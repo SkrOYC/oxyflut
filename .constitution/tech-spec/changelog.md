@@ -2,6 +2,14 @@
 
 All notable changes to the technical specification appear in this file.
 
+## [v0.12.0] - 2026-08-26
+
+### Changed
+
+- Advanced the integrated C ABI to version 9 and added explicit semantics-selection presence so absent selections remain distinct from valid zero-length selections.
+- Aligned texture realization on nonzero physical dimensions, the closed pixel format, and exact checked packed-byte lengths across common Rust and C.
+- Assigned the shared Rust image decoder above the substrate boundary for both qualification candidates.
+
 ## [v0.11.0] - 2026-08-26
 
 ### Changed

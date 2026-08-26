@@ -1,7 +1,7 @@
 {
   "$schema": "../data-models/capability-traceability.schema.json",
   "schemaVersion": "3.0.0",
-  "specificationVersion": "0.11.0",
+  "specificationVersion": "0.12.0",
   "mappings": [
     {
       "capabilityId": "CAP-CMP-001",
@@ -279,6 +279,8 @@
           "contract": "contracts/oxyflut-substrate.rs",
           "symbols": [
             "SubstrateAdapter::realize_texture",
+            "PixelSize",
+            "PixelFormat",
             "SceneBuilder::draw_texture"
           ]
         },
@@ -286,6 +288,7 @@
           "contract": "contracts/oxyflut-substrate.h",
           "symbols": [
             "OxySubstrateApi.realize_texture",
+            "OxyPixelFormat",
             "OxySubstrateApi.scene_builder_draw_texture"
           ]
         }
@@ -675,6 +678,7 @@
             "SemanticsRelation",
             "SemanticsRelationKind",
             "SemanticsNode.relations",
+            "SemanticsNode.selection",
             "TextLayoutId",
             "SemanticsNode.text_layout"
           ]
@@ -692,6 +696,7 @@
             "SemanticsRelation",
             "SemanticsRelationKind",
             "SemanticsNode.relations",
+            "SemanticsNode.selection_utf16",
             "TextLayoutGeneration",
             "SemanticsNode.text_layout"
           ]
@@ -709,6 +714,9 @@
             "OxySemanticsRelation",
             "OxySemanticsRelationKind",
             "OxySemanticsNode.relations",
+            "OxySemanticsNode.text_selection_base_utf16",
+            "OxySemanticsNode.text_selection_extent_utf16",
+            "OxySemanticsNode.has_text_selection",
             "OxySemanticsNode.text_layout_generation",
             "OxySemanticsNode.has_text_layout"
           ]
@@ -742,6 +750,7 @@
             "SemanticsRelation",
             "SemanticsRelationKind",
             "SemanticsNode.relations",
+            "SemanticsNode.selection",
             "TextLayoutId",
             "SemanticsNode.text_layout",
             "SemanticsBridge::perform_action"
@@ -760,6 +769,7 @@
             "SemanticsRelation",
             "SemanticsRelationKind",
             "SemanticsNode.relations",
+            "SemanticsNode.selection_utf16",
             "TextLayoutGeneration",
             "SemanticsNode.text_layout",
             "SubstrateEvents::semantics_action"
@@ -778,6 +788,9 @@
             "OxySemanticsRelation",
             "OxySemanticsRelationKind",
             "OxySemanticsNode.relations",
+            "OxySemanticsNode.text_selection_base_utf16",
+            "OxySemanticsNode.text_selection_extent_utf16",
+            "OxySemanticsNode.has_text_selection",
             "OxySemanticsNode.text_layout_generation",
             "OxySemanticsNode.has_text_layout",
             "OxySubstrateCallbacks.on_semantics_action"

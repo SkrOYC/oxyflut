@@ -95,7 +95,7 @@ Neither candidate has demonstrated the complete P0 scope. The choice changes imp
 ### R-12: Assets and textures
 
 - **Ruling:** P0 includes asynchronous asset loading, image decoding, memory caching, and GPU texture realization.
-- **Path effect:** Path A decodes compressed image formats outside Impeller and uploads decompressed pixels. Path B can use the Flutter Engine image decoder through the runtime bridge.
+- **Path effect:** Both paths use the same bounded Rust decoder in the candidate-neutral Asset and resource manager. Path A uploads the validated decoded pixels through Impeller; Path B uploads the same validated physical-pixel buffer through the language-neutral engine bridge. Candidate adapters don't own image decoding.
 - **Rationale:** Image decoding must not block frame processing. The framework must manage CPU and GPU resource lifetimes explicitly.
 
 ### R-13: Operating system capabilities

@@ -48,7 +48,7 @@ Checker: cargo +1.98.0 test -p xtask external_contracts
   - A completed 52-capability baseline
   - Product or candidate implementation
   - `.constitution/tech-spec/data-models/capability-baseline.schema.json` (binding schema)
-- **Verification Command:** `cargo +1.98.0 run -p xtask -- baseline validate --input PATH`
+- **Verification Command:** `cargo +1.98.0 run -p xtask -- baseline validate --input qualification/fixtures/baselines/complete.synthetic.json && cargo +1.98.0 test -p xtask baseline`
 - **Expected Success Output:** `exit 0` for the complete positive fixture and exit 1 for missing, duplicate, mismatched-flow, or empty-evidence fixtures
 - **STOP Conditions:**
   - STOP if authoring requires a capability exception or an additional test-vector field not defined by Stage 3.
@@ -64,7 +64,7 @@ Assertions:
 - Every entry resolves its architecture flow and has nonempty test vectors and expected evidence.
 - Canonical output is deterministic and content-addressed.
 - Synthetic fixtures are visibly marked and cannot be referenced by the qualification lock.
-Command: cargo +1.98.0 run -p xtask -- baseline validate --input PATH
+Command: cargo +1.98.0 run -p xtask -- baseline validate --input qualification/fixtures/baselines/complete.synthetic.json && cargo +1.98.0 test -p xtask baseline
 ```
 
 #### OXY-C003 Implement raw-measurement and sample-validity templates
@@ -82,7 +82,7 @@ Command: cargo +1.98.0 run -p xtask -- baseline validate --input PATH
   - Candidate measurements
   - Statistical thresholds other than those already defined by the PRD
   - Outlier-removal logic
-- **Verification Command:** `cargo +1.98.0 run -p xtask -- measurement validate --input PATH`
+- **Verification Command:** `cargo +1.98.0 run -p xtask -- measurement validate --input qualification/fixtures/measurements/complete.synthetic.json && cargo +1.98.0 run -p xtask -- measurement validate --input qualification/fixtures/sample-validity/complete.synthetic.json && cargo +1.98.0 test -p xtask measurement`
 - **Expected Success Output:** `exit 0` for complete templates and exit 1 for unapproved exclusions, missing raw samples, or altered meters
 - **STOP Conditions:**
   - STOP if a template drops outliers or introduces an exclusion outside the three PRD categories.
@@ -100,7 +100,7 @@ Assertions:
 - Only measurement-tool failure, unrelated operating-system interruption, and physical disconnect are valid exclusions.
 - Nearest-rank and maximum-bound inputs retain every valid observation without outlier deletion.
 - Templates bind to one environment, candidate, meter version, and lock digest.
-Command: cargo +1.98.0 run -p xtask -- measurement validate --input PATH
+Command: cargo +1.98.0 run -p xtask -- measurement validate --input qualification/fixtures/measurements/complete.synthetic.json && cargo +1.98.0 run -p xtask -- measurement validate --input qualification/fixtures/sample-validity/complete.synthetic.json && cargo +1.98.0 test -p xtask measurement
 ```
 
 #### OXY-C004 Implement reference-environment inspection

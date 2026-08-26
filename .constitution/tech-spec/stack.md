@@ -1,6 +1,6 @@
 # Qualification technical stack
 
-- **Version:** v0.11.0
+- **Version:** v0.12.0
 - **Status:** Phase 3A qualification specification
 - **Production ready:** no
 - **Required successor:** Phase 3B production specification
@@ -9,7 +9,7 @@
 
 This specification defines concrete builds for comparing both substrate candidates. It does not select a production substrate and cannot authorize a production implementation plan.
 
-Stage 4 can use v0.11.0 only for qualification infrastructure, candidate probes, common contract tests, measurements, and evidence collection. Stage 4 must not plan the production framework, release delivery, or removal of either candidate until Phase 3B reaches v1.0.0.
+Stage 4 can use v0.12.0 only for qualification infrastructure, candidate probes, common contract tests, measurements, and evidence collection. Stage 4 must not plan the production framework, release delivery, or removal of either candidate until Phase 3B reaches v1.0.0.
 
 The current qualification lock has `candidateImplementationReady: false` and `measurementReady: false`. Until `candidateImplementationReady` becomes true, Stage 4 is limited to qualification scaffolding, validators, environment discovery, baseline authoring, external-contract snapshotting, and pre-implementation lock finalization. Candidate implementation can then begin against the frozen suite. Comparable or scored evidence collection cannot begin until the completed candidate source identities are pinned and `measurementReady` becomes true.
 
@@ -29,7 +29,7 @@ The following entries are mandatory for both qualification candidates:
 | Worker handoff | `crossbeam-channel` 0.5.16 | Trial | Provides bounded asynchronous asset and decoding queues without introducing an application-wide async runtime. |
 | Flags | `bitflags` 2.13.1 | Adopt for Phase 3A | Models closed capability and state masks. |
 | Text boundaries | `unicode-segmentation` 1.13.3 | Trial | Supplies grapheme and word boundaries for the shared editing model. Rendering geometry remains substrate-qualified. |
-| Image decoding | `image` 0.25.10 with default features disabled and `gif`, `jpeg`, `png`, and `webp` enabled | Trial | Gives the focused candidate one bounded Rust decoder surface. The integrated candidate must expose equivalent behavior through its adapter. |
+| Image decoding | `image` 0.25.10 with default features disabled and `gif`, `jpeg`, `png`, and `webp` enabled | Trial | Gives both candidates one shared bounded Rust decoder above the substrate boundary; adapters receive identical validated decoded pixels and never own image decoding. |
 | Evidence serialization | `serde` 1.0.229 and `serde_json` 1.0.151 | Adopt for Phase 3A | Implements the owned JSON evidence formats in `data-models/`. |
 | Evidence hashing | `sha2` 0.11.0 with default features disabled | Adopt for Phase 3A | Supplies the shared streaming SHA-256 primitive used by validators and evidence writers; version 0.11.0 supports the pinned Rust toolchain with an MSRV of 1.85. |
 | JSON Schema validation | `jsonschema` 0.51.0 with default features disabled | Adopt for Phase 3A | Validates local schemas without network resolution. |

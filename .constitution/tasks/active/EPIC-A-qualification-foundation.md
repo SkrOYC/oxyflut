@@ -214,7 +214,9 @@ Assertions:
 - ABI table prefix, struct_size, abi_version, OXY_CALL, OXY_EXPORT, opaque handles, and callback signatures match fixtures.
 - Native IME index-unit constants match the Rust enum and platform-contract strings; unknown numeric values fail before range conversion.
 - Every declared C presentation status maps to the matching common Rust presentation status, success and failure timestamp invariants are enforced, and unknown status values fail before callback delivery.
-- An ABI-7 implementation fails compatibility negotiation against the ABI-8 presentation contract before callbacks are installed.
+- Texture realization accepts the same nonzero physical dimensions, closed pixel format, checked packed-byte length, and rejection cases through the common Rust and C contracts.
+- Semantics selections project `Some` and `None` losslessly through `has_text_selection`, and invalid presence, endpoint, or reserved-field combinations fail.
+- ABI-7 and ABI-8 implementations fail compatibility negotiation against the ABI-9 contract before callbacks are installed.
 - Deliberate layout and symbol mutations fail.
 Command: cargo +1.98.0 test -p xtask contracts::native
 ```

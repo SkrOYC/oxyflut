@@ -17,8 +17,10 @@ All product capability and priority decisions remain resolved. Research into the
 
 Evaluate the following candidate paths:
 
-- **Path A: standalone Impeller.** Use the published C SDK for rendering and text. Own windowing, frame scheduling, input, IME, clipboard, editable selection, accessibility, image decoding, and surface recovery in `oxyflut`.
+- **Path A: standalone Impeller.** Use the published C SDK for rendering and text. Own windowing, frame scheduling, input, IME, clipboard, editable selection, accessibility, and surface recovery in `oxyflut`.
 - **Path B: full Flutter Engine.** Add a language-neutral runtime controller and C ABI to a pinned Flutter Engine fork. Retain the shell, rasterizer, compositor, frame pipeline, and platform embedders. Starling is an example of this. It demonstrates the architecture but doesn't define the `oxyflut` design.
+
+The candidate-neutral Asset and resource manager owns the same bounded Rust image decoder for both paths and sends validated decoded pixels through either substrate boundary.
 
 The decision must not change the P0 capability list. It selects where those capabilities are implemented and which maintenance costs the project accepts.
 

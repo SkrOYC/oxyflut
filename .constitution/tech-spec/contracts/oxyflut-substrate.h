@@ -19,7 +19,7 @@
 extern "C" {
 #endif
 
-#define OXY_SUBSTRATE_ABI_VERSION 8u
+#define OXY_SUBSTRATE_ABI_VERSION 9u
 
 /* Unless a field comment states otherwise, every pointer passed to or returned from this ABI is nonnull. An array pointer is null if and only if its count is zero. Every out pointer names writable storage and is cleared before a fallible call. All opaque handles belong to the creating substrate and can be used only on the execution domain declared for that operation. */
 
@@ -274,6 +274,8 @@ typedef struct OxySemanticsNode {
   uint64_t relation_count;
   int64_t text_selection_base_utf16;
   int64_t text_selection_extent_utf16;
+  uint32_t has_text_selection;
+  uint32_t text_selection_reserved;
   uint64_t text_layout_generation;
   uint32_t has_text_layout;
   uint32_t text_layout_reserved;
@@ -290,7 +292,7 @@ typedef struct OxySemanticsNode {
   uint32_t is_secure_field;
 } OxySemanticsNode;
 
-/* When has_scroll is zero, scroll_position, scroll_minimum, and scroll_maximum must all be zero. A node with a selection or attributed text has has_text_layout set and binds every index to text_layout_generation. Replacing that text layout requires a new node_generation before publishing ranges or routing indexed actions. */
+/* When has_text_selection is zero, both text-selection endpoints and text_selection_reserved are zero. When it is one, both endpoints are nonnegative and no greater than UINT32_MAX. When has_scroll is zero, scroll_position, scroll_minimum, and scroll_maximum must all be zero. A node with a selection or attributed text has has_text_layout set and binds every index to text_layout_generation. Replacing that text layout requires a new node_generation before publishing ranges or routing indexed actions. */
 
 typedef struct OxySemanticsUpdate {
   uint32_t struct_size;
@@ -612,6 +614,7 @@ typedef struct OxySubstrateApi {
                                const OxyHeadlessMetrics* metrics,
                                OxyOwnedBytes* out_pixels,
                                OxyRasterDescriptor* out_descriptor);
+  /* Width and height are nonzero physical pixels. OXY_PIXEL_FORMAT_RGBA8888 requires exactly width * height * 4 bytes after checked multiplication. Unknown formats, overflow, and every other byte length fail before candidate work. */
   OxyStatus (OXY_CALL *realize_texture)(OxySubstrate* substrate,
                                uint64_t resource_generation,
                                uint32_t width,

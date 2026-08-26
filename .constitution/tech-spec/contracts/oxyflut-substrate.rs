@@ -897,12 +897,14 @@ pub trait SubstrateAdapter {
         output: &mut [u8],
     ) -> Result<RasterDescriptor, Self::Error>;
 
-    /// Realizes decoded pixels as an owned graphics resource.
+    /// Realizes tightly packed decoded pixels as an owned graphics resource.
+    ///
+    /// Both physical dimensions must be nonzero. `Rgba8888` requires exactly `width * height * 4` bytes after checked multiplication; unknown formats, overflow, and every other buffer length fail before candidate code runs.
     fn realize_texture(
         &mut self,
         generation: ResourceGeneration,
-        size: Size,
-        encoded_format: u32,
+        size: PixelSize,
+        pixel_format: PixelFormat,
         pixels: &[u8],
     ) -> Result<<Self::Builder as SceneBuilder<Self::Error>>::Texture, Self::Error>;
 
