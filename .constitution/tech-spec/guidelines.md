@@ -104,11 +104,11 @@ Use Conventional Commits. A commit that changes a public contract, ABI, schema, 
 
 ## Verification commands
 
-The following commands are the Stage 4 command contract. Only the documentation formatter exists in the repository at v0.2.0. Stage 4 can schedule implementation of the missing commands for qualification work only.
+The following commands are the Stage 4 command contract. Only the documentation formatter exists in the repository at v0.2.1. Stage 4 can schedule implementation of the missing commands for qualification work only.
 
 Qualification planning has three states. While `contracts/qualification-lock.json` has `candidateImplementationReady: false`, Stage 4 can plan only repository scaffolding, contract validators, evidence writers, external-schema snapshotting, environment discovery, baseline authoring, and pre-implementation lock finalization. When `candidateImplementationReady` becomes true, Stage 4 can plan both candidate adapters, the integrated engine changes, and the shared capability implementation against that frozen suite, but it cannot collect comparable or scored evidence. Evidence collection begins only after completed candidate sources and adapters are pinned and the lock validates with `measurementReady: true`. Changing a pre-implementation input resets both readiness flags and invalidates affected work; changing a source pin after measurement begins creates a new lock and restarts affected evidence.
 
-| Command | Purpose | Availability at v0.2.0 |
+| Command | Purpose | Availability at v0.2.1 |
 | :-- | :-- | :-- |
 | `bunx prettier --prose-wrap never --check '.constitution/**/*.md'` | Check constitution formatting without hard wrapping. | Available. |
 | `cargo +1.98.0 fmt --all --check` | Check Rust formatting. | Missing until the workspace exists. |
@@ -127,6 +127,8 @@ Qualification planning has three states. While `contracts/qualification-lock.jso
 | `cargo +1.98.0 fuzz run FUZZ_TARGET` | Run one frozen fuzz target. Replace `FUZZ_TARGET` with the ingress target identifier. | Missing until fuzz targets exist. |
 | `cargo +1.98.0 deny check` | Enforce dependency source, license, advisory, and duplicate policy. | Missing until the dependency policy exists. |
 | `cargo +1.98.0 audit` | Check the lockfile against RustSec advisories. | Missing until the workspace exists. |
+
+Qualification CLI commands write content-free diagnostics to standard error. Validation, evidence, external-contract, baseline, environment-inspection, build, probe, and qualification commands return exit code 0 on success and 1 on invalid input, failed validation, or execution failure. `lock status` returns 0 when the requested gate is ready, 2 when the lock is valid but the requested gate remains open, and 1 when the lock itself is invalid. No command converts an open gate into readiness.
 
 ## Production-planning prohibition
 

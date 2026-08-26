@@ -2,6 +2,12 @@
 
 All notable changes to the technical specification appear in this file.
 
+## [v0.2.1] - 2026-08-26
+
+### Fixed
+
+- Defined content-free diagnostics and exit codes for qualification commands, including the distinct valid-but-open result from `lock status`.
+
 ## [v0.2.0] - 2026-08-26
 
 ### Added

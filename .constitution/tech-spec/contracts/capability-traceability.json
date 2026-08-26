@@ -1,7 +1,7 @@
 {
   "$schema": "../data-models/capability-traceability.schema.json",
   "schemaVersion": "1.0.0",
-  "specificationVersion": "0.2.0",
+  "specificationVersion": "0.2.1",
   "mappings": [
     {
       "capabilityId": "CAP-CMP-001",
