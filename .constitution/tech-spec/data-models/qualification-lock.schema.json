@@ -1,0 +1,293 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:oxyflut:schema:qualification-lock:2",
+  "title": "Oxyflut qualification lock",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "measurementReady",
+    "sourcePins",
+    "candidateArtifacts",
+    "referenceEnvironments",
+    "workload",
+    "measurementPolicy",
+    "resolvedTools",
+    "gatingKnownUnknowns"
+  ],
+  "properties": {
+    "$schema": { "type": "string" },
+    "schemaVersion": { "const": "2.0.0" },
+    "measurementReady": { "type": "boolean" },
+    "sourcePins": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "rust",
+        "flutterFramework",
+        "flutterEngine",
+        "impellerHeaderBlob",
+        "integratedFork",
+        "oxyflutAdapter",
+        "upgradeLines"
+      ],
+      "properties": {
+        "rust": { "$ref": "#/$defs/versionCommit" },
+        "flutterFramework": { "$ref": "#/$defs/versionCommit" },
+        "flutterEngine": { "$ref": "#/$defs/versionCommit" },
+        "impellerHeaderBlob": { "$ref": "#/$defs/sha40" },
+        "integratedFork": { "$ref": "#/$defs/unresolvedCommit" },
+        "oxyflutAdapter": { "$ref": "#/$defs/unresolvedCommit" },
+        "upgradeLines": {
+          "type": "array",
+          "prefixItems": [
+            { "$ref": "#/$defs/versionCommit" },
+            { "$ref": "#/$defs/versionCommit" },
+            { "$ref": "#/$defs/versionCommit" }
+          ],
+          "items": false,
+          "minItems": 3,
+          "maxItems": 3
+        }
+      }
+    },
+    "candidateArtifacts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["darwin-arm64", "linux-x64", "windows-x64"],
+      "properties": {
+        "darwin-arm64": { "$ref": "#/$defs/artifact" },
+        "linux-x64": { "$ref": "#/$defs/artifact" },
+        "windows-x64": { "$ref": "#/$defs/artifact" }
+      }
+    },
+    "referenceEnvironments": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "macos-arm64",
+        "windows-x86_64",
+        "wayland-linux-x86_64",
+        "x11-linux-x86_64"
+      ],
+      "properties": {
+        "macos-arm64": { "$ref": "#/$defs/environment" },
+        "windows-x86_64": { "$ref": "#/$defs/environment" },
+        "wayland-linux-x86_64": { "$ref": "#/$defs/environment" },
+        "x11-linux-x86_64": { "$ref": "#/$defs/environment" }
+      }
+    },
+    "workload": { "$ref": "#/$defs/workload" },
+    "measurementPolicy": { "$ref": "#/$defs/measurementPolicy" },
+    "resolvedTools": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/tool" },
+      "uniqueItems": true
+    },
+    "gatingKnownUnknowns": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "measurementReady": { "const": true } },
+        "required": ["measurementReady"]
+      },
+      "then": {
+        "properties": {
+          "sourcePins": { "$ref": "#/$defs/resolvedSourcePins" },
+          "candidateArtifacts": {
+            "type": "object",
+            "properties": {
+              "darwin-arm64": { "$ref": "#/$defs/resolvedArtifact" },
+              "linux-x64": { "$ref": "#/$defs/resolvedArtifact" },
+              "windows-x64": { "$ref": "#/$defs/resolvedArtifact" }
+            }
+          },
+          "referenceEnvironments": {
+            "type": "object",
+            "additionalProperties": { "$ref": "#/$defs/resolvedEnvironment" }
+          },
+          "workload": { "$ref": "#/$defs/resolvedWorkload" },
+          "measurementPolicy": { "$ref": "#/$defs/resolvedMeasurementPolicy" },
+          "gatingKnownUnknowns": { "type": "array", "maxItems": 0 },
+          "resolvedTools": { "type": "array", "minItems": 1 }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "sha40": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "digestOrNull": { "type": ["string", "null"], "pattern": "^[0-9a-f]{64}$" },
+    "versionCommit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["version", "commit"],
+      "properties": {
+        "version": { "type": "string", "minLength": 1 },
+        "commit": { "$ref": "#/$defs/sha40" }
+      }
+    },
+    "unresolvedCommit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "commit"],
+      "properties": {
+        "status": { "enum": ["kk", "ku-gating"] },
+        "commit": { "type": ["string", "null"], "pattern": "^[0-9a-f]{40}$" }
+      }
+    },
+    "resolvedCommit": {
+      "type": "object",
+      "properties": {
+        "status": { "const": "kk" },
+        "commit": { "$ref": "#/$defs/sha40" }
+      }
+    },
+    "resolvedSourcePins": {
+      "type": "object",
+      "properties": {
+        "integratedFork": { "$ref": "#/$defs/resolvedCommit" },
+        "oxyflutAdapter": { "$ref": "#/$defs/resolvedCommit" }
+      }
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "url",
+        "sourceRevision",
+        "httpVerified",
+        "sha256",
+        "sizeBytes"
+      ],
+      "properties": {
+        "url": { "type": "string", "format": "uri" },
+        "sourceRevision": { "$ref": "#/$defs/sha40" },
+        "httpVerified": { "type": "boolean" },
+        "sha256": { "$ref": "#/$defs/digestOrNull" },
+        "sizeBytes": { "type": ["integer", "null"], "minimum": 1 }
+      }
+    },
+    "resolvedArtifact": {
+      "type": "object",
+      "properties": {
+        "httpVerified": { "const": true },
+        "sha256": { "$ref": "#/$defs/sha256" },
+        "sizeBytes": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "environment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "operatingSystem",
+        "minimumVersion",
+        "hardwareId",
+        "gpuId",
+        "driverVersion",
+        "systemPackageLockDigest"
+      ],
+      "properties": {
+        "operatingSystem": { "type": "string", "minLength": 1 },
+        "minimumVersion": { "type": ["string", "null"] },
+        "hardwareId": { "type": ["string", "null"] },
+        "gpuId": { "type": ["string", "null"] },
+        "driverVersion": { "type": ["string", "null"] },
+        "systemPackageLockDigest": { "$ref": "#/$defs/digestOrNull" }
+      }
+    },
+    "resolvedEnvironment": {
+      "type": "object",
+      "properties": {
+        "minimumVersion": { "type": "string", "minLength": 1 },
+        "hardwareId": { "type": "string", "minLength": 1 },
+        "gpuId": { "type": "string", "minLength": 1 },
+        "driverVersion": { "type": "string", "minLength": 1 },
+        "systemPackageLockDigest": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "workload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "referenceApplication",
+        "scenes",
+        "interactionScripts",
+        "fonts",
+        "assets",
+        "windowMatrix",
+        "cacheStates",
+        "releaseFlags"
+      ],
+      "properties": {
+        "referenceApplication": { "$ref": "#/$defs/digestOrNull" },
+        "scenes": { "$ref": "#/$defs/digestOrNull" },
+        "interactionScripts": { "$ref": "#/$defs/digestOrNull" },
+        "fonts": { "$ref": "#/$defs/digestOrNull" },
+        "assets": { "$ref": "#/$defs/digestOrNull" },
+        "windowMatrix": { "$ref": "#/$defs/digestOrNull" },
+        "cacheStates": { "$ref": "#/$defs/digestOrNull" },
+        "releaseFlags": { "$ref": "#/$defs/digestOrNull" }
+      }
+    },
+    "resolvedWorkload": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/sha256" }
+    },
+    "measurementPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "rawMeasurementSchema",
+        "sampleValidityRules",
+        "capabilityBaseline",
+        "platformContracts",
+        "scoringAnchors",
+        "assessors",
+        "fuzzCorpora",
+        "securityPatchRehearsal",
+        "layoutVisitCap"
+      ],
+      "properties": {
+        "rawMeasurementSchema": { "$ref": "#/$defs/digestOrNull" },
+        "sampleValidityRules": { "$ref": "#/$defs/digestOrNull" },
+        "capabilityBaseline": { "$ref": "#/$defs/digestOrNull" },
+        "platformContracts": { "$ref": "#/$defs/digestOrNull" },
+        "scoringAnchors": { "$ref": "#/$defs/digestOrNull" },
+        "assessors": { "$ref": "#/$defs/digestOrNull" },
+        "fuzzCorpora": { "$ref": "#/$defs/digestOrNull" },
+        "securityPatchRehearsal": { "$ref": "#/$defs/digestOrNull" },
+        "layoutVisitCap": { "type": ["integer", "null"], "minimum": 1 }
+      }
+    },
+    "resolvedMeasurementPolicy": {
+      "type": "object",
+      "properties": {
+        "rawMeasurementSchema": { "$ref": "#/$defs/sha256" },
+        "sampleValidityRules": { "$ref": "#/$defs/sha256" },
+        "capabilityBaseline": { "$ref": "#/$defs/sha256" },
+        "platformContracts": { "$ref": "#/$defs/sha256" },
+        "scoringAnchors": { "$ref": "#/$defs/sha256" },
+        "assessors": { "$ref": "#/$defs/sha256" },
+        "fuzzCorpora": { "$ref": "#/$defs/sha256" },
+        "securityPatchRehearsal": { "$ref": "#/$defs/sha256" },
+        "layoutVisitCap": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "tool": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "version", "sha256"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "version": { "type": "string", "minLength": 1 },
+        "sha256": { "$ref": "#/$defs/sha256" }
+      }
+    }
+  }
+}

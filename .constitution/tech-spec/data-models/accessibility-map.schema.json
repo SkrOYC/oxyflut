@@ -1,0 +1,112 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:oxyflut:schema:accessibility-map:1",
+  "title": "Oxyflut platform accessibility map",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "environment",
+    "candidate",
+    "epistemicStatus",
+    "forward",
+    "reverseActions",
+    "evidence"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "environment": { "enum": ["macos", "windows", "wayland", "x11"] },
+    "candidate": { "enum": ["focused", "integrated"] },
+    "epistemicStatus": { "enum": ["kk-complete", "ku-gating"] },
+    "forward": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "roles",
+        "states",
+        "values",
+        "bounds",
+        "transforms",
+        "traversal",
+        "accessibilityFocus",
+        "inputFocus",
+        "hitTesting",
+        "textRanges",
+        "selection",
+        "scrollExtents",
+        "language",
+        "direction",
+        "liveRegions",
+        "hidden",
+        "disabled",
+        "secureFieldRedaction",
+        "multiViewIsolation"
+      ],
+      "patternProperties": { "^[a-z][a-zA-Z]+$": { "$ref": "#/$defs/mapping" } }
+    },
+    "reverseActions": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/action" },
+      "minItems": 1
+    },
+    "evidence": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/evidence" },
+      "minItems": 1
+    }
+  },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "mapping": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["oxyflut", "native", "status"],
+      "properties": {
+        "oxyflut": { "type": "string", "minLength": 1 },
+        "native": { "type": "string", "minLength": 1 },
+        "status": { "enum": ["kk", "ku-gating"] }
+      }
+    },
+    "action": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "oxyflutAction",
+        "nativeIdentifier",
+        "payloadEncoding",
+        "textIndexUnit",
+        "targetRouting",
+        "acknowledgement",
+        "staleTarget",
+        "status"
+      ],
+      "properties": {
+        "oxyflutAction": { "type": "string", "minLength": 1 },
+        "nativeIdentifier": { "type": "string", "minLength": 1 },
+        "payloadEncoding": { "type": "string", "minLength": 1 },
+        "textIndexUnit": {
+          "enum": [
+            "none",
+            "utf8-bytes",
+            "utf16-code-units",
+            "graphemes",
+            "logical"
+          ]
+        },
+        "targetRouting": { "type": "string", "minLength": 1 },
+        "acknowledgement": { "type": "string", "minLength": 1 },
+        "staleTarget": { "type": "string", "minLength": 1 },
+        "status": { "enum": ["kk", "ku-gating"] }
+      }
+    }
+  }
+}

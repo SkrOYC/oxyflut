@@ -1,0 +1,64 @@
+{
+  "$schema": "../data-models/diagnostic-event-registry.schema.json",
+  "schemaVersion": "1.0.0",
+  "events": {
+    "runtime.lifecycle": {
+      "privacyClass": "operational",
+      "allowedFields": ["state", "reason"]
+    },
+    "view.lifecycle": {
+      "privacyClass": "operational",
+      "allowedFields": ["state", "reason", "displayEpoch"]
+    },
+    "frame.scheduled": {
+      "privacyClass": "operational",
+      "allowedFields": ["displayEpoch", "targetNs", "coalescedInvalidations"]
+    },
+    "frame.presented": {
+      "privacyClass": "operational",
+      "allowedFields": ["displayEpoch", "presentationNs", "status"]
+    },
+    "frame.missed": {
+      "privacyClass": "operational",
+      "allowedFields": ["displayEpoch", "targetNs", "reason"]
+    },
+    "input.rejected": {
+      "privacyClass": "private-redacted",
+      "allowedFields": ["kind", "reason", "payloadBytes"]
+    },
+    "text.transaction": {
+      "privacyClass": "private-redacted",
+      "allowedFields": ["kind", "status", "inputUnits", "outputUnits"]
+    },
+    "semantics.update": {
+      "privacyClass": "private-redacted",
+      "allowedFields": ["nodeCount", "deletedCount", "status"]
+    },
+    "semantics.action": {
+      "privacyClass": "private-redacted",
+      "allowedFields": ["action", "status", "staleTarget"]
+    },
+    "asset.lifecycle": {
+      "privacyClass": "private-redacted",
+      "allowedFields": ["stage", "status", "encodedBytes", "decodedBytes"]
+    },
+    "recovery.transition": {
+      "privacyClass": "operational",
+      "allowedFields": [
+        "fault",
+        "attempt",
+        "state",
+        "elapsedNs",
+        "releasedBytes"
+      ]
+    },
+    "boundary.failure": {
+      "privacyClass": "operational",
+      "allowedFields": ["boundary", "code", "operation"]
+    },
+    "diagnostics.dropped": {
+      "privacyClass": "operational",
+      "allowedFields": ["reason", "count"]
+    }
+  }
+}

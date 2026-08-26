@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:oxyflut:schema:diagnostic-event:2",
+  "title": "Oxyflut local diagnostic event",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "name",
+    "monotonicNs",
+    "privacyClass",
+    "runtimeId",
+    "fields"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "2.0.0" },
+    "name": {
+      "enum": [
+        "runtime.lifecycle",
+        "view.lifecycle",
+        "frame.scheduled",
+        "frame.presented",
+        "frame.missed",
+        "input.rejected",
+        "text.transaction",
+        "semantics.update",
+        "semantics.action",
+        "asset.lifecycle",
+        "recovery.transition",
+        "boundary.failure",
+        "diagnostics.dropped"
+      ]
+    },
+    "monotonicNs": { "type": "integer", "minimum": 0 },
+    "privacyClass": { "enum": ["public", "operational", "private-redacted"] },
+    "runtimeId": { "$ref": "#/$defs/scopedId" },
+    "viewId": { "$ref": "#/$defs/scopedId" },
+    "frameId": { "$ref": "#/$defs/scopedId" },
+    "fields": {
+      "type": "object",
+      "maxProperties": 32,
+      "additionalProperties": { "$ref": "#/$defs/classifiedValue" }
+    }
+  },
+  "$defs": {
+    "scopedId": { "type": "string", "pattern": "^[0-9a-f]{16}:[0-9a-f]{16}$" },
+    "classifiedValue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["privacyClass", "value"],
+      "properties": {
+        "privacyClass": {
+          "enum": ["public", "operational", "private-redacted"]
+        },
+        "value": {
+          "anyOf": [
+            { "type": "boolean" },
+            { "type": "integer" },
+            { "type": "number" },
+            { "type": "string", "maxLength": 256 }
+          ]
+        }
+      }
+    }
+  }
+}

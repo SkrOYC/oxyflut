@@ -1,0 +1,180 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:oxyflut:schema:specification-phase:1",
+  "title": "Oxyflut specification phase",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "specificationVersion",
+    "phase",
+    "productionReady",
+    "permittedStage4Scopes",
+    "requiredSuccessor",
+    "blockers",
+    "candidateStates",
+    "requiredProductionVersion"
+  ],
+  "properties": {
+    "$schema": { "type": "string" },
+    "schemaVersion": { "const": "1.0.0" },
+    "specificationVersion": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "phase": { "enum": ["qualification-3a", "production-3b"] },
+    "productionReady": { "type": "boolean" },
+    "permittedStage4Scopes": {
+      "type": "array",
+      "items": { "enum": ["qualification", "production"] },
+      "uniqueItems": true,
+      "minItems": 1
+    },
+    "requiredSuccessor": { "enum": ["production-3b", "none"] },
+    "blockers": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "candidateStates": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["focused", "integrated"],
+      "properties": {
+        "focused": { "enum": ["trial", "selected", "removed"] },
+        "integrated": { "enum": ["trial", "selected", "removed"] }
+      }
+    },
+    "requiredProductionVersion": { "const": ">=1.0.0" },
+    "promotionEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "qualificationLockDigest",
+        "selectedCandidate",
+        "selectionDecision",
+        "selectedCandidateQualification",
+        "layoutQualification",
+        "acceptedAdr0010",
+        "finalContractSet",
+        "targetMatrix",
+        "allTier1Results",
+        "losingCandidateRemoval",
+        "billOfMaterials",
+        "releaseQualification"
+      ],
+      "properties": {
+        "qualificationLockDigest": { "$ref": "#/$defs/sha256" },
+        "selectedCandidate": { "enum": ["focused", "integrated"] },
+        "selectionDecision": { "$ref": "#/$defs/evidence" },
+        "selectedCandidateQualification": { "$ref": "#/$defs/evidence" },
+        "layoutQualification": { "$ref": "#/$defs/evidence" },
+        "acceptedAdr0010": { "$ref": "#/$defs/evidence" },
+        "finalContractSet": { "$ref": "#/$defs/evidence" },
+        "targetMatrix": { "$ref": "#/$defs/evidence" },
+        "allTier1Results": { "$ref": "#/$defs/evidence" },
+        "losingCandidateRemoval": { "$ref": "#/$defs/evidence" },
+        "billOfMaterials": { "$ref": "#/$defs/evidence" },
+        "releaseQualification": { "$ref": "#/$defs/evidence" }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "phase": { "const": "qualification-3a" } },
+        "required": ["phase"]
+      },
+      "then": {
+        "properties": {
+          "specificationVersion": {
+            "type": "string",
+            "pattern": "^0\\.[0-9]+\\.[0-9]+$"
+          },
+          "productionReady": { "const": false },
+          "permittedStage4Scopes": { "const": ["qualification"] },
+          "requiredSuccessor": { "const": "production-3b" },
+          "blockers": { "type": "array", "minItems": 1 },
+          "candidateStates": {
+            "type": "object",
+            "properties": {
+              "focused": { "const": "trial" },
+              "integrated": { "const": "trial" }
+            }
+          },
+          "promotionEvidence": false
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "phase": { "const": "production-3b" } },
+        "required": ["phase"]
+      },
+      "then": {
+        "required": ["promotionEvidence"],
+        "properties": {
+          "specificationVersion": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*\\.[0-9]+\\.[0-9]+$"
+          },
+          "productionReady": { "const": true },
+          "permittedStage4Scopes": {
+            "type": "array",
+            "contains": { "const": "production" }
+          },
+          "requiredSuccessor": { "const": "none" },
+          "blockers": { "type": "array", "maxItems": 0 },
+          "promotionEvidence": true
+        },
+        "oneOf": [
+          {
+            "properties": {
+              "candidateStates": {
+                "type": "object",
+                "properties": {
+                  "focused": { "const": "selected" },
+                  "integrated": { "const": "removed" }
+                }
+              },
+              "promotionEvidence": {
+                "type": "object",
+                "properties": { "selectedCandidate": { "const": "focused" } }
+              }
+            }
+          },
+          {
+            "properties": {
+              "candidateStates": {
+                "type": "object",
+                "properties": {
+                  "focused": { "const": "removed" },
+                  "integrated": { "const": "selected" }
+                }
+              },
+              "promotionEvidence": {
+                "type": "object",
+                "properties": { "selectedCandidate": { "const": "integrated" } }
+              }
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": {
+          "type": "string",
+          "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$"
+        },
+        "sha256": { "$ref": "#/$defs/sha256" }
+      }
+    }
+  }
+}

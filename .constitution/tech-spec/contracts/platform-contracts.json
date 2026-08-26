@@ -1,0 +1,567 @@
+{
+  "$schema": "../data-models/platform-contracts.schema.json",
+  "schemaVersion": "2.0.0",
+  "environments": {
+    "macos": {
+      "reference": "arm64 macOS with Xcode 26.6 build 17F113 and macOS 26.5 SDK",
+      "minimumVersion": { "status": "ku-gating", "value": null },
+      "protocols": [
+        { "name": "AppKit SDK", "version": "26.5", "status": "kk" }
+      ],
+      "ime": {
+        "status": "ku-gating",
+        "nativeIndexUnit": "utf16-code-units",
+        "engineIndexUnit": "checked-logical-with-explicit-conversion",
+        "metadata": [
+          "selected range",
+          "marked range",
+          "surrounding attributed text",
+          "candidate rectangle",
+          "character index at point",
+          "input context",
+          "sensitive-field state"
+        ],
+        "actions": [
+          "insert",
+          "replace",
+          "set marked text",
+          "unmark",
+          "commit",
+          "cancel",
+          "delete surrounding",
+          "focus transfer"
+        ],
+        "sensitiveFieldPolicy": "Return only the minimum protocol-required redacted context and never emit raw content to diagnostics.",
+        "numericNegotiation": "Freeze the NSTextInputContext and client behavior or record a cited unsupported KK result.",
+        "testVectors": [
+          "ASCII",
+          "emoji grapheme",
+          "combining sequence",
+          "bidirectional selection",
+          "CJK composition",
+          "replacement range",
+          "candidate geometry",
+          "secure field"
+        ]
+      },
+      "accessibilityMaps": {
+        "focused": { "status": "ku-gating", "path": null, "sha256": null },
+        "integrated": { "status": "ku-gating", "path": null, "sha256": null }
+      },
+      "timing": {
+        "status": "ku-gating",
+        "interactiveOpportunitySource": "NSView displayLink(target:selector:) associated with the target view",
+        "independentMeterSource": "A separate harness-owned NSView, NSWindow, or NSScreen display link associated with the target display; independence must be proven",
+        "presentationFeedback": "selected Metal presentation feedback path",
+        "perDisplayAssociation": "Bind and migrate each view and observer to its current NSScreen"
+      },
+      "recoveryBaseline": {
+        "status": "ku-gating",
+        "path": null,
+        "sha256": null
+      },
+      "allocations": {
+        "focused": {
+          "status": "ku-gating",
+          "windowAndInput": ["NSApplication", "NSWindow", "NSView", "NSEvent"],
+          "imeInterfaces": ["NSTextInputClient", "NSTextInputContext"],
+          "accessibilityInterfaces": [
+            "NSAccessibility protocol and attributes",
+            "NSAccessibility action methods"
+          ],
+          "clipboardInterfaces": ["NSPasteboard"],
+          "timingInterfaces": [
+            "NSView displayLink(target:selector:)",
+            "Metal presentation feedback"
+          ],
+          "recoveryInterfaces": [
+            "NSWindow and NSView lifecycle notifications",
+            "Metal drawable and device failure signals"
+          ],
+          "serviceRouting": "Every request carries its owning view generation; no default window is inferred.",
+          "normalization": "AppKit callbacks enter Platform integration, cross the reentrancy barrier, and then reach application state.",
+          "requiredEvidence": [
+            "complete IME transcript",
+            "complete forward and reverse accessibility map",
+            "independent timing proof",
+            "recovery baseline",
+            "multi-view service routing"
+          ]
+        },
+        "integrated": {
+          "status": "ku-gating",
+          "windowAndInput": [
+            "pinned Flutter macOS embedder AppKit interfaces enumerated by the probe"
+          ],
+          "imeInterfaces": [
+            "pinned Flutter macOS embedder NSTextInputClient and NSTextInputContext mapping enumerated by the probe"
+          ],
+          "accessibilityInterfaces": [
+            "pinned Flutter macOS embedder NSAccessibility mapping enumerated by the probe"
+          ],
+          "clipboardInterfaces": [
+            "pinned Flutter macOS embedder NSPasteboard path enumerated by the probe"
+          ],
+          "timingInterfaces": [
+            "pinned Flutter macOS embedder scheduling callback",
+            "separate harness-owned NSView, NSWindow, or NSScreen display link",
+            "Metal presentation feedback"
+          ],
+          "recoveryInterfaces": [
+            "pinned Flutter macOS embedder lifecycle and Metal recovery paths enumerated by the probe"
+          ],
+          "serviceRouting": "Every inherited callback and request is normalized with its owning view generation; no implicit view is accepted.",
+          "normalization": "Engine callbacks enter the C ABI and Platform integration reentrancy barrier before product state.",
+          "requiredEvidence": [
+            "exact inherited interface inventory",
+            "complete IME transcript",
+            "complete forward and reverse accessibility map",
+            "independent timing proof",
+            "recovery baseline",
+            "multi-view service routing"
+          ]
+        }
+      },
+      "openQuestions": [
+        "minimum deployment target",
+        "complete IME mapping",
+        "complete accessibility maps for both candidates",
+        "independence of the external timing observer",
+        "injectable recovery mechanisms"
+      ]
+    },
+    "windows": {
+      "reference": "Windows 11 25H2 x86-64 with Visual Studio Build Tools 2022 17.14.39 and Windows SDK 10.0.26100.8876",
+      "minimumVersion": { "status": "ku-gating", "value": null },
+      "protocols": [
+        { "name": "Windows SDK", "version": "10.0.26100.8876", "status": "kk" },
+        {
+          "name": "Text Services Framework",
+          "version": null,
+          "status": "ku-gating"
+        },
+        {
+          "name": "Microsoft UI Automation",
+          "version": null,
+          "status": "ku-gating"
+        }
+      ],
+      "ime": {
+        "status": "ku-gating",
+        "nativeIndexUnit": "utf16-code-units",
+        "engineIndexUnit": "checked-logical-with-explicit-conversion",
+        "metadata": [
+          "ACP text extent",
+          "selection",
+          "composition range",
+          "layout rectangle",
+          "attributes",
+          "focus document",
+          "sensitive-field state"
+        ],
+        "actions": [
+          "read lock",
+          "read-write lock",
+          "get text",
+          "set text",
+          "insert at selection",
+          "set selection",
+          "composition start",
+          "composition update",
+          "composition end",
+          "layout change",
+          "focus transfer"
+        ],
+        "sensitiveFieldPolicy": "Expose only TSF-required redacted context and never emit raw content to diagnostics.",
+        "numericNegotiation": "Freeze TSF input-scope behavior or record a cited unsupported KK result.",
+        "testVectors": [
+          "ASCII",
+          "emoji grapheme",
+          "combining sequence",
+          "bidirectional selection",
+          "CJK composition",
+          "replacement range",
+          "candidate geometry",
+          "secure field"
+        ]
+      },
+      "accessibilityMaps": {
+        "focused": { "status": "ku-gating", "path": null, "sha256": null },
+        "integrated": { "status": "ku-gating", "path": null, "sha256": null }
+      },
+      "timing": {
+        "status": "ku-gating",
+        "interactiveOpportunitySource": "per-output IDXGIOutput::WaitForVBlank worker observation or a proven equivalent",
+        "independentMeterSource": "separate harness-owned per-output IDXGIOutput::WaitForVBlank observation",
+        "presentationFeedback": "selected DXGI swap-chain presentation statistics or equivalent external acknowledgement",
+        "perDisplayAssociation": "Resolve the view's current output and migrate both scheduling and observer ownership on topology change"
+      },
+      "recoveryBaseline": {
+        "status": "ku-gating",
+        "path": null,
+        "sha256": null
+      },
+      "allocations": {
+        "focused": {
+          "status": "ku-gating",
+          "windowAndInput": [
+            "Win32 HWND messages",
+            "pointer input",
+            "raw keyboard input"
+          ],
+          "imeInterfaces": [
+            "ITextStoreACP2",
+            "ITfThreadMgr",
+            "ITfDocumentMgr",
+            "ITfContext"
+          ],
+          "accessibilityInterfaces": [
+            "IRawElementProviderSimple",
+            "IRawElementProviderFragment",
+            "ITextProvider2",
+            "required control patterns"
+          ],
+          "clipboardInterfaces": ["Win32 clipboard"],
+          "timingInterfaces": [
+            "IDXGIOutput::WaitForVBlank",
+            "DXGI presentation acknowledgement"
+          ],
+          "recoveryInterfaces": [
+            "Win32 lifecycle and display notifications",
+            "DXGI resize, occlusion, and device-removal results"
+          ],
+          "serviceRouting": "Every request carries the owning HWND and view generation.",
+          "normalization": "Win32 and COM callbacks enter Platform integration, cross the reentrancy barrier, and then reach application state.",
+          "requiredEvidence": [
+            "complete TSF transcript",
+            "complete forward and reverse UI Automation map",
+            "independent timing proof",
+            "recovery baseline",
+            "multi-view service routing"
+          ]
+        },
+        "integrated": {
+          "status": "ku-gating",
+          "windowAndInput": [
+            "pinned Flutter Windows embedder Win32 interfaces enumerated by the probe"
+          ],
+          "imeInterfaces": [
+            "pinned Flutter Windows embedder TSF interfaces enumerated by the probe"
+          ],
+          "accessibilityInterfaces": [
+            "pinned Flutter Windows embedder UI Automation interfaces enumerated by the probe"
+          ],
+          "clipboardInterfaces": [
+            "pinned Flutter Windows embedder clipboard path enumerated by the probe"
+          ],
+          "timingInterfaces": [
+            "pinned Flutter Windows embedder scheduling callback",
+            "separate harness-owned IDXGIOutput::WaitForVBlank observer",
+            "DXGI presentation acknowledgement"
+          ],
+          "recoveryInterfaces": [
+            "pinned Flutter Windows embedder lifecycle and DXGI recovery paths enumerated by the probe"
+          ],
+          "serviceRouting": "Every inherited callback and request is normalized with its owning HWND and view generation.",
+          "normalization": "Engine callbacks enter the C ABI and Platform integration reentrancy barrier before product state.",
+          "requiredEvidence": [
+            "exact inherited interface inventory",
+            "complete TSF transcript",
+            "complete forward and reverse UI Automation map",
+            "independent timing proof",
+            "recovery baseline",
+            "multi-view service routing"
+          ]
+        }
+      },
+      "openQuestions": [
+        "minimum Windows build",
+        "complete TSF mapping",
+        "complete accessibility maps for both candidates",
+        "independence and precision of per-output timing",
+        "injectable recovery mechanisms"
+      ]
+    },
+    "wayland": {
+      "reference": "Ubuntu 26.04 LTS x86-64 Wayland session with locked GTK and Wayland packages",
+      "minimumVersion": { "status": "ku-gating", "value": null },
+      "protocols": [
+        { "name": "GTK", "version": "4.20", "status": "kk" },
+        { "name": "wp_presentation", "version": null, "status": "ku-gating" },
+        { "name": "AT-SPI", "version": null, "status": "ku-gating" }
+      ],
+      "ime": {
+        "status": "ku-gating",
+        "nativeIndexUnit": "utf8-bytes",
+        "engineIndexUnit": "checked-logical-with-explicit-conversion",
+        "metadata": [
+          "preedit text",
+          "preedit attributes",
+          "cursor position",
+          "surrounding text",
+          "candidate rectangle",
+          "focus context",
+          "sensitive-field state"
+        ],
+        "actions": [
+          "preedit start",
+          "preedit changed",
+          "preedit end",
+          "commit",
+          "retrieve surrounding",
+          "delete surrounding",
+          "focus in",
+          "focus out",
+          "reset"
+        ],
+        "sensitiveFieldPolicy": "Provide only protocol-required redacted context and never emit raw content to diagnostics.",
+        "numericNegotiation": "GtkIMContext has no assumed numeric handshake; freeze a proven input-purpose mechanism or record a cited unsupported KK result.",
+        "testVectors": [
+          "ASCII",
+          "emoji grapheme",
+          "combining sequence",
+          "bidirectional selection",
+          "CJK composition",
+          "replacement range",
+          "candidate geometry",
+          "secure field"
+        ]
+      },
+      "accessibilityMaps": {
+        "focused": { "status": "ku-gating", "path": null, "sha256": null },
+        "integrated": { "status": "ku-gating", "path": null, "sha256": null }
+      },
+      "timing": {
+        "status": "ku-gating",
+        "interactiveOpportunitySource": "GdkFrameClock for host scheduling",
+        "independentMeterSource": "unresolved compositor or DRM observer independent of both candidate callback streams",
+        "presentationFeedback": "wp_presentation feedback",
+        "perDisplayAssociation": "Bind each surface to the entered output set and start a new display epoch on association change"
+      },
+      "recoveryBaseline": {
+        "status": "ku-gating",
+        "path": null,
+        "sha256": null
+      },
+      "allocations": {
+        "focused": {
+          "status": "ku-gating",
+          "windowAndInput": [
+            "GtkApplication",
+            "GtkWindow",
+            "GdkSurface",
+            "GTK event controllers"
+          ],
+          "imeInterfaces": ["GtkIMContext"],
+          "accessibilityInterfaces": [
+            "GtkAccessible",
+            "AT-SPI Accessible",
+            "AT-SPI Action",
+            "AT-SPI Text"
+          ],
+          "clipboardInterfaces": ["GdkClipboard"],
+          "timingInterfaces": [
+            "GdkFrameClock",
+            "wp_presentation feedback",
+            "unresolved independent observer"
+          ],
+          "recoveryInterfaces": [
+            "GdkSurface lifecycle",
+            "Wayland surface and output events",
+            "Vulkan surface and device failure results"
+          ],
+          "serviceRouting": "Every request carries its GdkSurface and view generation.",
+          "normalization": "GTK and Wayland callbacks enter Platform integration, cross the reentrancy barrier, and then reach application state.",
+          "requiredEvidence": [
+            "complete GtkIMContext transcript",
+            "complete forward and reverse AT-SPI map",
+            "independent timing source",
+            "recovery baseline",
+            "multi-view service routing"
+          ]
+        },
+        "integrated": {
+          "status": "ku-gating",
+          "windowAndInput": [
+            "pinned Flutter Linux embedder GTK and Wayland interfaces enumerated by the probe"
+          ],
+          "imeInterfaces": [
+            "pinned Flutter Linux embedder GtkIMContext interfaces enumerated by the probe"
+          ],
+          "accessibilityInterfaces": [
+            "pinned Flutter Linux embedder GTK and AT-SPI mapping enumerated by the probe"
+          ],
+          "clipboardInterfaces": [
+            "pinned Flutter Linux embedder GdkClipboard path enumerated by the probe"
+          ],
+          "timingInterfaces": [
+            "pinned Flutter Linux embedder scheduling callback",
+            "wp_presentation feedback",
+            "unresolved independent observer"
+          ],
+          "recoveryInterfaces": [
+            "pinned Flutter Linux embedder lifecycle and graphics recovery paths enumerated by the probe"
+          ],
+          "serviceRouting": "Every inherited callback and request is normalized with its owning GdkSurface and view generation.",
+          "normalization": "Engine callbacks enter the C ABI and Platform integration reentrancy barrier before product state.",
+          "requiredEvidence": [
+            "exact inherited interface inventory",
+            "complete GtkIMContext transcript",
+            "complete forward and reverse AT-SPI map",
+            "independent timing source",
+            "recovery baseline",
+            "multi-view service routing"
+          ]
+        }
+      },
+      "openQuestions": [
+        "minimum compositor and protocol versions",
+        "complete IME mapping",
+        "complete accessibility maps for both candidates",
+        "independent presentation-opportunity source",
+        "injectable recovery mechanisms"
+      ]
+    },
+    "x11": {
+      "reference": "Ubuntu 26.04 LTS x86-64 X11 session with locked GTK and X11 packages",
+      "minimumVersion": { "status": "ku-gating", "value": null },
+      "protocols": [
+        { "name": "GTK", "version": "4.20", "status": "kk" },
+        { "name": "X Present", "version": null, "status": "ku-gating" },
+        { "name": "AT-SPI", "version": null, "status": "ku-gating" }
+      ],
+      "ime": {
+        "status": "ku-gating",
+        "nativeIndexUnit": "utf8-bytes",
+        "engineIndexUnit": "checked-logical-with-explicit-conversion",
+        "metadata": [
+          "preedit text",
+          "preedit attributes",
+          "cursor position",
+          "surrounding text",
+          "candidate rectangle",
+          "focus context",
+          "sensitive-field state"
+        ],
+        "actions": [
+          "preedit start",
+          "preedit changed",
+          "preedit end",
+          "commit",
+          "retrieve surrounding",
+          "delete surrounding",
+          "focus in",
+          "focus out",
+          "reset"
+        ],
+        "sensitiveFieldPolicy": "Provide only protocol-required redacted context and never emit raw content to diagnostics.",
+        "numericNegotiation": "GtkIMContext has no assumed numeric handshake; freeze a proven input-purpose mechanism or record a cited unsupported KK result.",
+        "testVectors": [
+          "ASCII",
+          "emoji grapheme",
+          "combining sequence",
+          "bidirectional selection",
+          "CJK composition",
+          "replacement range",
+          "candidate geometry",
+          "secure field"
+        ]
+      },
+      "accessibilityMaps": {
+        "focused": { "status": "ku-gating", "path": null, "sha256": null },
+        "integrated": { "status": "ku-gating", "path": null, "sha256": null }
+      },
+      "timing": {
+        "status": "ku-gating",
+        "interactiveOpportunitySource": "GdkFrameClock for host scheduling",
+        "independentMeterSource": "unresolved X Sync or DRM observer independent of both candidate callback streams",
+        "presentationFeedback": "X Present complete events",
+        "perDisplayAssociation": "Resolve each window's current output and start a new display epoch on association change"
+      },
+      "recoveryBaseline": {
+        "status": "ku-gating",
+        "path": null,
+        "sha256": null
+      },
+      "allocations": {
+        "focused": {
+          "status": "ku-gating",
+          "windowAndInput": [
+            "GtkApplication",
+            "GtkWindow",
+            "GdkSurface",
+            "GTK event controllers",
+            "x11rb observation path"
+          ],
+          "imeInterfaces": ["GtkIMContext"],
+          "accessibilityInterfaces": [
+            "GtkAccessible",
+            "AT-SPI Accessible",
+            "AT-SPI Action",
+            "AT-SPI Text"
+          ],
+          "clipboardInterfaces": ["GdkClipboard"],
+          "timingInterfaces": [
+            "GdkFrameClock",
+            "X Present completion",
+            "unresolved independent observer"
+          ],
+          "recoveryInterfaces": [
+            "GdkSurface lifecycle",
+            "X11 window and output events",
+            "Vulkan surface and device failure results"
+          ],
+          "serviceRouting": "Every request carries its X11 window and view generation.",
+          "normalization": "GTK and X11 callbacks enter Platform integration, cross the reentrancy barrier, and then reach application state.",
+          "requiredEvidence": [
+            "complete GtkIMContext transcript",
+            "complete forward and reverse AT-SPI map",
+            "independent timing source",
+            "recovery baseline",
+            "multi-view service routing"
+          ]
+        },
+        "integrated": {
+          "status": "ku-gating",
+          "windowAndInput": [
+            "pinned Flutter Linux embedder GTK and X11 interfaces enumerated by the probe"
+          ],
+          "imeInterfaces": [
+            "pinned Flutter Linux embedder GtkIMContext interfaces enumerated by the probe"
+          ],
+          "accessibilityInterfaces": [
+            "pinned Flutter Linux embedder GTK and AT-SPI mapping enumerated by the probe"
+          ],
+          "clipboardInterfaces": [
+            "pinned Flutter Linux embedder GdkClipboard path enumerated by the probe"
+          ],
+          "timingInterfaces": [
+            "pinned Flutter Linux embedder scheduling callback",
+            "X Present completion",
+            "unresolved independent observer"
+          ],
+          "recoveryInterfaces": [
+            "pinned Flutter Linux embedder lifecycle and graphics recovery paths enumerated by the probe"
+          ],
+          "serviceRouting": "Every inherited callback and request is normalized with its owning X11 window and view generation.",
+          "normalization": "Engine callbacks enter the C ABI and Platform integration reentrancy barrier before product state.",
+          "requiredEvidence": [
+            "exact inherited interface inventory",
+            "complete GtkIMContext transcript",
+            "complete forward and reverse AT-SPI map",
+            "independent timing source",
+            "recovery baseline",
+            "multi-view service routing"
+          ]
+        }
+      },
+      "openQuestions": [
+        "minimum X server and protocol versions",
+        "complete IME mapping",
+        "complete accessibility maps for both candidates",
+        "independent presentation-opportunity source",
+        "injectable recovery mechanisms"
+      ]
+    }
+  }
+}

@@ -1,0 +1,442 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:oxyflut:schema:qualification-evidence:2",
+  "title": "Oxyflut candidate qualification evidence",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "candidate",
+    "source",
+    "lockDigest",
+    "environmentResults",
+    "constraintResults",
+    "eligibility"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "2.0.0" },
+    "candidate": { "enum": ["focused", "integrated"] },
+    "source": { "$ref": "#/$defs/sourceIdentity" },
+    "lockDigest": { "$ref": "#/$defs/sha256" },
+    "environmentResults": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["macos", "windows", "wayland", "x11"],
+      "properties": {
+        "macos": { "$ref": "#/$defs/capabilityResults" },
+        "windows": { "$ref": "#/$defs/capabilityResults" },
+        "wayland": { "$ref": "#/$defs/capabilityResults" },
+        "x11": { "$ref": "#/$defs/capabilityResults" }
+      }
+    },
+    "constraintResults": { "$ref": "#/$defs/constraintResults" },
+    "eligibility": { "enum": ["eligible", "ineligible", "open"] },
+    "assessors": {
+      "type": "array",
+      "prefixItems": [
+        { "$ref": "#/$defs/assessor" },
+        { "$ref": "#/$defs/assessor" }
+      ],
+      "items": false,
+      "minItems": 2,
+      "maxItems": 2,
+      "uniqueItems": true
+    },
+    "scores": { "$ref": "#/$defs/scores" },
+    "weightedTotal": {
+      "type": "number",
+      "minimum": 60,
+      "maximum": 100,
+      "multipleOf": 0.2
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "type": "object",
+        "properties": { "eligibility": { "const": "eligible" } },
+        "required": ["eligibility"]
+      },
+      "then": {
+        "type": "object",
+        "required": ["assessors", "scores", "weightedTotal"],
+        "properties": {
+          "assessors": true,
+          "scores": true,
+          "weightedTotal": true,
+          "environmentResults": {
+            "type": "object",
+            "properties": {
+              "macos": { "$ref": "#/$defs/passingCapabilityResults" },
+              "windows": { "$ref": "#/$defs/passingCapabilityResults" },
+              "wayland": { "$ref": "#/$defs/passingCapabilityResults" },
+              "x11": { "$ref": "#/$defs/passingCapabilityResults" }
+            }
+          },
+          "constraintResults": { "$ref": "#/$defs/passingConstraintResults" }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "sha40": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "sourceIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "oxyflutCommit",
+        "flutterFrameworkCommit",
+        "flutterEngineCommit",
+        "candidateCommit",
+        "adapterCommit"
+      ],
+      "properties": {
+        "oxyflutCommit": { "$ref": "#/$defs/sha40" },
+        "flutterFrameworkCommit": { "$ref": "#/$defs/sha40" },
+        "flutterEngineCommit": { "$ref": "#/$defs/sha40" },
+        "candidateCommit": { "$ref": "#/$defs/sha40" },
+        "adapterCommit": { "$ref": "#/$defs/sha40" }
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256", "mediaType"],
+      "properties": {
+        "path": {
+          "type": "string",
+          "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$"
+        },
+        "sha256": { "$ref": "#/$defs/sha256" },
+        "mediaType": { "type": "string", "minLength": 1 }
+      }
+    },
+    "gateResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "evidence"],
+      "properties": {
+        "status": {
+          "enum": ["pass", "fail", "gating-ku", "not-applicable-kk"]
+        },
+        "evidence": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/evidence" },
+          "minItems": 1,
+          "uniqueItems": true
+        }
+      }
+    },
+    "passingGateResult": {
+      "allOf": [
+        { "$ref": "#/$defs/gateResult" },
+        {
+          "type": "object",
+          "properties": { "status": { "enum": ["pass", "not-applicable-kk"] } }
+        }
+      ]
+    },
+    "passingCapabilityGateResult": {
+      "allOf": [
+        { "$ref": "#/$defs/gateResult" },
+        { "type": "object", "properties": { "status": { "const": "pass" } } }
+      ]
+    },
+    "capabilityResults": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "CAP-CMP-001",
+        "CAP-CMP-002",
+        "CAP-CMP-003",
+        "CAP-CMP-004",
+        "CAP-CMP-005",
+        "CAP-CMP-006",
+        "CAP-CMP-007",
+        "CAP-LAY-001",
+        "CAP-LAY-002",
+        "CAP-SCR-001",
+        "CAP-SCR-002",
+        "CAP-REN-001",
+        "CAP-REN-002",
+        "CAP-REN-003",
+        "CAP-AST-001",
+        "CAP-AST-002",
+        "CAP-AST-003",
+        "CAP-AST-004",
+        "CAP-VIEW-001",
+        "CAP-VIEW-002",
+        "CAP-VIEW-003",
+        "CAP-VIEW-004",
+        "CAP-VIEW-005",
+        "CAP-REC-001",
+        "CAP-INP-001",
+        "CAP-INP-002",
+        "CAP-FOC-001",
+        "CAP-TXT-001",
+        "CAP-TXT-002",
+        "CAP-TXT-003",
+        "CAP-IME-001",
+        "CAP-CLP-001",
+        "CAP-I18N-001",
+        "CAP-SEM-001",
+        "CAP-SEM-002",
+        "CAP-PLT-001",
+        "CAP-OS-001",
+        "CAP-OS-002",
+        "CAP-TST-001",
+        "CAP-TST-002",
+        "CAP-TST-003",
+        "CAP-TST-004",
+        "CAP-DST-001",
+        "CAP-SEC-001",
+        "CAP-DIA-001",
+        "CAP-DIA-002",
+        "CAP-DIA-003",
+        "CAP-DIA-004",
+        "CAP-SUB-001",
+        "CAP-SUB-002",
+        "CAP-SUB-003",
+        "CAP-SUB-004"
+      ],
+      "patternProperties": {
+        "^CAP-[A-Z0-9]+-[0-9]{3}$": { "$ref": "#/$defs/gateResult" }
+      },
+      "minProperties": 52,
+      "maxProperties": 52
+    },
+    "passingCapabilityResults": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "CAP-CMP-001",
+        "CAP-CMP-002",
+        "CAP-CMP-003",
+        "CAP-CMP-004",
+        "CAP-CMP-005",
+        "CAP-CMP-006",
+        "CAP-CMP-007",
+        "CAP-LAY-001",
+        "CAP-LAY-002",
+        "CAP-SCR-001",
+        "CAP-SCR-002",
+        "CAP-REN-001",
+        "CAP-REN-002",
+        "CAP-REN-003",
+        "CAP-AST-001",
+        "CAP-AST-002",
+        "CAP-AST-003",
+        "CAP-AST-004",
+        "CAP-VIEW-001",
+        "CAP-VIEW-002",
+        "CAP-VIEW-003",
+        "CAP-VIEW-004",
+        "CAP-VIEW-005",
+        "CAP-REC-001",
+        "CAP-INP-001",
+        "CAP-INP-002",
+        "CAP-FOC-001",
+        "CAP-TXT-001",
+        "CAP-TXT-002",
+        "CAP-TXT-003",
+        "CAP-IME-001",
+        "CAP-CLP-001",
+        "CAP-I18N-001",
+        "CAP-SEM-001",
+        "CAP-SEM-002",
+        "CAP-PLT-001",
+        "CAP-OS-001",
+        "CAP-OS-002",
+        "CAP-TST-001",
+        "CAP-TST-002",
+        "CAP-TST-003",
+        "CAP-TST-004",
+        "CAP-DST-001",
+        "CAP-SEC-001",
+        "CAP-DIA-001",
+        "CAP-DIA-002",
+        "CAP-DIA-003",
+        "CAP-DIA-004",
+        "CAP-SUB-001",
+        "CAP-SUB-002",
+        "CAP-SUB-003",
+        "CAP-SUB-004"
+      ],
+      "patternProperties": {
+        "^CAP-[A-Z0-9]+-[0-9]{3}$": {
+          "$ref": "#/$defs/passingCapabilityGateResult"
+        }
+      },
+      "minProperties": 52,
+      "maxProperties": 52
+    },
+    "constraintResults": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "CON-PERF-001",
+        "CON-PERF-002",
+        "CON-PERF-003",
+        "CON-MEM-001",
+        "CON-SIZE-001",
+        "CON-SIZE-002",
+        "CON-FRM-001",
+        "CON-FRM-002",
+        "CON-REC-001",
+        "CON-REC-002",
+        "CON-REC-003",
+        "CON-REC-004",
+        "CON-REC-005",
+        "CON-REC-006",
+        "CON-REC-007",
+        "CON-DET-001",
+        "CON-DET-002",
+        "CON-UPG-001",
+        "CON-COMP-001",
+        "CON-SAFE-001",
+        "CON-SEC-001",
+        "CON-SEC-002",
+        "CON-SEC-003",
+        "CON-PRV-001",
+        "CON-DIA-001",
+        "CON-DST-001",
+        "CON-LIC-001"
+      ],
+      "patternProperties": {
+        "^CON-[A-Z0-9]+-[0-9]{3}$": { "$ref": "#/$defs/gateResult" }
+      },
+      "minProperties": 27,
+      "maxProperties": 27
+    },
+    "passingConstraintResults": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "CON-PERF-001",
+        "CON-PERF-002",
+        "CON-PERF-003",
+        "CON-MEM-001",
+        "CON-SIZE-001",
+        "CON-SIZE-002",
+        "CON-FRM-001",
+        "CON-FRM-002",
+        "CON-REC-001",
+        "CON-REC-002",
+        "CON-REC-003",
+        "CON-REC-004",
+        "CON-REC-005",
+        "CON-REC-006",
+        "CON-REC-007",
+        "CON-DET-001",
+        "CON-DET-002",
+        "CON-UPG-001",
+        "CON-COMP-001",
+        "CON-SAFE-001",
+        "CON-SEC-001",
+        "CON-SEC-002",
+        "CON-SEC-003",
+        "CON-PRV-001",
+        "CON-DIA-001",
+        "CON-DST-001",
+        "CON-LIC-001"
+      ],
+      "patternProperties": {
+        "^CON-[A-Z0-9]+-[0-9]{3}$": { "$ref": "#/$defs/passingGateResult" }
+      },
+      "minProperties": 27,
+      "maxProperties": 27
+    },
+    "assessor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "frozenBeforeImplementation"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "frozenBeforeImplementation": { "const": true }
+      }
+    },
+    "score": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "weight",
+        "assessorScores",
+        "consensusScore",
+        "consensusRationale",
+        "evidence"
+      ],
+      "properties": {
+        "weight": { "type": "integer" },
+        "assessorScores": {
+          "type": "array",
+          "prefixItems": [
+            { "type": "integer", "minimum": 3, "maximum": 5 },
+            { "type": "integer", "minimum": 3, "maximum": 5 }
+          ],
+          "items": false,
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "consensusScore": { "type": "integer", "minimum": 3, "maximum": 5 },
+        "consensusRationale": { "type": "string", "minLength": 1 },
+        "evidence": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/evidence" },
+          "minItems": 1,
+          "uniqueItems": true
+        }
+      }
+    },
+    "scores": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "platformCoverage",
+        "upgradeMaintenance",
+        "performance",
+        "safetySecurityPrivacy",
+        "distribution",
+        "operationalClarity"
+      ],
+      "properties": {
+        "platformCoverage": {
+          "allOf": [
+            { "$ref": "#/$defs/score" },
+            { "type": "object", "properties": { "weight": { "const": 30 } } }
+          ]
+        },
+        "upgradeMaintenance": {
+          "allOf": [
+            { "$ref": "#/$defs/score" },
+            { "type": "object", "properties": { "weight": { "const": 20 } } }
+          ]
+        },
+        "performance": {
+          "allOf": [
+            { "$ref": "#/$defs/score" },
+            { "type": "object", "properties": { "weight": { "const": 15 } } }
+          ]
+        },
+        "safetySecurityPrivacy": {
+          "allOf": [
+            { "$ref": "#/$defs/score" },
+            { "type": "object", "properties": { "weight": { "const": 15 } } }
+          ]
+        },
+        "distribution": {
+          "allOf": [
+            { "$ref": "#/$defs/score" },
+            { "type": "object", "properties": { "weight": { "const": 10 } } }
+          ]
+        },
+        "operationalClarity": {
+          "allOf": [
+            { "$ref": "#/$defs/score" },
+            { "type": "object", "properties": { "weight": { "const": 10 } } }
+          ]
+        }
+      }
+    }
+  }
+}

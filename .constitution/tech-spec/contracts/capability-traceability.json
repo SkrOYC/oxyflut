@@ -1,0 +1,617 @@
+{
+  "$schema": "../data-models/capability-traceability.schema.json",
+  "schemaVersion": "1.0.0",
+  "specificationVersion": "0.1.0",
+  "mappings": [
+    {
+      "capabilityId": "CAP-CMP-001",
+      "crate": "oxyflut-runtime",
+      "architectureFlow": ".constitution/architecture/flows/cap-cmp-001.md",
+      "contracts": ["contracts/oxyflut-public.rs"],
+      "symbols": ["ApplicationRuntime", "Signal", "ComponentTree"],
+      "contractTests": ["contract::cap_cmp_001"]
+    },
+    {
+      "capabilityId": "CAP-CMP-002",
+      "crate": "oxyflut-runtime",
+      "architectureFlow": ".constitution/architecture/flows/cap-cmp-002.md",
+      "contracts": ["contracts/oxyflut-public.rs"],
+      "symbols": ["Memo"],
+      "contractTests": ["contract::cap_cmp_002"]
+    },
+    {
+      "capabilityId": "CAP-CMP-003",
+      "crate": "oxyflut-runtime",
+      "architectureFlow": ".constitution/architecture/flows/cap-cmp-003.md",
+      "contracts": ["contracts/oxyflut-public.rs"],
+      "symbols": ["EffectHandle"],
+      "contractTests": ["contract::cap_cmp_003"]
+    },
+    {
+      "capabilityId": "CAP-CMP-004",
+      "crate": "oxyflut-runtime",
+      "architectureFlow": ".constitution/architecture/flows/cap-cmp-004.md",
+      "contracts": ["contracts/oxyflut-public.rs"],
+      "symbols": ["ApplicationRuntime::batch"],
+      "contractTests": ["contract::cap_cmp_004"]
+    },
+    {
+      "capabilityId": "CAP-CMP-005",
+      "crate": "oxyflut-runtime",
+      "architectureFlow": ".constitution/architecture/flows/cap-cmp-005.md",
+      "contracts": ["contracts/oxyflut-public.rs"],
+      "symbols": ["ApplicationRuntime", "Signal", "ComponentTree"],
+      "contractTests": ["contract::cap_cmp_005"]
+    },
+    {
+      "capabilityId": "CAP-CMP-006",
+      "crate": "oxyflut-runtime",
+      "architectureFlow": ".constitution/architecture/flows/cap-cmp-006.md",
+      "contracts": ["contracts/oxyflut-public.rs"],
+      "symbols": ["ApplicationRuntime", "Signal", "ComponentTree"],
+      "contractTests": ["contract::cap_cmp_006"]
+    },
+    {
+      "capabilityId": "CAP-CMP-007",
+      "crate": "oxyflut-runtime",
+      "architectureFlow": ".constitution/architecture/flows/cap-cmp-007.md",
+      "contracts": ["contracts/oxyflut-public.rs"],
+      "symbols": ["ComponentTree::reconcile_keyed"],
+      "contractTests": ["contract::cap_cmp_007"]
+    },
+    {
+      "capabilityId": "CAP-LAY-001",
+      "crate": "oxyflut-layout",
+      "architectureFlow": ".constitution/architecture/flows/cap-lay-001.md",
+      "contracts": ["contracts/oxyflut-public.rs"],
+      "symbols": ["LayoutPolicy"],
+      "contractTests": ["contract::cap_lay_001"]
+    },
+    {
+      "capabilityId": "CAP-LAY-002",
+      "crate": "oxyflut-layout",
+      "architectureFlow": ".constitution/architecture/flows/cap-lay-002.md",
+      "contracts": ["contracts/oxyflut-public.rs"],
+      "symbols": ["LayoutPolicy"],
+      "contractTests": ["contract::cap_lay_002"]
+    },
+    {
+      "capabilityId": "CAP-SCR-001",
+      "crate": "oxyflut-layout",
+      "architectureFlow": ".constitution/architecture/flows/cap-scr-001.md",
+      "contracts": ["contracts/oxyflut-public.rs"],
+      "symbols": ["VirtualViewport"],
+      "contractTests": ["contract::cap_scr_001"]
+    },
+    {
+      "capabilityId": "CAP-SCR-002",
+      "crate": "oxyflut-layout",
+      "architectureFlow": ".constitution/architecture/flows/cap-scr-002.md",
+      "contracts": ["contracts/oxyflut-public.rs"],
+      "symbols": ["VirtualViewport"],
+      "contractTests": ["contract::cap_scr_002"]
+    },
+    {
+      "capabilityId": "CAP-REN-001",
+      "crate": "oxyflut-scene",
+      "architectureFlow": ".constitution/architecture/flows/cap-ren-001.md",
+      "contracts": [
+        "contracts/oxyflut-public.rs",
+        "contracts/oxyflut-substrate.rs",
+        "contracts/oxyflut-substrate.h"
+      ],
+      "symbols": ["Canvas", "Paint", "Path"],
+      "contractTests": ["contract::cap_ren_001"]
+    },
+    {
+      "capabilityId": "CAP-REN-002",
+      "crate": "oxyflut-scene",
+      "architectureFlow": ".constitution/architecture/flows/cap-ren-002.md",
+      "contracts": [
+        "contracts/oxyflut-public.rs",
+        "contracts/oxyflut-substrate.rs",
+        "contracts/oxyflut-substrate.h"
+      ],
+      "symbols": ["Canvas", "Paint", "Path"],
+      "contractTests": ["contract::cap_ren_002"]
+    },
+    {
+      "capabilityId": "CAP-REN-003",
+      "crate": "oxyflut-scene",
+      "architectureFlow": ".constitution/architecture/flows/cap-ren-003.md",
+      "contracts": [
+        "contracts/oxyflut-public.rs",
+        "contracts/oxyflut-substrate.rs",
+        "contracts/oxyflut-substrate.h"
+      ],
+      "symbols": ["Canvas", "Paint", "Path"],
+      "contractTests": ["contract::cap_ren_003"]
+    },
+    {
+      "capabilityId": "CAP-AST-001",
+      "crate": "oxyflut-assets",
+      "architectureFlow": ".constitution/architecture/flows/cap-ast-001.md",
+      "contracts": [
+        "contracts/oxyflut-public.rs",
+        "contracts/oxyflut-substrate.rs",
+        "contracts/oxyflut-substrate.h"
+      ],
+      "symbols": ["AssetLoader", "DecodedImage", "PollState"],
+      "contractTests": ["contract::cap_ast_001"]
+    },
+    {
+      "capabilityId": "CAP-AST-002",
+      "crate": "oxyflut-assets",
+      "architectureFlow": ".constitution/architecture/flows/cap-ast-002.md",
+      "contracts": [
+        "contracts/oxyflut-public.rs",
+        "contracts/oxyflut-substrate.rs",
+        "contracts/oxyflut-substrate.h"
+      ],
+      "symbols": ["AssetLoader", "DecodedImage", "PollState"],
+      "contractTests": ["contract::cap_ast_002"]
+    },
+    {
+      "capabilityId": "CAP-AST-003",
+      "crate": "oxyflut-assets",
+      "architectureFlow": ".constitution/architecture/flows/cap-ast-003.md",
+      "contracts": [
+        "contracts/oxyflut-public.rs",
+        "contracts/oxyflut-substrate.rs",
+        "contracts/oxyflut-substrate.h"
+      ],
+      "symbols": ["AssetLoader", "DecodedImage", "PollState"],
+      "contractTests": ["contract::cap_ast_003"]
+    },
+    {
+      "capabilityId": "CAP-AST-004",
+      "crate": "oxyflut-assets",
+      "architectureFlow": ".constitution/architecture/flows/cap-ast-004.md",
+      "contracts": [
+        "contracts/oxyflut-public.rs",
+        "contracts/oxyflut-substrate.rs",
+        "contracts/oxyflut-substrate.h"
+      ],
+      "symbols": ["AssetLoader", "DecodedImage", "PollState"],
+      "contractTests": ["contract::cap_ast_004"]
+    },
+    {
+      "capabilityId": "CAP-VIEW-001",
+      "crate": "oxyflut-view",
+      "architectureFlow": ".constitution/architecture/flows/cap-view-001.md",
+      "contracts": [
+        "contracts/oxyflut-public.rs",
+        "contracts/oxyflut-substrate.rs",
+        "contracts/oxyflut-substrate.h"
+      ],
+      "symbols": ["ApplicationRuntime", "FrameInstant"],
+      "contractTests": ["contract::cap_view_001"]
+    },
+    {
+      "capabilityId": "CAP-VIEW-002",
+      "crate": "oxyflut-view",
+      "architectureFlow": ".constitution/architecture/flows/cap-view-002.md",
+      "contracts": [
+        "contracts/oxyflut-public.rs",
+        "contracts/oxyflut-substrate.rs",
+        "contracts/oxyflut-substrate.h"
+      ],
+      "symbols": ["ApplicationRuntime", "FrameInstant"],
+      "contractTests": ["contract::cap_view_002"]
+    },
+    {
+      "capabilityId": "CAP-VIEW-003",
+      "crate": "oxyflut-view",
+      "architectureFlow": ".constitution/architecture/flows/cap-view-003.md",
+      "contracts": [
+        "contracts/oxyflut-public.rs",
+        "contracts/oxyflut-substrate.rs",
+        "contracts/oxyflut-substrate.h"
+      ],
+      "symbols": ["ApplicationRuntime", "FrameInstant"],
+      "contractTests": ["contract::cap_view_003"]
+    },
+    {
+      "capabilityId": "CAP-VIEW-004",
+      "crate": "oxyflut-view",
+      "architectureFlow": ".constitution/architecture/flows/cap-view-004.md",
+      "contracts": [
+        "contracts/oxyflut-public.rs",
+        "contracts/oxyflut-substrate.rs",
+        "contracts/oxyflut-substrate.h"
+      ],
+      "symbols": ["ApplicationRuntime", "FrameInstant"],
+      "contractTests": ["contract::cap_view_004"]
+    },
+    {
+      "capabilityId": "CAP-VIEW-005",
+      "crate": "oxyflut-view",
+      "architectureFlow": ".constitution/architecture/flows/cap-view-005.md",
+      "contracts": [
+        "contracts/oxyflut-public.rs",
+        "contracts/oxyflut-substrate.rs",
+        "contracts/oxyflut-substrate.h"
+      ],
+      "symbols": ["ApplicationRuntime", "FrameInstant"],
+      "contractTests": ["contract::cap_view_005"]
+    },
+    {
+      "capabilityId": "CAP-REC-001",
+      "crate": "oxyflut-view",
+      "architectureFlow": ".constitution/architecture/flows/cap-rec-001.md",
+      "contracts": [
+        "contracts/oxyflut-public.rs",
+        "contracts/oxyflut-substrate.rs",
+        "contracts/oxyflut-substrate.h"
+      ],
+      "symbols": ["RecoveryController"],
+      "contractTests": ["contract::cap_rec_001"]
+    },
+    {
+      "capabilityId": "CAP-INP-001",
+      "crate": "oxyflut-input",
+      "architectureFlow": ".constitution/architecture/flows/cap-inp-001.md",
+      "contracts": ["contracts/oxyflut-public.rs"],
+      "symbols": ["InteractionRouter", "HitTestResult"],
+      "contractTests": ["contract::cap_inp_001"]
+    },
+    {
+      "capabilityId": "CAP-INP-002",
+      "crate": "oxyflut-input",
+      "architectureFlow": ".constitution/architecture/flows/cap-inp-002.md",
+      "contracts": ["contracts/oxyflut-public.rs"],
+      "symbols": ["InteractionRouter", "HitTestResult"],
+      "contractTests": ["contract::cap_inp_002"]
+    },
+    {
+      "capabilityId": "CAP-FOC-001",
+      "crate": "oxyflut-input",
+      "architectureFlow": ".constitution/architecture/flows/cap-foc-001.md",
+      "contracts": ["contracts/oxyflut-public.rs"],
+      "symbols": ["FocusManager"],
+      "contractTests": ["contract::cap_foc_001"]
+    },
+    {
+      "capabilityId": "CAP-TXT-001",
+      "crate": "oxyflut-text",
+      "architectureFlow": ".constitution/architecture/flows/cap-txt-001.md",
+      "contracts": [
+        "contracts/oxyflut-public.rs",
+        "contracts/oxyflut-substrate.rs",
+        "contracts/oxyflut-substrate.h",
+        "contracts/platform-contracts.json"
+      ],
+      "symbols": ["TextEngine", "EditableText", "TextRun", "TextHit"],
+      "contractTests": ["contract::cap_txt_001"]
+    },
+    {
+      "capabilityId": "CAP-TXT-002",
+      "crate": "oxyflut-text",
+      "architectureFlow": ".constitution/architecture/flows/cap-txt-002.md",
+      "contracts": [
+        "contracts/oxyflut-public.rs",
+        "contracts/oxyflut-substrate.rs",
+        "contracts/oxyflut-substrate.h",
+        "contracts/platform-contracts.json"
+      ],
+      "symbols": ["TextEngine", "EditableText", "TextRun", "TextHit"],
+      "contractTests": ["contract::cap_txt_002"]
+    },
+    {
+      "capabilityId": "CAP-TXT-003",
+      "crate": "oxyflut-text",
+      "architectureFlow": ".constitution/architecture/flows/cap-txt-003.md",
+      "contracts": [
+        "contracts/oxyflut-public.rs",
+        "contracts/oxyflut-substrate.rs",
+        "contracts/oxyflut-substrate.h",
+        "contracts/platform-contracts.json"
+      ],
+      "symbols": ["TextEngine", "EditableText", "TextRun", "TextHit"],
+      "contractTests": ["contract::cap_txt_003"]
+    },
+    {
+      "capabilityId": "CAP-IME-001",
+      "crate": "oxyflut-text",
+      "architectureFlow": ".constitution/architecture/flows/cap-ime-001.md",
+      "contracts": [
+        "contracts/oxyflut-public.rs",
+        "contracts/oxyflut-substrate.rs",
+        "contracts/oxyflut-substrate.h",
+        "contracts/platform-contracts.json"
+      ],
+      "symbols": ["EditableText::apply_ime", "ImeTransaction"],
+      "contractTests": ["contract::cap_ime_001"]
+    },
+    {
+      "capabilityId": "CAP-CLP-001",
+      "crate": "oxyflut-text",
+      "architectureFlow": ".constitution/architecture/flows/cap-clp-001.md",
+      "contracts": [
+        "contracts/oxyflut-public.rs",
+        "contracts/oxyflut-substrate.rs",
+        "contracts/oxyflut-substrate.h",
+        "contracts/platform-contracts.json"
+      ],
+      "symbols": ["Clipboard"],
+      "contractTests": ["contract::cap_clp_001"]
+    },
+    {
+      "capabilityId": "CAP-I18N-001",
+      "crate": "oxyflut-text",
+      "architectureFlow": ".constitution/architecture/flows/cap-i18n-001.md",
+      "contracts": [
+        "contracts/oxyflut-public.rs",
+        "contracts/oxyflut-substrate.rs",
+        "contracts/oxyflut-substrate.h",
+        "contracts/platform-contracts.json"
+      ],
+      "symbols": ["LocaleManager", "TextDirection"],
+      "contractTests": ["contract::cap_i18n_001"]
+    },
+    {
+      "capabilityId": "CAP-SEM-001",
+      "crate": "oxyflut-semantics",
+      "architectureFlow": ".constitution/architecture/flows/cap-sem-001.md",
+      "contracts": [
+        "contracts/oxyflut-public.rs",
+        "contracts/oxyflut-substrate.rs",
+        "contracts/oxyflut-substrate.h",
+        "contracts/platform-contracts.json"
+      ],
+      "symbols": ["SemanticsBridge", "SemanticsNode", "SemanticsActionResult"],
+      "contractTests": ["contract::cap_sem_001"]
+    },
+    {
+      "capabilityId": "CAP-SEM-002",
+      "crate": "oxyflut-semantics",
+      "architectureFlow": ".constitution/architecture/flows/cap-sem-002.md",
+      "contracts": [
+        "contracts/oxyflut-public.rs",
+        "contracts/oxyflut-substrate.rs",
+        "contracts/oxyflut-substrate.h",
+        "contracts/platform-contracts.json"
+      ],
+      "symbols": ["SemanticsBridge", "SemanticsNode", "SemanticsActionResult"],
+      "contractTests": ["contract::cap_sem_002"]
+    },
+    {
+      "capabilityId": "CAP-PLT-001",
+      "crate": "oxyflut-platform",
+      "architectureFlow": ".constitution/architecture/flows/cap-plt-001.md",
+      "contracts": [
+        "contracts/oxyflut-public.rs",
+        "contracts/platform-contracts.json",
+        "contracts/oxyflut-substrate.h"
+      ],
+      "symbols": ["PlatformServices", "Clipboard", "LocaleManager"],
+      "contractTests": ["contract::cap_plt_001"]
+    },
+    {
+      "capabilityId": "CAP-OS-001",
+      "crate": "oxyflut-platform",
+      "architectureFlow": ".constitution/architecture/flows/cap-os-001.md",
+      "contracts": [
+        "contracts/oxyflut-public.rs",
+        "contracts/platform-contracts.json",
+        "contracts/oxyflut-substrate.h"
+      ],
+      "symbols": ["PlatformServices"],
+      "contractTests": ["contract::cap_os_001"]
+    },
+    {
+      "capabilityId": "CAP-OS-002",
+      "crate": "oxyflut-platform",
+      "architectureFlow": ".constitution/architecture/flows/cap-os-002.md",
+      "contracts": [
+        "contracts/oxyflut-public.rs",
+        "contracts/platform-contracts.json",
+        "contracts/oxyflut-substrate.h"
+      ],
+      "symbols": ["PlatformServices"],
+      "contractTests": ["contract::cap_os_002"]
+    },
+    {
+      "capabilityId": "CAP-TST-001",
+      "crate": "oxyflut-qualification",
+      "architectureFlow": ".constitution/architecture/flows/cap-tst-001.md",
+      "contracts": [
+        "contracts/oxyflut-qualification.rs",
+        "contracts/qualification-lock.json",
+        "data-models/qualification-evidence.schema.json"
+      ],
+      "symbols": ["CandidateProbe", "QualificationDecision"],
+      "contractTests": ["contract::cap_tst_001"]
+    },
+    {
+      "capabilityId": "CAP-TST-002",
+      "crate": "oxyflut-qualification",
+      "architectureFlow": ".constitution/architecture/flows/cap-tst-002.md",
+      "contracts": [
+        "contracts/oxyflut-qualification.rs",
+        "contracts/qualification-lock.json",
+        "data-models/qualification-evidence.schema.json"
+      ],
+      "symbols": ["CandidateProbe", "QualificationDecision"],
+      "contractTests": ["contract::cap_tst_002"]
+    },
+    {
+      "capabilityId": "CAP-TST-003",
+      "crate": "oxyflut-qualification",
+      "architectureFlow": ".constitution/architecture/flows/cap-tst-003.md",
+      "contracts": [
+        "contracts/oxyflut-qualification.rs",
+        "contracts/qualification-lock.json",
+        "data-models/qualification-evidence.schema.json"
+      ],
+      "symbols": ["CandidateProbe", "QualificationDecision"],
+      "contractTests": ["contract::cap_tst_003"]
+    },
+    {
+      "capabilityId": "CAP-TST-004",
+      "crate": "oxyflut-qualification",
+      "architectureFlow": ".constitution/architecture/flows/cap-tst-004.md",
+      "contracts": [
+        "contracts/oxyflut-qualification.rs",
+        "contracts/qualification-lock.json",
+        "data-models/qualification-evidence.schema.json"
+      ],
+      "symbols": ["CandidateProbe", "QualificationDecision"],
+      "contractTests": ["contract::cap_tst_004"]
+    },
+    {
+      "capabilityId": "CAP-DST-001",
+      "crate": "oxyflut-qualification",
+      "architectureFlow": ".constitution/architecture/flows/cap-dst-001.md",
+      "contracts": [
+        "contracts/oxyflut-qualification.rs",
+        "contracts/qualification-lock.json",
+        "data-models/artifact-manifest.schema.json",
+        "data-models/qualification-evidence.schema.json"
+      ],
+      "symbols": ["CandidateProbe", "QualificationDecision"],
+      "contractTests": ["contract::cap_dst_001"]
+    },
+    {
+      "capabilityId": "CAP-SEC-001",
+      "crate": "oxyflut-qualification",
+      "architectureFlow": ".constitution/architecture/flows/cap-sec-001.md",
+      "contracts": [
+        "contracts/oxyflut-qualification.rs",
+        "contracts/qualification-lock.json",
+        "data-models/ingress-inventory.schema.json",
+        "data-models/qualification-evidence.schema.json"
+      ],
+      "symbols": ["CandidateProbe", "QualificationDecision"],
+      "contractTests": ["contract::cap_sec_001"]
+    },
+    {
+      "capabilityId": "CAP-DIA-001",
+      "crate": "oxyflut-diagnostics",
+      "architectureFlow": ".constitution/architecture/flows/cap-dia-001.md",
+      "contracts": [
+        "contracts/diagnostic-event-registry.json",
+        "data-models/diagnostic-event.schema.json"
+      ],
+      "symbols": [
+        "LocalDiagnosticSink",
+        "diagnostic-event.schema.json",
+        "diagnostic-event-registry.json"
+      ],
+      "contractTests": ["contract::cap_dia_001"]
+    },
+    {
+      "capabilityId": "CAP-DIA-002",
+      "crate": "oxyflut-diagnostics",
+      "architectureFlow": ".constitution/architecture/flows/cap-dia-002.md",
+      "contracts": [
+        "contracts/diagnostic-event-registry.json",
+        "data-models/diagnostic-event.schema.json"
+      ],
+      "symbols": [
+        "LocalDiagnosticSink",
+        "diagnostic-event.schema.json",
+        "diagnostic-event-registry.json"
+      ],
+      "contractTests": ["contract::cap_dia_002"]
+    },
+    {
+      "capabilityId": "CAP-DIA-003",
+      "crate": "oxyflut-diagnostics",
+      "architectureFlow": ".constitution/architecture/flows/cap-dia-003.md",
+      "contracts": [
+        "contracts/diagnostic-event-registry.json",
+        "data-models/diagnostic-event.schema.json"
+      ],
+      "symbols": [
+        "LocalDiagnosticSink",
+        "diagnostic-event.schema.json",
+        "diagnostic-event-registry.json"
+      ],
+      "contractTests": ["contract::cap_dia_003"]
+    },
+    {
+      "capabilityId": "CAP-DIA-004",
+      "crate": "oxyflut-diagnostics",
+      "architectureFlow": ".constitution/architecture/flows/cap-dia-004.md",
+      "contracts": [
+        "contracts/diagnostic-event-registry.json",
+        "data-models/diagnostic-event.schema.json"
+      ],
+      "symbols": [
+        "LocalDiagnosticSink",
+        "diagnostic-event.schema.json",
+        "diagnostic-event-registry.json"
+      ],
+      "contractTests": ["contract::cap_dia_004"]
+    },
+    {
+      "capabilityId": "CAP-SUB-001",
+      "crate": "oxyflut-qualification",
+      "architectureFlow": ".constitution/architecture/flows/cap-sub-001.md",
+      "contracts": [
+        "contracts/oxyflut-qualification.rs",
+        "contracts/qualification-lock.json",
+        "contracts/specification-phase.json",
+        "data-models/qualification-evidence.schema.json"
+      ],
+      "symbols": [
+        "CandidateProbe",
+        "QualificationDecision",
+        "selection-decision.schema.json"
+      ],
+      "contractTests": ["contract::cap_sub_001"]
+    },
+    {
+      "capabilityId": "CAP-SUB-002",
+      "crate": "oxyflut-qualification",
+      "architectureFlow": ".constitution/architecture/flows/cap-sub-002.md",
+      "contracts": [
+        "contracts/oxyflut-qualification.rs",
+        "contracts/qualification-lock.json",
+        "contracts/specification-phase.json",
+        "data-models/qualification-evidence.schema.json"
+      ],
+      "symbols": [
+        "CandidateProbe",
+        "QualificationDecision",
+        "selection-decision.schema.json"
+      ],
+      "contractTests": ["contract::cap_sub_002"]
+    },
+    {
+      "capabilityId": "CAP-SUB-003",
+      "crate": "oxyflut-qualification",
+      "architectureFlow": ".constitution/architecture/flows/cap-sub-003.md",
+      "contracts": [
+        "contracts/oxyflut-qualification.rs",
+        "contracts/qualification-lock.json",
+        "contracts/specification-phase.json",
+        "data-models/qualification-evidence.schema.json"
+      ],
+      "symbols": [
+        "CandidateProbe",
+        "QualificationDecision",
+        "selection-decision.schema.json"
+      ],
+      "contractTests": ["contract::cap_sub_003"]
+    },
+    {
+      "capabilityId": "CAP-SUB-004",
+      "crate": "oxyflut-qualification",
+      "architectureFlow": ".constitution/architecture/flows/cap-sub-004.md",
+      "contracts": [
+        "contracts/oxyflut-qualification.rs",
+        "contracts/qualification-lock.json",
+        "contracts/specification-phase.json",
+        "data-models/qualification-evidence.schema.json"
+      ],
+      "symbols": [
+        "CandidateProbe",
+        "QualificationDecision",
+        "selection-decision.schema.json"
+      ],
+      "contractTests": ["contract::cap_sub_004"]
+    }
+  ]
+}

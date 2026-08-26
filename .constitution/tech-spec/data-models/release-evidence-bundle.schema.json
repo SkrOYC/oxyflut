@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:oxyflut:schema:release-evidence-bundle:1",
+  "title": "Oxyflut release evidence bundle",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "candidate",
+    "environment",
+    "artifactManifest",
+    "spdxSbom",
+    "notices",
+    "slsaProvenance",
+    "dsseEnvelope",
+    "ciInvocation",
+    "externalContractLockDigest"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "candidate": { "enum": ["focused", "integrated"] },
+    "environment": { "enum": ["macos", "windows", "wayland", "x11"] },
+    "artifactManifest": { "$ref": "#/$defs/evidence" },
+    "spdxSbom": { "$ref": "#/$defs/evidence" },
+    "notices": { "$ref": "#/$defs/evidence" },
+    "slsaProvenance": { "$ref": "#/$defs/evidence" },
+    "dsseEnvelope": { "$ref": "#/$defs/evidence" },
+    "ciInvocation": { "$ref": "#/$defs/evidence" },
+    "externalContractLockDigest": { "$ref": "#/$defs/sha256" }
+  },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256", "mediaType"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "sha256": { "$ref": "#/$defs/sha256" },
+        "mediaType": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

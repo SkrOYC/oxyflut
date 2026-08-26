@@ -1,0 +1,371 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:oxyflut:schema:selection-decision:1",
+  "title": "Oxyflut substrate selection decision",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "specificationVersion",
+    "qualificationLockDigest",
+    "candidateEvidence",
+    "eligibility",
+    "decisionBasis",
+    "outcome",
+    "selectedCandidate",
+    "calculation",
+    "rationale"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "specificationVersion": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "qualificationLockDigest": { "$ref": "#/$defs/sha256" },
+    "candidateEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["focused", "integrated"],
+      "properties": {
+        "focused": { "$ref": "#/$defs/evidence" },
+        "integrated": { "$ref": "#/$defs/evidence" }
+      }
+    },
+    "eligibility": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["focused", "integrated"],
+      "properties": {
+        "focused": { "enum": ["eligible", "ineligible"] },
+        "integrated": { "enum": ["eligible", "ineligible"] }
+      }
+    },
+    "decisionBasis": {
+      "enum": [
+        "no-eligible-candidate",
+        "sole-focused-eligible",
+        "sole-integrated-eligible",
+        "score-margin",
+        "maintenance-tie-break",
+        "inconclusive-tie-break"
+      ]
+    },
+    "outcome": {
+      "enum": [
+        "reopen-research",
+        "select-focused",
+        "select-integrated",
+        "continue-investigation"
+      ]
+    },
+    "selectedCandidate": { "enum": ["focused", "integrated", "none"] },
+    "calculation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "algorithmVersion",
+        "focusedScore",
+        "integratedScore",
+        "absoluteDifference",
+        "tieBreakApplied"
+      ],
+      "properties": {
+        "algorithmVersion": { "const": "prd-v1.0.0" },
+        "focusedScore": {
+          "type": ["number", "null"],
+          "minimum": 60,
+          "maximum": 100
+        },
+        "integratedScore": {
+          "type": ["number", "null"],
+          "minimum": 60,
+          "maximum": 100
+        },
+        "absoluteDifference": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 40
+        },
+        "tieBreakApplied": { "type": "boolean" },
+        "maintenanceEvidence": { "$ref": "#/$defs/evidence" }
+      }
+    },
+    "rationale": { "type": "string", "minLength": 1 }
+  },
+  "allOf": [
+    {
+      "if": {
+        "type": "object",
+        "properties": { "decisionBasis": { "const": "no-eligible-candidate" } },
+        "required": ["decisionBasis"]
+      },
+      "then": {
+        "type": "object",
+        "properties": {
+          "outcome": { "const": "reopen-research" },
+          "selectedCandidate": { "const": "none" },
+          "eligibility": {
+            "type": "object",
+            "properties": {
+              "focused": { "const": "ineligible" },
+              "integrated": { "const": "ineligible" }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "type": "object",
+        "properties": { "decisionBasis": { "const": "sole-focused-eligible" } },
+        "required": ["decisionBasis"]
+      },
+      "then": {
+        "type": "object",
+        "properties": {
+          "outcome": { "const": "select-focused" },
+          "selectedCandidate": { "const": "focused" },
+          "eligibility": {
+            "type": "object",
+            "properties": {
+              "focused": { "const": "eligible" },
+              "integrated": { "const": "ineligible" }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "type": "object",
+        "properties": {
+          "decisionBasis": { "const": "sole-integrated-eligible" }
+        },
+        "required": ["decisionBasis"]
+      },
+      "then": {
+        "type": "object",
+        "properties": {
+          "outcome": { "const": "select-integrated" },
+          "selectedCandidate": { "const": "integrated" },
+          "eligibility": {
+            "type": "object",
+            "properties": {
+              "focused": { "const": "ineligible" },
+              "integrated": { "const": "eligible" }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "type": "object",
+        "properties": { "decisionBasis": { "const": "score-margin" } },
+        "required": ["decisionBasis"]
+      },
+      "then": {
+        "type": "object",
+        "properties": {
+          "outcome": { "enum": ["select-focused", "select-integrated"] },
+          "selectedCandidate": { "enum": ["focused", "integrated"] },
+          "eligibility": {
+            "type": "object",
+            "properties": {
+              "focused": { "const": "eligible" },
+              "integrated": { "const": "eligible" }
+            }
+          },
+          "calculation": {
+            "type": "object",
+            "properties": {
+              "focusedScore": {
+                "type": "number",
+                "minimum": 60,
+                "maximum": 100
+              },
+              "integratedScore": {
+                "type": "number",
+                "minimum": 60,
+                "maximum": 100
+              },
+              "absoluteDifference": {
+                "type": "number",
+                "minimum": 5,
+                "maximum": 40
+              },
+              "tieBreakApplied": { "const": false }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "type": "object",
+        "properties": {
+          "decisionBasis": {
+            "enum": ["maintenance-tie-break", "inconclusive-tie-break"]
+          }
+        },
+        "required": ["decisionBasis"]
+      },
+      "then": {
+        "type": "object",
+        "properties": {
+          "eligibility": {
+            "type": "object",
+            "properties": {
+              "focused": { "const": "eligible" },
+              "integrated": { "const": "eligible" }
+            }
+          },
+          "calculation": {
+            "type": "object",
+            "properties": {
+              "focusedScore": {
+                "type": "number",
+                "minimum": 60,
+                "maximum": 100
+              },
+              "integratedScore": {
+                "type": "number",
+                "minimum": 60,
+                "maximum": 100
+              },
+              "absoluteDifference": {
+                "type": "number",
+                "minimum": 0,
+                "exclusiveMaximum": 5
+              },
+              "tieBreakApplied": { "const": true }
+            },
+            "required": ["maintenanceEvidence"]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "type": "object",
+        "properties": { "decisionBasis": { "const": "maintenance-tie-break" } },
+        "required": ["decisionBasis"]
+      },
+      "then": {
+        "type": "object",
+        "properties": {
+          "outcome": { "enum": ["select-focused", "select-integrated"] },
+          "selectedCandidate": { "enum": ["focused", "integrated"] }
+        }
+      }
+    },
+    {
+      "if": {
+        "type": "object",
+        "properties": {
+          "decisionBasis": { "const": "inconclusive-tie-break" }
+        },
+        "required": ["decisionBasis"]
+      },
+      "then": {
+        "type": "object",
+        "properties": {
+          "outcome": { "const": "continue-investigation" },
+          "selectedCandidate": { "const": "none" }
+        }
+      }
+    },
+    {
+      "if": {
+        "type": "object",
+        "properties": { "outcome": { "const": "reopen-research" } },
+        "required": ["outcome"]
+      },
+      "then": {
+        "type": "object",
+        "properties": {
+          "selectedCandidate": { "const": "none" },
+          "eligibility": {
+            "type": "object",
+            "properties": {
+              "focused": { "const": "ineligible" },
+              "integrated": { "const": "ineligible" }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "type": "object",
+        "properties": { "outcome": { "const": "select-focused" } },
+        "required": ["outcome"]
+      },
+      "then": {
+        "type": "object",
+        "properties": {
+          "selectedCandidate": { "const": "focused" },
+          "eligibility": {
+            "type": "object",
+            "properties": { "focused": { "const": "eligible" } }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "type": "object",
+        "properties": { "outcome": { "const": "select-integrated" } },
+        "required": ["outcome"]
+      },
+      "then": {
+        "type": "object",
+        "properties": {
+          "selectedCandidate": { "const": "integrated" },
+          "eligibility": {
+            "type": "object",
+            "properties": { "integrated": { "const": "eligible" } }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "type": "object",
+        "properties": { "outcome": { "const": "continue-investigation" } },
+        "required": ["outcome"]
+      },
+      "then": {
+        "type": "object",
+        "properties": {
+          "selectedCandidate": { "const": "none" },
+          "eligibility": {
+            "type": "object",
+            "properties": {
+              "focused": { "const": "eligible" },
+              "integrated": { "const": "eligible" }
+            }
+          },
+          "calculation": {
+            "type": "object",
+            "properties": { "tieBreakApplied": { "const": true } },
+            "required": ["maintenanceEvidence"]
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "sha256": { "$ref": "#/$defs/sha256" }
+      }
+    }
+  }
+}

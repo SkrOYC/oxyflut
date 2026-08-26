@@ -1,0 +1,180 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:oxyflut:schema:platform-contracts:2",
+  "title": "Oxyflut platform qualification contracts",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "environments"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "schemaVersion": { "const": "2.0.0" },
+    "environments": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["macos", "windows", "wayland", "x11"],
+      "properties": {
+        "macos": { "$ref": "#/$defs/environment" },
+        "windows": { "$ref": "#/$defs/environment" },
+        "wayland": { "$ref": "#/$defs/environment" },
+        "x11": { "$ref": "#/$defs/environment" }
+      }
+    }
+  },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "status": { "enum": ["kk", "ku-gating"] },
+    "stringSet": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "contractRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "path", "sha256"],
+      "properties": {
+        "status": { "$ref": "#/$defs/status" },
+        "path": { "type": ["string", "null"] },
+        "sha256": { "type": ["string", "null"], "pattern": "^[0-9a-f]{64}$" }
+      }
+    },
+    "ime": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "nativeIndexUnit",
+        "engineIndexUnit",
+        "metadata",
+        "actions",
+        "sensitiveFieldPolicy",
+        "numericNegotiation",
+        "testVectors"
+      ],
+      "properties": {
+        "status": { "$ref": "#/$defs/status" },
+        "nativeIndexUnit": {
+          "enum": ["utf8-bytes", "utf16-code-units", "unicode-scalars"]
+        },
+        "engineIndexUnit": {
+          "const": "checked-logical-with-explicit-conversion"
+        },
+        "metadata": { "$ref": "#/$defs/stringSet" },
+        "actions": { "$ref": "#/$defs/stringSet" },
+        "sensitiveFieldPolicy": { "type": "string", "minLength": 1 },
+        "numericNegotiation": { "type": "string", "minLength": 1 },
+        "testVectors": { "$ref": "#/$defs/stringSet" }
+      }
+    },
+    "timing": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "interactiveOpportunitySource",
+        "independentMeterSource",
+        "presentationFeedback",
+        "perDisplayAssociation"
+      ],
+      "properties": {
+        "status": { "$ref": "#/$defs/status" },
+        "interactiveOpportunitySource": { "type": "string", "minLength": 1 },
+        "independentMeterSource": { "type": "string", "minLength": 1 },
+        "presentationFeedback": { "type": "string", "minLength": 1 },
+        "perDisplayAssociation": { "type": "string", "minLength": 1 }
+      }
+    },
+    "allocation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "windowAndInput",
+        "imeInterfaces",
+        "accessibilityInterfaces",
+        "clipboardInterfaces",
+        "timingInterfaces",
+        "recoveryInterfaces",
+        "serviceRouting",
+        "normalization",
+        "requiredEvidence"
+      ],
+      "properties": {
+        "status": { "$ref": "#/$defs/status" },
+        "windowAndInput": { "$ref": "#/$defs/stringSet" },
+        "imeInterfaces": { "$ref": "#/$defs/stringSet" },
+        "accessibilityInterfaces": { "$ref": "#/$defs/stringSet" },
+        "clipboardInterfaces": { "$ref": "#/$defs/stringSet" },
+        "timingInterfaces": { "$ref": "#/$defs/stringSet" },
+        "recoveryInterfaces": { "$ref": "#/$defs/stringSet" },
+        "serviceRouting": { "type": "string", "minLength": 1 },
+        "normalization": { "type": "string", "minLength": 1 },
+        "requiredEvidence": { "$ref": "#/$defs/stringSet" }
+      }
+    },
+    "environment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "reference",
+        "minimumVersion",
+        "protocols",
+        "ime",
+        "accessibilityMaps",
+        "timing",
+        "recoveryBaseline",
+        "allocations",
+        "openQuestions"
+      ],
+      "properties": {
+        "reference": { "type": "string", "minLength": 1 },
+        "minimumVersion": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "value"],
+          "properties": {
+            "status": { "$ref": "#/$defs/status" },
+            "value": { "type": ["string", "null"] }
+          }
+        },
+        "protocols": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["name", "version", "status"],
+            "properties": {
+              "name": { "type": "string", "minLength": 1 },
+              "version": { "type": ["string", "null"] },
+              "status": { "$ref": "#/$defs/status" }
+            }
+          },
+          "minItems": 1
+        },
+        "ime": { "$ref": "#/$defs/ime" },
+        "accessibilityMaps": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["focused", "integrated"],
+          "properties": {
+            "focused": { "$ref": "#/$defs/contractRef" },
+            "integrated": { "$ref": "#/$defs/contractRef" }
+          }
+        },
+        "timing": { "$ref": "#/$defs/timing" },
+        "recoveryBaseline": { "$ref": "#/$defs/contractRef" },
+        "allocations": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["focused", "integrated"],
+          "properties": {
+            "focused": { "$ref": "#/$defs/allocation" },
+            "integrated": { "$ref": "#/$defs/allocation" }
+          }
+        },
+        "openQuestions": { "$ref": "#/$defs/stringSet" }
+      }
+    }
+  }
+}

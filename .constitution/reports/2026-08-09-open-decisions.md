@@ -5,7 +5,7 @@
 - **Target:** Product requirements document (PRD)
 - **Status:** One architecture-enabling decision reopened
 
-All product capability and priority decisions remain resolved. Research into the standalone Impeller SDK and a full Flutter Engine path invalidated the original assumption that stock Flutter Engine binaries expose the required framework-facing rendering interfaces. Starling is an example that demonstrates the full-engine path with Swift.
+All product capability and priority decisions remain resolved. Research into the standalone Impeller SDK and a full Flutter Engine path invalidated the original assumption that stock Flutter Engine binaries expose the required framework-facing rendering interfaces. The full-engine path replaces the application runtime while retaining selected engine subsystems. Starling is an example of this: it demonstrates the path with Swift.
 
 ## Open decision
 
@@ -18,7 +18,7 @@ All product capability and priority decisions remain resolved. Research into the
 Evaluate the following candidate paths:
 
 - **Path A: standalone Impeller.** Use the published C SDK for rendering and text. Own windowing, frame scheduling, input, IME, clipboard, editable selection, accessibility, image decoding, and surface recovery in `oxyflut`.
-- **Path B: full Flutter Engine.** Add a language-neutral runtime controller and C ABI to a pinned Flutter Engine fork. Retain the shell, rasterizer, compositor, frame pipeline, and platform embedders. Starling is an example that demonstrates this architecture but doesn't define the `oxyflut` design.
+- **Path B: full Flutter Engine.** Add a language-neutral runtime controller and C ABI to a pinned Flutter Engine fork. Retain the shell, rasterizer, compositor, frame pipeline, and platform embedders. Starling is an example of this. It demonstrates the architecture but doesn't define the `oxyflut` design.
 
 The decision must not change the P0 capability list. It selects where those capabilities are implemented and which maintenance costs the project accepts.
 
@@ -41,7 +41,7 @@ Both candidates can fail. A candidate with a failed or unresolved gating P0 item
 
 The decision record uses KK for verified facts, KU for named unanswered questions, UK for knowledge that might exist outside these artifacts, and UU for risks that can't be enumerated in advance.
 
-- **KK:** The standalone Impeller C API exists. The stock Embedder API alone doesn't provide the required framework-submission boundary. Starling is an example that demonstrates runtime substitution with a Swift-specific callback contract. The exact Rust-compatible Path B interface doesn't exist in `oxyflut`. Upstream Flutter currently schedules all views together rather than providing separate per-display vsync. Neither candidate has demonstrated the complete P0 or nonfunctional scope in these artifacts.
+- **KK:** The standalone Impeller C API exists. The stock Embedder API alone doesn't provide the required framework-submission boundary. Runtime substitution with a Swift-specific callback contract exists; Starling is an example of this. The exact Rust-compatible Path B interface doesn't exist in `oxyflut`. Upstream Flutter currently schedules all views together rather than providing separate per-display vsync. Neither candidate has demonstrated the complete P0 or nonfunctional scope in these artifacts.
 - **KU:** Can the Path B interface meet the safety contract? Can Path B replace upstream Flutter's currently shared all-view frame scheduling with compliant per-display pacing? Can each candidate pass complete Tier 1 behavior, editing geometry, recovery, nonfunctional targets, and the frozen upgrade rehearsal?
 - **UK:** Upstream maintainers, platform specialists, downstream forks, or unindexed tests might hold relevant constraints and failure cases. Each platform probe requires specialist review and a recorded search.
 - **UU:** Hardware, driver, locale, assistive-technology, and lifecycle combinations can expose failures that this register can't predict. Hardware diversity, fuzzing, fault injection, prerelease deployment, and telemetry reduce this exposure but don't eliminate it.

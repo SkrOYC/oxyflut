@@ -1,0 +1,141 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:oxyflut:schema:ingress-inventory:2",
+  "title": "Oxyflut implemented ingress and threat inventory",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "candidate", "environment", "entries"],
+  "properties": {
+    "schemaVersion": { "const": "2.0.0" },
+    "candidate": { "enum": ["focused", "integrated"] },
+    "environment": { "enum": ["macos", "windows", "wayland", "x11"] },
+    "entries": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "application-assets",
+        "operating-environment-events",
+        "private-platform-content",
+        "accessibility",
+        "candidate-boundary",
+        "local-sink",
+        "candidate-artifacts",
+        "independent-verification"
+      ],
+      "properties": {
+        "application-assets": { "$ref": "#/$defs/entry" },
+        "operating-environment-events": { "$ref": "#/$defs/entry" },
+        "private-platform-content": { "$ref": "#/$defs/entry" },
+        "accessibility": { "$ref": "#/$defs/entry" },
+        "candidate-boundary": { "$ref": "#/$defs/entry" },
+        "local-sink": { "$ref": "#/$defs/entry" },
+        "candidate-artifacts": { "$ref": "#/$defs/entry" },
+        "independent-verification": { "$ref": "#/$defs/entry" }
+      }
+    }
+  },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "payloadBytes",
+        "eventsPerSecond",
+        "queueItems",
+        "decodedBytes",
+        "resourceBytes"
+      ],
+      "properties": {
+        "payloadBytes": { "type": ["integer", "null"], "minimum": 0 },
+        "eventsPerSecond": { "type": ["integer", "null"], "minimum": 0 },
+        "queueItems": { "type": ["integer", "null"], "minimum": 0 },
+        "decodedBytes": { "type": ["integer", "null"], "minimum": 0 },
+        "resourceBytes": { "type": ["integer", "null"], "minimum": 0 }
+      }
+    },
+    "entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source",
+        "trustBoundary",
+        "owner",
+        "epistemicStatus",
+        "privacyClass",
+        "threats",
+        "limits",
+        "validation",
+        "mitigations",
+        "failureContainment",
+        "evidence"
+      ],
+      "properties": {
+        "source": { "type": "string", "minLength": 1 },
+        "trustBoundary": {
+          "enum": ["application-process", "qualification-plane"]
+        },
+        "owner": { "type": "string", "minLength": 1 },
+        "epistemicStatus": {
+          "enum": ["kk-implemented", "kk-absent", "ku-gating"]
+        },
+        "privacyClass": {
+          "enum": [
+            "public",
+            "application-content",
+            "interaction-metadata",
+            "raw-private-content",
+            "potentially-private-semantics",
+            "internal-state-and-timing",
+            "content-free-operational-metadata",
+            "release-evidence"
+          ]
+        },
+        "threats": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "spoofing",
+              "tampering",
+              "repudiation",
+              "information-disclosure",
+              "denial-of-service",
+              "elevation-of-privilege"
+            ]
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "limits": { "$ref": "#/$defs/limits" },
+        "validation": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "mitigations": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "failureContainment": { "type": "string", "minLength": 1 },
+        "evidence": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/evidence" },
+          "minItems": 1,
+          "uniqueItems": true
+        }
+      }
+    }
+  }
+}

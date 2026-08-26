@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:oxyflut:schema:capability-traceability:1",
+  "title": "Oxyflut capability traceability",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "specificationVersion", "mappings"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "schemaVersion": { "const": "1.0.0" },
+    "specificationVersion": { "const": "0.1.0" },
+    "mappings": {
+      "type": "array",
+      "minItems": 52,
+      "maxItems": 52,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "capabilityId",
+          "crate",
+          "architectureFlow",
+          "contracts",
+          "symbols",
+          "contractTests"
+        ],
+        "properties": {
+          "capabilityId": {
+            "type": "string",
+            "pattern": "^CAP-[A-Z0-9]+-[0-9]{3}$"
+          },
+          "crate": { "type": "string", "pattern": "^oxyflut(?:-[a-z]+)*$" },
+          "architectureFlow": {
+            "type": "string",
+            "pattern": "^\\.constitution/architecture/flows/cap-[a-z0-9]+-[0-9]{3}\\.md$"
+          },
+          "contracts": {
+            "type": "array",
+            "items": { "type": "string", "minLength": 1 },
+            "minItems": 1,
+            "uniqueItems": true
+          },
+          "symbols": {
+            "type": "array",
+            "items": { "type": "string", "minLength": 1 },
+            "minItems": 1,
+            "uniqueItems": true
+          },
+          "contractTests": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^contract::cap_[a-z0-9_]+$"
+            },
+            "minItems": 1,
+            "uniqueItems": true
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:oxyflut:schema:diagnostic-event-registry:1",
+  "title": "Oxyflut diagnostic event registry",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "events"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "schemaVersion": { "const": "1.0.0" },
+    "events": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "runtime.lifecycle",
+        "view.lifecycle",
+        "frame.scheduled",
+        "frame.presented",
+        "frame.missed",
+        "input.rejected",
+        "text.transaction",
+        "semantics.update",
+        "semantics.action",
+        "asset.lifecycle",
+        "recovery.transition",
+        "boundary.failure",
+        "diagnostics.dropped"
+      ],
+      "patternProperties": {
+        "^[a-z][a-z0-9]*(\\.[a-z0-9]+)+$": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["privacyClass", "allowedFields"],
+          "properties": {
+            "privacyClass": {
+              "enum": ["public", "operational", "private-redacted"]
+            },
+            "allowedFields": {
+              "type": "array",
+              "items": { "type": "string", "pattern": "^[a-z][a-zA-Z0-9]*$" },
+              "uniqueItems": true
+            }
+          }
+        }
+      }
+    }
+  }
+}

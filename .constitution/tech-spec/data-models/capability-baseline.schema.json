@@ -1,0 +1,97 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:oxyflut:schema:capability-baseline:1",
+  "title": "Oxyflut frozen capability baseline",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "specificationVersion", "capabilities"],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "specificationVersion": { "const": "0.1.0" },
+    "capabilities": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "CAP-CMP-001",
+        "CAP-CMP-002",
+        "CAP-CMP-003",
+        "CAP-CMP-004",
+        "CAP-CMP-005",
+        "CAP-CMP-006",
+        "CAP-CMP-007",
+        "CAP-LAY-001",
+        "CAP-LAY-002",
+        "CAP-SCR-001",
+        "CAP-SCR-002",
+        "CAP-REN-001",
+        "CAP-REN-002",
+        "CAP-REN-003",
+        "CAP-AST-001",
+        "CAP-AST-002",
+        "CAP-AST-003",
+        "CAP-AST-004",
+        "CAP-VIEW-001",
+        "CAP-VIEW-002",
+        "CAP-VIEW-003",
+        "CAP-VIEW-004",
+        "CAP-VIEW-005",
+        "CAP-REC-001",
+        "CAP-INP-001",
+        "CAP-INP-002",
+        "CAP-FOC-001",
+        "CAP-TXT-001",
+        "CAP-TXT-002",
+        "CAP-TXT-003",
+        "CAP-IME-001",
+        "CAP-CLP-001",
+        "CAP-I18N-001",
+        "CAP-SEM-001",
+        "CAP-SEM-002",
+        "CAP-PLT-001",
+        "CAP-OS-001",
+        "CAP-OS-002",
+        "CAP-TST-001",
+        "CAP-TST-002",
+        "CAP-TST-003",
+        "CAP-TST-004",
+        "CAP-DST-001",
+        "CAP-SEC-001",
+        "CAP-DIA-001",
+        "CAP-DIA-002",
+        "CAP-DIA-003",
+        "CAP-DIA-004",
+        "CAP-SUB-001",
+        "CAP-SUB-002",
+        "CAP-SUB-003",
+        "CAP-SUB-004"
+      ],
+      "patternProperties": {
+        "^CAP-[A-Z0-9]+-[0-9]{3}$": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["flow", "testVectors", "expectedEvidence"],
+          "properties": {
+            "flow": {
+              "type": "string",
+              "pattern": "^\\.constitution/architecture/flows/cap-[a-z0-9-]+\\.md$"
+            },
+            "testVectors": {
+              "type": "array",
+              "items": { "type": "string", "minLength": 1 },
+              "minItems": 1,
+              "uniqueItems": true
+            },
+            "expectedEvidence": {
+              "type": "array",
+              "items": { "type": "string", "minLength": 1 },
+              "minItems": 1,
+              "uniqueItems": true
+            }
+          }
+        }
+      },
+      "minProperties": 52,
+      "maxProperties": 52
+    }
+  }
+}

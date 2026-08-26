@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:oxyflut:schema:external-contract-lock:1",
+  "title": "Oxyflut external contract snapshot lock",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "contracts"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "schemaVersion": { "const": "1.0.0" },
+    "contracts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "spdx-3.0.1",
+        "in-toto-statement-v1",
+        "slsa-provenance-v1",
+        "dsse-envelope-v1"
+      ],
+      "patternProperties": { "^[a-z0-9.-]+$": { "$ref": "#/$defs/contract" } }
+    }
+  },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "version",
+        "source",
+        "epistemicStatus",
+        "localPath",
+        "sha256",
+        "verifier"
+      ],
+      "properties": {
+        "version": { "type": "string", "minLength": 1 },
+        "source": { "type": "string", "format": "uri" },
+        "epistemicStatus": { "enum": ["kk-locked", "ku-gating"] },
+        "localPath": { "type": ["string", "null"] },
+        "sha256": { "type": ["string", "null"], "pattern": "^[0-9a-f]{64}$" },
+        "verifier": { "type": ["string", "null"] }
+      }
+    }
+  }
+}
