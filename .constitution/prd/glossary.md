@@ -6,7 +6,7 @@ Use the following terms throughout the constitution:
 | :-- | :-- | :-- |
 | Application developer | A developer who builds an application with Oxyflut's safe public surface. | App author, consumer |
 | Application runtime | The Oxyflut-owned state, component, layout, interaction, and lifecycle behavior inside an application process. | Framework core, app engine |
-| Capability baseline | A candidate-neutral statement of required platform behavior and evidence for one environment. | Adapter checklist, implementation baseline |
+| Capability baseline | The candidate-neutral complete set of required P0 capability behavior and evidence. | Adapter checklist, implementation baseline |
 | Component | A stable unit of user-interface composition with identity, state, lifecycle, layout, and rendering behavior. | Widget, element |
 | Display epoch | A measured interval during which a view has one display association and display timing source. | Vsync period, screen session |
 | Input method editor | Operating-system text-entry behavior for composition, conversion, candidate selection, and commit. | IME bridge, text service |

@@ -2,6 +2,12 @@
 
 All notable changes to the product requirements appear in this file.
 
+## [v1.0.1] - 2026-08-26
+
+### Fixed
+
+- Clarified that the capability baseline is the complete candidate-neutral P0 behavior and evidence set, while environment-specific contracts remain separate.
+
 ## [v1.0.0] - 2026-08-26
 
 ### Added
