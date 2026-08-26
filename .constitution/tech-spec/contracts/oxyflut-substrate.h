@@ -19,7 +19,7 @@
 extern "C" {
 #endif
 
-#define OXY_SUBSTRATE_ABI_VERSION 2u
+#define OXY_SUBSTRATE_ABI_VERSION 3u
 
 /* Unless a field comment states otherwise, every pointer passed to or returned from this ABI is nonnull. An array pointer is null if and only if its count is zero. Every out pointer names writable storage and is cleared before a fallible call. All opaque handles belong to the creating substrate and can be used only on the execution domain declared for that operation. */
 
@@ -41,7 +41,8 @@ enum {
   OXY_PLATFORM_EVENT_POINTER = 1u,
   OXY_PLATFORM_EVENT_KEY = 2u,
   OXY_PLATFORM_EVENT_IME = 3u,
-  OXY_PLATFORM_EVENT_LIFECYCLE = 4u
+  OXY_PLATFORM_EVENT_LIFECYCLE = 4u,
+  OXY_PLATFORM_EVENT_IME_REQUEST = 5u
 };
 
 typedef uint32_t OxyPlatformServiceKind;
@@ -199,6 +200,7 @@ typedef struct OxySemanticsNode {
   double scroll_position;
   double scroll_minimum;
   double scroll_maximum;
+  uint32_t has_scroll;
   uint32_t heading_level;
   uint32_t text_direction;
   uint32_t has_input_focus;
@@ -207,6 +209,8 @@ typedef struct OxySemanticsNode {
   uint32_t is_disabled;
   uint32_t is_secure_field;
 } OxySemanticsNode;
+
+/* When has_scroll is zero, scroll_position, scroll_minimum, and scroll_maximum must all be zero. */
 
 typedef struct OxySemanticsUpdate {
   uint32_t struct_size;
@@ -259,6 +263,12 @@ typedef struct OxyKeyEvent {
   uint32_t repeat;
 } OxyKeyEvent;
 
+typedef struct OxyImeTextSegment {
+  int64_t start;
+  int64_t end;
+  uint64_t attributes;
+} OxyImeTextSegment;
+
 typedef struct OxyImeEvent {
   uint64_t transaction_generation;
   uint32_t kind;
@@ -270,8 +280,45 @@ typedef struct OxyImeEvent {
   int64_t marked_start;
   int64_t marked_end;
   OxyRect candidate_rect;
+  uint32_t action;
+  uint32_t input_context;
+  uint32_t sensitive_field;
+  uint32_t reserved;
+  const OxyImeTextSegment* segments;
+  uint64_t segment_count;
   OxyBorrowedBytes text_utf8;
 } OxyImeEvent;
+
+typedef struct OxyImeRequest {
+  uint64_t request_generation;
+  uint32_t kind;
+  uint32_t native_index_unit;
+  int64_t range_start;
+  int64_t range_end;
+  OxyPoint point;
+  uint32_t maximum_units;
+  uint32_t reserved;
+} OxyImeRequest;
+
+typedef struct OxyImeResponse {
+  uint32_t struct_size;
+  uint32_t abi_version;
+  int64_t text_range_start;
+  int64_t text_range_end;
+  int64_t selection_start;
+  int64_t selection_end;
+  int64_t marked_start;
+  int64_t marked_end;
+  OxyRect text_rect;
+  int64_t character_index;
+  uint32_t input_context;
+  uint32_t sensitive_field;
+  OxyBorrowedBytes text_utf8;
+  const OxyImeTextSegment* segments;
+  uint64_t segment_count;
+} OxyImeResponse;
+
+/* Optional IME ranges and character indices use -1 for both range endpoints or for the index. Other negative values are invalid. Text and segment payloads are borrowed for the call or callback. */
 
 typedef struct OxyLifecycleEvent {
   uint32_t kind;
@@ -284,6 +331,7 @@ typedef union OxyPlatformEventPayload {
   OxyPointerEvent pointer;
   OxyKeyEvent key;
   OxyImeEvent ime;
+  OxyImeRequest ime_request;
   OxyLifecycleEvent lifecycle;
 } OxyPlatformEventPayload;
 
@@ -495,6 +543,10 @@ typedef struct OxySubstrateApi {
                                                  const OxyPlatformServiceRequest* request);
   OxyStatus (OXY_CALL *cancel_platform_service)(OxySubstrate* substrate,
                                                 uint64_t request_generation);
+  OxyStatus (OXY_CALL *respond_ime_request)(OxySubstrate* substrate,
+                                           uint64_t request_generation,
+                                           OxyStatus status,
+                                           const OxyImeResponse* response);
   OxyStatus (OXY_CALL *recover)(OxySubstrate* substrate,
                        OxyView* view,
                        const OxyRecoveryRequest* request);

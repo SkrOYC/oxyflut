@@ -2,11 +2,26 @@
 
 All notable changes to the technical specification appear in this file.
 
+## [v0.4.0] - 2026-08-26
+
+### Added
+
+- Added shared paragraph drawing, complete semantics-node projections, and bidirectional attributed input method editor queries across the safe Rust, common Rust, and C contracts.
+- Added explicit logical size, physical size, and device-pixel-ratio consistency rules for headless views.
+- Added closed environment status and KK evidence conditions to the platform-contract schema.
+
+### Changed
+
+- Advanced the integrated C ABI to version 3 for the input method editor response operation and complete semantics layout.
+- Expanded resolved-tool lock entries with source identity, host triple, license, executable path, version, and digest.
+- Advanced artifact manifests to v3, raw measurements to v2, platform contracts to v3, and qualification locks to v4 before any durable evidence existed.
+- Confined link targets, defined link hash semantics, and forbade link metadata on regular files.
+
 ## [v0.3.0] - 2026-08-26
 
 ### Added
 
-- Added complete pointer, keyboard, and input method editor event fields to the common Rust substrate contract.
+- Added pointer, keyboard, and transaction-level input method editor fields to the common Rust substrate contract.
 - Added path clipping, color-matrix filtering, and exact headless-raster descriptors across the Rust and C contracts.
 - Added a public headless-view and raster-output surface.
 - Added field kinds, bounds, closed values, and registry versions to the diagnostic contracts.

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:oxyflut:schema:qualification-lock:3",
+  "$id": "urn:oxyflut:schema:qualification-lock:4",
   "title": "Oxyflut qualification lock",
   "type": "object",
   "additionalProperties": false,
@@ -19,7 +19,7 @@
   ],
   "properties": {
     "$schema": { "type": "string" },
-    "schemaVersion": { "const": "3.0.0" },
+    "schemaVersion": { "const": "4.0.0" },
     "candidateImplementationReady": { "type": "boolean" },
     "measurementReady": { "type": "boolean" },
     "sourcePins": {
@@ -321,10 +321,22 @@
     "tool": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["name", "version", "sha256"],
+      "required": [
+        "name",
+        "version",
+        "sourceIdentity",
+        "hostTriple",
+        "licenseId",
+        "executablePath",
+        "sha256"
+      ],
       "properties": {
         "name": { "type": "string", "minLength": 1 },
         "version": { "type": "string", "minLength": 1 },
+        "sourceIdentity": { "type": "string", "minLength": 1 },
+        "hostTriple": { "type": "string", "minLength": 1 },
+        "licenseId": { "type": "string", "minLength": 1 },
+        "executablePath": { "type": "string", "minLength": 1 },
         "sha256": { "$ref": "#/$defs/sha256" }
       }
     }

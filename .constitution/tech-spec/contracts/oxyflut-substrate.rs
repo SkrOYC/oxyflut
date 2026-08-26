@@ -190,6 +190,17 @@ pub struct TextStyleRun {
     pub color: Color,
 }
 
+/// Describes semantics scrolling state in logical units.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct SemanticsScroll {
+    /// Current scroll position.
+    pub position: f64,
+    /// Minimum scroll position.
+    pub minimum: f64,
+    /// Maximum scroll position.
+    pub maximum: f64,
+}
+
 /// Describes one complete candidate-neutral semantics node.
 #[derive(Clone, Debug, PartialEq)]
 pub struct SemanticsNode {
@@ -201,6 +212,16 @@ pub struct SemanticsNode {
     pub states: u64,
     /// Closed action mask.
     pub actions: u64,
+    /// Human-visible value; diagnostics cannot copy it.
+    pub value: String,
+    /// Human-visible label; diagnostics cannot copy it.
+    pub label: String,
+    /// Human-visible hint; diagnostics cannot copy it.
+    pub hint: String,
+    /// Human-visible tooltip; diagnostics cannot copy it.
+    pub tooltip: String,
+    /// Stable application-provided identifier.
+    pub identifier: String,
     /// View-local bounds.
     pub bounds: Rect,
     /// Node transform.
@@ -215,8 +236,16 @@ pub struct SemanticsNode {
     pub described_by: Vec<u64>,
     /// Checked UTF-16 selection, if applicable.
     pub selection_utf16: Option<(u32, u32)>,
+    /// Scroll position and extents, if applicable.
+    pub scroll: Option<SemanticsScroll>,
+    /// Heading level, or zero when the node isn't a heading.
+    pub heading_level: u32,
+    /// Closed logical text-direction identifier.
+    pub text_direction: u32,
     /// BCP-47 language.
     pub language: String,
+    /// True for an accessibility live region.
+    pub live_region: bool,
     /// True when input-focused.
     pub input_focus: bool,
     /// True when accessibility-focused.
@@ -303,6 +332,72 @@ pub struct NativeTextRange {
     pub end: u32,
 }
 
+/// Describes one attributed input method editor text segment.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct ImeTextSegment {
+    /// Segment range in the declared native index unit.
+    pub range: NativeTextRange,
+    /// Closed platform-independent attribute mask.
+    pub attributes: u64,
+}
+
+/// Selects a bidirectional input method editor query.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ImeRequestKind {
+    /// Requests bounded surrounding text and attributes.
+    SurroundingText,
+    /// Requests text and attributes for one range.
+    AttributedText,
+    /// Requests the text index at a view-local point.
+    CharacterIndexAtPoint,
+    /// Requests geometry for one text range.
+    TextRect,
+    /// Requests selection and marked-range state.
+    SelectionState,
+    /// Requests the closed input-context identifier and sensitive-field state.
+    InputContext,
+}
+
+/// Describes one candidate-transported input method editor query.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct ImeRequest {
+    /// Request generation acknowledged exactly once.
+    pub generation: u64,
+    /// Query kind.
+    pub kind: ImeRequestKind,
+    /// Native index unit expected by the platform.
+    pub native_index_unit: u32,
+    /// Optional checked query range.
+    pub range: Option<NativeTextRange>,
+    /// Optional query point; ignored for non-point queries.
+    pub point: Point,
+    /// Maximum text units permitted in the response.
+    pub maximum_units: u32,
+}
+
+/// Supplies a bounded response to an input method editor query.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct ImeResponse<'a> {
+    /// Range represented by the returned text, if any.
+    pub text_range: Option<NativeTextRange>,
+    /// Current selection.
+    pub selection: NativeTextRange,
+    /// Current marked range, if any.
+    pub marked: Option<NativeTextRange>,
+    /// Candidate or queried text rectangle.
+    pub text_rect: Rect,
+    /// Character index returned for a point query, if any.
+    pub character_index: Option<u32>,
+    /// Closed input-context identifier.
+    pub input_context: u32,
+    /// True when the active field contains sensitive content.
+    pub sensitive_field: bool,
+    /// Callback-scoped UTF-8 text bounded by the request.
+    pub text: &'a str,
+    /// Callback-scoped attributed text segments.
+    pub segments: &'a [ImeTextSegment],
+}
+
 /// Selects a physical execution domain.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ExecutionDomain {
@@ -382,9 +477,19 @@ pub enum PlatformEvent<'a> {
         marked: Option<NativeTextRange>,
         /// Candidate-window rectangle in view-local logical pixels.
         candidate_rect: Rect,
+        /// Closed transaction or platform-action identifier.
+        action: u32,
+        /// Closed input-context identifier.
+        input_context: u32,
+        /// True when the active field contains sensitive content.
+        sensitive_field: bool,
+        /// Callback-scoped attributed text segments.
+        segments: &'a [ImeTextSegment],
         /// Callback-scoped UTF-8 text.
         text: &'a str,
     },
+    /// Bidirectional input method editor state query.
+    ImeRequest(ImeRequest),
     /// View, display, or recovery lifecycle transition.
     Lifecycle {
         /// Closed lifecycle-kind identifier.
@@ -455,6 +560,8 @@ pub trait SceneBuilder<E: Error + Send + Sync + 'static> {
     type Texture: Send + Sync + 'static;
     /// Candidate-owned picture type.
     type Picture: Send + Sync + 'static;
+    /// Candidate-owned immutable paragraph type.
+    type Paragraph: Send + Sync + 'static;
 
     /// Saves transform, clip, and paint state.
     fn save(&mut self) -> Result<(), E>;
@@ -487,6 +594,9 @@ pub trait SceneBuilder<E: Error + Send + Sync + 'static> {
 
     /// Draws a reusable picture.
     fn draw_picture(&mut self, picture: &Self::Picture, transform: Transform) -> Result<(), E>;
+
+    /// Draws an immutable laid-out paragraph at a logical origin.
+    fn draw_paragraph(&mut self, paragraph: &Self::Paragraph, origin: Point) -> Result<(), E>;
 
     /// Begins a retained layer with bounded effect metadata.
     fn begin_layer(&mut self, bounds: Rect, paint: &Paint) -> Result<(), E>;
@@ -539,7 +649,7 @@ pub trait SubstrateAdapter {
     /// Candidate-owned view mechanism.
     type View: Send + 'static;
     /// Candidate scene builder.
-    type Builder: SceneBuilder<Self::Error>;
+    type Builder: SceneBuilder<Self::Error, Paragraph = <Self::Text as SubstrateText<Self::Error>>::Paragraph>;
     /// Candidate text implementation.
     type Text: SubstrateText<Self::Error>;
 
@@ -625,6 +735,13 @@ pub trait SubstrateAdapter {
         view: ViewGeneration,
         service: PlatformService,
         payload: &[u8],
+    ) -> Result<(), Self::Error>;
+
+    /// Completes one candidate-transported input method editor query exactly once.
+    fn respond_ime_request(
+        &mut self,
+        request_generation: u64,
+        response: ImeResponse<'_>,
     ) -> Result<(), Self::Error>;
 
     /// Cancels an unpublished candidate-transported platform service.

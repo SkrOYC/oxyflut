@@ -73,6 +73,7 @@ Assertions:
 - Every committed contract instance validates against its declared local schema.
 - Network and undeclared schema resolution fail closed.
 - Invalid type, required-field, enum, additional-property, and conditional fixtures fail with stable paths.
+- Superseded pre-evidence schema identities have explicit rejection and supersession fixtures; migrations preserve source bytes after durable evidence exists.
 Command: cargo +1.98.0 run -p xtask -- contracts validate
 ```
 
@@ -96,13 +97,13 @@ Command: cargo +1.98.0 run -p xtask -- contracts validate
 - **STOP Conditions:**
   - STOP if the three 52-capability sets differ; report the owning upstream stage rather than normalizing the mismatch.
   - STOP if a symbol, contract path, or contract-test identifier doesn't resolve.
-- **Description:** Validate the exact 52 P0 IDs across PRD tables, architecture flow filenames, and traceability; the exact 27 constraint IDs; referenced contract paths and symbols; contract-test identifiers; diagnostic names and fields; candidate names; Tier 1 environment identifiers; unique canonical artifact paths; and unique raw-sample keys. For diagnostics, resolve each event's registry version and validate the registered event and field privacy classes, field kind, range, and closed integer values.
+- **Description:** Validate the exact 52 P0 IDs across PRD tables, architecture flow filenames, and traceability; the exact 27 constraint IDs; referenced contract paths and symbols; contract-test identifiers; diagnostic names and fields; candidate names; Tier 1 environment identifiers; unique canonical artifact paths and link targets; and unique raw-sample keys. Resolve every hardlink to a regular-file entry and every symlink within the artifact root without dereferencing it. For diagnostics, resolve each event's registry version and validate the registered event and field privacy classes, field kind, range, and closed integer values.
 - **Acceptance:**
   - **Mode:** invariant
   - **Evidence:**
 
 ```text
-Invariant: No identifier, canonical artifact path, or raw-sample key can be missing, duplicated, renamed, or added in one downstream set without the authoritative upstream set changing first. Diagnostic values must resolve to the registry's event class and match the field class, kind, bounds, and closed integer values. Event files cannot override registry privacy metadata.
+Invariant: No identifier, canonical artifact path, canonical link target, or raw-sample key can be missing, duplicated, renamed, or added in one downstream set without the authoritative upstream set changing first. Hardlinks resolve to regular-file entries with equal size and digest; symlinks remain inside the artifact root; regular files carry no link target. Diagnostic values must resolve to the registry's event class and match the field class, kind, bounds, and closed integer values. Event files cannot override registry privacy metadata.
 Checker: cargo +1.98.0 run -p xtask -- contracts validate
 Corpus: positive committed constitution plus fixtures for missing, duplicate, unknown, stale-path, and unresolved-symbol cases.
 ```

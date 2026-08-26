@@ -114,6 +114,17 @@ pub struct PixelSize {
     pub height: u32,
 }
 
+/// Describes a headless viewport and its raster mapping.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct HeadlessMetrics {
+    /// Viewport size in logical pixels.
+    pub logical_size: Size,
+    /// Raster size in physical pixels.
+    pub physical_size: PixelSize,
+    /// Physical pixels per logical pixel.
+    pub device_pixel_ratio: f32,
+}
+
 /// Selects the byte layout of a headless raster.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum PixelFormat {
@@ -522,19 +533,114 @@ pub enum EditCommand {
     SelectAll,
 }
 
+/// Describes one attributed input method editor text segment.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct ImeTextSegment {
+    /// Segment range in checked logical indices.
+    pub range: TextRange,
+    /// Closed platform-independent attribute mask.
+    pub attributes: u64,
+}
+
+/// Selects a normalized input method editor action.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ImeAction {
+    /// Inserts or replaces text.
+    Insert,
+    /// Sets or updates marked text.
+    SetMarked,
+    /// Clears marked state without committing text.
+    Unmark,
+    /// Commits the active composition.
+    Commit,
+    /// Cancels the active composition.
+    Cancel,
+    /// Deletes surrounding text.
+    DeleteSurrounding,
+    /// Transfers input method editor focus.
+    FocusTransfer,
+    /// Reports a platform-specific lock or layout transition.
+    PlatformTransition,
+}
+
+/// Selects a bidirectional input method editor query.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ImeQueryKind {
+    /// Requests bounded surrounding text and attributes.
+    SurroundingText,
+    /// Requests text and attributes for one range.
+    AttributedText,
+    /// Requests the text index at a view-local point.
+    CharacterIndexAtPoint,
+    /// Requests geometry for one text range.
+    TextRect,
+    /// Requests selection and marked-range state.
+    SelectionState,
+    /// Requests input-context and sensitive-field state.
+    InputContext,
+}
+
+/// Describes one checked input method editor query.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct ImeQuery {
+    /// Query generation acknowledged exactly once.
+    pub generation: u64,
+    /// Query kind.
+    pub kind: ImeQueryKind,
+    /// Optional checked query range.
+    pub range: Option<TextRange>,
+    /// Optional query point; ignored for non-point queries.
+    pub point: Point,
+    /// Maximum logical text units permitted in the response.
+    pub maximum_units: u32,
+}
+
+/// Owns one bounded input method editor query result.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ImeQueryResult {
+    /// Checked range represented by the returned text, if any.
+    pub text_range: Option<TextRange>,
+    /// Returned text, bounded by the query.
+    pub text: String,
+    /// Returned attributed segments.
+    pub segments: Vec<ImeTextSegment>,
+    /// Current selection.
+    pub selection: Selection,
+    /// Current marked range, if any.
+    pub marked: Option<TextRange>,
+    /// Candidate or queried text rectangle.
+    pub text_rect: Rect,
+    /// Checked character index returned for a point query, if any.
+    pub character_index: Option<TextIndex>,
+    /// Closed input-context identifier.
+    pub input_context: u32,
+    /// True when the active field contains sensitive content.
+    pub sensitive_field: bool,
+}
+
 /// Describes one input method editor transaction.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct ImeTransaction {
     /// Monotonic transaction generation.
     pub generation: u64,
-    /// Replacement range in the declared native index unit.
-    pub replacement: TextRange,
+    /// Replacement range, if the platform supplied one.
+    pub replacement: Option<TextRange>,
     /// Marked or committed text.
     pub text: String,
     /// Selection after applying the transaction.
     pub selection: Selection,
     /// Marked range after applying the transaction, if any.
     pub marked: Option<TextRange>,
+    /// Normalized action represented by the transaction.
+    pub action: ImeAction,
+    /// Closed input-context identifier.
+    pub input_context: u32,
+    /// True when the active field contains sensitive content.
+    pub sensitive_field: bool,
+    /// Attributed composition segments.
+    pub segments: Vec<ImeTextSegment>,
+    /// Candidate-window rectangle in view-local logical pixels.
+    pub candidate_rect: Rect,
 }
 
 /// Selects an accessibility action result.
@@ -559,10 +665,18 @@ pub struct SemanticsNode {
     pub role: u32,
     /// Closed state and capability mask.
     pub states: u64,
+    /// Closed action mask.
+    pub actions: u64,
     /// Human-visible value; diagnostics must not copy it.
     pub value: String,
     /// Human-visible label; diagnostics must not copy it.
     pub label: String,
+    /// Human-visible hint; diagnostics must not copy it.
+    pub hint: String,
+    /// Human-visible tooltip; diagnostics must not copy it.
+    pub tooltip: String,
+    /// Stable application-provided identifier.
+    pub identifier: String,
     /// View-local bounds.
     pub bounds: Rect,
     /// Node transform.
@@ -571,6 +685,10 @@ pub struct SemanticsNode {
     pub traversal_children: Vec<SemanticsNodeId>,
     /// Hit-test-order children.
     pub hit_test_children: Vec<SemanticsNodeId>,
+    /// Nodes that label this node.
+    pub labelled_by: Vec<SemanticsNodeId>,
+    /// Nodes that describe this node.
+    pub described_by: Vec<SemanticsNodeId>,
     /// Current text selection, if applicable.
     pub selection: Option<Selection>,
     /// Scroll position and extent, if applicable.
@@ -579,8 +697,14 @@ pub struct SemanticsNode {
     pub language: String,
     /// Logical text direction.
     pub direction: TextDirection,
+    /// Heading level, or zero when the node isn't a heading.
+    pub heading_level: u32,
     /// True for an accessibility live region.
     pub live_region: bool,
+    /// True when this node owns input focus.
+    pub input_focus: bool,
+    /// True when this node owns accessibility focus.
+    pub accessibility_focus: bool,
     /// True when hidden from accessibility.
     pub hidden: bool,
     /// True when interaction is disabled.
@@ -595,7 +719,9 @@ pub trait ApplicationRuntime {
     fn create_view(&mut self, metrics: ViewMetrics) -> Result<ViewId, OxyError>;
 
     /// Creates a view that renders without an interactive display connection.
-    fn create_headless_view(&mut self, physical_size: PixelSize) -> Result<ViewId, OxyError>;
+    ///
+    /// The device-pixel ratio must be finite and positive. Each physical extent must equal its logical extent multiplied by the ratio and rounded to the nearest integer, with half values rounded away from zero.
+    fn create_headless_view(&mut self, metrics: HeadlessMetrics) -> Result<ViewId, OxyError>;
 
     /// Tears down a view and rejects later work for its generation.
     fn destroy_view(&mut self, view: ViewId) -> Result<(), OxyError>;
@@ -771,6 +897,9 @@ pub trait Canvas {
     /// Draws a reusable immutable picture under a transform.
     fn draw_picture(&mut self, picture: ResourceId, transform: Transform) -> Result<(), OxyError>;
 
+    /// Draws an immutable text layout at a logical origin.
+    fn draw_text_layout(&mut self, layout: TextLayoutId, origin: Point) -> Result<(), OxyError>;
+
     /// Begins a retained compositing layer for opacity, clips, or backdrop effects.
     fn begin_layer(&mut self, bounds: Rect, paint: &Paint) -> Result<(), OxyError>;
 
@@ -905,6 +1034,9 @@ pub trait EditableText {
 
     /// Returns the candidate-window rectangle for a checked text position.
     fn candidate_rect(&self, index: TextIndex, affinity: TextAffinity) -> Result<Rect, OxyError>;
+
+    /// Answers one bounded input method editor query without exposing content to diagnostics.
+    fn query_ime(&self, query: ImeQuery) -> Result<ImeQueryResult, OxyError>;
 
     /// Reverts the most recent committed edit.
     fn undo(&mut self) -> Result<(), OxyError>;

@@ -1,13 +1,13 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:oxyflut:schema:platform-contracts:2",
+  "$id": "urn:oxyflut:schema:platform-contracts:3",
   "title": "Oxyflut platform qualification contracts",
   "type": "object",
   "additionalProperties": false,
   "required": ["schemaVersion", "environments"],
   "properties": {
     "$schema": { "type": "string" },
-    "schemaVersion": { "const": "2.0.0" },
+    "schemaVersion": { "const": "3.0.0" },
     "environments": {
       "type": "object",
       "additionalProperties": false,
@@ -29,15 +29,40 @@
       "minItems": 1,
       "uniqueItems": true
     },
+    "openQuestionSet": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
     "contractRef": {
       "type": "object",
       "additionalProperties": false,
       "required": ["status", "path", "sha256"],
       "properties": {
         "status": { "$ref": "#/$defs/status" },
-        "path": { "type": ["string", "null"] },
+        "path": { "type": ["string", "null"], "minLength": 1 },
         "sha256": { "type": ["string", "null"], "pattern": "^[0-9a-f]{64}$" }
-      }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "status": { "const": "kk" } },
+            "required": ["status"]
+          },
+          "then": {
+            "properties": {
+              "path": { "type": "string", "minLength": 1 },
+              "sha256": { "$ref": "#/$defs/sha256" }
+            }
+          },
+          "else": {
+            "properties": {
+              "path": { "type": "null" },
+              "sha256": { "type": "null" }
+            }
+          }
+        }
+      ]
     },
     "ime": {
       "type": "object",
@@ -117,6 +142,7 @@
       "type": "object",
       "additionalProperties": false,
       "required": [
+        "status",
         "reference",
         "minimumVersion",
         "protocols",
@@ -128,6 +154,7 @@
         "openQuestions"
       ],
       "properties": {
+        "status": { "$ref": "#/$defs/status" },
         "reference": { "type": "string", "minLength": 1 },
         "minimumVersion": {
           "type": "object",
@@ -136,7 +163,19 @@
           "properties": {
             "status": { "$ref": "#/$defs/status" },
             "value": { "type": ["string", "null"] }
-          }
+          },
+          "allOf": [
+            {
+              "if": {
+                "properties": { "status": { "const": "kk" } },
+                "required": ["status"]
+              },
+              "then": {
+                "properties": { "value": { "type": "string", "minLength": 1 } }
+              },
+              "else": { "properties": { "value": { "type": "null" } } }
+            }
+          ]
         },
         "protocols": {
           "type": "array",
@@ -148,7 +187,21 @@
               "name": { "type": "string", "minLength": 1 },
               "version": { "type": ["string", "null"] },
               "status": { "$ref": "#/$defs/status" }
-            }
+            },
+            "allOf": [
+              {
+                "if": {
+                  "properties": { "status": { "const": "kk" } },
+                  "required": ["status"]
+                },
+                "then": {
+                  "properties": {
+                    "version": { "type": "string", "minLength": 1 }
+                  }
+                },
+                "else": { "properties": { "version": { "type": "null" } } }
+              }
+            ]
           },
           "minItems": 1
         },
@@ -173,8 +226,75 @@
             "integrated": { "$ref": "#/$defs/allocation" }
           }
         },
-        "openQuestions": { "$ref": "#/$defs/stringSet" }
-      }
+        "openQuestions": { "$ref": "#/$defs/openQuestionSet" }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "status": { "const": "kk" } },
+            "required": ["status"]
+          },
+          "then": {
+            "properties": {
+              "openQuestions": { "type": "array", "maxItems": 0 },
+              "minimumVersion": {
+                "type": "object",
+                "properties": { "status": { "const": "kk" } }
+              },
+              "protocols": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": { "status": { "const": "kk" } }
+                }
+              },
+              "ime": {
+                "type": "object",
+                "properties": { "status": { "const": "kk" } }
+              },
+              "timing": {
+                "type": "object",
+                "properties": { "status": { "const": "kk" } }
+              },
+              "recoveryBaseline": {
+                "type": "object",
+                "properties": { "status": { "const": "kk" } }
+              },
+              "accessibilityMaps": {
+                "type": "object",
+                "properties": {
+                  "focused": {
+                    "type": "object",
+                    "properties": { "status": { "const": "kk" } }
+                  },
+                  "integrated": {
+                    "type": "object",
+                    "properties": { "status": { "const": "kk" } }
+                  }
+                }
+              },
+              "allocations": {
+                "type": "object",
+                "properties": {
+                  "focused": {
+                    "type": "object",
+                    "properties": { "status": { "const": "kk" } }
+                  },
+                  "integrated": {
+                    "type": "object",
+                    "properties": { "status": { "const": "kk" } }
+                  }
+                }
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "openQuestions": { "type": "array", "minItems": 1 }
+            }
+          }
+        }
+      ]
     }
   }
 }

@@ -2,6 +2,13 @@
 
 All notable changes to the Stage 4 execution plan appear in this file.
 
+## [v0.2.1] - 2026-08-26
+
+### Fixed
+
+- Required superseded-schema fixtures, canonical link-target validation, and artifact-root confinement in the contract validators.
+- Aligned native-tool resolution acceptance with the expanded qualification-lock tool entries.
+
 ## [v0.2.0] - 2026-08-26
 
 ### Added

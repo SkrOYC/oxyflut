@@ -5,7 +5,7 @@
 
 ## Context
 
-Both substrate candidates cross a Rust and C or C++ boundary, but forcing both through another shared C wrapper would distort the focused candidate. Candidate symmetry requires one Rust ownership, callback, error, view, frame, scene, semantics, and recovery contract.
+Both substrate candidates cross a Rust and C or C++ boundary, but forcing both through another shared C wrapper would distort the focused candidate. Candidate symmetry requires one Rust ownership, callback, error, view, frame, scene, paragraph, bidirectional input method editor, semantics, and recovery contract.
 
 ## Decision
 

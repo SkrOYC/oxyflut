@@ -1,7 +1,7 @@
 {
   "$schema": "../data-models/capability-traceability.schema.json",
   "schemaVersion": "1.0.0",
-  "specificationVersion": "0.3.0",
+  "specificationVersion": "0.4.0",
   "mappings": [
     {
       "capabilityId": "CAP-CMP-001",
@@ -281,7 +281,13 @@
         "contracts/oxyflut-substrate.h",
         "contracts/platform-contracts.json"
       ],
-      "symbols": ["TextEngine", "EditableText", "TextRun", "TextHit"],
+      "symbols": [
+        "TextEngine",
+        "EditableText",
+        "TextRun",
+        "TextHit",
+        "Canvas::draw_text_layout"
+      ],
       "contractTests": ["contract::cap_txt_001"]
     },
     {
@@ -320,7 +326,13 @@
         "contracts/oxyflut-substrate.h",
         "contracts/platform-contracts.json"
       ],
-      "symbols": ["EditableText::apply_ime", "ImeTransaction"],
+      "symbols": [
+        "EditableText::apply_ime",
+        "EditableText::query_ime",
+        "ImeTransaction",
+        "ImeQuery",
+        "ImeQueryResult"
+      ],
       "contractTests": ["contract::cap_ime_001"]
     },
     {

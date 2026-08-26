@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:oxyflut:schema:raw-measurement:1",
+  "$id": "urn:oxyflut:schema:raw-measurement:2",
   "title": "Oxyflut raw qualification measurements",
   "type": "object",
   "additionalProperties": false,
@@ -13,7 +13,7 @@
     "samples"
   ],
   "properties": {
-    "schemaVersion": { "const": "1.0.0" },
+    "schemaVersion": { "const": "2.0.0" },
     "candidate": { "enum": ["focused", "integrated"] },
     "environment": { "enum": ["macos", "windows", "wayland", "x11"] },
     "lockDigest": { "$ref": "#/$defs/sha256" },

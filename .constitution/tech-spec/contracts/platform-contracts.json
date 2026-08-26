@@ -1,8 +1,9 @@
 {
   "$schema": "../data-models/platform-contracts.schema.json",
-  "schemaVersion": "2.0.0",
+  "schemaVersion": "3.0.0",
   "environments": {
     "macos": {
+      "status": "ku-gating",
       "reference": "arm64 macOS with Xcode 26.6 build 17F113 and macOS 26.5 SDK",
       "minimumVersion": { "status": "ku-gating", "value": null },
       "protocols": [
@@ -131,6 +132,7 @@
       ]
     },
     "windows": {
+      "status": "ku-gating",
       "reference": "Windows 11 25H2 x86-64 with Visual Studio Build Tools 2022 17.14.39 and Windows SDK 10.0.26100.8876",
       "minimumVersion": { "status": "ku-gating", "value": null },
       "protocols": [
@@ -283,6 +285,7 @@
       ]
     },
     "wayland": {
+      "status": "ku-gating",
       "reference": "Ubuntu 26.04 LTS x86-64 Wayland session with locked GTK and Wayland packages",
       "minimumVersion": { "status": "ku-gating", "value": null },
       "protocols": [
@@ -423,6 +426,7 @@
       ]
     },
     "x11": {
+      "status": "ku-gating",
       "reference": "Ubuntu 26.04 LTS x86-64 X11 session with locked GTK and X11 packages",
       "minimumVersion": { "status": "ku-gating", "value": null },
       "protocols": [
