@@ -7,7 +7,7 @@
   "required": ["schemaVersion", "specificationVersion", "capabilities"],
   "properties": {
     "schemaVersion": { "const": "2.0.0" },
-    "specificationVersion": { "const": "0.7.0" },
+    "specificationVersion": { "const": "0.8.0" },
     "capabilities": {
       "type": "object",
       "additionalProperties": false,

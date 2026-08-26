@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:oxyflut:schema:accessibility-map:4",
+  "$id": "urn:oxyflut:schema:accessibility-map:5",
   "title": "Oxyflut platform accessibility map",
   "type": "object",
   "additionalProperties": false,
@@ -14,7 +14,7 @@
     "evidence"
   ],
   "properties": {
-    "schemaVersion": { "const": "4.0.0" },
+    "schemaVersion": { "const": "5.0.0" },
     "environment": { "enum": ["macos", "windows", "wayland", "x11"] },
     "candidate": { "enum": ["focused", "integrated"] },
     "epistemicStatus": { "enum": ["kk-complete", "ku-gating"] },
@@ -125,6 +125,7 @@
         "nativeIdentifier",
         "payloadEncoding",
         "textIndexUnit",
+        "textLayoutBinding",
         "targetRouting",
         "acknowledgement",
         "errorResult",
@@ -145,6 +146,7 @@
             "logical"
           ]
         },
+        "textLayoutBinding": { "type": "string", "minLength": 1 },
         "targetRouting": { "type": "string", "minLength": 1 },
         "acknowledgement": { "type": "string", "minLength": 1 },
         "errorResult": { "type": "string", "minLength": 1 },

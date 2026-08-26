@@ -2,6 +2,17 @@
 
 All notable changes to the technical specification appear in this file.
 
+## [v0.8.0] - 2026-08-26
+
+### Added
+
+- Bound semantics selections, attributed-text ranges, and indexed reverse actions to one immutable text-layout generation.
+
+### Changed
+
+- Advanced the integrated C ABI to version 7 for semantics text-layout identity.
+- Advanced accessibility maps to v5 before durable qualification evidence existed.
+
 ## [v0.7.0] - 2026-08-26
 
 ### Added

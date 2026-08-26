@@ -752,6 +752,8 @@ pub struct SemanticsNode {
     pub relations: Vec<SemanticsRelation>,
     /// Current text selection, if applicable.
     pub selection: Option<Selection>,
+    /// Immutable text layout that owns every selection and attributed-text index, if applicable.
+    pub text_layout: Option<TextLayoutId>,
     /// Scroll position and extent, if applicable.
     pub scroll: Option<(f32, f32, f32)>,
     /// BCP-47 language tag.
@@ -773,6 +775,8 @@ pub struct SemanticsNode {
     /// True when private text must be redacted.
     pub secure_field: bool,
 }
+
+// Contract invariant: A semantics node with selection or attributed text carries `text_layout`. Replacing that layout creates a new semantics-node generation before publishing ranges or routing indexed actions.
 
 /// Creates and owns the application runtime and its views.
 pub trait ApplicationRuntime {

@@ -14,6 +14,7 @@ Build the repository and validation foundation permitted before candidate implem
   - `rust-toolchain.toml`
   - `crates/*/Cargo.toml`
   - `crates/*/src/lib.rs`
+  - `crates/oxyflut-qualification/src/{schema,identifiers,readiness,evidence,hash,baseline,measurement,environment}.rs`
   - `xtask/Cargo.toml`
   - `xtask/src/main.rs`
   - `xtask/src/commands/*.rs`
@@ -29,7 +30,7 @@ Build the repository and validation foundation permitted before candidate implem
 - **STOP Conditions:**
   - STOP if a package requires behavior or an API not already present in `.constitution/tech-spec/`; don't invent it.
   - STOP if scaffolding would compile or link candidate code while `candidateImplementationReady` is false.
-- **Description:** Use Cargo CLI commands to create the edition-2024 workspace and package skeletons specified by the target repository structure. Pin Rust 1.98.0, resolver version 3, exact dependencies, warnings policy, and one workspace lockfile. Create the `xtask` command dispatcher and compile-safe placeholder modules for every command in `guidelines.md`; later tickets replace only their owned placeholder modules and don't edit `main.rs`. Other package bodies remain empty except for documentation and compile-safe placeholders.
+- **Description:** Use Cargo CLI commands to create the edition-2024 workspace and package skeletons specified by the target repository structure. Pin Rust 1.98.0, resolver version 3, exact dependencies, warnings policy, and one workspace lockfile. Create the `xtask` command dispatcher and compile-safe placeholder modules for every command in `guidelines.md`. Create and register compile-safe `oxyflut-qualification` placeholder modules for every later qualification ticket. Later tickets replace only their owned placeholder modules and don't edit `main.rs` or `lib.rs`. Other package bodies remain empty except for documentation and compile-safe placeholders.
 - **Acceptance:**
   - **Mode:** contract_test
   - **Evidence:**
@@ -52,6 +53,7 @@ Command: cargo +1.98.0 test --workspace --all-features
 - **Category:** Correctness
 - **Scope (In-Scope Files):**
   - `xtask/src/contracts/schema.rs`
+  - `xtask/src/contracts/{traceability,registries,readiness,digests,native}.rs`
   - `xtask/src/contracts/mod.rs`
   - `xtask/src/commands/contracts.rs`
   - `crates/oxyflut-qualification/src/schema.rs`
@@ -60,12 +62,12 @@ Command: cargo +1.98.0 test --workspace --all-features
   - `.constitution/tech-spec/data-models/*.json` (binding inputs; don't redesign)
   - `.constitution/tech-spec/contracts/*.json` (binding instances; don't weaken)
   - Candidate and platform crates
-- **Verification Command:** `cargo +1.98.0 run -p xtask -- contracts validate`
+- **Verification Command:** `cargo +1.98.0 test --workspace --all-features schema`
 - **Expected Success Output:** `exit 0` with every local schema compiled and every committed instance validated without network access
 - **STOP Conditions:**
   - STOP if a schema requires remote resolution; route the missing snapshot to OXY-C001 instead of enabling network resolution.
   - STOP if validation requires changing a schema's meaning; trigger a Stage 3 correction.
-- **Description:** Replace the OXY-A001 contracts command placeholder with the offline JSON Schema 2020-12 entry point. Implement schema compilation, local reference resolution, instance discovery, deterministic error ordering, and positive and negative fixtures for every durable Stage 3 shape.
+- **Description:** Replace the OXY-A001 contracts command placeholder with the offline JSON Schema 2020-12 entry point. Create and register compile-safe placeholder validator modules for OXY-A003, OXY-A004, and OXY-A005 so their code is compiled before OXY-A007 aggregates execution. Implement schema compilation, local reference resolution, instance discovery, deterministic error ordering, and positive and negative fixtures for every durable Stage 3 shape.
 - **Acceptance:**
   - **Mode:** contract_test
   - **Evidence:**
@@ -77,7 +79,7 @@ Assertions:
 - Network and undeclared schema resolution fail closed.
 - Invalid type, required-field, enum, additional-property, and conditional fixtures fail with stable paths.
 - Superseded pre-evidence schema identities have explicit rejection and supersession fixtures; migrations preserve source bytes after durable evidence exists.
-Command: cargo +1.98.0 run -p xtask -- contracts validate
+Command: cargo +1.98.0 test --workspace --all-features schema
 ```
 
 #### OXY-A003 Validate exact upstream sets and registries
@@ -95,7 +97,7 @@ Command: cargo +1.98.0 run -p xtask -- contracts validate
   - `.constitution/prd/` (binding input)
   - `.constitution/architecture/` (binding input)
   - `.constitution/tech-spec/contracts/capability-traceability.json` (don't add exceptions)
-- **Verification Command:** `cargo +1.98.0 run -p xtask -- contracts validate`
+- **Verification Command:** `cargo +1.98.0 test -p xtask contracts::traceability`
 - **Expected Success Output:** `exit 0` with exact PRD, architecture, traceability, diagnostic, and evidence ID sets
 - **STOP Conditions:**
   - STOP if the three 52-capability sets differ; report the owning upstream stage rather than normalizing the mismatch.
@@ -106,9 +108,9 @@ Command: cargo +1.98.0 run -p xtask -- contracts validate
   - **Evidence:**
 
 ```text
-Invariant: No identifier, file-qualified contract binding, canonical artifact path, canonical link target, or raw-sample key can be missing, duplicated, renamed, or added in one downstream set without the authoritative upstream set changing first. Each declared physical contract has exactly one binding with one or more symbols that resolve inside that file. Every nested KK platform claim resolves at least one immutable evidence path and digest. A KK platform accessibility reference resolves to the matching environment and candidate, has the declared digest, contains every required semantics category, and has no nested KU. Hardlinks resolve to regular-file entries with equal size and digest; symlinks remain inside the artifact root; regular files carry no link target. Diagnostic values must resolve to the registry's event class and match the field class, kind, bounds, and closed integer values. Event files cannot override registry privacy metadata.
-Checker: cargo +1.98.0 run -p xtask -- contracts validate
-Corpus: positive committed constitution plus fixtures for missing, duplicate, unknown, stale-path, omitted required capability-to-contract edge, unresolved file-qualified symbol, missing or mismatched nested KK evidence, mismatched accessibility identity or digest, nested accessibility KU, empty or trailing path segments, duplicate separators, and control-character paths.
+Invariant: No identifier, file-qualified contract binding, canonical artifact path, canonical link target, or raw-sample key can be missing, duplicated, renamed, or added in one downstream set without the authoritative upstream set changing first. Each declared physical contract has exactly one binding with one or more symbols that resolve inside that file. Every nested KK platform claim resolves at least one immutable evidence path and digest. A KK platform accessibility reference resolves to the matching environment and candidate, has the declared digest, contains every required semantics category, has no nested KU, and binds each indexed reverse action to the live node's immutable text-layout generation. Hardlinks resolve to regular-file entries with equal size and digest; symlinks remain inside the artifact root; regular files carry no link target. Diagnostic values must resolve to the registry's event class and match the field class, kind, bounds, and closed integer values. Event files cannot override registry privacy metadata.
+Checker: cargo +1.98.0 test -p xtask contracts::traceability
+Corpus: positive committed constitution plus fixtures for missing, duplicate, unknown, stale-path, omitted required capability-to-contract edge, unresolved file-qualified symbol, missing or mismatched nested KK evidence, mismatched accessibility identity or digest, nested accessibility KU, stale accessibility text-layout generation, empty or trailing path segments, duplicate separators, and control-character paths.
 ```
 
 #### OXY-A004 Enforce readiness, promotion, and immutable evidence bindings
@@ -125,7 +127,7 @@ Corpus: positive committed constitution plus fixtures for missing, duplicate, un
   - Candidate source trees
   - `.constitution/tech-spec/data-models/qualification-lock.schema.json` (don't weaken the gate)
   - `.constitution/tech-spec/data-models/specification-phase.schema.json` (don't weaken promotion)
-- **Verification Command:** `cargo +1.98.0 run -p xtask -- contracts validate`
+- **Verification Command:** `cargo +1.98.0 test -p xtask contracts::readiness`
 - **Expected Success Output:** `exit 0`, with negative fixtures proving that unresolved readiness and fabricated promotion fail
 - **STOP Conditions:**
   - STOP if a referenced file is absent or its SHA-256 differs; don't regenerate or accept it implicitly.
@@ -141,7 +143,7 @@ Invariants:
 - candidateImplementationReady cannot become true while any nested KK platform claim lacks resolvable digest-bound evidence.
 - measurementReady cannot become true without candidateImplementationReady and final candidate source identities.
 - productionReady cannot become true without every typed Phase 3B promotion artifact resolving to the same lock, candidate, and Stage 3 version.
-Checker: cargo +1.98.0 run -p xtask -- contracts validate
+Checker: cargo +1.98.0 test -p xtask contracts::readiness
 ```
 
 #### OXY-A008 Resolve the native contract toolchain
@@ -181,7 +183,7 @@ Command: cargo +1.98.0 test --workspace --all-features
 
 - **Type:** Chore
 - **Effort:** 5
-- **Dependencies:** OXY-A008
+- **Dependencies:** OXY-A002, OXY-A008
 - **Category:** Correctness
 - **Scope (In-Scope Files):**
   - `xtask/src/contracts/native.rs`
@@ -191,7 +193,7 @@ Command: cargo +1.98.0 test --workspace --all-features
   - `native/engine-bridge/` (don't implement the bridge)
   - Candidate adapter crates
   - `.constitution/tech-spec/contracts/oxyflut-substrate.h` (authoritative input)
-- **Verification Command:** `cargo +1.98.0 run -p xtask -- contracts validate`
+- **Verification Command:** `cargo +1.98.0 test -p xtask contracts::native`
 - **Expected Success Output:** `exit 0` after C11, C++17, generated-binding, calling-convention, symbol, and layout checks
 - **STOP Conditions:**
   - STOP if the staged tool manifest is absent, incomplete, or differs from any resolved executable; return to OXY-A008 instead of substituting a tool.
@@ -208,7 +210,7 @@ Assertions:
 - ABI table prefix, struct_size, abi_version, OXY_CALL, OXY_EXPORT, opaque handles, and callback signatures match fixtures.
 - Native IME index-unit constants match the Rust enum and platform-contract strings; unknown numeric values fail before range conversion.
 - Deliberate layout and symbol mutations fail.
-Command: cargo +1.98.0 run -p xtask -- contracts validate
+Command: cargo +1.98.0 test -p xtask contracts::native
 ```
 
 #### OXY-A006 Implement canonical evidence writing and hashing

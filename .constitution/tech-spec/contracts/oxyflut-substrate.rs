@@ -21,6 +21,10 @@ pub struct DisplayEpoch(pub u64);
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub struct ResourceGeneration(pub u64);
 
+/// Identifies one immutable text layout generation.
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+pub struct TextLayoutGeneration(pub u64);
+
 /// Stores a point in logical pixels.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Point {
@@ -361,6 +365,8 @@ pub struct SemanticsNode {
     pub relations: Vec<SemanticsRelation>,
     /// Checked UTF-16 selection, if applicable.
     pub selection_utf16: Option<(u32, u32)>,
+    /// Immutable text layout that owns every selection and attributed-text index, if applicable.
+    pub text_layout: Option<TextLayoutGeneration>,
     /// Scroll position and extents, if applicable.
     pub scroll: Option<SemanticsScroll>,
     /// Heading level, or zero when the node isn't a heading.
@@ -382,6 +388,8 @@ pub struct SemanticsNode {
     /// True when private text is redacted.
     pub secure_field: bool,
 }
+
+// Contract invariant: A semantics node with selection or attributed text carries `text_layout`. Replacing that layout requires a new node generation before publishing ranges or routing indexed actions.
 
 /// Selects a recoverable fault mechanism.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]

@@ -8,7 +8,7 @@
   "properties": {
     "$schema": { "type": "string" },
     "schemaVersion": { "const": "2.0.0" },
-    "specificationVersion": { "const": "0.7.0" },
+    "specificationVersion": { "const": "0.8.0" },
     "mappings": {
       "type": "array",
       "minItems": 52,

@@ -2,6 +2,13 @@
 
 All notable changes to the Stage 4 execution plan appear in this file.
 
+## [v0.2.5] - 2026-08-26
+
+### Fixed
+
+- Registered compile-safe command, crate, and validator placeholders before later tickets replace them.
+- Gave pre-aggregation validator tickets direct module-test commands and made native validation depend on schema scaffolding.
+
 ## [v0.2.4] - 2026-08-26
 
 ### Fixed

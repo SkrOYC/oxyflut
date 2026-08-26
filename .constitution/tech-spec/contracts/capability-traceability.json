@@ -1,7 +1,7 @@
 {
   "$schema": "../data-models/capability-traceability.schema.json",
   "schemaVersion": "2.0.0",
-  "specificationVersion": "0.7.0",
+  "specificationVersion": "0.8.0",
   "mappings": [
     {
       "capabilityId": "CAP-CMP-001",
@@ -644,7 +644,9 @@
             "SemanticsNode.attributed_text",
             "SemanticsRelation",
             "SemanticsRelationKind",
-            "SemanticsNode.relations"
+            "SemanticsNode.relations",
+            "TextLayoutId",
+            "SemanticsNode.text_layout"
           ]
         },
         {
@@ -659,7 +661,9 @@
             "SemanticsNode.attributed_text",
             "SemanticsRelation",
             "SemanticsRelationKind",
-            "SemanticsNode.relations"
+            "SemanticsNode.relations",
+            "TextLayoutGeneration",
+            "SemanticsNode.text_layout"
           ]
         },
         {
@@ -674,7 +678,9 @@
             "OxySemanticsNode.attributed_text_segments",
             "OxySemanticsRelation",
             "OxySemanticsRelationKind",
-            "OxySemanticsNode.relations"
+            "OxySemanticsNode.relations",
+            "OxySemanticsNode.text_layout_generation",
+            "OxySemanticsNode.has_text_layout"
           ]
         },
         {
@@ -705,7 +711,9 @@
             "SemanticsNode.attributed_text",
             "SemanticsRelation",
             "SemanticsRelationKind",
-            "SemanticsNode.relations"
+            "SemanticsNode.relations",
+            "TextLayoutId",
+            "SemanticsNode.text_layout"
           ]
         },
         {
@@ -720,7 +728,9 @@
             "SemanticsNode.attributed_text",
             "SemanticsRelation",
             "SemanticsRelationKind",
-            "SemanticsNode.relations"
+            "SemanticsNode.relations",
+            "TextLayoutGeneration",
+            "SemanticsNode.text_layout"
           ]
         },
         {
@@ -735,7 +745,9 @@
             "OxySemanticsNode.attributed_text_segments",
             "OxySemanticsRelation",
             "OxySemanticsRelationKind",
-            "OxySemanticsNode.relations"
+            "OxySemanticsNode.relations",
+            "OxySemanticsNode.text_layout_generation",
+            "OxySemanticsNode.has_text_layout"
           ]
         },
         {

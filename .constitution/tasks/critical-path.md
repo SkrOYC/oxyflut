@@ -1,6 +1,6 @@
 # Qualification planning critical path
 
-- **Version:** v0.2.4
+- **Version:** v0.2.5
 - **Active story points:** 77
 - **Active phase:** Pre-implementation qualification foundation and decision research
 
@@ -27,6 +27,7 @@ flowchart LR
     A001 --> A008[OXY-A008]
     A008 --> A005[OXY-A005]
     A002 --> A003[OXY-A003]
+    A002 --> A005
     A002 --> A006[OXY-A006]
     A002 --> C001[OXY-C001]
     A003 --> A004[OXY-A004]
