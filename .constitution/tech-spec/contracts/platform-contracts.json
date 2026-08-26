@@ -1,13 +1,22 @@
 {
   "$schema": "../data-models/platform-contracts.schema.json",
-  "schemaVersion": "3.0.0",
+  "schemaVersion": "4.0.0",
   "environments": {
     "macos": {
       "status": "ku-gating",
       "reference": "arm64 macOS with Xcode 26.6 build 17F113 and macOS 26.5 SDK",
-      "minimumVersion": { "status": "ku-gating", "value": null },
+      "minimumVersion": {
+        "status": "ku-gating",
+        "value": null,
+        "evidence": []
+      },
       "protocols": [
-        { "name": "AppKit SDK", "version": "26.5", "status": "kk" }
+        {
+          "name": "AppKit SDK",
+          "version": null,
+          "status": "ku-gating",
+          "evidence": []
+        }
       ],
       "ime": {
         "status": "ku-gating",
@@ -43,18 +52,28 @@
           "replacement range",
           "candidate geometry",
           "secure field"
-        ]
+        ],
+        "evidence": []
       },
       "accessibilityMaps": {
-        "focused": { "status": "ku-gating", "path": null, "sha256": null },
-        "integrated": { "status": "ku-gating", "path": null, "sha256": null }
+        "focused": {
+          "status": "ku-gating",
+          "path": null,
+          "sha256": null
+        },
+        "integrated": {
+          "status": "ku-gating",
+          "path": null,
+          "sha256": null
+        }
       },
       "timing": {
         "status": "ku-gating",
         "interactiveOpportunitySource": "NSView displayLink(target:selector:) associated with the target view",
         "independentMeterSource": "A separate harness-owned NSView, NSWindow, or NSScreen display link associated with the target display; independence must be proven",
         "presentationFeedback": "selected Metal presentation feedback path",
-        "perDisplayAssociation": "Bind and migrate each view and observer to its current NSScreen"
+        "perDisplayAssociation": "Bind and migrate each view and observer to its current NSScreen",
+        "evidence": []
       },
       "recoveryBaseline": {
         "status": "ku-gating",
@@ -87,7 +106,8 @@
             "independent timing proof",
             "recovery baseline",
             "multi-view service routing"
-          ]
+          ],
+          "evidence": []
         },
         "integrated": {
           "status": "ku-gating",
@@ -120,7 +140,8 @@
             "independent timing proof",
             "recovery baseline",
             "multi-view service routing"
-          ]
+          ],
+          "evidence": []
         }
       },
       "openQuestions": [
@@ -128,24 +149,36 @@
         "complete IME mapping",
         "complete accessibility maps for both candidates",
         "independence of the external timing observer",
-        "injectable recovery mechanisms"
+        "injectable recovery mechanisms",
+        "immutable evidence for every status-bearing platform claim"
       ]
     },
     "windows": {
       "status": "ku-gating",
       "reference": "Windows 11 25H2 x86-64 with Visual Studio Build Tools 2022 17.14.39 and Windows SDK 10.0.26100.8876",
-      "minimumVersion": { "status": "ku-gating", "value": null },
+      "minimumVersion": {
+        "status": "ku-gating",
+        "value": null,
+        "evidence": []
+      },
       "protocols": [
-        { "name": "Windows SDK", "version": "10.0.26100.8876", "status": "kk" },
+        {
+          "name": "Windows SDK",
+          "version": null,
+          "status": "ku-gating",
+          "evidence": []
+        },
         {
           "name": "Text Services Framework",
           "version": null,
-          "status": "ku-gating"
+          "status": "ku-gating",
+          "evidence": []
         },
         {
           "name": "Microsoft UI Automation",
           "version": null,
-          "status": "ku-gating"
+          "status": "ku-gating",
+          "evidence": []
         }
       ],
       "ime": {
@@ -185,18 +218,28 @@
           "replacement range",
           "candidate geometry",
           "secure field"
-        ]
+        ],
+        "evidence": []
       },
       "accessibilityMaps": {
-        "focused": { "status": "ku-gating", "path": null, "sha256": null },
-        "integrated": { "status": "ku-gating", "path": null, "sha256": null }
+        "focused": {
+          "status": "ku-gating",
+          "path": null,
+          "sha256": null
+        },
+        "integrated": {
+          "status": "ku-gating",
+          "path": null,
+          "sha256": null
+        }
       },
       "timing": {
         "status": "ku-gating",
         "interactiveOpportunitySource": "per-output IDXGIOutput::WaitForVBlank worker observation or a proven equivalent",
         "independentMeterSource": "separate harness-owned per-output IDXGIOutput::WaitForVBlank observation",
         "presentationFeedback": "selected DXGI swap-chain presentation statistics or equivalent external acknowledgement",
-        "perDisplayAssociation": "Resolve the view's current output and migrate both scheduling and observer ownership on topology change"
+        "perDisplayAssociation": "Resolve the view's current output and migrate both scheduling and observer ownership on topology change",
+        "evidence": []
       },
       "recoveryBaseline": {
         "status": "ku-gating",
@@ -240,7 +283,8 @@
             "independent timing proof",
             "recovery baseline",
             "multi-view service routing"
-          ]
+          ],
+          "evidence": []
         },
         "integrated": {
           "status": "ku-gating",
@@ -273,7 +317,8 @@
             "independent timing proof",
             "recovery baseline",
             "multi-view service routing"
-          ]
+          ],
+          "evidence": []
         }
       },
       "openQuestions": [
@@ -281,17 +326,37 @@
         "complete TSF mapping",
         "complete accessibility maps for both candidates",
         "independence and precision of per-output timing",
-        "injectable recovery mechanisms"
+        "injectable recovery mechanisms",
+        "immutable evidence for every status-bearing platform claim"
       ]
     },
     "wayland": {
       "status": "ku-gating",
       "reference": "Ubuntu 26.04 LTS x86-64 Wayland session with locked GTK and Wayland packages",
-      "minimumVersion": { "status": "ku-gating", "value": null },
+      "minimumVersion": {
+        "status": "ku-gating",
+        "value": null,
+        "evidence": []
+      },
       "protocols": [
-        { "name": "GTK", "version": "4.20", "status": "kk" },
-        { "name": "wp_presentation", "version": null, "status": "ku-gating" },
-        { "name": "AT-SPI", "version": null, "status": "ku-gating" }
+        {
+          "name": "GTK",
+          "version": null,
+          "status": "ku-gating",
+          "evidence": []
+        },
+        {
+          "name": "wp_presentation",
+          "version": null,
+          "status": "ku-gating",
+          "evidence": []
+        },
+        {
+          "name": "AT-SPI",
+          "version": null,
+          "status": "ku-gating",
+          "evidence": []
+        }
       ],
       "ime": {
         "status": "ku-gating",
@@ -328,18 +393,28 @@
           "replacement range",
           "candidate geometry",
           "secure field"
-        ]
+        ],
+        "evidence": []
       },
       "accessibilityMaps": {
-        "focused": { "status": "ku-gating", "path": null, "sha256": null },
-        "integrated": { "status": "ku-gating", "path": null, "sha256": null }
+        "focused": {
+          "status": "ku-gating",
+          "path": null,
+          "sha256": null
+        },
+        "integrated": {
+          "status": "ku-gating",
+          "path": null,
+          "sha256": null
+        }
       },
       "timing": {
         "status": "ku-gating",
         "interactiveOpportunitySource": "GdkFrameClock for host scheduling",
         "independentMeterSource": "unresolved compositor or DRM observer independent of both candidate callback streams",
         "presentationFeedback": "wp_presentation feedback",
-        "perDisplayAssociation": "Bind each surface to the entered output set and start a new display epoch on association change"
+        "perDisplayAssociation": "Bind each surface to the entered output set and start a new display epoch on association change",
+        "evidence": []
       },
       "recoveryBaseline": {
         "status": "ku-gating",
@@ -381,7 +456,8 @@
             "independent timing source",
             "recovery baseline",
             "multi-view service routing"
-          ]
+          ],
+          "evidence": []
         },
         "integrated": {
           "status": "ku-gating",
@@ -414,7 +490,8 @@
             "independent timing source",
             "recovery baseline",
             "multi-view service routing"
-          ]
+          ],
+          "evidence": []
         }
       },
       "openQuestions": [
@@ -422,17 +499,37 @@
         "complete IME mapping",
         "complete accessibility maps for both candidates",
         "independent presentation-opportunity source",
-        "injectable recovery mechanisms"
+        "injectable recovery mechanisms",
+        "immutable evidence for every status-bearing platform claim"
       ]
     },
     "x11": {
       "status": "ku-gating",
       "reference": "Ubuntu 26.04 LTS x86-64 X11 session with locked GTK and X11 packages",
-      "minimumVersion": { "status": "ku-gating", "value": null },
+      "minimumVersion": {
+        "status": "ku-gating",
+        "value": null,
+        "evidence": []
+      },
       "protocols": [
-        { "name": "GTK", "version": "4.20", "status": "kk" },
-        { "name": "X Present", "version": null, "status": "ku-gating" },
-        { "name": "AT-SPI", "version": null, "status": "ku-gating" }
+        {
+          "name": "GTK",
+          "version": null,
+          "status": "ku-gating",
+          "evidence": []
+        },
+        {
+          "name": "X Present",
+          "version": null,
+          "status": "ku-gating",
+          "evidence": []
+        },
+        {
+          "name": "AT-SPI",
+          "version": null,
+          "status": "ku-gating",
+          "evidence": []
+        }
       ],
       "ime": {
         "status": "ku-gating",
@@ -469,18 +566,28 @@
           "replacement range",
           "candidate geometry",
           "secure field"
-        ]
+        ],
+        "evidence": []
       },
       "accessibilityMaps": {
-        "focused": { "status": "ku-gating", "path": null, "sha256": null },
-        "integrated": { "status": "ku-gating", "path": null, "sha256": null }
+        "focused": {
+          "status": "ku-gating",
+          "path": null,
+          "sha256": null
+        },
+        "integrated": {
+          "status": "ku-gating",
+          "path": null,
+          "sha256": null
+        }
       },
       "timing": {
         "status": "ku-gating",
         "interactiveOpportunitySource": "GdkFrameClock for host scheduling",
         "independentMeterSource": "unresolved X Sync or DRM observer independent of both candidate callback streams",
         "presentationFeedback": "X Present complete events",
-        "perDisplayAssociation": "Resolve each window's current output and start a new display epoch on association change"
+        "perDisplayAssociation": "Resolve each window's current output and start a new display epoch on association change",
+        "evidence": []
       },
       "recoveryBaseline": {
         "status": "ku-gating",
@@ -523,7 +630,8 @@
             "independent timing source",
             "recovery baseline",
             "multi-view service routing"
-          ]
+          ],
+          "evidence": []
         },
         "integrated": {
           "status": "ku-gating",
@@ -556,7 +664,8 @@
             "independent timing source",
             "recovery baseline",
             "multi-view service routing"
-          ]
+          ],
+          "evidence": []
         }
       },
       "openQuestions": [
@@ -564,7 +673,8 @@
         "complete IME mapping",
         "complete accessibility maps for both candidates",
         "independent presentation-opportunity source",
-        "injectable recovery mechanisms"
+        "injectable recovery mechanisms",
+        "immutable evidence for every status-bearing platform claim"
       ]
     }
   }

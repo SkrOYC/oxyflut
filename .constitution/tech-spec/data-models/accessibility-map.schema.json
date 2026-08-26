@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:oxyflut:schema:accessibility-map:2",
+  "$id": "urn:oxyflut:schema:accessibility-map:3",
   "title": "Oxyflut platform accessibility map",
   "type": "object",
   "additionalProperties": false,
@@ -14,7 +14,7 @@
     "evidence"
   ],
   "properties": {
-    "schemaVersion": { "const": "2.0.0" },
+    "schemaVersion": { "const": "3.0.0" },
     "environment": { "enum": ["macos", "windows", "wayland", "x11"] },
     "candidate": { "enum": ["focused", "integrated"] },
     "epistemicStatus": { "enum": ["kk-complete", "ku-gating"] },
@@ -27,8 +27,12 @@
         "actions",
         "values",
         "labels",
+        "accessibleNames",
+        "descriptions",
         "hints",
+        "helpOrFullDescriptions",
         "tooltips",
+        "attributedText",
         "identifiers",
         "bounds",
         "transforms",
@@ -122,6 +126,7 @@
         "textIndexUnit",
         "targetRouting",
         "acknowledgement",
+        "errorResult",
         "staleTarget",
         "status"
       ],
@@ -140,6 +145,7 @@
         },
         "targetRouting": { "type": "string", "minLength": 1 },
         "acknowledgement": { "type": "string", "minLength": 1 },
+        "errorResult": { "type": "string", "minLength": 1 },
         "staleTarget": { "type": "string", "minLength": 1 },
         "status": { "enum": ["kk", "ku-gating"] }
       }

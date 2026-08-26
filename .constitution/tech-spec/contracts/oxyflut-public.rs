@@ -684,10 +684,18 @@ pub struct SemanticsNode {
     pub value: String,
     /// Human-visible label; diagnostics must not copy it.
     pub label: String,
+    /// Computed accessible name; diagnostics must not copy it.
+    pub accessible_name: String,
+    /// Distinct accessible description; diagnostics must not copy it.
+    pub description: String,
     /// Human-visible hint; diagnostics must not copy it.
     pub hint: String,
+    /// Platform help or full-description text; diagnostics must not copy it.
+    pub help: String,
     /// Human-visible tooltip; diagnostics must not copy it.
     pub tooltip: String,
+    /// Attributed accessible text runs; diagnostics must not copy their text.
+    pub attributed_text: Vec<ImeTextSegment>,
     /// Stable application-provided identifier.
     pub identifier: String,
     /// View-local bounds.

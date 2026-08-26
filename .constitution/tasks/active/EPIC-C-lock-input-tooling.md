@@ -75,13 +75,14 @@ Command: cargo +1.98.0 run -p xtask -- baseline validate --input PATH
 - **Category:** Correctness
 - **Scope (In-Scope Files):**
   - `crates/oxyflut-qualification/src/measurement.rs`
+  - `xtask/src/measurement.rs`
   - `qualification/fixtures/measurements/`
   - `qualification/fixtures/sample-validity/`
 - **Scope (Out-of-Scope Files):**
   - Candidate measurements
   - Statistical thresholds other than those already defined by the PRD
   - Outlier-removal logic
-- **Verification Command:** `cargo +1.98.0 run -p xtask -- baseline validate --input PATH`
+- **Verification Command:** `cargo +1.98.0 run -p xtask -- measurement validate --input PATH`
 - **Expected Success Output:** `exit 0` for complete templates and exit 1 for unapproved exclusions, missing raw samples, or altered meters
 - **STOP Conditions:**
   - STOP if a template drops outliers or introduces an exclusion outside the three PRD categories.
@@ -99,7 +100,7 @@ Assertions:
 - Only measurement-tool failure, unrelated operating-system interruption, and physical disconnect are valid exclusions.
 - Nearest-rank and maximum-bound inputs retain every valid observation without outlier deletion.
 - Templates bind to one environment, candidate, meter version, and lock digest.
-Command: cargo +1.98.0 run -p xtask -- baseline validate --input PATH
+Command: cargo +1.98.0 run -p xtask -- measurement validate --input PATH
 ```
 
 #### OXY-C004 Implement reference-environment inspection

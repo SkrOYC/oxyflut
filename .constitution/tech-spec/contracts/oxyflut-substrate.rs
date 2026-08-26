@@ -258,6 +258,15 @@ pub struct TextHit {
     pub inside: bool,
 }
 
+/// Describes one attributed semantics text segment.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct SemanticsTextSegment {
+    /// Checked segment range.
+    pub range: TextRange,
+    /// Closed platform-independent attribute mask.
+    pub attributes: u64,
+}
+
 /// Describes semantics scrolling state in logical units.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct SemanticsScroll {
@@ -284,10 +293,18 @@ pub struct SemanticsNode {
     pub value: String,
     /// Human-visible label; diagnostics cannot copy it.
     pub label: String,
+    /// Computed accessible name; diagnostics cannot copy it.
+    pub accessible_name: String,
+    /// Distinct accessible description; diagnostics cannot copy it.
+    pub description: String,
     /// Human-visible hint; diagnostics cannot copy it.
     pub hint: String,
+    /// Platform help or full-description text; diagnostics cannot copy it.
+    pub help: String,
     /// Human-visible tooltip; diagnostics cannot copy it.
     pub tooltip: String,
+    /// Attributed accessible text segments.
+    pub attributed_text: Vec<SemanticsTextSegment>,
     /// Stable application-provided identifier.
     pub identifier: String,
     /// View-local bounds.
@@ -400,6 +417,17 @@ pub struct NativeTextRange {
     pub end: u32,
 }
 
+/// Selects the index unit used by a platform input method editor.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum NativeTextIndexUnit {
+    /// UTF-8 byte offsets.
+    Utf8Bytes,
+    /// UTF-16 code-unit offsets.
+    Utf16Units,
+    /// Unicode scalar-value offsets.
+    UnicodeScalars,
+}
+
 /// Describes one attributed input method editor text segment.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct ImeTextSegment {
@@ -434,7 +462,7 @@ pub struct ImeRequest {
     /// Query kind.
     pub kind: ImeRequestKind,
     /// Native index unit expected by the platform.
-    pub native_index_unit: u32,
+    pub native_index_unit: NativeTextIndexUnit,
     /// Optional checked query range.
     pub range: Option<NativeTextRange>,
     /// Optional query point; ignored for non-point queries.
@@ -551,7 +579,7 @@ pub enum PlatformEvent<'a> {
         /// Closed transaction-kind identifier.
         kind: u32,
         /// Explicit native index unit.
-        native_index_unit: u32,
+        native_index_unit: NativeTextIndexUnit,
         /// Replacement range, or no range when the platform supplies negative sentinels.
         replacement: Option<NativeTextRange>,
         /// Selection after applying the transaction.

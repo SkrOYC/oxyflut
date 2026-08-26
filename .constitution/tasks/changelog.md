@@ -2,6 +2,13 @@
 
 All notable changes to the Stage 4 execution plan appear in this file.
 
+## [v0.2.3] - 2026-08-26
+
+### Fixed
+
+- Required file-qualified traceability resolution and immutable evidence for every nested KK platform claim.
+- Gave raw-measurement validation an independent command and matching `xtask` scope.
+
 ## [v0.2.2] - 2026-08-26
 
 ### Fixed

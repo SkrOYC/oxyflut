@@ -104,11 +104,11 @@ Use Conventional Commits. A commit that changes a public contract, ABI, schema, 
 
 ## Verification commands
 
-The following commands are the Stage 4 command contract. Only the documentation formatter exists in the repository at v0.5.0. Stage 4 can schedule implementation of the missing commands for qualification work only.
+The following commands are the Stage 4 command contract. Only the documentation formatter exists in the repository at v0.6.0. Stage 4 can schedule implementation of the missing commands for qualification work only.
 
 Qualification planning has three states. While `contracts/qualification-lock.json` has `candidateImplementationReady: false`, Stage 4 can plan only repository scaffolding, contract validators, evidence writers, external-schema snapshotting, environment discovery, baseline authoring, and pre-implementation lock finalization. When `candidateImplementationReady` becomes true, Stage 4 can plan both candidate adapters, the integrated engine changes, and the shared capability implementation against that frozen suite, but it cannot collect comparable or scored evidence. Evidence collection begins only after completed candidate sources and adapters are pinned and the lock validates with `measurementReady: true`. Changing a pre-implementation input resets both readiness flags and invalidates affected work; changing a source pin after measurement begins creates a new lock and restarts affected evidence.
 
-| Command | Purpose | Availability at v0.5.0 |
+| Command | Purpose | Availability at v0.6.0 |
 | :-- | :-- | :-- |
 | `bunx prettier@3.9.6 --prose-wrap never --check '.constitution/**/*.md'` | Check constitution formatting without hard wrapping. | Available. |
 | `cargo +1.98.0 fmt --all --check` | Check Rust formatting. | Missing until the workspace exists. |
@@ -118,6 +118,7 @@ Qualification planning has three states. While `contracts/qualification-lock.jso
 | `cargo +1.98.0 run -p xtask -- evidence verify PATH` | Verify one repository-relative evidence file, its schema or media type, canonical derived form when applicable, and every declared digest without rewriting preserved source bytes. Replace `PATH` with the evidence path. | Missing until the evidence writer exists. |
 | `cargo +1.98.0 run -p xtask -- external-contracts verify` | Verify every locally snapshotted SPDX, in-toto, SLSA, and DSSE contract and its pinned verifier against `contracts/external-contract-lock.json` without network resolution. | Missing until the snapshots and verifier adapters exist. |
 | `cargo +1.98.0 run -p xtask -- baseline validate --input PATH` | Validate one candidate-neutral capability, platform, accessibility, workload, scoring-anchor, corpus, or sample-validity baseline. Replace `PATH` with the baseline path. | Missing until baseline tooling exists. |
+| `cargo +1.98.0 run -p xtask -- measurement validate --input PATH` | Validate one raw-measurement or sample-validity record without executing a candidate measurement. Replace `PATH` with the record path. | Missing until measurement tooling exists. |
 | `cargo +1.98.0 run -p xtask -- environment inspect --environment ENVIRONMENT --output PATH` | Capture one content-bounded reference-environment inventory for `macos`, `windows`, `wayland`, or `x11`. Replace `ENVIRONMENT` and `PATH` with locked values. | Missing until environment collectors exist. |
 | `cargo +1.98.0 run -p xtask -- lock status --gate candidate-implementation` | Validate all pre-implementation inputs and report remaining KUs without changing either readiness flag. | Missing until readiness validation exists. |
 | `cargo +1.98.0 run -p xtask -- candidate build --candidate focused --locked` | Build the focused candidate from the qualification lock. | Missing until the adapter exists. |

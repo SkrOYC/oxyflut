@@ -1,14 +1,14 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:oxyflut:schema:capability-traceability:1",
+  "$id": "urn:oxyflut:schema:capability-traceability:2",
   "title": "Oxyflut capability traceability",
   "type": "object",
   "additionalProperties": false,
   "required": ["schemaVersion", "specificationVersion", "mappings"],
   "properties": {
     "$schema": { "type": "string" },
-    "schemaVersion": { "const": "1.0.0" },
-    "specificationVersion": { "const": "0.5.0" },
+    "schemaVersion": { "const": "2.0.0" },
+    "specificationVersion": { "const": "0.6.0" },
     "mappings": {
       "type": "array",
       "minItems": 52,
@@ -20,8 +20,7 @@
           "capabilityId",
           "crate",
           "architectureFlow",
-          "contracts",
-          "symbols",
+          "bindings",
           "contractTests"
         ],
         "properties": {
@@ -34,15 +33,9 @@
             "type": "string",
             "pattern": "^\\.constitution/architecture/flows/cap-[a-z0-9]+-[0-9]{3}\\.md$"
           },
-          "contracts": {
+          "bindings": {
             "type": "array",
-            "items": { "type": "string", "minLength": 1 },
-            "minItems": 1,
-            "uniqueItems": true
-          },
-          "symbols": {
-            "type": "array",
-            "items": { "type": "string", "minLength": 1 },
+            "items": { "$ref": "#/$defs/binding" },
             "minItems": 1,
             "uniqueItems": true
           },
@@ -55,6 +48,22 @@
             "minItems": 1,
             "uniqueItems": true
           }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["contract", "symbols"],
+      "properties": {
+        "contract": { "type": "string", "minLength": 1 },
+        "symbols": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "minItems": 1,
+          "uniqueItems": true
         }
       }
     }

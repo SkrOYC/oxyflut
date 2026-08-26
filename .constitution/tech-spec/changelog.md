@@ -2,6 +2,21 @@
 
 All notable changes to the technical specification appear in this file.
 
+## [v0.6.0] - 2026-08-26
+
+### Added
+
+- Added distinct accessible name, description, help, and attributed-text properties plus reverse-action errors to semantics contracts and accessibility maps.
+- Added immutable evidence references to every status-bearing platform claim.
+- Added file-qualified symbol bindings to capability traceability.
+- Added a closed native input method editor index-unit enum shared by Rust, C, and platform contracts.
+
+### Changed
+
+- Advanced the integrated C ABI to version 5 for the expanded semantics-node layout and native index-unit constants.
+- Advanced accessibility maps to v3, platform contracts to v4, and capability traceability to v2 before durable qualification evidence existed.
+- Downgraded platform protocol claims without committed immutable evidence from KK to KU.
+
 ## [v0.5.0] - 2026-08-26
 
 ### Added

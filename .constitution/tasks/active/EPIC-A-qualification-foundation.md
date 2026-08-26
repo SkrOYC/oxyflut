@@ -97,15 +97,15 @@ Command: cargo +1.98.0 run -p xtask -- contracts validate
 - **STOP Conditions:**
   - STOP if the three 52-capability sets differ; report the owning upstream stage rather than normalizing the mismatch.
   - STOP if a symbol, contract path, or contract-test identifier doesn't resolve.
-- **Description:** Validate the exact 52 P0 IDs across PRD tables, architecture flow filenames, and traceability; the exact 27 constraint IDs; referenced contract paths and symbols; contract-test identifiers; diagnostic names and fields; candidate names; Tier 1 environment identifiers; unique canonical artifact paths and link targets; and unique raw-sample keys. Dereference each platform accessibility map, verify its path digest, environment and candidate identity, required semantics categories, aggregate status, and nested mapping and action statuses. Resolve every hardlink to a regular-file entry and every symlink within the artifact root without dereferencing it. For diagnostics, resolve each event's registry version and validate the registered event and field privacy classes, field kind, range, and closed integer values.
+- **Description:** Validate the exact 52 P0 IDs across PRD tables, architecture flow filenames, and traceability; the exact 27 constraint IDs; file-qualified contract symbols and contract-test identifiers; diagnostic names and fields; candidate names; Tier 1 environment identifiers; unique canonical artifact paths and link targets; and unique raw-sample keys. Resolve and hash every evidence reference behind a KK minimum-version, protocol, input method editor, timing, allocation, recovery, or accessibility claim. Dereference each platform accessibility map, verify its path digest, environment and candidate identity, required semantics categories, aggregate status, and nested mapping and action statuses. Resolve every hardlink to a regular-file entry and every symlink within the artifact root without dereferencing it. For diagnostics, resolve each event's registry version and validate the registered event and field privacy classes, field kind, range, and closed integer values.
 - **Acceptance:**
   - **Mode:** invariant
   - **Evidence:**
 
 ```text
-Invariant: No identifier, canonical artifact path, canonical link target, or raw-sample key can be missing, duplicated, renamed, or added in one downstream set without the authoritative upstream set changing first. A KK platform accessibility reference resolves to the matching environment and candidate, has the declared digest, contains every required semantics category, and has no nested KU. Hardlinks resolve to regular-file entries with equal size and digest; symlinks remain inside the artifact root; regular files carry no link target. Diagnostic values must resolve to the registry's event class and match the field class, kind, bounds, and closed integer values. Event files cannot override registry privacy metadata.
+Invariant: No identifier, file-qualified contract binding, canonical artifact path, canonical link target, or raw-sample key can be missing, duplicated, renamed, or added in one downstream set without the authoritative upstream set changing first. Each declared physical contract has exactly one binding with one or more symbols that resolve inside that file. Every nested KK platform claim resolves at least one immutable evidence path and digest. A KK platform accessibility reference resolves to the matching environment and candidate, has the declared digest, contains every required semantics category, and has no nested KU. Hardlinks resolve to regular-file entries with equal size and digest; symlinks remain inside the artifact root; regular files carry no link target. Diagnostic values must resolve to the registry's event class and match the field class, kind, bounds, and closed integer values. Event files cannot override registry privacy metadata.
 Checker: cargo +1.98.0 run -p xtask -- contracts validate
-Corpus: positive committed constitution plus fixtures for missing, duplicate, unknown, stale-path, unresolved-symbol, mismatched accessibility identity or digest, nested accessibility KU, empty or trailing path segments, duplicate separators, and control-character paths.
+Corpus: positive committed constitution plus fixtures for missing, duplicate, unknown, stale-path, unresolved file-qualified symbol, missing or mismatched nested KK evidence, mismatched accessibility identity or digest, nested accessibility KU, empty or trailing path segments, duplicate separators, and control-character paths.
 ```
 
 #### OXY-A004 Enforce readiness, promotion, and immutable evidence bindings
@@ -135,6 +135,7 @@ Corpus: positive committed constitution plus fixtures for missing, duplicate, un
 ```text
 Invariants:
 - candidateImplementationReady cannot become true while any pre-implementation input is null, missing, mismatched, or listed as a KU.
+- candidateImplementationReady cannot become true while any nested KK platform claim lacks resolvable digest-bound evidence.
 - measurementReady cannot become true without candidateImplementationReady and final candidate source identities.
 - productionReady cannot become true without every typed Phase 3B promotion artifact resolving to the same lock, candidate, and Stage 3 version.
 Checker: cargo +1.98.0 run -p xtask -- contracts validate
@@ -202,6 +203,7 @@ Assertions:
 - The authoritative header passes C11 and C++17 with all configured warnings treated as errors.
 - Generated bindings are byte-stable under the locked toolchain.
 - ABI table prefix, struct_size, abi_version, OXY_CALL, OXY_EXPORT, opaque handles, and callback signatures match fixtures.
+- Native IME index-unit constants match the Rust enum and platform-contract strings; unknown numeric values fail before range conversion.
 - Deliberate layout and symbol mutations fail.
 Command: cargo +1.98.0 run -p xtask -- contracts validate
 ```

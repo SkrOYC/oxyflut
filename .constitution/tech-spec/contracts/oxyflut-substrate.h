@@ -19,7 +19,7 @@
 extern "C" {
 #endif
 
-#define OXY_SUBSTRATE_ABI_VERSION 4u
+#define OXY_SUBSTRATE_ABI_VERSION 5u
 
 /* Unless a field comment states otherwise, every pointer passed to or returned from this ABI is nonnull. An array pointer is null if and only if its count is zero. Every out pointer names writable storage and is cleared before a fallible call. All opaque handles belong to the creating substrate and can be used only on the execution domain declared for that operation. */
 
@@ -63,6 +63,14 @@ typedef struct OxyColorFilter OxyColorFilter;
 typedef struct OxyImageFilter OxyImageFilter;
 typedef struct OxyParagraphBuilder OxyParagraphBuilder;
 typedef struct OxyParagraph OxyParagraph;
+typedef struct OxyImeTextSegment OxyImeTextSegment;
+
+typedef uint32_t OxyNativeTextIndexUnit;
+enum {
+  OXY_NATIVE_TEXT_INDEX_UTF8_BYTES = 1u,
+  OXY_NATIVE_TEXT_INDEX_UTF16_UNITS = 2u,
+  OXY_NATIVE_TEXT_INDEX_UNICODE_SCALARS = 3u
+};
 
 /* Borrowed bytes remain valid only for the containing call or callback. data is null if and only if length is zero. */
 typedef struct OxyBorrowedBytes {
@@ -222,9 +230,16 @@ typedef struct OxySemanticsNode {
   OxyRect bounds;
   OxyTransform transform;
   OxyBorrowedBytes label_utf8;
+  OxyBorrowedBytes accessible_name_utf8;
+  OxyBorrowedBytes description_utf8;
   OxyBorrowedBytes value_utf8;
   OxyBorrowedBytes hint_utf8;
+  OxyBorrowedBytes help_utf8;
   OxyBorrowedBytes tooltip_utf8;
+  OxyNativeTextIndexUnit attributed_text_index_unit;
+  uint32_t attributed_text_reserved;
+  const OxyImeTextSegment* attributed_text_segments;
+  uint64_t attributed_text_segment_count;
   OxyBorrowedBytes identifier_utf8;
   OxyBorrowedBytes language_bcp47_utf8;
   const uint64_t* traversal_children;
@@ -303,16 +318,16 @@ typedef struct OxyKeyEvent {
   uint32_t repeat;
 } OxyKeyEvent;
 
-typedef struct OxyImeTextSegment {
+struct OxyImeTextSegment {
   int64_t start;
   int64_t end;
   uint64_t attributes;
-} OxyImeTextSegment;
+};
 
 typedef struct OxyImeEvent {
   uint64_t transaction_generation;
   uint32_t kind;
-  uint32_t native_index_unit;
+  OxyNativeTextIndexUnit native_index_unit;
   int64_t replacement_start;
   int64_t replacement_end;
   int64_t selection_start;
@@ -332,7 +347,7 @@ typedef struct OxyImeEvent {
 typedef struct OxyImeRequest {
   uint64_t request_generation;
   uint32_t kind;
-  uint32_t native_index_unit;
+  OxyNativeTextIndexUnit native_index_unit;
   int64_t range_start;
   int64_t range_end;
   OxyPoint point;

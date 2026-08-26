@@ -1,13 +1,13 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:oxyflut:schema:platform-contracts:3",
+  "$id": "urn:oxyflut:schema:platform-contracts:4",
   "title": "Oxyflut platform qualification contracts",
   "type": "object",
   "additionalProperties": false,
   "required": ["schemaVersion", "environments"],
   "properties": {
     "$schema": { "type": "string" },
-    "schemaVersion": { "const": "3.0.0" },
+    "schemaVersion": { "const": "4.0.0" },
     "environments": {
       "type": "object",
       "additionalProperties": false,
@@ -22,6 +22,20 @@
   },
   "$defs": {
     "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "evidenceSet": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/evidence" },
+      "uniqueItems": true
+    },
     "status": { "enum": ["kk", "ku-gating"] },
     "stringSet": {
       "type": "array",
@@ -75,7 +89,8 @@
         "actions",
         "sensitiveFieldPolicy",
         "numericNegotiation",
-        "testVectors"
+        "testVectors",
+        "evidence"
       ],
       "properties": {
         "status": { "$ref": "#/$defs/status" },
@@ -89,8 +104,20 @@
         "actions": { "$ref": "#/$defs/stringSet" },
         "sensitiveFieldPolicy": { "type": "string", "minLength": 1 },
         "numericNegotiation": { "type": "string", "minLength": 1 },
-        "testVectors": { "$ref": "#/$defs/stringSet" }
-      }
+        "testVectors": { "$ref": "#/$defs/stringSet" },
+        "evidence": { "$ref": "#/$defs/evidenceSet" }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "status": { "const": "kk" } },
+            "required": ["status"]
+          },
+          "then": {
+            "properties": { "evidence": { "type": "array", "minItems": 1 } }
+          }
+        }
+      ]
     },
     "timing": {
       "type": "object",
@@ -100,15 +127,28 @@
         "interactiveOpportunitySource",
         "independentMeterSource",
         "presentationFeedback",
-        "perDisplayAssociation"
+        "perDisplayAssociation",
+        "evidence"
       ],
       "properties": {
         "status": { "$ref": "#/$defs/status" },
         "interactiveOpportunitySource": { "type": "string", "minLength": 1 },
         "independentMeterSource": { "type": "string", "minLength": 1 },
         "presentationFeedback": { "type": "string", "minLength": 1 },
-        "perDisplayAssociation": { "type": "string", "minLength": 1 }
-      }
+        "perDisplayAssociation": { "type": "string", "minLength": 1 },
+        "evidence": { "$ref": "#/$defs/evidenceSet" }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "status": { "const": "kk" } },
+            "required": ["status"]
+          },
+          "then": {
+            "properties": { "evidence": { "type": "array", "minItems": 1 } }
+          }
+        }
+      ]
     },
     "allocation": {
       "type": "object",
@@ -123,7 +163,8 @@
         "recoveryInterfaces",
         "serviceRouting",
         "normalization",
-        "requiredEvidence"
+        "requiredEvidence",
+        "evidence"
       ],
       "properties": {
         "status": { "$ref": "#/$defs/status" },
@@ -135,8 +176,20 @@
         "recoveryInterfaces": { "$ref": "#/$defs/stringSet" },
         "serviceRouting": { "type": "string", "minLength": 1 },
         "normalization": { "type": "string", "minLength": 1 },
-        "requiredEvidence": { "$ref": "#/$defs/stringSet" }
-      }
+        "requiredEvidence": { "$ref": "#/$defs/stringSet" },
+        "evidence": { "$ref": "#/$defs/evidenceSet" }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "status": { "const": "kk" } },
+            "required": ["status"]
+          },
+          "then": {
+            "properties": { "evidence": { "type": "array", "minItems": 1 } }
+          }
+        }
+      ]
     },
     "environment": {
       "type": "object",
@@ -159,10 +212,11 @@
         "minimumVersion": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["status", "value"],
+          "required": ["status", "value", "evidence"],
           "properties": {
             "status": { "$ref": "#/$defs/status" },
-            "value": { "type": ["string", "null"] }
+            "value": { "type": ["string", "null"] },
+            "evidence": { "$ref": "#/$defs/evidenceSet" }
           },
           "allOf": [
             {
@@ -171,7 +225,10 @@
                 "required": ["status"]
               },
               "then": {
-                "properties": { "value": { "type": "string", "minLength": 1 } }
+                "properties": {
+                  "value": { "type": "string", "minLength": 1 },
+                  "evidence": { "type": "array", "minItems": 1 }
+                }
               },
               "else": { "properties": { "value": { "type": "null" } } }
             }
@@ -182,11 +239,12 @@
           "items": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["name", "version", "status"],
+            "required": ["name", "version", "status", "evidence"],
             "properties": {
               "name": { "type": "string", "minLength": 1 },
               "version": { "type": ["string", "null"] },
-              "status": { "$ref": "#/$defs/status" }
+              "status": { "$ref": "#/$defs/status" },
+              "evidence": { "$ref": "#/$defs/evidenceSet" }
             },
             "allOf": [
               {
@@ -196,7 +254,8 @@
                 },
                 "then": {
                   "properties": {
-                    "version": { "type": "string", "minLength": 1 }
+                    "version": { "type": "string", "minLength": 1 },
+                    "evidence": { "type": "array", "minItems": 1 }
                   }
                 },
                 "else": { "properties": { "version": { "type": "null" } } }
