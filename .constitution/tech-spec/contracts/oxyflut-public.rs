@@ -669,6 +669,48 @@ pub enum SemanticsActionResult {
     InvalidPayload,
 }
 
+/// Selects a candidate-neutral semantics relation.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum SemanticsRelationKind {
+    /// The target labels this node.
+    LabelledBy,
+    /// This node labels the target.
+    Labels,
+    /// The target describes this node.
+    DescribedBy,
+    /// This node describes the target.
+    Describes,
+    /// This node controls the target.
+    Controls,
+    /// The target controls this node.
+    ControlledBy,
+    /// Reading order flows from this node to the target.
+    FlowsTo,
+    /// Reading order flows from the target to this node.
+    FlowsFrom,
+    /// This node belongs to the target collection.
+    MemberOf,
+    /// This node owns the target.
+    Owns,
+    /// The target provides error-message content for this node.
+    ErrorMessage,
+    /// The target provides extended details for this node.
+    Details,
+    /// This node provides extended details for the target.
+    DetailsFor,
+    /// The target is the active descendant of this node.
+    ActiveDescendant,
+}
+
+/// Describes one typed semantics relation to a live node generation.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct SemanticsRelation {
+    /// Relation kind.
+    pub kind: SemanticsRelationKind,
+    /// Related node generation.
+    pub target: SemanticsNodeId,
+}
+
 /// Describes one typed semantics node.
 #[derive(Clone, Debug, PartialEq)]
 pub struct SemanticsNode {
@@ -706,10 +748,8 @@ pub struct SemanticsNode {
     pub traversal_children: Vec<SemanticsNodeId>,
     /// Hit-test-order children.
     pub hit_test_children: Vec<SemanticsNodeId>,
-    /// Nodes that label this node.
-    pub labelled_by: Vec<SemanticsNodeId>,
-    /// Nodes that describe this node.
-    pub described_by: Vec<SemanticsNodeId>,
+    /// Role-applicable typed relations.
+    pub relations: Vec<SemanticsRelation>,
     /// Current text selection, if applicable.
     pub selection: Option<Selection>,
     /// Scroll position and extent, if applicable.

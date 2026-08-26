@@ -2,6 +2,13 @@
 
 All notable changes to the Stage 4 execution plan appear in this file.
 
+## [v0.2.4] - 2026-08-26
+
+### Fixed
+
+- Moved stable command dispatch and placeholder ownership into workspace scaffolding so dependency-ready validator tickets can run their declared commands.
+- Required the complete capability-to-contract edge matrix and Linux Unicode-scalar accessibility fixtures.
+
 ## [v0.2.3] - 2026-08-26
 
 ### Fixed

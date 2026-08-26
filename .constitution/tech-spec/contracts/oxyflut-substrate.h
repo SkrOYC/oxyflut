@@ -19,7 +19,7 @@
 extern "C" {
 #endif
 
-#define OXY_SUBSTRATE_ABI_VERSION 5u
+#define OXY_SUBSTRATE_ABI_VERSION 6u
 
 /* Unless a field comment states otherwise, every pointer passed to or returned from this ABI is nonnull. An array pointer is null if and only if its count is zero. Every out pointer names writable storage and is cleared before a fallible call. All opaque handles belong to the creating substrate and can be used only on the execution domain declared for that operation. */
 
@@ -219,6 +219,30 @@ typedef struct OxyTextBox {
   uint32_t direction;
 } OxyTextBox;
 
+typedef uint32_t OxySemanticsRelationKind;
+enum {
+  OXY_SEMANTICS_RELATION_LABELLED_BY = 1u,
+  OXY_SEMANTICS_RELATION_LABELS = 2u,
+  OXY_SEMANTICS_RELATION_DESCRIBED_BY = 3u,
+  OXY_SEMANTICS_RELATION_DESCRIBES = 4u,
+  OXY_SEMANTICS_RELATION_CONTROLS = 5u,
+  OXY_SEMANTICS_RELATION_CONTROLLED_BY = 6u,
+  OXY_SEMANTICS_RELATION_FLOWS_TO = 7u,
+  OXY_SEMANTICS_RELATION_FLOWS_FROM = 8u,
+  OXY_SEMANTICS_RELATION_MEMBER_OF = 9u,
+  OXY_SEMANTICS_RELATION_OWNS = 10u,
+  OXY_SEMANTICS_RELATION_ERROR_MESSAGE = 11u,
+  OXY_SEMANTICS_RELATION_DETAILS = 12u,
+  OXY_SEMANTICS_RELATION_DETAILS_FOR = 13u,
+  OXY_SEMANTICS_RELATION_ACTIVE_DESCENDANT = 14u
+};
+
+typedef struct OxySemanticsRelation {
+  OxySemanticsRelationKind kind;
+  uint32_t reserved;
+  uint64_t target_generation;
+} OxySemanticsRelation;
+
 typedef struct OxySemanticsNode {
   uint32_t struct_size;
   uint32_t abi_version;
@@ -246,10 +270,8 @@ typedef struct OxySemanticsNode {
   uint64_t traversal_child_count;
   const uint64_t* hit_test_children;
   uint64_t hit_test_child_count;
-  const uint64_t* labelled_by;
-  uint64_t labelled_by_count;
-  const uint64_t* described_by;
-  uint64_t described_by_count;
+  const OxySemanticsRelation* relations;
+  uint64_t relation_count;
   int64_t text_selection_base_utf16;
   int64_t text_selection_extent_utf16;
   double scroll_position;

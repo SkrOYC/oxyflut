@@ -1,6 +1,6 @@
 # Qualification planning critical path
 
-- **Version:** v0.2.3
+- **Version:** v0.2.4
 - **Active story points:** 77
 - **Active phase:** Pre-implementation qualification foundation and decision research
 

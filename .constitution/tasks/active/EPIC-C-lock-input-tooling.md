@@ -11,7 +11,7 @@ Build the reusable tools and candidate-neutral templates needed to turn research
 - **Scope (In-Scope Files):**
   - `qualification/schemas/external/`
   - `qualification/fixtures/external-contracts/`
-  - `xtask/src/external_contracts.rs`
+  - `xtask/src/commands/external_contracts.rs`
 - **Scope (Out-of-Scope Files):**
   - `.constitution/tech-spec/contracts/external-contract-lock.json` (Stage 3 reconciliation owns active pins)
   - Release artifact generation
@@ -21,7 +21,7 @@ Build the reusable tools and candidate-neutral templates needed to turn research
 - **STOP Conditions:**
   - STOP if an upstream source isn't authoritative, immutable, license-compatible, or retrievable by a pinned reference.
   - STOP if semantic validation requires a mutable network service.
-- **Description:** Preserve source bytes for SPDX 3.0.1, in-toto Statement v1, SLSA Provenance v1, and DSSE Envelope v1; record source identity and SHA-256; pin local verifier adapters and versions; and add positive and negative fixtures. Produce the exact proposed external-contract lock values for Stage 3 reconciliation without editing the active lock.
+- **Description:** Replace the OXY-A001 external-contracts command placeholder. Preserve source bytes for SPDX 3.0.1, in-toto Statement v1, SLSA Provenance v1, and DSSE Envelope v1; record source identity and SHA-256; pin local verifier adapters and versions; and add positive and negative fixtures. Produce the exact proposed external-contract lock values for Stage 3 reconciliation without editing the active lock.
 - **Acceptance:**
   - **Mode:** invariant
   - **Evidence:**
@@ -41,7 +41,7 @@ Checker: cargo +1.98.0 run -p xtask -- external-contracts verify
 - **Dependencies:** OXY-A003, OXY-A006
 - **Category:** DX
 - **Scope (In-Scope Files):**
-  - `xtask/src/baseline.rs`
+  - `xtask/src/commands/baseline.rs`
   - `crates/oxyflut-qualification/src/baseline.rs`
   - `qualification/fixtures/baselines/`
 - **Scope (Out-of-Scope Files):**
@@ -53,7 +53,7 @@ Checker: cargo +1.98.0 run -p xtask -- external-contracts verify
 - **STOP Conditions:**
   - STOP if authoring requires a capability exception or an additional test-vector field not defined by Stage 3.
   - STOP if a baseline could pass without all 52 exact capability keys.
-- **Description:** Implement parsing, exact-set validation, deterministic ordering, architecture-flow binding, evidence expectation validation, and content-addressed output for candidate-neutral capability baseline drafts. Include a synthetic complete fixture without pretending it is the approved product baseline.
+- **Description:** Replace the OXY-A001 baseline command placeholder. Implement parsing, exact-set validation, deterministic ordering, architecture-flow binding, evidence expectation validation, and content-addressed output for candidate-neutral capability baseline drafts. Include a synthetic complete fixture without pretending it is the approved product baseline.
 - **Acceptance:**
   - **Mode:** contract_test
   - **Evidence:**
@@ -75,7 +75,7 @@ Command: cargo +1.98.0 run -p xtask -- baseline validate --input PATH
 - **Category:** Correctness
 - **Scope (In-Scope Files):**
   - `crates/oxyflut-qualification/src/measurement.rs`
-  - `xtask/src/measurement.rs`
+  - `xtask/src/commands/measurement.rs`
   - `qualification/fixtures/measurements/`
   - `qualification/fixtures/sample-validity/`
 - **Scope (Out-of-Scope Files):**
@@ -87,7 +87,7 @@ Command: cargo +1.98.0 run -p xtask -- baseline validate --input PATH
 - **STOP Conditions:**
   - STOP if a template drops outliers or introduces an exclusion outside the three PRD categories.
   - STOP if a meter needs an unstated statistic or confidence rule; return to Stage 3.
-- **Description:** Implement typed template generation and validation for raw samples, harness logs, launch/sample ordinals, monotonic times, units, admitted samples, the three permitted exclusion categories, comparison-bound calculation inputs, and source/lock attribution. Don't execute a measurement.
+- **Description:** Replace the OXY-A001 measurement command placeholder. Implement typed template generation and validation for raw samples, harness logs, launch/sample ordinals, monotonic times, units, admitted samples, the three permitted exclusion categories, comparison-bound calculation inputs, and source/lock attribution. Don't execute a measurement.
 - **Acceptance:**
   - **Mode:** contract_test
   - **Evidence:**
@@ -110,7 +110,7 @@ Command: cargo +1.98.0 run -p xtask -- measurement validate --input PATH
 - **Dependencies:** OXY-A001, OXY-A006
 - **Category:** DX
 - **Scope (In-Scope Files):**
-  - `xtask/src/environment/`
+  - `xtask/src/commands/environment/`
   - `crates/oxyflut-qualification/src/environment.rs`
   - `qualification/fixtures/environments/`
 - **Scope (Out-of-Scope Files):**
@@ -122,7 +122,7 @@ Command: cargo +1.98.0 run -p xtask -- measurement validate --input PATH
 - **STOP Conditions:**
   - STOP if collection requires private user content, stable user identity, or an unbounded system inventory.
   - STOP if a platform value can't be obtained from an authoritative API or package database; emit a typed missing value.
-- **Description:** Implement the specified environment-inspection command behind testable platform collectors. Capture operating-system and minimum-version evidence, architecture, hardware and GPU identifiers, driver versions, compiler and SDK identities, compositor/session/protocol versions, and a content-bounded system-package lock. Output schema-valid evidence without changing readiness.
+- **Description:** Replace the OXY-A001 environment command placeholder with testable platform collectors. Capture operating-system and minimum-version evidence, architecture, hardware and GPU identifiers, driver versions, compiler and SDK identities, compositor/session/protocol versions, and a content-bounded system-package lock. Output schema-valid evidence without changing readiness.
 - **Acceptance:**
   - **Mode:** contract_test
   - **Evidence:**
@@ -145,7 +145,7 @@ Commands:
 - **Dependencies:** OXY-A004, OXY-A006, OXY-C001, OXY-C002, OXY-C003, OXY-C004
 - **Category:** Correctness
 - **Scope (In-Scope Files):**
-  - `xtask/src/lock.rs`
+  - `xtask/src/commands/lock.rs`
   - `crates/oxyflut-qualification/src/readiness.rs`
   - `qualification/fixtures/readiness/`
 - **Scope (Out-of-Scope Files):**
@@ -157,7 +157,7 @@ Commands:
 - **STOP Conditions:**
   - STOP if the command would mutate the lock or infer readiness from the absence of an error.
   - STOP if a KU can't be tied to an exact required field, evidence path, or upstream decision.
-- **Description:** Implement the read-only readiness command and stable content-free report. Distinguish an invalid lock from a valid open gate, list exact blocking fields and KUs, verify staged input digests, and prove that clearing a string without supplying its evidence doesn't change readiness.
+- **Description:** Replace the OXY-A001 lock command placeholder with the read-only readiness command and stable content-free report. Distinguish an invalid lock from a valid open gate, list exact blocking fields and KUs, verify staged input digests, and prove that clearing a string without supplying its evidence doesn't change readiness.
 - **Acceptance:**
   - **Mode:** invariant
   - **Evidence:**

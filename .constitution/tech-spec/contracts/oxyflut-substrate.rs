@@ -267,6 +267,48 @@ pub struct SemanticsTextSegment {
     pub attributes: u64,
 }
 
+/// Selects a candidate-neutral semantics relation.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum SemanticsRelationKind {
+    /// The target labels this node.
+    LabelledBy,
+    /// This node labels the target.
+    Labels,
+    /// The target describes this node.
+    DescribedBy,
+    /// This node describes the target.
+    Describes,
+    /// This node controls the target.
+    Controls,
+    /// The target controls this node.
+    ControlledBy,
+    /// Reading order flows from this node to the target.
+    FlowsTo,
+    /// Reading order flows from the target to this node.
+    FlowsFrom,
+    /// This node belongs to the target collection.
+    MemberOf,
+    /// This node owns the target.
+    Owns,
+    /// The target provides error-message content for this node.
+    ErrorMessage,
+    /// The target provides extended details for this node.
+    Details,
+    /// This node provides extended details for the target.
+    DetailsFor,
+    /// The target is the active descendant of this node.
+    ActiveDescendant,
+}
+
+/// Describes one typed semantics relation to a node generation.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct SemanticsRelation {
+    /// Relation kind.
+    pub kind: SemanticsRelationKind,
+    /// Related node generation.
+    pub target_generation: u64,
+}
+
 /// Describes semantics scrolling state in logical units.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct SemanticsScroll {
@@ -315,10 +357,8 @@ pub struct SemanticsNode {
     pub traversal_children: Vec<u64>,
     /// Hit-test child generations.
     pub hit_test_children: Vec<u64>,
-    /// Label relation generations.
-    pub labelled_by: Vec<u64>,
-    /// Description relation generations.
-    pub described_by: Vec<u64>,
+    /// Role-applicable typed relations.
+    pub relations: Vec<SemanticsRelation>,
     /// Checked UTF-16 selection, if applicable.
     pub selection_utf16: Option<(u32, u32)>,
     /// Scroll position and extents, if applicable.

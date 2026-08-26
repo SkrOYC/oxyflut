@@ -2,6 +2,20 @@
 
 All notable changes to the technical specification appear in this file.
 
+## [v0.7.0] - 2026-08-26
+
+### Added
+
+- Added a closed typed semantics relation set across the public Rust, common Rust, and C contracts.
+- Added Unicode-scalar reverse-action indexing for Linux accessibility maps.
+- Added decisive accessibility, selection, release-bundle, and CI contract edges to capability traceability.
+
+### Changed
+
+- Required all 27 aggregate constraint results to pass before a candidate can be eligible; platform-level unsupported events remain in the platform baseline.
+- Advanced the integrated C ABI to version 6 for typed semantics relations.
+- Advanced accessibility maps to v4, capability baselines to v2, and qualification evidence to v3 before durable qualification evidence existed.
+
 ## [v0.6.0] - 2026-08-26
 
 ### Added

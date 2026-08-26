@@ -1,13 +1,13 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:oxyflut:schema:capability-baseline:1",
+  "$id": "urn:oxyflut:schema:capability-baseline:2",
   "title": "Oxyflut frozen capability baseline",
   "type": "object",
   "additionalProperties": false,
   "required": ["schemaVersion", "specificationVersion", "capabilities"],
   "properties": {
-    "schemaVersion": { "const": "1.0.0" },
-    "specificationVersion": { "const": "0.6.0" },
+    "schemaVersion": { "const": "2.0.0" },
+    "specificationVersion": { "const": "0.7.0" },
     "capabilities": {
       "type": "object",
       "additionalProperties": false,

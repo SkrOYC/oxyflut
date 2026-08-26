@@ -1,7 +1,7 @@
 {
   "$schema": "../data-models/capability-traceability.schema.json",
   "schemaVersion": "2.0.0",
-  "specificationVersion": "0.6.0",
+  "specificationVersion": "0.7.0",
   "mappings": [
     {
       "capabilityId": "CAP-CMP-001",
@@ -641,7 +641,10 @@
             "SemanticsNode.accessible_name",
             "SemanticsNode.description",
             "SemanticsNode.help",
-            "SemanticsNode.attributed_text"
+            "SemanticsNode.attributed_text",
+            "SemanticsRelation",
+            "SemanticsRelationKind",
+            "SemanticsNode.relations"
           ]
         },
         {
@@ -653,7 +656,10 @@
             "SemanticsNode.accessible_name",
             "SemanticsNode.description",
             "SemanticsNode.help",
-            "SemanticsNode.attributed_text"
+            "SemanticsNode.attributed_text",
+            "SemanticsRelation",
+            "SemanticsRelationKind",
+            "SemanticsNode.relations"
           ]
         },
         {
@@ -665,12 +671,19 @@
             "OxySemanticsNode.accessible_name_utf8",
             "OxySemanticsNode.description_utf8",
             "OxySemanticsNode.help_utf8",
-            "OxySemanticsNode.attributed_text_segments"
+            "OxySemanticsNode.attributed_text_segments",
+            "OxySemanticsRelation",
+            "OxySemanticsRelationKind",
+            "OxySemanticsNode.relations"
           ]
         },
         {
           "contract": "contracts/platform-contracts.json",
           "symbols": ["#/environments"]
+        },
+        {
+          "contract": "data-models/accessibility-map.schema.json",
+          "symbols": ["#/properties/forward", "#/properties/reverseActions"]
         }
       ]
     },
@@ -689,7 +702,10 @@
             "SemanticsNode.accessible_name",
             "SemanticsNode.description",
             "SemanticsNode.help",
-            "SemanticsNode.attributed_text"
+            "SemanticsNode.attributed_text",
+            "SemanticsRelation",
+            "SemanticsRelationKind",
+            "SemanticsNode.relations"
           ]
         },
         {
@@ -701,7 +717,10 @@
             "SemanticsNode.accessible_name",
             "SemanticsNode.description",
             "SemanticsNode.help",
-            "SemanticsNode.attributed_text"
+            "SemanticsNode.attributed_text",
+            "SemanticsRelation",
+            "SemanticsRelationKind",
+            "SemanticsNode.relations"
           ]
         },
         {
@@ -713,12 +732,19 @@
             "OxySemanticsNode.accessible_name_utf8",
             "OxySemanticsNode.description_utf8",
             "OxySemanticsNode.help_utf8",
-            "OxySemanticsNode.attributed_text_segments"
+            "OxySemanticsNode.attributed_text_segments",
+            "OxySemanticsRelation",
+            "OxySemanticsRelationKind",
+            "OxySemanticsNode.relations"
           ]
         },
         {
           "contract": "contracts/platform-contracts.json",
           "symbols": ["#/environments"]
+        },
+        {
+          "contract": "data-models/accessibility-map.schema.json",
+          "symbols": ["#/properties/forward", "#/properties/reverseActions"]
         }
       ]
     },
@@ -907,6 +933,17 @@
             "#/properties/eligibility",
             "#/properties/constraintResults"
           ]
+        },
+        {
+          "contract": "data-models/release-evidence-bundle.schema.json",
+          "symbols": [
+            "#/properties/artifactManifest",
+            "#/properties/slsaProvenance"
+          ]
+        },
+        {
+          "contract": "data-models/ci-invocation.schema.json",
+          "symbols": ["#/properties/materials", "#/properties/outputs"]
         }
       ]
     },
@@ -1079,6 +1116,10 @@
             "#/properties/eligibility",
             "#/properties/constraintResults"
           ]
+        },
+        {
+          "contract": "data-models/selection-decision.schema.json",
+          "symbols": ["#/properties/outcome", "#/properties/selectedCandidate"]
         }
       ]
     },
@@ -1106,6 +1147,10 @@
             "#/properties/eligibility",
             "#/properties/constraintResults"
           ]
+        },
+        {
+          "contract": "data-models/selection-decision.schema.json",
+          "symbols": ["#/properties/outcome", "#/properties/selectedCandidate"]
         }
       ]
     }

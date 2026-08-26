@@ -79,7 +79,7 @@ Pass: The report answers every question or explicitly retains it as a gating KU 
 - **STOP Conditions:**
   - STOP if compositor behavior is assumed from protocol availability; require cited compositor/version evidence.
   - STOP if `wp_presentation` feedback is treated as an independent presentation-opportunity source.
-- **Description:** Complete the one-day spike in `.constitution/spikes/SPK-B003.md` covering minimum compositor and protocol versions, GtkIMContext index and input-purpose behavior, the selected Linux assistive technology and complete AT-SPI mapping, an observer independent of both candidate callback streams, service routing, and injectable recovery for both allocations.
+- **Description:** Complete the one-day spike in `.constitution/spikes/SPK-B003.md` covering minimum compositor and protocol versions, GtkIMContext index and input-purpose behavior, the selected Linux assistive technology and complete AT-SPI mapping, Unicode-scalar AT-SPI character-offset conversion fixtures, an observer independent of both candidate callback streams, service routing, and injectable recovery for both allocations.
 - **Acceptance:**
   - **Mode:** runbook_probe
   - **Evidence:**
@@ -88,7 +88,8 @@ Pass: The report answers every question or explicitly retains it as a gating KU 
 Procedure:
 1. Record cited upstream protocol, GTK, AT-SPI, compositor, and graphics evidence.
 2. Run minimal noncandidate probes where documentation is insufficient.
-3. Mark each item KK or gating KU and recommend exact Stage 3 edits.
+3. Prove Unicode-scalar AT-SPI offsets against UTF-8, UTF-16, grapheme, and logical indices with ASCII, multibyte, combining, and bidirectional fixtures.
+4. Mark each item KK or gating KU and recommend exact Stage 3 edits.
 Pass: The report answers every question or explicitly retains it as a gating KU with the next bounded probe.
 ```
 
@@ -109,7 +110,7 @@ Pass: The report answers every question or explicitly retains it as a gating KU 
 - **STOP Conditions:**
   - STOP if X server behavior is assumed from extension availability; require cited server/version evidence.
   - STOP if X Present completion is treated as an independent presentation-opportunity source.
-- **Description:** Complete the one-day spike in `.constitution/spikes/SPK-B004.md` covering minimum X server and extension versions, GtkIMContext behavior, the selected Linux assistive technology and complete AT-SPI mapping, an observer independent of both candidate callback streams, service routing, and injectable recovery for both allocations.
+- **Description:** Complete the one-day spike in `.constitution/spikes/SPK-B004.md` covering minimum X server and extension versions, GtkIMContext behavior, the selected Linux assistive technology and complete AT-SPI mapping, Unicode-scalar AT-SPI character-offset conversion fixtures, an observer independent of both candidate callback streams, service routing, and injectable recovery for both allocations.
 - **Acceptance:**
   - **Mode:** runbook_probe
   - **Evidence:**
@@ -118,7 +119,8 @@ Pass: The report answers every question or explicitly retains it as a gating KU 
 Procedure:
 1. Record cited upstream X11, GTK, AT-SPI, graphics, and distribution evidence.
 2. Run minimal noncandidate probes where documentation is insufficient.
-3. Mark each item KK or gating KU and recommend exact Stage 3 edits.
+3. Prove Unicode-scalar AT-SPI offsets against UTF-8, UTF-16, grapheme, and logical indices with ASCII, multibyte, combining, and bidirectional fixtures.
+4. Mark each item KK or gating KU and recommend exact Stage 3 edits.
 Pass: The report answers every question or explicitly retains it as a gating KU with the next bounded probe.
 ```
 
