@@ -1,13 +1,22 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:oxyflut:schema:platform-contracts:4",
+  "$id": "urn:oxyflut:schema:platform-contracts:5",
   "title": "Oxyflut platform qualification contracts",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schemaVersion", "environments"],
+  "required": [
+    "schemaVersion",
+    "specificationVersion",
+    "environments",
+    "absentEvents"
+  ],
   "properties": {
     "$schema": { "type": "string" },
-    "schemaVersion": { "const": "4.0.0" },
+    "schemaVersion": { "const": "5.0.0" },
+    "specificationVersion": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
     "environments": {
       "type": "object",
       "additionalProperties": false,
@@ -18,6 +27,11 @@
         "wayland": { "$ref": "#/$defs/environment" },
         "x11": { "$ref": "#/$defs/environment" }
       }
+    },
+    "absentEvents": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/absentEvent" },
+      "uniqueItems": true
     }
   },
   "$defs": {
@@ -37,6 +51,51 @@
       "uniqueItems": true
     },
     "status": { "enum": ["kk", "ku-gating"] },
+    "absentEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "gateId",
+        "eventId",
+        "status",
+        "environments",
+        "candidates",
+        "evidence"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^ABS-[A-Z0-9]+-[0-9]{3}$"
+        },
+        "gateId": {
+          "type": "string",
+          "pattern": "^(?:CAP|CON)-[A-Z0-9]+-[0-9]{3}$"
+        },
+        "eventId": { "type": "string", "minLength": 1 },
+        "status": { "const": "absent-kk" },
+        "environments": {
+          "type": "array",
+          "items": { "enum": ["macos", "windows", "wayland", "x11"] },
+          "minItems": 1,
+          "maxItems": 4,
+          "uniqueItems": true
+        },
+        "candidates": {
+          "type": "array",
+          "items": { "enum": ["focused", "integrated"] },
+          "minItems": 1,
+          "maxItems": 2,
+          "uniqueItems": true
+        },
+        "evidence": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/evidence" },
+          "minItems": 1,
+          "uniqueItems": true
+        }
+      }
+    },
     "stringSet": {
       "type": "array",
       "items": { "type": "string", "minLength": 1 },

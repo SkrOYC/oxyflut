@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:oxyflut:schema:qualification-evidence:4",
+  "$id": "urn:oxyflut:schema:qualification-evidence:5",
   "title": "Oxyflut candidate qualification evidence",
   "type": "object",
   "additionalProperties": false,
@@ -14,7 +14,7 @@
     "eligibility"
   ],
   "properties": {
-    "schemaVersion": { "const": "4.0.0" },
+    "schemaVersion": { "const": "5.0.0" },
     "candidate": { "enum": ["focused", "integrated"] },
     "source": { "$ref": "#/$defs/sourceIdentity" },
     "lockDigest": { "$ref": "#/$defs/sha256" },
@@ -112,10 +112,39 @@
         "mediaType": { "type": "string", "minLength": 1 }
       }
     },
+    "platformBaselineReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256", "schemaVersion", "specificationVersion"],
+      "properties": {
+        "path": {
+          "type": "string",
+          "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$"
+        },
+        "sha256": { "$ref": "#/$defs/sha256" },
+        "schemaVersion": { "const": "5.0.0" },
+        "specificationVersion": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+        }
+      }
+    },
+    "absenceBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["platformBaseline", "absentEventId"],
+      "properties": {
+        "platformBaseline": { "$ref": "#/$defs/platformBaselineReference" },
+        "absentEventId": {
+          "type": "string",
+          "pattern": "^ABS-[A-Z0-9]+-[0-9]{3}$"
+        }
+      }
+    },
     "gateResult": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["status", "evidence"],
+      "required": ["status", "evidence", "notApplicable"],
       "properties": {
         "status": {
           "enum": ["pass", "fail", "gating-ku", "not-applicable-kk"]
@@ -125,8 +154,27 @@
           "items": { "$ref": "#/$defs/evidence" },
           "minItems": 1,
           "uniqueItems": true
+        },
+        "notApplicable": {
+          "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/absenceBinding" }]
         }
-      }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "status": { "const": "not-applicable-kk" } },
+            "required": ["status"]
+          },
+          "then": {
+            "properties": {
+              "notApplicable": { "$ref": "#/$defs/absenceBinding" }
+            }
+          },
+          "else": {
+            "properties": { "notApplicable": { "type": "null" } }
+          }
+        }
+      ]
     },
     "eligibleGateResult": {
       "allOf": [

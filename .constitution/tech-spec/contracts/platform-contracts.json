@@ -1,6 +1,7 @@
 {
   "$schema": "../data-models/platform-contracts.schema.json",
-  "schemaVersion": "4.0.0",
+  "schemaVersion": "5.0.0",
+  "specificationVersion": "0.15.0",
   "environments": {
     "macos": {
       "status": "ku-gating",
@@ -677,5 +678,6 @@
         "immutable evidence for every status-bearing platform claim"
       ]
     }
-  }
+  },
+  "absentEvents": []
 }

@@ -2,6 +2,13 @@
 
 All notable changes to the Stage 4 execution plan appear in this file.
 
+## [v0.2.12] - 2026-08-26
+
+### Fixed
+
+- Required unique absent-event IDs and exact gate, event, candidate, environment, platform-baseline digest, schema, and active specification joins for `not-applicable-kk`.
+- Required aggregate not-applicable constraints to prove absence across all four Tier 1 environments.
+
 ## [v0.2.11] - 2026-08-26
 
 ### Fixed

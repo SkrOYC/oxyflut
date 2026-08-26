@@ -1,7 +1,7 @@
 {
   "$schema": "../data-models/capability-traceability.schema.json",
   "schemaVersion": "3.0.0",
-  "specificationVersion": "0.14.0",
+  "specificationVersion": "0.15.0",
   "mappings": [
     {
       "capabilityId": "CAP-CMP-001",
@@ -820,7 +820,11 @@
         },
         {
           "contract": "contracts/platform-contracts.json",
-          "symbols": ["#/environments"]
+          "symbols": [
+            "#/specificationVersion",
+            "#/environments",
+            "#/absentEvents"
+          ]
         },
         {
           "contract": "contracts/oxyflut-substrate.h",
@@ -895,8 +899,13 @@
           "contract": "data-models/qualification-evidence.schema.json",
           "symbols": [
             "#/properties/eligibility",
-            "#/properties/constraintResults"
+            "#/properties/constraintResults",
+            "#/$defs/absenceBinding"
           ]
+        },
+        {
+          "contract": "contracts/platform-contracts.json",
+          "symbols": ["#/specificationVersion", "#/absentEvents"]
         }
       ]
     },
@@ -1156,8 +1165,13 @@
           "contract": "data-models/qualification-evidence.schema.json",
           "symbols": [
             "#/properties/eligibility",
-            "#/properties/constraintResults"
+            "#/properties/constraintResults",
+            "#/$defs/absenceBinding"
           ]
+        },
+        {
+          "contract": "contracts/platform-contracts.json",
+          "symbols": ["#/specificationVersion", "#/absentEvents"]
         }
       ]
     },

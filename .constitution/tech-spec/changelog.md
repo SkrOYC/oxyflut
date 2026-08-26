@@ -2,6 +2,13 @@
 
 All notable changes to the technical specification appear in this file.
 
+## [v0.15.0] - 2026-08-26
+
+### Changed
+
+- Advanced platform contracts to v5 with the active specification version and typed immutable absent-event entries keyed by gate, event, environment, and candidate.
+- Advanced qualification evidence to v5 so every `not-applicable-kk` gate names an exact absent-event entry through a versioned, digest-bound platform-baseline reference.
+
 ## [v0.14.0] - 2026-08-26
 
 ### Changed
