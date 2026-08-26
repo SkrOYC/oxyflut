@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:oxyflut:schema:qualification-evidence:3",
+  "$id": "urn:oxyflut:schema:qualification-evidence:4",
   "title": "Oxyflut candidate qualification evidence",
   "type": "object",
   "additionalProperties": false,
@@ -14,7 +14,7 @@
     "eligibility"
   ],
   "properties": {
-    "schemaVersion": { "const": "3.0.0" },
+    "schemaVersion": { "const": "4.0.0" },
     "candidate": { "enum": ["focused", "integrated"] },
     "source": { "$ref": "#/$defs/sourceIdentity" },
     "lockDigest": { "$ref": "#/$defs/sha256" },
@@ -67,13 +67,13 @@
           "environmentResults": {
             "type": "object",
             "properties": {
-              "macos": { "$ref": "#/$defs/passingCapabilityResults" },
-              "windows": { "$ref": "#/$defs/passingCapabilityResults" },
-              "wayland": { "$ref": "#/$defs/passingCapabilityResults" },
-              "x11": { "$ref": "#/$defs/passingCapabilityResults" }
+              "macos": { "$ref": "#/$defs/eligibleCapabilityResults" },
+              "windows": { "$ref": "#/$defs/eligibleCapabilityResults" },
+              "wayland": { "$ref": "#/$defs/eligibleCapabilityResults" },
+              "x11": { "$ref": "#/$defs/eligibleCapabilityResults" }
             }
           },
-          "constraintResults": { "$ref": "#/$defs/passingConstraintResults" }
+          "constraintResults": { "$ref": "#/$defs/eligibleConstraintResults" }
         }
       }
     }
@@ -128,10 +128,15 @@
         }
       }
     },
-    "passingCapabilityGateResult": {
+    "eligibleGateResult": {
       "allOf": [
         { "$ref": "#/$defs/gateResult" },
-        { "type": "object", "properties": { "status": { "const": "pass" } } }
+        {
+          "type": "object",
+          "properties": {
+            "status": { "enum": ["pass", "not-applicable-kk"] }
+          }
+        }
       ]
     },
     "capabilityResults": {
@@ -197,7 +202,7 @@
       "minProperties": 52,
       "maxProperties": 52
     },
-    "passingCapabilityResults": {
+    "eligibleCapabilityResults": {
       "type": "object",
       "additionalProperties": false,
       "required": [
@@ -256,7 +261,7 @@
       ],
       "patternProperties": {
         "^CAP-[A-Z0-9]+-[0-9]{3}$": {
-          "$ref": "#/$defs/passingCapabilityGateResult"
+          "$ref": "#/$defs/eligibleGateResult"
         }
       },
       "minProperties": 52,
@@ -300,7 +305,7 @@
       "minProperties": 27,
       "maxProperties": 27
     },
-    "passingConstraintResults": {
+    "eligibleConstraintResults": {
       "type": "object",
       "additionalProperties": false,
       "required": [
@@ -334,7 +339,7 @@
       ],
       "patternProperties": {
         "^CON-[A-Z0-9]+-[0-9]{3}$": {
-          "$ref": "#/$defs/passingCapabilityGateResult"
+          "$ref": "#/$defs/eligibleGateResult"
         }
       },
       "minProperties": 27,

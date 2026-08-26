@@ -2,6 +2,13 @@
 
 All notable changes to the technical specification appear in this file.
 
+## [v0.14.0] - 2026-08-26
+
+### Changed
+
+- Advanced qualification evidence to v4 so eligible capability and constraint gates can record either `pass` or a cited `not-applicable-kk` result.
+- Required cross-file proof that every eligible `not-applicable-kk` result matches a frozen platform-baseline row where the event cannot occur.
+
 ## [v0.13.0] - 2026-08-26
 
 ### Changed

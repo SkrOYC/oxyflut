@@ -2,6 +2,12 @@
 
 All notable changes to the Stage 4 execution plan appear in this file.
 
+## [v0.2.11] - 2026-08-26
+
+### Fixed
+
+- Added eligible `not-applicable-kk` schema fixtures and matching frozen-platform-baseline evidence checks.
+
 ## [v0.2.10] - 2026-08-26
 
 ### Fixed
