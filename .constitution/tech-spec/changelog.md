@@ -2,6 +2,16 @@
 
 All notable changes to the technical specification appear in this file.
 
+## [v0.9.0] - 2026-08-26
+
+### Added
+
+- Bound reverse semantics actions to the public Rust, common Rust, and integrated C ingress contracts.
+
+### Changed
+
+- Advanced capability baselines and capability traceability to v3, and moved active specification-version equality to cross-file validation so future specification releases don't require new schema identities.
+
 ## [v0.8.0] - 2026-08-26
 
 ### Added

@@ -18,6 +18,8 @@ Build the repository and validation foundation permitted before candidate implem
   - `xtask/Cargo.toml`
   - `xtask/src/main.rs`
   - `xtask/src/commands/*.rs`
+  - `xtask/src/commands/environment/mod.rs`
+  - `xtask/src/{evidence,toolchain}.rs`
   - `qualification/{fixtures,golden,probes,schemas}/`
   - `fuzz/`
 - **Scope (Out-of-Scope Files):**
@@ -30,7 +32,7 @@ Build the repository and validation foundation permitted before candidate implem
 - **STOP Conditions:**
   - STOP if a package requires behavior or an API not already present in `.constitution/tech-spec/`; don't invent it.
   - STOP if scaffolding would compile or link candidate code while `candidateImplementationReady` is false.
-- **Description:** Use Cargo CLI commands to create the edition-2024 workspace and package skeletons specified by the target repository structure. Pin Rust 1.98.0, resolver version 3, exact dependencies, warnings policy, and one workspace lockfile. Create the `xtask` command dispatcher and compile-safe placeholder modules for every command in `guidelines.md`. Create and register compile-safe `oxyflut-qualification` placeholder modules for every later qualification ticket. Later tickets replace only their owned placeholder modules and don't edit `main.rs` or `lib.rs`. Other package bodies remain empty except for documentation and compile-safe placeholders.
+- **Description:** Use Cargo CLI commands to create the edition-2024 workspace and package skeletons specified by the target repository structure. Pin Rust 1.98.0, resolver version 3, exact dependencies, warnings policy, and one workspace lockfile. Create the `xtask` command dispatcher, registered root `evidence` and `toolchain` modules, and compile-safe placeholder modules for every command in `guidelines.md`. Use only `commands/environment/mod.rs` for the environment command; don't create a competing `commands/environment.rs` file. Create and register compile-safe `oxyflut-qualification` placeholder modules for every later qualification ticket. Later tickets replace only their owned placeholder modules and don't edit `main.rs` or `lib.rs`. Other package bodies remain empty except for documentation and compile-safe placeholders.
 - **Acceptance:**
   - **Mode:** contract_test
   - **Evidence:**
@@ -102,15 +104,15 @@ Command: cargo +1.98.0 test --workspace --all-features schema
 - **STOP Conditions:**
   - STOP if the three 52-capability sets differ; report the owning upstream stage rather than normalizing the mismatch.
   - STOP if a symbol, contract path, or contract-test identifier doesn't resolve.
-- **Description:** Validate the exact 52 P0 IDs across PRD tables, architecture flow filenames, traceability, and the required capability-to-physical-contract edge matrix; the exact 27 constraint IDs; file-qualified contract symbols and contract-test identifiers; diagnostic names and fields; candidate names; Tier 1 environment identifiers; unique canonical artifact paths and link targets; and unique raw-sample keys. Resolve and hash every evidence reference behind a KK minimum-version, protocol, input method editor, timing, allocation, recovery, or accessibility claim. Dereference each platform accessibility map, verify its path digest, environment and candidate identity, required semantics categories, aggregate status, and nested mapping and action statuses. Resolve every hardlink to a regular-file entry and every symlink within the artifact root without dereferencing it. For diagnostics, resolve each event's registry version and validate the registered event and field privacy classes, field kind, range, and closed integer values.
+- **Description:** Validate the exact 52 P0 IDs across PRD tables, architecture flow filenames, traceability, and the required capability-to-physical-contract edge matrix; the exact 27 constraint IDs; equality between the active specification version and every baseline or traceability instance; file-qualified contract symbols and contract-test identifiers; diagnostic names and fields; candidate names; Tier 1 environment identifiers; unique canonical artifact paths and link targets; and unique raw-sample keys. Resolve and hash every evidence reference behind a KK minimum-version, protocol, input method editor, timing, allocation, recovery, or accessibility claim. Dereference each platform accessibility map, verify its path digest, environment and candidate identity, required semantics categories, aggregate status, and nested mapping and action statuses. Resolve every hardlink to a regular-file entry and every symlink within the artifact root without dereferencing it. For diagnostics, resolve each event's registry version and validate the registered event and field privacy classes, field kind, range, and closed integer values.
 - **Acceptance:**
   - **Mode:** invariant
   - **Evidence:**
 
 ```text
-Invariant: No identifier, file-qualified contract binding, canonical artifact path, canonical link target, or raw-sample key can be missing, duplicated, renamed, or added in one downstream set without the authoritative upstream set changing first. Each declared physical contract has exactly one binding with one or more symbols that resolve inside that file. Every nested KK platform claim resolves at least one immutable evidence path and digest. A KK platform accessibility reference resolves to the matching environment and candidate, has the declared digest, contains every required semantics category, has no nested KU, and binds each indexed reverse action to the live node's immutable text-layout generation. Hardlinks resolve to regular-file entries with equal size and digest; symlinks remain inside the artifact root; regular files carry no link target. Diagnostic values must resolve to the registry's event class and match the field class, kind, bounds, and closed integer values. Event files cannot override registry privacy metadata.
+Invariant: No identifier, file-qualified contract binding, canonical artifact path, canonical link target, or raw-sample key can be missing, duplicated, renamed, or added in one downstream set without the authoritative upstream set changing first. Every baseline and traceability instance names the active specification version. Each declared physical contract has exactly one binding with one or more symbols that resolve inside that file. Every nested KK platform claim resolves at least one immutable evidence path and digest. A KK platform accessibility reference resolves to the matching environment and candidate, has the declared digest, contains every required semantics category, has no nested KU, and binds each indexed reverse action to the live node's immutable text-layout generation. Hardlinks resolve to regular-file entries with equal size and digest; symlinks remain inside the artifact root; regular files carry no link target. Diagnostic values must resolve to the registry's event class and match the field class, kind, bounds, and closed integer values. Event files cannot override registry privacy metadata.
 Checker: cargo +1.98.0 test -p xtask contracts::traceability
-Corpus: positive committed constitution plus fixtures for missing, duplicate, unknown, stale-path, omitted required capability-to-contract edge, unresolved file-qualified symbol, missing or mismatched nested KK evidence, mismatched accessibility identity or digest, nested accessibility KU, stale accessibility text-layout generation, empty or trailing path segments, duplicate separators, and control-character paths.
+Corpus: positive committed constitution plus fixtures for missing, duplicate, unknown, stale-path, omitted required capability-to-contract edge, omitted reverse-action ingress, unresolved file-qualified symbol, mismatched active specification version, missing or mismatched nested KK evidence, mismatched accessibility identity or digest, nested accessibility KU, stale accessibility text-layout generation, empty or trailing path segments, duplicate separators, and control-character paths.
 ```
 
 #### OXY-A004 Enforce readiness, promotion, and immutable evidence bindings
@@ -223,6 +225,7 @@ Command: cargo +1.98.0 test -p xtask contracts::native
   - `crates/oxyflut-qualification/src/evidence.rs`
   - `crates/oxyflut-qualification/src/hash.rs`
   - `xtask/src/evidence.rs`
+  - `xtask/src/commands/evidence.rs`
   - `qualification/fixtures/evidence/`
 - **Scope (Out-of-Scope Files):**
   - Candidate probes and measurements
@@ -233,7 +236,7 @@ Command: cargo +1.98.0 test -p xtask contracts::native
 - **STOP Conditions:**
   - STOP if canonicalization would rewrite preserved source evidence; derived records must retain the source bytes and digest.
   - STOP if a format needs an unpinned external schema; route it to OXY-C001.
-- **Description:** Implement local atomic writes, deterministic JSON encoding, repository-relative evidence references, streaming SHA-256 calculation, media-type recording, collision-safe paths, source/derived provenance, and verification APIs used by later lock-input tools.
+- **Description:** Replace the OXY-A001 root evidence and evidence-command placeholders. Implement local atomic writes, deterministic JSON encoding, repository-relative evidence references, streaming SHA-256 calculation, media-type recording, collision-safe paths, source/derived provenance, and verification APIs used by later lock-input tools.
 - **Acceptance:**
   - **Mode:** invariant
   - **Evidence:**

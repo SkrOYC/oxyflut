@@ -1,7 +1,7 @@
 {
   "$schema": "../data-models/capability-traceability.schema.json",
-  "schemaVersion": "2.0.0",
-  "specificationVersion": "0.8.0",
+  "schemaVersion": "3.0.0",
+  "specificationVersion": "0.9.0",
   "mappings": [
     {
       "capabilityId": "CAP-CMP-001",
@@ -713,7 +713,8 @@
             "SemanticsRelationKind",
             "SemanticsNode.relations",
             "TextLayoutId",
-            "SemanticsNode.text_layout"
+            "SemanticsNode.text_layout",
+            "SemanticsBridge::perform_action"
           ]
         },
         {
@@ -730,7 +731,8 @@
             "SemanticsRelationKind",
             "SemanticsNode.relations",
             "TextLayoutGeneration",
-            "SemanticsNode.text_layout"
+            "SemanticsNode.text_layout",
+            "SubstrateEvents::semantics_action"
           ]
         },
         {
@@ -747,7 +749,8 @@
             "OxySemanticsRelationKind",
             "OxySemanticsNode.relations",
             "OxySemanticsNode.text_layout_generation",
-            "OxySemanticsNode.has_text_layout"
+            "OxySemanticsNode.has_text_layout",
+            "OxySubstrateCallbacks.on_semantics_action"
           ]
         },
         {

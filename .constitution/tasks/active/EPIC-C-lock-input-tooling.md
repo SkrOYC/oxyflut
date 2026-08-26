@@ -110,7 +110,8 @@ Command: cargo +1.98.0 run -p xtask -- measurement validate --input PATH
 - **Dependencies:** OXY-A001, OXY-A006
 - **Category:** DX
 - **Scope (In-Scope Files):**
-  - `xtask/src/commands/environment/`
+  - `xtask/src/commands/environment/mod.rs`
+  - `xtask/src/commands/environment/*.rs`
   - `crates/oxyflut-qualification/src/environment.rs`
   - `qualification/fixtures/environments/`
 - **Scope (Out-of-Scope Files):**

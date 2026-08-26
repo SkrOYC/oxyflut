@@ -2,6 +2,13 @@
 
 All notable changes to the Stage 4 execution plan appear in this file.
 
+## [v0.2.6] - 2026-08-26
+
+### Fixed
+
+- Registered root evidence and toolchain modules, one canonical environment module, and an evidence-command placeholder during workspace scaffolding.
+- Required reverse semantics-action ingress and active specification-version mismatch fixtures in capability traceability validation.
+
 ## [v0.2.5] - 2026-08-26
 
 ### Fixed
