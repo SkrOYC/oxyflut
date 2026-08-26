@@ -19,7 +19,7 @@
 extern "C" {
 #endif
 
-#define OXY_SUBSTRATE_ABI_VERSION 7u
+#define OXY_SUBSTRATE_ABI_VERSION 8u
 
 /* Unless a field comment states otherwise, every pointer passed to or returned from this ABI is nonnull. An array pointer is null if and only if its count is zero. Every out pointer names writable storage and is cleared before a fallible call. All opaque handles belong to the creating substrate and can be used only on the execution domain declared for that operation. */
 

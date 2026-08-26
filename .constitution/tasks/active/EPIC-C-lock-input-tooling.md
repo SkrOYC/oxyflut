@@ -17,7 +17,7 @@ Build the reusable tools and candidate-neutral templates needed to turn research
   - Release artifact generation
   - Signing keys or remote verification services
 - **Verification Command:** `cargo +1.98.0 test --workspace --all-features`
-- **Expected Success Output:** `exit 0` with staged snapshot and verifier fixtures passing; the active-lock command remains expected to return exit 2 until Stage 3 reconciliation
+- **Expected Success Output:** `exit 0` with staged snapshot and verifier fixtures passing; invalid and incomplete fixture locks return exit 1 without changing the active lock
 - **STOP Conditions:**
   - STOP if an upstream source isn't authoritative, immutable, license-compatible, or retrievable by a pinned reference.
   - STOP if semantic validation requires a mutable network service.
@@ -31,7 +31,7 @@ Invariants:
 - Every snapshot preserves authoritative source bytes, source identity, version, license, and SHA-256.
 - Semantic verification runs entirely against local bytes with pinned verifier behavior.
 - Mutated schemas, envelopes, predicates, and registry digests fail.
-Checker: cargo +1.98.0 run -p xtask -- external-contracts verify
+Checker: cargo +1.98.0 test -p xtask external_contracts
 ```
 
 #### OXY-C002 Implement capability-baseline authoring and validation

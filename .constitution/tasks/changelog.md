@@ -2,6 +2,13 @@
 
 All notable changes to the Stage 4 execution plan appear in this file.
 
+## [v0.2.8] - 2026-08-26
+
+### Fixed
+
+- Required ABI-7 rejection and omitted texture-drawing edge fixtures for the ABI-8 qualification contracts.
+- Kept valid-but-open exit code 2 exclusive to `lock status`; external-contract fixture verification now returns 0 only for complete staged fixtures.
+
 ## [v0.2.7] - 2026-08-26
 
 ### Fixed

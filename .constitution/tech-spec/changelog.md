@@ -2,6 +2,13 @@
 
 All notable changes to the technical specification appear in this file.
 
+## [v0.11.0] - 2026-08-26
+
+### Changed
+
+- Advanced the integrated C ABI to version 8 so ABI-7 implementations cannot negotiate successfully without the presentation-status and timestamp semantics.
+- Corrected realized-texture traceability to bind texture drawing on the public Rust, common Rust, and integrated C surfaces.
+
 ## [v0.10.0] - 2026-08-26
 
 ### Added

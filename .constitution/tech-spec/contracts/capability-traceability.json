@@ -1,7 +1,7 @@
 {
   "$schema": "../data-models/capability-traceability.schema.json",
   "schemaVersion": "3.0.0",
-  "specificationVersion": "0.10.0",
+  "specificationVersion": "0.11.0",
   "mappings": [
     {
       "capabilityId": "CAP-CMP-001",
@@ -180,19 +180,15 @@
       "bindings": [
         {
           "contract": "contracts/oxyflut-public.rs",
-          "symbols": ["Canvas", "Paint", "Path"]
+          "symbols": ["Canvas", "Canvas::draw_texture"]
         },
         {
           "contract": "contracts/oxyflut-substrate.rs",
-          "symbols": ["SceneBuilder", "SceneBuilder::draw_path"]
+          "symbols": ["SceneBuilder", "SceneBuilder::draw_texture"]
         },
         {
           "contract": "contracts/oxyflut-substrate.h",
-          "symbols": [
-            "OxySubstrateApi.scene_builder_draw_path",
-            "OxySubstrateApi.scene_builder_draw_texture",
-            "OxySubstrateApi.scene_builder_begin_layer"
-          ]
+          "symbols": ["OxySubstrateApi.scene_builder_draw_texture"]
         }
       ]
     },
