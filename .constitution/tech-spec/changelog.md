@@ -2,6 +2,16 @@
 
 All notable changes to the technical specification appear in this file.
 
+## [v0.2.0] - 2026-08-26
+
+### Added
+
+- Added concrete pre-implementation commands for evidence verification, external-contract verification, baseline validation, environment inspection, and qualification-lock readiness status.
+
+### Changed
+
+- Bound Stage 4 pre-lock tooling tickets to named commands rather than leaving command design to the execution plan.
+
 ## [v0.1.1] - 2026-08-26
 
 ### Fixed
