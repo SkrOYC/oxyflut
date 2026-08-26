@@ -54,7 +54,7 @@
         "properties": {
           "path": {
             "type": "string",
-            "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$"
+            "pattern": "^(?!/)(?![A-Za-z]:)(?!.*\\\\)(?!.*(?:^|/)\\.{1,2}(?:/|$))[^\\u0000]+$"
           },
           "kind": { "enum": ["file", "symlink", "hardlink"] },
           "mode": { "type": "integer", "minimum": 0, "maximum": 4095 },

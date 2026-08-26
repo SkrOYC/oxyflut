@@ -96,13 +96,13 @@ Command: cargo +1.98.0 run -p xtask -- contracts validate
 - **STOP Conditions:**
   - STOP if the three 52-capability sets differ; report the owning upstream stage rather than normalizing the mismatch.
   - STOP if a symbol, contract path, or contract-test identifier doesn't resolve.
-- **Description:** Validate the exact 52 P0 IDs across PRD tables, architecture flow filenames, and traceability; the exact 27 constraint IDs; referenced contract paths and symbols; contract-test identifiers; diagnostic names and fields; candidate names; and Tier 1 environment identifiers.
+- **Description:** Validate the exact 52 P0 IDs across PRD tables, architecture flow filenames, and traceability; the exact 27 constraint IDs; referenced contract paths and symbols; contract-test identifiers; diagnostic names and fields; candidate names; Tier 1 environment identifiers; unique canonical artifact paths; and unique raw-sample keys. For diagnostics, resolve each event's registry version and validate the registered event and field privacy classes, field kind, range, and closed integer values.
 - **Acceptance:**
   - **Mode:** invariant
   - **Evidence:**
 
 ```text
-Invariant: No identifier can be missing, duplicated, renamed, or added in one downstream set without the authoritative upstream set changing first.
+Invariant: No identifier, canonical artifact path, or raw-sample key can be missing, duplicated, renamed, or added in one downstream set without the authoritative upstream set changing first. Diagnostic values must resolve to the registry's event class and match the field class, kind, bounds, and closed integer values. Event files cannot override registry privacy metadata.
 Checker: cargo +1.98.0 run -p xtask -- contracts validate
 Corpus: positive committed constitution plus fixtures for missing, duplicate, unknown, stale-path, and unresolved-symbol cases.
 ```
@@ -139,11 +139,44 @@ Invariants:
 Checker: cargo +1.98.0 run -p xtask -- contracts validate
 ```
 
+#### OXY-A008 Resolve the native contract toolchain
+
+- **Type:** Chore
+- **Effort:** 3
+- **Dependencies:** OXY-A001
+- **Category:** DX
+- **Scope (In-Scope Files):**
+  - `xtask/src/toolchain.rs`
+  - `qualification/tools/native-contract-toolchain.json`
+  - `qualification/fixtures/toolchain/`
+- **Scope (Out-of-Scope Files):**
+  - `.constitution/tech-spec/contracts/qualification-lock.json` (Stage 3 reconciliation owns active pins)
+  - Candidate source trees
+  - Native contract compilation
+- **Verification Command:** `cargo +1.98.0 test --workspace --all-features`
+- **Expected Success Output:** `exit 0` with a staged compiler, binding-generator, formatter, and SDK tool manifest whose files match their recorded SHA-256 values
+- **STOP Conditions:**
+  - STOP if a required tool has no immutable source identity, license, supported host build, or verified digest.
+  - STOP if resolving a tool would silently use an executable outside the staged manifest.
+- **Description:** Resolve or fetch the exact C and C++ compiler, linker-independent header checker, `bindgen`, `cbindgen`, Rust formatter, Prettier, and required SDK utilities. Record source identities, host triples, versions, executable paths, and SHA-256 values in a staged manifest. Produce the exact `resolvedTools` proposal for Stage 3 reconciliation without editing the active qualification lock.
+- **Acceptance:**
+  - **Mode:** contract_test
+  - **Evidence:**
+
+```text
+Assertions:
+- Every required tool has an immutable source identity, version, host triple, license, executable path, and SHA-256.
+- Re-resolution produces the same manifest bytes on the same locked host.
+- Missing, substituted, or digest-mismatched tools fail before native contract validation starts.
+- The staged manifest is visibly nonauthoritative and cannot set either readiness flag.
+Command: cargo +1.98.0 test --workspace --all-features
+```
+
 #### OXY-A005 Compile and layout-check native contract headers
 
 - **Type:** Chore
 - **Effort:** 5
-- **Dependencies:** OXY-A001
+- **Dependencies:** OXY-A008
 - **Category:** Correctness
 - **Scope (In-Scope Files):**
   - `xtask/src/contracts/native.rs`
@@ -156,9 +189,9 @@ Checker: cargo +1.98.0 run -p xtask -- contracts validate
 - **Verification Command:** `cargo +1.98.0 run -p xtask -- contracts validate`
 - **Expected Success Output:** `exit 0` after C11, C++17, generated-binding, calling-convention, symbol, and layout checks
 - **STOP Conditions:**
-  - STOP if the local environment lacks the locked compiler; record the missing tool instead of silently substituting one.
+  - STOP if the staged tool manifest is absent, incomplete, or differs from any resolved executable; return to OXY-A008 instead of substituting a tool.
   - STOP if generated bindings require a semantic ABI decision; return to Stage 3.
-- **Description:** Add deterministic native-contract validation that syntax-checks the integrated header as C11 and C++17, generates Rust declarations with the pinned bindgen version, inspects the acquisition symbol and calling convention, and compares sizes, alignment, offsets, nullability metadata, and generated hashes without linking a candidate.
+- **Description:** Add deterministic native-contract validation that uses only the OXY-A008 staged tool manifest, syntax-checks the integrated header as C11 and C++17, generates Rust declarations with the pinned bindgen version, inspects the acquisition symbol and calling convention, and compares sizes, alignment, offsets, nullability metadata, and generated hashes without linking a candidate.
 - **Acceptance:**
   - **Mode:** contract_test
   - **Evidence:**

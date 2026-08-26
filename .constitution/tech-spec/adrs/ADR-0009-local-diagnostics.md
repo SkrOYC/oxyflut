@@ -9,7 +9,7 @@ P0 requires bounded, privacy-safe, machine-local diagnostics and explicitly excl
 
 ## Decision
 
-Use `data-models/diagnostic-event.schema.json` for durable diagnostic files and the Rust contract for in-process records. Emission is one-way and nonblocking. Records contain monotonic timestamps, bounded-lifetime runtime, view, and frame identifiers, privacy classes, stable names, and dropped-record counters.
+Use `data-models/diagnostic-event.schema.json` for durable diagnostic files and the Rust contract for in-process records. Emission is one-way and nonblocking. Records contain monotonic timestamps, bounded-lifetime runtime, view, and frame identifiers, stable names, and dropped-record counters. The versioned diagnostic registry is the sole privacy-classification authority; event files cannot override its event or field classifications.
 
 ## Consequences
 

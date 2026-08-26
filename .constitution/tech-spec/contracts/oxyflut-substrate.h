@@ -19,7 +19,7 @@
 extern "C" {
 #endif
 
-#define OXY_SUBSTRATE_ABI_VERSION 1u
+#define OXY_SUBSTRATE_ABI_VERSION 2u
 
 /* Unless a field comment states otherwise, every pointer passed to or returned from this ABI is nonnull. An array pointer is null if and only if its count is zero. Every out pointer names writable storage and is cleared before a fallible call. All opaque handles belong to the creating substrate and can be used only on the execution domain declared for that operation. */
 
@@ -58,6 +58,7 @@ typedef struct OxySceneBuilder OxySceneBuilder;
 typedef struct OxyScene OxyScene;
 typedef struct OxyTexture OxyTexture;
 typedef struct OxyColorSource OxyColorSource;
+typedef struct OxyColorFilter OxyColorFilter;
 typedef struct OxyImageFilter OxyImageFilter;
 typedef struct OxyParagraphBuilder OxyParagraphBuilder;
 typedef struct OxyParagraph OxyParagraph;
@@ -120,9 +121,38 @@ typedef struct OxyPaint {
   uint32_t stroke_cap;
   uint32_t stroke_join;
   uint32_t blend_mode;
-  OxyColorSource* color_source;
-  OxyImageFilter* image_filter;
+  OxyColorSource* color_source; /* Nullable; null selects the inline solid color. */
+  OxyColorFilter* color_filter; /* Nullable; null applies no color filter. */
+  OxyImageFilter* image_filter; /* Nullable; null applies no image filter. */
 } OxyPaint;
+
+/* At most one of color_filter and image_filter can be nonnull. */
+
+typedef uint32_t OxyPixelFormat;
+enum {
+  OXY_PIXEL_FORMAT_RGBA8888 = 1u
+};
+
+typedef uint32_t OxyAlphaType;
+enum {
+  OXY_ALPHA_TYPE_PREMULTIPLIED = 1u
+};
+
+typedef uint32_t OxyColorSpace;
+enum {
+  OXY_COLOR_SPACE_SRGB = 1u
+};
+
+typedef struct OxyRasterDescriptor {
+  uint32_t struct_size;
+  uint32_t abi_version;
+  uint32_t width;
+  uint32_t height;
+  uint32_t row_bytes;
+  OxyPixelFormat pixel_format;
+  OxyAlphaType alpha_type;
+  OxyColorSpace color_space;
+} OxyRasterDescriptor;
 
 typedef struct OxyTextStyle {
   uint32_t struct_size;
@@ -363,6 +393,9 @@ typedef struct OxySubstrateApi {
   OxyStatus (OXY_CALL *scene_builder_clip_rect)(OxySceneBuilder* builder,
                                        const OxyRect* rect,
                                        uint32_t clip_operation);
+  OxyStatus (OXY_CALL *scene_builder_clip_path)(OxySceneBuilder* builder,
+                                               const OxyPathData* path,
+                                               uint32_t clip_operation);
   OxyStatus (OXY_CALL *scene_builder_draw_rect)(OxySceneBuilder* builder,
                                        const OxyRect* rect,
                                        const OxyPaint* paint);
@@ -394,6 +427,10 @@ typedef struct OxySubstrateApi {
                                       uint64_t stop_count,
                                       OxyColorSource** out_source);
   void (OXY_CALL *release_color_source)(OxyColorSource* source);
+  OxyStatus (OXY_CALL *create_color_matrix_filter)(OxySubstrate* substrate,
+                                                  const float row_major[20],
+                                                  OxyColorFilter** out_filter);
+  void (OXY_CALL *release_color_filter)(OxyColorFilter* filter);
   OxyStatus (OXY_CALL *create_blur_filter)(OxySubstrate* substrate,
                                   float sigma_x,
                                   float sigma_y,
@@ -433,11 +470,13 @@ typedef struct OxySubstrateApi {
   OxyStatus (OXY_CALL *submit_scene)(OxySubstrate* substrate,
                             OxyView* view,
                             const OxySceneSubmission* submission);
+  /* On success, out_pixels contains exactly out_descriptor->row_bytes * out_descriptor->height bytes. Phase 3A returns tightly packed RGBA8888 with premultiplied alpha in sRGB. */
   OxyStatus (OXY_CALL *render_headless)(OxySubstrate* substrate,
                                OxyScene* scene,
                                uint32_t width,
                                uint32_t height,
-                               OxyOwnedBytes* out_pixels);
+                               OxyOwnedBytes* out_pixels,
+                               OxyRasterDescriptor* out_descriptor);
   OxyStatus (OXY_CALL *realize_texture)(OxySubstrate* substrate,
                                uint64_t resource_generation,
                                uint32_t width,

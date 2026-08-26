@@ -1,7 +1,7 @@
 # Qualification planning critical path
 
-- **Version:** v0.1.0
-- **Active story points:** 74
+- **Version:** v0.2.0
+- **Active story points:** 77
 - **Active phase:** Pre-implementation qualification foundation and decision research
 
 ## Critical path
@@ -24,7 +24,8 @@ An arrow points from a prerequisite to a ticket that depends on it.
 ```mermaid
 flowchart LR
     A001[OXY-A001] --> A002[OXY-A002]
-    A001 --> A005[OXY-A005]
+    A001 --> A008[OXY-A008]
+    A008 --> A005[OXY-A005]
     A002 --> A003[OXY-A003]
     A002 --> A006[OXY-A006]
     A002 --> C001[OXY-C001]
@@ -59,6 +60,8 @@ flowchart LR
 
 ## Phasing strategy
 
-This active plan implements only work permitted while `contracts/qualification-lock.json` has `candidateImplementationReady: false`: repository scaffolding, offline contract validators, evidence writers, external-contract snapshots, environment-inventory tooling, baseline-authoring tooling, and time-boxed research into the remaining technical KUs. `OXY-D001` consolidates the evidence and identifies the exact Stage 3 revisions still required.
+This active plan implements only work permitted while `contracts/qualification-lock.json` has `candidateImplementationReady: false`: repository scaffolding, offline contract validators, evidence writers, external-contract snapshots, environment-inventory tooling, baseline-authoring tooling, resolved-tool staging, and time-boxed research into the remaining technical KUs. `OXY-D001` consolidates the evidence and identifies the exact Stage 3 revisions still required.
 
-Candidate adapters, the integrated engine fork, shared product capabilities, scored probes, and measurements are deferred. After the spike recommendations receive their required Stage 3 revision and the pre-implementation lock validates with `candidateImplementationReady: true`, Stage 4 must release a minor version that plans both candidates symmetrically. Measurement and scoring remain deferred until the later `measurementReady: true` gate. Production planning remains prohibited until mandatory Phase 3B.
+This iteration cannot set `candidateImplementationReady`. Its authoring tickets produce tools, synthetic fixtures, staged manifests, and decision reports. They do not produce the approved 52-capability baseline, reference application, scenes, interaction scripts, fonts, assets, window matrix, cache states, release flags, scoring anchors, assessor assignments, reference-environment captures, or authoritative resolved-tool lock. `OXY-D001` must name each missing lock input and its owner without claiming readiness.
+
+Candidate adapters, the integrated engine fork, shared product capabilities, scored probes, and measurements are deferred. After Stage 3 reconciles the spike results and approved pre-implementation inputs into a lock with `candidateImplementationReady: true`, Stage 4 must release another minor version that plans both candidates symmetrically. Measurement and scoring remain deferred until the later `measurementReady: true` gate. Production planning remains prohibited until mandatory Phase 3B.

@@ -75,6 +75,13 @@
             "required": ["valid"]
           },
           "then": { "required": ["exclusionReason"] }
+        },
+        {
+          "if": {
+            "properties": { "valid": { "const": true } },
+            "required": ["valid"]
+          },
+          "then": { "properties": { "exclusionReason": false } }
         }
       ]
     }

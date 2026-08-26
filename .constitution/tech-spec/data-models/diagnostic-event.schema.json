@@ -1,19 +1,20 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:oxyflut:schema:diagnostic-event:2",
+  "$id": "urn:oxyflut:schema:diagnostic-event:3",
   "title": "Oxyflut local diagnostic event",
   "type": "object",
   "additionalProperties": false,
   "required": [
     "schemaVersion",
+    "registryVersion",
     "name",
     "monotonicNs",
-    "privacyClass",
     "runtimeId",
     "fields"
   ],
   "properties": {
-    "schemaVersion": { "const": "2.0.0" },
+    "schemaVersion": { "const": "3.0.0" },
+    "registryVersion": { "const": "2.0.0" },
     "name": {
       "enum": [
         "runtime.lifecycle",
@@ -32,7 +33,6 @@
       ]
     },
     "monotonicNs": { "type": "integer", "minimum": 0 },
-    "privacyClass": { "enum": ["public", "operational", "private-redacted"] },
     "runtimeId": { "$ref": "#/$defs/scopedId" },
     "viewId": { "$ref": "#/$defs/scopedId" },
     "frameId": { "$ref": "#/$defs/scopedId" },
@@ -47,17 +47,13 @@
     "classifiedValue": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["privacyClass", "value"],
+      "required": ["value"],
       "properties": {
-        "privacyClass": {
-          "enum": ["public", "operational", "private-redacted"]
-        },
         "value": {
           "anyOf": [
             { "type": "boolean" },
             { "type": "integer" },
-            { "type": "number" },
-            { "type": "string", "maxLength": 256 }
+            { "type": "number" }
           ]
         }
       }

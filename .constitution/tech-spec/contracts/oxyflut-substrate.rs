@@ -39,6 +39,53 @@ pub struct Size {
     pub height: f32,
 }
 
+/// Stores a raster size in physical pixels.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct PixelSize {
+    /// Width in physical pixels.
+    pub width: u32,
+    /// Height in physical pixels.
+    pub height: u32,
+}
+
+/// Selects the byte layout of a headless raster.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum PixelFormat {
+    /// Eight-bit red, green, blue, and alpha channels in that byte order.
+    Rgba8888,
+}
+
+/// Selects the alpha representation of a headless raster.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum AlphaType {
+    /// Color channels are multiplied by alpha.
+    Premultiplied,
+}
+
+/// Selects the color space of a headless raster.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ColorSpace {
+    /// Standard red, green, and blue color space.
+    Srgb,
+}
+
+/// Describes the exact layout of a headless raster.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct RasterDescriptor {
+    /// Width in physical pixels.
+    pub width: u32,
+    /// Height in physical pixels.
+    pub height: u32,
+    /// Bytes from the start of one row to the next row.
+    pub row_bytes: u32,
+    /// Byte layout of each pixel.
+    pub pixel_format: PixelFormat,
+    /// Alpha representation.
+    pub alpha_type: AlphaType,
+    /// Color space.
+    pub color_space: ColorSpace,
+}
+
 /// Stores an axis-aligned logical rectangle.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Rect {
@@ -247,6 +294,15 @@ pub struct RecoveryRequest {
     pub transient_memory_cap_bytes: u64,
 }
 
+/// Stores a checked range in the source platform's declared index unit.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct NativeTextRange {
+    /// Inclusive range start.
+    pub start: u32,
+    /// Exclusive range end.
+    pub end: u32,
+}
+
 /// Selects a physical execution domain.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ExecutionDomain {
@@ -284,6 +340,14 @@ pub enum PlatformEvent<'a> {
         phase: u32,
         /// View-local position.
         position: Point,
+        /// Pointer movement since the preceding event.
+        delta: Point,
+        /// Pressed-button mask.
+        buttons: u64,
+        /// Modifier-key mask.
+        modifiers: u64,
+        /// Closed pointer-device identifier.
+        device_kind: u32,
         /// Monotonic event time.
         monotonic_ns: u64,
     },
@@ -297,6 +361,10 @@ pub enum PlatformEvent<'a> {
         action: u32,
         /// Modifier mask.
         modifiers: u64,
+        /// Monotonic event time.
+        monotonic_ns: u64,
+        /// True when the platform identifies this event as a repeat.
+        repeat: bool,
     },
     /// Input method editor transaction with callback-scoped UTF-8 text.
     Ime {
@@ -306,6 +374,14 @@ pub enum PlatformEvent<'a> {
         kind: u32,
         /// Explicit native index unit.
         native_index_unit: u32,
+        /// Replacement range, or no range when the platform supplies negative sentinels.
+        replacement: Option<NativeTextRange>,
+        /// Selection after applying the transaction.
+        selection: NativeTextRange,
+        /// Marked range after applying the transaction, if any.
+        marked: Option<NativeTextRange>,
+        /// Candidate-window rectangle in view-local logical pixels.
+        candidate_rect: Rect,
         /// Callback-scoped UTF-8 text.
         text: &'a str,
     },
@@ -391,6 +467,9 @@ pub trait SceneBuilder<E: Error + Send + Sync + 'static> {
 
     /// Adds a rectangle clip.
     fn clip_rect(&mut self, bounds: Rect) -> Result<(), E>;
+
+    /// Adds a validated path clip.
+    fn clip_path(&mut self, path: &Path) -> Result<(), E>;
 
     /// Draws a rectangle.
     fn draw_rect(&mut self, bounds: Rect, paint: &Paint) -> Result<(), E>;
@@ -506,12 +585,14 @@ pub trait SubstrateAdapter {
     ) -> Result<(), Self::Error>;
 
     /// Renders one immutable scene without an interactive display connection.
+    ///
+    /// The returned descriptor is always tightly packed RGBA8888 with premultiplied alpha in sRGB. The caller provides at least `width * height * 4` bytes, and the successful descriptor's `row_bytes * height` equals the initialized output length.
     fn render_headless(
         &mut self,
         scene: &<Self::Builder as SceneBuilder<Self::Error>>::Scene,
-        size: Size,
+        size: PixelSize,
         output: &mut [u8],
-    ) -> Result<usize, Self::Error>;
+    ) -> Result<RasterDescriptor, Self::Error>;
 
     /// Realizes decoded pixels as an owned graphics resource.
     fn realize_texture(

@@ -94,6 +94,8 @@ Command: cargo +1.98.0 run -p xtask -- baseline validate --input PATH
 ```text
 Assertions:
 - Every raw sample and exclusion is preserved with its harness log.
+- Every `(constraintId, launch, ordinal)` tuple is unique within one measurement record.
+- A valid sample cannot carry an exclusion reason.
 - Only measurement-tool failure, unrelated operating-system interruption, and physical disconnect are valid exclusions.
 - Nearest-rank and maximum-bound inputs retain every valid observation without outlier deletion.
 - Templates bind to one environment, candidate, meter version, and lock digest.

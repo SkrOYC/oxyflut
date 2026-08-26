@@ -14,7 +14,7 @@ Resolve the decisions that Stage 3 intentionally records as pre-implementation K
   - `.constitution/tech-spec/` (report required changes; don't edit them in the spike)
   - `platform/macos/`
   - Candidate source trees
-- **Verification Command:** `bunx prettier --prose-wrap never --check '.constitution/**/*.md'`
+- **Verification Command:** `bunx prettier@3.9.6 --prose-wrap never --check '.constitution/**/*.md'`
 - **Expected Success Output:** `exit 0` and a completed spike recommendation
 - **STOP Conditions:**
   - STOP if official Apple documentation or a controlled probe cannot establish an interface; retain a gating KU.
@@ -44,7 +44,7 @@ Pass: The report answers every question or explicitly retains it as a gating KU 
   - `.constitution/tech-spec/` (report required changes; don't edit them in the spike)
   - `platform/windows/`
   - Candidate source trees
-- **Verification Command:** `bunx prettier --prose-wrap never --check '.constitution/**/*.md'`
+- **Verification Command:** `bunx prettier@3.9.6 --prose-wrap never --check '.constitution/**/*.md'`
 - **Expected Success Output:** `exit 0` and a completed spike recommendation
 - **STOP Conditions:**
   - STOP if official Microsoft documentation or a controlled probe cannot establish an interface; retain a gating KU.
@@ -74,7 +74,7 @@ Pass: The report answers every question or explicitly retains it as a gating KU 
   - `.constitution/tech-spec/` (report required changes; don't edit them in the spike)
   - `platform/linux/`
   - Candidate source trees
-- **Verification Command:** `bunx prettier --prose-wrap never --check '.constitution/**/*.md'`
+- **Verification Command:** `bunx prettier@3.9.6 --prose-wrap never --check '.constitution/**/*.md'`
 - **Expected Success Output:** `exit 0` and a completed spike recommendation
 - **STOP Conditions:**
   - STOP if compositor behavior is assumed from protocol availability; require cited compositor/version evidence.
@@ -104,7 +104,7 @@ Pass: The report answers every question or explicitly retains it as a gating KU 
   - `.constitution/tech-spec/` (report required changes; don't edit them in the spike)
   - `platform/linux/`
   - Candidate source trees
-- **Verification Command:** `bunx prettier --prose-wrap never --check '.constitution/**/*.md'`
+- **Verification Command:** `bunx prettier@3.9.6 --prose-wrap never --check '.constitution/**/*.md'`
 - **Expected Success Output:** `exit 0` and a completed spike recommendation
 - **STOP Conditions:**
   - STOP if X server behavior is assumed from extension availability; require cited server/version evidence.
@@ -134,7 +134,7 @@ Pass: The report answers every question or explicitly retains it as a gating KU 
   - `.constitution/prd/constraints.md`
   - `.constitution/tech-spec/` (report required changes; don't edit them in the spike)
   - Product layout implementation
-- **Verification Command:** `bunx prettier --prose-wrap never --check '.constitution/**/*.md'`
+- **Verification Command:** `bunx prettier@3.9.6 --prose-wrap never --check '.constitution/**/*.md'`
 - **Expected Success Output:** `exit 0` and either a defensible finite cap recommendation or a precise Stage 3 blocker
 - **STOP Conditions:**
   - STOP if a cap can be obtained only by weakening CAP-LAY-001 or CON-PERF-001.
@@ -162,7 +162,7 @@ Expected end state: The report justifies the proposed cap from preserved observa
   - Candidate source trees
   - `fuzz/` implementation
   - `.constitution/tech-spec/` (report required changes; don't edit them in the spike)
-- **Verification Command:** `bunx prettier --prose-wrap never --check '.constitution/**/*.md'`
+- **Verification Command:** `bunx prettier@3.9.6 --prose-wrap never --check '.constitution/**/*.md'`
 - **Expected Success Output:** `exit 0` and a completed patch/corpus recommendation
 - **STOP Conditions:**
   - STOP if the patch doesn't apply to code consumed by both candidates.
@@ -189,7 +189,7 @@ Expected end state: The report names one patch, its tests, and a corpus registry
 - **Scope (Out-of-Scope Files):**
   - `.constitution/tech-spec/contracts/qualification-lock.json` (don't mark readiness from an access promise)
   - Purchasing or provisioning hardware
-- **Verification Command:** `bunx prettier --prose-wrap never --check '.constitution/**/*.md'`
+- **Verification Command:** `bunx prettier@3.9.6 --prose-wrap never --check '.constitution/**/*.md'`
 - **Expected Success Output:** `exit 0` and an owner-confirmed access matrix for macOS arm64, Windows x86-64, Wayland x86-64, and X11 x86-64
 - **STOP Conditions:**
   - STOP if no accountable owner or access procedure exists for an environment; record it as blocked.
@@ -216,7 +216,7 @@ Pass log: Four Tier 1 rows have a named owner and usable procedure, or the missi
   - Candidate scores
   - Candidate selection
   - `.constitution/tech-spec/contracts/qualification-lock.json` until both assessors accept the role
-- **Verification Command:** `bunx prettier --prose-wrap never --check '.constitution/**/*.md'`
+- **Verification Command:** `bunx prettier@3.9.6 --prose-wrap never --check '.constitution/**/*.md'`
 - **Expected Success Output:** `exit 0` and two consenting, distinct assessor identities with the frozen consensus procedure
 - **STOP Conditions:**
   - STOP if two independent assessors aren't named and available before candidate implementation.

@@ -9,21 +9,17 @@
       "commit": "88d9e12ae178fab0fb5cc050a94da85685d449ea"
     },
     "flutterFramework": {
-      "version": "3.44.0",
-      "commit": "559ffa3f75e7402d65a8def9c28389a9b2e6fe42"
+      "version": "3.47.0",
+      "commit": "4cf24164269a5ebf0c16a028a00727d0e77bbb05"
     },
     "flutterEngine": {
-      "version": "3.44.0-engine",
-      "commit": "4c525dac5ebe5971c5708ef73558ed8edcf4a362"
+      "version": "3.47.0-engine",
+      "commit": "5f77625673248ee5846fbcaf5d3e1a3878386fd7"
     },
     "impellerHeaderBlob": "440f83aac6580495e488ba350e6d5cbbb32e2f11",
     "integratedFork": { "status": "ku-gating", "commit": null },
     "oxyflutAdapter": { "status": "ku-gating", "commit": null },
     "upgradeLines": [
-      {
-        "version": "3.38.6",
-        "commit": "8b872868494e429d94fa06dca855c306438b22c0"
-      },
       {
         "version": "3.41.0",
         "commit": "44a626f4f0027bc38a46dc68aed5964b05a83c18"
@@ -31,30 +27,34 @@
       {
         "version": "3.44.0",
         "commit": "559ffa3f75e7402d65a8def9c28389a9b2e6fe42"
+      },
+      {
+        "version": "3.47.0",
+        "commit": "4cf24164269a5ebf0c16a028a00727d0e77bbb05"
       }
     ]
   },
   "candidateArtifacts": {
     "darwin-arm64": {
-      "url": "https://storage.googleapis.com/flutter_infra_release/flutter/4c525dac5ebe5971c5708ef73558ed8edcf4a362/darwin-arm64/impeller_sdk.zip",
-      "sourceRevision": "4c525dac5ebe5971c5708ef73558ed8edcf4a362",
+      "url": "https://storage.googleapis.com/flutter_infra_release/flutter/5f77625673248ee5846fbcaf5d3e1a3878386fd7/darwin-arm64/impeller_sdk.zip",
+      "sourceRevision": "5f77625673248ee5846fbcaf5d3e1a3878386fd7",
       "httpVerified": true,
-      "sha256": "2d7e6ef045c1dbd483d8e7a1d379f8111ae69f4f89d9159b5b2e0849cec74548",
-      "sizeBytes": 3671740
+      "sha256": "bb571afdfbdbd4f1e84b265a77b5f890aa1c564bc90d2e224c245632f62badf8",
+      "sizeBytes": 236704745
     },
     "linux-x64": {
-      "url": "https://storage.googleapis.com/flutter_infra_release/flutter/4c525dac5ebe5971c5708ef73558ed8edcf4a362/linux-x64/impeller_sdk.zip",
-      "sourceRevision": "4c525dac5ebe5971c5708ef73558ed8edcf4a362",
+      "url": "https://storage.googleapis.com/flutter_infra_release/flutter/5f77625673248ee5846fbcaf5d3e1a3878386fd7/linux-x64/impeller_sdk.zip",
+      "sourceRevision": "5f77625673248ee5846fbcaf5d3e1a3878386fd7",
       "httpVerified": true,
-      "sha256": "3708c575c1a67320e59e8138c1d8c92950a22b1b6480ace762519a61ae537082",
-      "sizeBytes": 3580821
+      "sha256": "e4c3e81fe8c857a349f7077680c95d44a2f264cdbaf797f7310e8dc3c6201a93",
+      "sizeBytes": 22528769
     },
     "windows-x64": {
-      "url": "https://storage.googleapis.com/flutter_infra_release/flutter/4c525dac5ebe5971c5708ef73558ed8edcf4a362/windows-x64/impeller_sdk.zip",
-      "sourceRevision": "4c525dac5ebe5971c5708ef73558ed8edcf4a362",
+      "url": "https://storage.googleapis.com/flutter_infra_release/flutter/5f77625673248ee5846fbcaf5d3e1a3878386fd7/windows-x64/impeller_sdk.zip",
+      "sourceRevision": "5f77625673248ee5846fbcaf5d3e1a3878386fd7",
       "httpVerified": true,
-      "sha256": "657d8fc1ba00e0d5e7414d862c864fefda215ddb1cf8d230f3ac9d9e25d33b16",
-      "sizeBytes": 3015297
+      "sha256": "c3766f293c61353fbfa0d021e6f15bd9193feca0bde3c6e12799e0ada2c6ccde",
+      "sizeBytes": 105779655
     }
   },
   "referenceEnvironments": {

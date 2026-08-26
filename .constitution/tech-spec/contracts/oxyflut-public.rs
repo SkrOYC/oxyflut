@@ -105,6 +105,62 @@ pub struct Size {
     pub height: f32,
 }
 
+/// Stores a raster size in physical pixels.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct PixelSize {
+    /// Width in physical pixels.
+    pub width: u32,
+    /// Height in physical pixels.
+    pub height: u32,
+}
+
+/// Selects the byte layout of a headless raster.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum PixelFormat {
+    /// Eight-bit red, green, blue, and alpha channels in that byte order.
+    Rgba8888,
+}
+
+/// Selects the alpha representation of a headless raster.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum AlphaType {
+    /// Color channels are multiplied by alpha.
+    Premultiplied,
+}
+
+/// Selects the color space of a headless raster.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ColorSpace {
+    /// Standard red, green, and blue color space.
+    Srgb,
+}
+
+/// Describes the exact layout of a headless raster.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct RasterDescriptor {
+    /// Width in physical pixels.
+    pub width: u32,
+    /// Height in physical pixels.
+    pub height: u32,
+    /// Bytes from the start of one row to the next row.
+    pub row_bytes: u32,
+    /// Byte layout of each pixel.
+    pub pixel_format: PixelFormat,
+    /// Alpha representation.
+    pub alpha_type: AlphaType,
+    /// Color space.
+    pub color_space: ColorSpace,
+}
+
+/// Owns one deterministic headless frame.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct HeadlessFrame {
+    /// Exact raster layout.
+    pub descriptor: RasterDescriptor,
+    /// Pixel bytes whose length equals `descriptor.row_bytes * descriptor.height`.
+    pub pixels: Vec<u8>,
+}
+
 /// Stores an axis-aligned rectangle in logical pixels.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Rect {
@@ -538,6 +594,9 @@ pub trait ApplicationRuntime {
     /// Creates a view with independent mutable state.
     fn create_view(&mut self, metrics: ViewMetrics) -> Result<ViewId, OxyError>;
 
+    /// Creates a view that renders without an interactive display connection.
+    fn create_headless_view(&mut self, physical_size: PixelSize) -> Result<ViewId, OxyError>;
+
     /// Tears down a view and rejects later work for its generation.
     fn destroy_view(&mut self, view: ViewId) -> Result<(), OxyError>;
 
@@ -554,6 +613,13 @@ pub trait ApplicationRuntime {
 
     /// Processes one interactive or harness-controlled frame instant.
     fn begin_frame(&mut self, view: ViewId, instant: FrameInstant) -> Result<(), OxyError>;
+
+    /// Processes one harness-controlled frame and returns tightly packed RGBA8888 pixels with premultiplied alpha in sRGB.
+    fn render_headless(
+        &mut self,
+        view: ViewId,
+        instant: FrameInstant,
+    ) -> Result<HeadlessFrame, OxyError>;
 }
 
 /// Exposes a mutable reactive value with dependency tracking.

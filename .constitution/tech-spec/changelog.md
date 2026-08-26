@@ -2,6 +2,27 @@
 
 All notable changes to the technical specification appear in this file.
 
+## [v0.3.0] - 2026-08-26
+
+### Added
+
+- Added complete pointer, keyboard, and input method editor event fields to the common Rust substrate contract.
+- Added path clipping, color-matrix filtering, and exact headless-raster descriptors across the Rust and C contracts.
+- Added a public headless-view and raster-output surface.
+- Added field kinds, bounds, closed values, and registry versions to the diagnostic contracts.
+
+### Changed
+
+- Advanced the integrated C ABI to version 2 after adding handles, table entries, paint state, and raster metadata.
+- Advanced the qualification base to Flutter 3.47.0 and kept 3.41.0, 3.44.0, and 3.47.0 as the consecutive upgrade-rehearsal lines.
+- Recorded verified standalone Impeller SDK hashes and sizes for the Flutter 3.47.0 engine revision.
+- Pinned constitution formatting to Prettier 3.9.6.
+- Tightened artifact-path and raw-measurement invariants.
+
+### Security
+
+- Removed arbitrary string values from durable diagnostics and required semantic registry validation of event and field privacy classes.
+
 ## [v0.2.1] - 2026-08-26
 
 ### Fixed

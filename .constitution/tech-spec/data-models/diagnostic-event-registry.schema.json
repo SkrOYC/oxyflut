@@ -1,13 +1,13 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:oxyflut:schema:diagnostic-event-registry:1",
+  "$id": "urn:oxyflut:schema:diagnostic-event-registry:2",
   "title": "Oxyflut diagnostic event registry",
   "type": "object",
   "additionalProperties": false,
   "required": ["schemaVersion", "events"],
   "properties": {
     "$schema": { "type": "string" },
-    "schemaVersion": { "const": "1.0.0" },
+    "schemaVersion": { "const": "2.0.0" },
     "events": {
       "type": "object",
       "additionalProperties": false,
@@ -26,22 +26,56 @@
         "boundary.failure",
         "diagnostics.dropped"
       ],
-      "patternProperties": {
-        "^[a-z][a-z0-9]*(\\.[a-z0-9]+)+$": {
+      "properties": {
+        "runtime.lifecycle": { "$ref": "#/$defs/event" },
+        "view.lifecycle": { "$ref": "#/$defs/event" },
+        "frame.scheduled": { "$ref": "#/$defs/event" },
+        "frame.presented": { "$ref": "#/$defs/event" },
+        "frame.missed": { "$ref": "#/$defs/event" },
+        "input.rejected": { "$ref": "#/$defs/event" },
+        "text.transaction": { "$ref": "#/$defs/event" },
+        "semantics.update": { "$ref": "#/$defs/event" },
+        "semantics.action": { "$ref": "#/$defs/event" },
+        "asset.lifecycle": { "$ref": "#/$defs/event" },
+        "recovery.transition": { "$ref": "#/$defs/event" },
+        "boundary.failure": { "$ref": "#/$defs/event" },
+        "diagnostics.dropped": { "$ref": "#/$defs/event" }
+      }
+    }
+  },
+  "$defs": {
+    "event": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["privacyClass", "fields"],
+      "properties": {
+        "privacyClass": {
+          "enum": ["public", "operational", "private-redacted"]
+        },
+        "fields": {
           "type": "object",
-          "additionalProperties": false,
-          "required": ["privacyClass", "allowedFields"],
-          "properties": {
-            "privacyClass": {
-              "enum": ["public", "operational", "private-redacted"]
-            },
-            "allowedFields": {
-              "type": "array",
-              "items": { "type": "string", "pattern": "^[a-z][a-zA-Z0-9]*$" },
-              "uniqueItems": true
-            }
-          }
+          "propertyNames": { "pattern": "^[a-z][a-zA-Z0-9]*$" },
+          "additionalProperties": { "$ref": "#/$defs/field" }
         }
+      }
+    },
+    "field": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["privacyClass", "kind"],
+      "properties": {
+        "privacyClass": {
+          "enum": ["public", "operational", "private-redacted"]
+        },
+        "kind": { "enum": ["boolean", "integer", "number"] },
+        "enumValues": {
+          "type": "array",
+          "items": { "type": "integer" },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "minimum": { "type": "number" },
+        "maximum": { "type": "number" }
       }
     }
   }

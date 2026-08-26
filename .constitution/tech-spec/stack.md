@@ -1,6 +1,6 @@
 # Qualification technical stack
 
-- **Version:** v0.2.1
+- **Version:** v0.3.0
 - **Status:** Phase 3A qualification specification
 - **Production ready:** no
 - **Required successor:** Phase 3B production specification
@@ -9,7 +9,7 @@
 
 This specification defines concrete builds for comparing both substrate candidates. It does not select a production substrate and cannot authorize a production implementation plan.
 
-Stage 4 can use v0.2.1 only for qualification infrastructure, candidate probes, common contract tests, measurements, and evidence collection. Stage 4 must not plan the production framework, release delivery, or removal of either candidate until Phase 3B reaches v1.0.0.
+Stage 4 can use v0.3.0 only for qualification infrastructure, candidate probes, common contract tests, measurements, and evidence collection. Stage 4 must not plan the production framework, release delivery, or removal of either candidate until Phase 3B reaches v1.0.0.
 
 The current qualification lock has `candidateImplementationReady: false` and `measurementReady: false`. Until `candidateImplementationReady` becomes true, Stage 4 is limited to qualification scaffolding, validators, environment discovery, baseline authoring, external-contract snapshotting, and pre-implementation lock finalization. Candidate implementation can then begin against the frozen suite. Comparable or scored evidence collection cannot begin until the completed candidate source identities are pinned and `measurementReady` becomes true.
 
@@ -38,17 +38,18 @@ The following entries are mandatory for both qualification candidates:
 | Fuzzing | `cargo-fuzz` 0.13.2 | Adopt for Phase 3A | Runs the required parser and callback campaigns. |
 | Dependency policy | `cargo-deny` 0.20.2 and `cargo-audit` 0.22.2 | Adopt for Phase 3A | Enforces license, source, duplicate, and advisory policies. |
 | Coverage | `cargo-llvm-cov` 0.9.0 | Trial | Produces qualification coverage evidence without defining a product acceptance percentage. |
+| Documentation formatting | Prettier 3.9.6 executed as `bunx prettier@3.9.6` | Adopt for Phase 3A | Makes constitution formatting repeatable without adding a package manifest before repository scaffolding. |
 
 No database, network service, remote telemetry system, application plugin runtime, or custom-shader API is part of Phase 3A.
 
 ## Substrate candidate pins
 
-Both candidates use Flutter framework 3.44.0 at commit `559ffa3f75e7402d65a8def9c28389a9b2e6fe42`, whose `bin/internal/engine.version` pins engine commit `4c525dac5ebe5971c5708ef73558ed8edcf4a362`. Upgrade rehearsal also uses the two earlier framework revisions already frozen by the PRD evidence contract.
+Both candidates use Flutter framework 3.47.0 at commit `4cf24164269a5ebf0c16a028a00727d0e77bbb05`, whose `bin/internal/engine.version` pins engine commit `5f77625673248ee5846fbcaf5d3e1a3878386fd7`. Upgrade rehearsal uses the consecutive 3.41.0, 3.44.0, and 3.47.0 stable feature-release lines frozen by the PRD evidence contract.
 
 | Candidate | Concrete input | Posture | Qualification boundary |
 | :-- | :-- | :-- | :-- |
-| Focused drawing-and-text candidate | Standalone Impeller SDK artifacts retrieved under engine commit `4c525dac5ebe5971c5708ef73558ed8edcf4a362`; `impeller.h` Git blob `440f83aac6580495e488ba350e6d5cbbb32e2f11` from the framework checkout; `darwin-arm64`, `linux-x64`, and `windows-x64` downloads with SHA-256 and sizes in the qualification lock | Trial | Rust owns the Platform integration, View coordinator, asset decoding, and recovery policy. The Rust adapter implements `contracts/oxyflut-substrate.rs` through generated Impeller bindings. |
-| Integrated candidate | Oxyflut engine fork based on Flutter commit `559ffa3f75e7402d65a8def9c28389a9b2e6fe42` with a language-neutral runtime controller and `flutter_enable_dart=false` production-configuration probe | Trial | The fork can transport platform and timing callbacks but must normalize through the same C contract. It cannot package, start, or execute the Dart runtime in scored artifacts. |
+| Focused drawing-and-text candidate | Standalone Impeller SDK artifacts retrieved under engine commit `5f77625673248ee5846fbcaf5d3e1a3878386fd7`; `impeller.h` Git blob `440f83aac6580495e488ba350e6d5cbbb32e2f11` from the framework checkout; `darwin-arm64`, `linux-x64`, and `windows-x64` downloads with SHA-256 and sizes in the qualification lock | Trial | Rust owns the Platform integration, View coordinator, asset decoding, and recovery policy. The Rust adapter implements `contracts/oxyflut-substrate.rs` through generated Impeller bindings. |
+| Integrated candidate | Oxyflut engine fork based on Flutter commit `4cf24164269a5ebf0c16a028a00727d0e77bbb05` with a language-neutral runtime controller and `flutter_enable_dart=false` production-configuration probe | Trial | The fork can transport platform and timing callbacks but must normalize through the same C contract. It cannot package, start, or execute the Dart runtime in scored artifacts. |
 
 The integrated approach replaces the application runtime while retaining selected engine subsystems. Starling is an example of this: it demonstrates runtime substitution and a Dart-free engine build with Swift. It is evidence for feasibility, not a dependency, fork base, contract, or design name.
 
@@ -106,9 +107,9 @@ Failure of any condition keeps Phase 3A active. It does not permit a partial pro
 
 - [Rust 1.98.0 release announcement](https://blog.rust-lang.org/releases/1.98.0/)
 - [Rust 2024 Edition Guide](https://doc.rust-lang.org/stable/edition-guide/rust-2024/)
-- [Flutter 3.44.0 release notes](https://docs.flutter.dev/release/release-notes/release-notes-3.44.0)
-- [Impeller Standalone SDK](https://github.com/flutter/flutter/tree/559ffa3f75e7402d65a8def9c28389a9b2e6fe42/engine/src/flutter/impeller/toolkit/interop)
-- [Flutter 3.44.0 engine revision](https://github.com/flutter/flutter/blob/559ffa3f75e7402d65a8def9c28389a9b2e6fe42/bin/internal/engine.version)
+- [Flutter 3.47.0 release notes](https://docs.flutter.dev/release/release-notes/release-notes-3.47.0)
+- [Impeller Standalone SDK](https://github.com/flutter/flutter/tree/4cf24164269a5ebf0c16a028a00727d0e77bbb05/engine/src/flutter/impeller/toolkit/interop)
+- [Flutter 3.47.0 engine revision](https://github.com/flutter/flutter/blob/4cf24164269a5ebf0c16a028a00727d0e77bbb05/bin/internal/engine.version)
 - [Xcode 26.6 release](https://developer.apple.com/news/releases/?id=06252026a)
 - [NSView display-link API](<https://developer.apple.com/documentation/appkit/nsview/displaylink(target:selector:)>)
 - [Windows SDK release notes](https://learn.microsoft.com/en-us/windows/apps/windows-sdk/release-notes)
