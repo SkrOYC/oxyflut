@@ -2,6 +2,21 @@
 
 All notable changes to the technical specification appear in this file.
 
+## [v0.5.0] - 2026-08-26
+
+### Added
+
+- Added strongly tagged text-index units, affinity-preserving paragraph hit testing, and index conversion to both substrate contracts.
+- Added explicit failed and canceled input method editor query acknowledgements.
+- Added complete headless logical, physical, and device-pixel-ratio metrics at the substrate boundary.
+- Added aggregate KK constraints and the complete semantics property set to accessibility maps.
+
+### Changed
+
+- Advanced the integrated C ABI to version 4 for text geometry, input method editor acknowledgements, and headless metrics.
+- Advanced accessibility maps to v2 and artifact manifests to v4 before durable qualification evidence existed.
+- Rejected control characters, empty path segments, duplicate separators, and trailing separators from canonical artifact paths and link targets.
+
 ## [v0.4.0] - 2026-08-26
 
 ### Added

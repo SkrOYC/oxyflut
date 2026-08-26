@@ -2,6 +2,13 @@
 
 All notable changes to the Stage 4 execution plan appear in this file.
 
+## [v0.2.2] - 2026-08-26
+
+### Fixed
+
+- Required accessibility-map dereferencing, identity and digest checks, aggregate KK enforcement, and nested KU rejection.
+- Added canonical path-alias and control-character negative fixtures.
+
 ## [v0.2.1] - 2026-08-26
 
 ### Fixed

@@ -1,6 +1,6 @@
 # Qualification technical stack
 
-- **Version:** v0.4.0
+- **Version:** v0.5.0
 - **Status:** Phase 3A qualification specification
 - **Production ready:** no
 - **Required successor:** Phase 3B production specification
@@ -9,7 +9,7 @@
 
 This specification defines concrete builds for comparing both substrate candidates. It does not select a production substrate and cannot authorize a production implementation plan.
 
-Stage 4 can use v0.4.0 only for qualification infrastructure, candidate probes, common contract tests, measurements, and evidence collection. Stage 4 must not plan the production framework, release delivery, or removal of either candidate until Phase 3B reaches v1.0.0.
+Stage 4 can use v0.5.0 only for qualification infrastructure, candidate probes, common contract tests, measurements, and evidence collection. Stage 4 must not plan the production framework, release delivery, or removal of either candidate until Phase 3B reaches v1.0.0.
 
 The current qualification lock has `candidateImplementationReady: false` and `measurementReady: false`. Until `candidateImplementationReady` becomes true, Stage 4 is limited to qualification scaffolding, validators, environment discovery, baseline authoring, external-contract snapshotting, and pre-implementation lock finalization. Candidate implementation can then begin against the frozen suite. Comparable or scored evidence collection cannot begin until the completed candidate source identities are pinned and `measurementReady` becomes true.
 

@@ -19,7 +19,7 @@
 extern "C" {
 #endif
 
-#define OXY_SUBSTRATE_ABI_VERSION 3u
+#define OXY_SUBSTRATE_ABI_VERSION 4u
 
 /* Unless a field comment states otherwise, every pointer passed to or returned from this ABI is nonnull. An array pointer is null if and only if its count is zero. Every out pointer names writable storage and is cleared before a fallible call. All opaque handles belong to the creating substrate and can be used only on the execution domain declared for that operation. */
 
@@ -155,6 +155,18 @@ typedef struct OxyRasterDescriptor {
   OxyColorSpace color_space;
 } OxyRasterDescriptor;
 
+typedef struct OxyHeadlessMetrics {
+  uint32_t struct_size;
+  uint32_t abi_version;
+  double logical_width;
+  double logical_height;
+  uint32_t physical_width;
+  uint32_t physical_height;
+  double device_pixel_ratio;
+} OxyHeadlessMetrics;
+
+/* Headless metrics require finite positive logical extents and device_pixel_ratio. Each physical extent equals its logical extent multiplied by device_pixel_ratio and rounded to the nearest integer, with half values rounded away from zero. */
+
 typedef struct OxyTextStyle {
   uint32_t struct_size;
   uint32_t abi_version;
@@ -165,6 +177,34 @@ typedef struct OxyTextStyle {
   OxyBorrowedBytes font_family_utf8;
   OxyBorrowedBytes locale_utf8;
 } OxyTextStyle;
+
+typedef uint32_t OxyTextIndexUnit;
+enum {
+  OXY_TEXT_INDEX_UTF8_BYTES = 1u,
+  OXY_TEXT_INDEX_UTF16_UNITS = 2u,
+  OXY_TEXT_INDEX_GRAPHEME = 3u,
+  OXY_TEXT_INDEX_LOGICAL = 4u
+};
+
+typedef struct OxyTextIndex {
+  OxyTextIndexUnit unit;
+  uint32_t reserved;
+  uint64_t offset;
+} OxyTextIndex;
+
+typedef uint32_t OxyTextAffinity;
+enum {
+  OXY_TEXT_AFFINITY_UPSTREAM = 1u,
+  OXY_TEXT_AFFINITY_DOWNSTREAM = 2u
+};
+
+typedef struct OxyTextHit {
+  OxyTextIndex index;
+  OxyTextAffinity affinity;
+  uint32_t grapheme_boundary;
+  uint32_t inside;
+  uint32_t reserved;
+} OxyTextHit;
 
 typedef struct OxyTextBox {
   OxyRect rect;
@@ -502,15 +542,22 @@ typedef struct OxySubstrateApi {
   OxyStatus (OXY_CALL *paragraph_layout)(OxyParagraph* paragraph,
                                 float maximum_width);
   OxyStatus (OXY_CALL *paragraph_get_caret_rect)(OxyParagraph* paragraph,
-                                        uint64_t logical_position,
-                                        uint32_t downstream_affinity,
+                                        OxyTextIndex position,
+                                        OxyTextAffinity affinity,
                                         OxyRect* out_rect);
   OxyStatus (OXY_CALL *paragraph_get_range_boxes)(OxyParagraph* paragraph,
-                                         uint64_t logical_start,
-                                         uint64_t logical_end,
+                                         OxyTextIndex start,
+                                         OxyTextIndex end,
                                          OxyTextBox* output,
                                          uint64_t output_capacity,
                                          uint64_t* out_required);
+  OxyStatus (OXY_CALL *paragraph_hit_test)(OxyParagraph* paragraph,
+                                         OxyPoint point,
+                                         OxyTextHit* out_hit);
+  OxyStatus (OXY_CALL *paragraph_convert_index)(OxyParagraph* paragraph,
+                                              OxyTextIndex index,
+                                              OxyTextIndexUnit target_unit,
+                                              OxyTextIndex* out_index);
   OxyStatus (OXY_CALL *scene_builder_draw_paragraph)(OxySceneBuilder* builder,
                                             OxyParagraph* paragraph,
                                             OxyPoint origin);
@@ -521,8 +568,7 @@ typedef struct OxySubstrateApi {
   /* On success, out_pixels contains exactly out_descriptor->row_bytes * out_descriptor->height bytes. Phase 3A returns tightly packed RGBA8888 with premultiplied alpha in sRGB. */
   OxyStatus (OXY_CALL *render_headless)(OxySubstrate* substrate,
                                OxyScene* scene,
-                               uint32_t width,
-                               uint32_t height,
+                               const OxyHeadlessMetrics* metrics,
                                OxyOwnedBytes* out_pixels,
                                OxyRasterDescriptor* out_descriptor);
   OxyStatus (OXY_CALL *realize_texture)(OxySubstrate* substrate,
@@ -543,6 +589,7 @@ typedef struct OxySubstrateApi {
                                                  const OxyPlatformServiceRequest* request);
   OxyStatus (OXY_CALL *cancel_platform_service)(OxySubstrate* substrate,
                                                 uint64_t request_generation);
+  /* response is nonnull only when status is OXY_STATUS_OK. Every call terminally acknowledges request_generation exactly once, including stale, invalid, unsupported, and canceled results. */
   OxyStatus (OXY_CALL *respond_ime_request)(OxySubstrate* substrate,
                                            uint64_t request_generation,
                                            OxyStatus status,

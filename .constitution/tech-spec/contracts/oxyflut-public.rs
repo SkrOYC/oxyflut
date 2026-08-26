@@ -299,6 +299,19 @@ pub enum TextIndex {
     Logical(u32),
 }
 
+/// Selects a text-index unit without carrying an offset.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum TextIndexUnit {
+    /// UTF-8 byte offsets.
+    Utf8Bytes,
+    /// UTF-16 code-unit offsets.
+    Utf16Units,
+    /// Grapheme-boundary ordinals.
+    Grapheme,
+    /// Logical positions within one immutable layout generation.
+    Logical,
+}
+
 /// Describes a half-open text range.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct TextRange {
@@ -1008,7 +1021,7 @@ pub trait TextEngine {
         &self,
         layout: TextLayoutId,
         index: TextIndex,
-        target_unit: TextIndex,
+        target_unit: TextIndexUnit,
     ) -> Result<TextIndex, OxyError>;
 }
 

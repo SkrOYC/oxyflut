@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:oxyflut:schema:accessibility-map:1",
+  "$id": "urn:oxyflut:schema:accessibility-map:2",
   "title": "Oxyflut platform accessibility map",
   "type": "object",
   "additionalProperties": false,
@@ -14,7 +14,7 @@
     "evidence"
   ],
   "properties": {
-    "schemaVersion": { "const": "1.0.0" },
+    "schemaVersion": { "const": "2.0.0" },
     "environment": { "enum": ["macos", "windows", "wayland", "x11"] },
     "candidate": { "enum": ["focused", "integrated"] },
     "epistemicStatus": { "enum": ["kk-complete", "ku-gating"] },
@@ -24,10 +24,17 @@
       "required": [
         "roles",
         "states",
+        "actions",
         "values",
+        "labels",
+        "hints",
+        "tooltips",
+        "identifiers",
         "bounds",
         "transforms",
         "traversal",
+        "labelledByRelations",
+        "describedByRelations",
         "accessibilityFocus",
         "inputFocus",
         "hitTesting",
@@ -36,6 +43,7 @@
         "scrollExtents",
         "language",
         "direction",
+        "headingLevels",
         "liveRegions",
         "hidden",
         "disabled",
@@ -55,6 +63,34 @@
       "minItems": 1
     }
   },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "epistemicStatus": { "const": "kk-complete" } },
+        "required": ["epistemicStatus"]
+      },
+      "then": {
+        "properties": {
+          "forward": {
+            "type": "object",
+            "patternProperties": {
+              "^[a-z][a-zA-Z]+$": {
+                "type": "object",
+                "properties": { "status": { "const": "kk" } }
+              }
+            }
+          },
+          "reverseActions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": { "status": { "const": "kk" } }
+            }
+          }
+        }
+      }
+    }
+  ],
   "$defs": {
     "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
     "evidence": {

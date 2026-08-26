@@ -48,6 +48,17 @@ pub struct PixelSize {
     pub height: u32,
 }
 
+/// Describes a headless viewport and its raster mapping.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct HeadlessMetrics {
+    /// Viewport size in logical pixels.
+    pub logical_size: Size,
+    /// Raster size in physical pixels.
+    pub physical_size: PixelSize,
+    /// Physical pixels per logical pixel.
+    pub device_pixel_ratio: f32,
+}
+
 /// Selects the byte layout of a headless raster.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum PixelFormat {
@@ -188,6 +199,63 @@ pub struct TextStyleRun {
     pub font_size: f32,
     /// Foreground color.
     pub color: Color,
+}
+
+/// Selects the unit carried by a checked text index.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum TextIndex {
+    /// Checked UTF-8 byte offset.
+    Utf8Bytes(u32),
+    /// Checked UTF-16 code-unit offset.
+    Utf16Units(u32),
+    /// Checked grapheme-boundary ordinal.
+    Grapheme(u32),
+    /// Logical position within one immutable paragraph.
+    Logical(u32),
+}
+
+/// Selects a text-index unit without carrying an offset.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum TextIndexUnit {
+    /// UTF-8 byte offsets.
+    Utf8Bytes,
+    /// UTF-16 code-unit offsets.
+    Utf16Units,
+    /// Grapheme-boundary ordinals.
+    Grapheme,
+    /// Logical paragraph positions.
+    Logical,
+}
+
+/// Describes a half-open checked text range.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct TextRange {
+    /// Inclusive range start.
+    pub start: TextIndex,
+    /// Exclusive range end.
+    pub end: TextIndex,
+}
+
+/// Selects caret affinity at a text boundary.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum TextAffinity {
+    /// Associates the position with preceding visual content.
+    Upstream,
+    /// Associates the position with following visual content.
+    Downstream,
+}
+
+/// Reports point-to-text hit-test results.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct TextHit {
+    /// Checked hit index.
+    pub index: TextIndex,
+    /// Visual affinity.
+    pub affinity: TextAffinity,
+    /// True when the index is a grapheme boundary.
+    pub grapheme_boundary: bool,
+    /// True when the point lies within paragraph bounds.
+    pub inside: bool,
 }
 
 /// Describes semantics scrolling state in logical units.
@@ -396,6 +464,21 @@ pub struct ImeResponse<'a> {
     pub text: &'a str,
     /// Callback-scoped attributed text segments.
     pub segments: &'a [ImeTextSegment],
+}
+
+/// Selects the outcome of an input method editor query.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ImeResponseStatus {
+    /// The response payload is valid and complete.
+    Ok,
+    /// The target query generation is stale.
+    Stale,
+    /// A requested range or index is invalid.
+    InvalidRange,
+    /// The query isn't supported by the active platform contract.
+    Unsupported,
+    /// The query was canceled before publication.
+    Cancelled,
 }
 
 /// Selects a physical execution domain.
@@ -624,22 +707,32 @@ pub trait SubstrateText<E: Error + Send + Sync + 'static> {
         maximum_width: f32,
     ) -> Result<Self::Paragraph, E>;
 
-    /// Returns caret geometry for a checked logical position and affinity.
+    /// Returns caret geometry for a checked position and affinity.
     fn caret_rect(
         &self,
         paragraph: &Self::Paragraph,
-        logical_position: u32,
-        downstream_affinity: bool,
+        position: TextIndex,
+        affinity: TextAffinity,
     ) -> Result<Rect, E>;
 
     /// Writes selection rectangles and returns the number required.
     fn selection_rects(
         &self,
         paragraph: &Self::Paragraph,
-        logical_start: u32,
-        logical_end: u32,
+        range: TextRange,
         output: &mut [Rect],
     ) -> Result<usize, E>;
+
+    /// Hit-tests a logical point and returns a checked index and affinity.
+    fn hit_test(&self, paragraph: &Self::Paragraph, point: Point) -> Result<TextHit, E>;
+
+    /// Converts a checked index to another unit after boundary validation.
+    fn convert_index(
+        &self,
+        paragraph: &Self::Paragraph,
+        index: TextIndex,
+        target_unit: TextIndexUnit,
+    ) -> Result<TextIndex, E>;
 }
 
 /// Implements the physical rendering-substrate boundary for one candidate.
@@ -696,11 +789,11 @@ pub trait SubstrateAdapter {
 
     /// Renders one immutable scene without an interactive display connection.
     ///
-    /// The returned descriptor is always tightly packed RGBA8888 with premultiplied alpha in sRGB. The caller provides at least `width * height * 4` bytes, and the successful descriptor's `row_bytes * height` equals the initialized output length.
+    /// The metrics obey the same finite, positive, round-to-nearest consistency rule as the public headless view. The returned descriptor is always tightly packed RGBA8888 with premultiplied alpha in sRGB. The caller provides at least `physical_width * physical_height * 4` bytes, and the successful descriptor's `row_bytes * height` equals the initialized output length.
     fn render_headless(
         &mut self,
         scene: &<Self::Builder as SceneBuilder<Self::Error>>::Scene,
-        size: PixelSize,
+        metrics: HeadlessMetrics,
         output: &mut [u8],
     ) -> Result<RasterDescriptor, Self::Error>;
 
@@ -738,10 +831,13 @@ pub trait SubstrateAdapter {
     ) -> Result<(), Self::Error>;
 
     /// Completes one candidate-transported input method editor query exactly once.
+    ///
+    /// `Ok` requires a response payload. Every other status requires no payload and terminally acknowledges the request generation.
     fn respond_ime_request(
         &mut self,
         request_generation: u64,
-        response: ImeResponse<'_>,
+        status: ImeResponseStatus,
+        response: Option<ImeResponse<'_>>,
     ) -> Result<(), Self::Error>;
 
     /// Cancels an unpublished candidate-transported platform service.

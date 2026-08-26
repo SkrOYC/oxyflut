@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:oxyflut:schema:artifact-manifest:3",
+  "$id": "urn:oxyflut:schema:artifact-manifest:4",
   "title": "Oxyflut canonical artifact manifest",
   "type": "object",
   "additionalProperties": false,
@@ -14,7 +14,7 @@
     "files"
   ],
   "properties": {
-    "schemaVersion": { "const": "3.0.0" },
+    "schemaVersion": { "const": "4.0.0" },
     "candidate": { "enum": ["focused", "integrated"] },
     "environment": {
       "enum": [
@@ -81,7 +81,7 @@
   "$defs": {
     "artifactPath": {
       "type": "string",
-      "pattern": "^(?!/)(?![A-Za-z]:)(?!.*\\\\)(?!.*(?:^|/)\\.{1,2}(?:/|$))[^\\u0000]+$"
+      "pattern": "^(?![A-Za-z]:)(?!.*\\\\)(?!.*[\\u0000-\\u001F\\u007F])(?!(?:\\.{1,2})(?:/|$))(?!.*\\/\\.{1,2}(?:/|$))[^/]+(?:/[^/]+)*$"
     },
     "sha40": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
     "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
