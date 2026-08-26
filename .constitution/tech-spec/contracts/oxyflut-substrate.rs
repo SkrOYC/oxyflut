@@ -673,17 +673,43 @@ pub enum PlatformService {
     Message,
 }
 
+/// Reports the terminal result of one submitted frame.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum PresentationStatus {
+    /// The frame reached the presentation mechanism.
+    Presented,
+    /// The submission or callback payload was invalid.
+    InvalidArgument,
+    /// The adapter and substrate ABI were incompatible.
+    IncompatibleAbi,
+    /// The view or frame generation was stale.
+    StaleOwner,
+    /// A bounded resource limit prevented presentation.
+    ResourceLimit,
+    /// The presentation mechanism was unsupported.
+    Unsupported,
+    /// The substrate reported an implementation failure.
+    SubstrateFailure,
+    /// Presentation was cancelled before completion.
+    Cancelled,
+    /// Presentation missed its terminal deadline.
+    DeadlineExceeded,
+}
+
 /// Receives normalized asynchronous substrate events.
 pub trait SubstrateEvents<E: Error + Send + Sync + 'static> {
     /// Reports one candidate-transported frame opportunity.
     fn frame_opportunity(&mut self, opportunity: FrameOpportunity) -> Result<(), E>;
 
-    /// Reports presentation feedback for one submitted frame.
+    /// Reports presentation feedback or a structured terminal failure for one submitted frame.
+    ///
+    /// `Presented` requires one monotonic presentation timestamp. Every failure requires `None`. The integrated adapter maps the nine declared `OxyStatus` values explicitly and rejects unknown values before invoking this callback.
     fn presented(
         &mut self,
         view: ViewGeneration,
         frame: FrameGeneration,
-        presentation_ns: u64,
+        presentation_ns: Option<u64>,
+        status: PresentationStatus,
     ) -> Result<(), E>;
 
     /// Reports a candidate-transported platform event for normalization.
@@ -717,8 +743,6 @@ pub trait SceneBuilder<E: Error + Send + Sync + 'static> {
     type Scene: Send + Sync + 'static;
     /// Candidate-owned texture type.
     type Texture: Send + Sync + 'static;
-    /// Candidate-owned picture type.
-    type Picture: Send + Sync + 'static;
     /// Candidate-owned immutable paragraph type.
     type Paragraph: Send + Sync + 'static;
 
@@ -751,8 +775,8 @@ pub trait SceneBuilder<E: Error + Send + Sync + 'static> {
         paint: &Paint,
     ) -> Result<(), E>;
 
-    /// Draws a reusable picture.
-    fn draw_picture(&mut self, picture: &Self::Picture, transform: Transform) -> Result<(), E>;
+    /// Draws a reusable immutable scene.
+    fn draw_picture(&mut self, picture: &Self::Scene, transform: Transform) -> Result<(), E>;
 
     /// Draws an immutable laid-out paragraph at a logical origin.
     fn draw_paragraph(&mut self, paragraph: &Self::Paragraph, origin: Point) -> Result<(), E>;

@@ -1,7 +1,7 @@
 {
   "$schema": "../data-models/capability-traceability.schema.json",
   "schemaVersion": "3.0.0",
-  "specificationVersion": "0.9.0",
+  "specificationVersion": "0.10.0",
   "mappings": [
     {
       "capabilityId": "CAP-CMP-001",
@@ -143,18 +143,31 @@
       "bindings": [
         {
           "contract": "contracts/oxyflut-public.rs",
-          "symbols": ["Canvas", "Paint", "Path"]
+          "symbols": [
+            "Canvas",
+            "Canvas::draw_picture",
+            "Canvas::finish",
+            "Paint",
+            "Path"
+          ]
         },
         {
           "contract": "contracts/oxyflut-substrate.rs",
-          "symbols": ["SceneBuilder", "SceneBuilder::draw_path"]
+          "symbols": [
+            "SceneBuilder",
+            "SceneBuilder::draw_path",
+            "SceneBuilder::draw_picture",
+            "SceneBuilder::build"
+          ]
         },
         {
           "contract": "contracts/oxyflut-substrate.h",
           "symbols": [
             "OxySubstrateApi.scene_builder_draw_path",
             "OxySubstrateApi.scene_builder_draw_texture",
-            "OxySubstrateApi.scene_builder_begin_layer"
+            "OxySubstrateApi.scene_builder_begin_layer",
+            "OxySubstrateApi.scene_builder_draw_scene",
+            "OxySubstrateApi.scene_builder_build"
           ]
         }
       ]
@@ -191,18 +204,31 @@
       "bindings": [
         {
           "contract": "contracts/oxyflut-public.rs",
-          "symbols": ["Canvas", "Paint", "Path"]
+          "symbols": [
+            "Canvas",
+            "Canvas::draw_picture",
+            "Canvas::finish",
+            "Paint",
+            "Path"
+          ]
         },
         {
           "contract": "contracts/oxyflut-substrate.rs",
-          "symbols": ["SceneBuilder", "SceneBuilder::draw_path"]
+          "symbols": [
+            "SceneBuilder",
+            "SceneBuilder::draw_path",
+            "SceneBuilder::draw_picture",
+            "SceneBuilder::build"
+          ]
         },
         {
           "contract": "contracts/oxyflut-substrate.h",
           "symbols": [
             "OxySubstrateApi.scene_builder_draw_path",
             "OxySubstrateApi.scene_builder_draw_texture",
-            "OxySubstrateApi.scene_builder_begin_layer"
+            "OxySubstrateApi.scene_builder_begin_layer",
+            "OxySubstrateApi.scene_builder_draw_scene",
+            "OxySubstrateApi.scene_builder_build"
           ]
         }
       ]
@@ -309,13 +335,21 @@
         },
         {
           "contract": "contracts/oxyflut-substrate.rs",
-          "symbols": ["FrameOpportunity", "SubstrateEvents::frame_opportunity"]
+          "symbols": [
+            "FrameOpportunity",
+            "PresentationStatus",
+            "SubstrateEvents::frame_opportunity",
+            "SubstrateEvents::presented",
+            "SubstrateAdapter::submit"
+          ]
         },
         {
           "contract": "contracts/oxyflut-substrate.h",
           "symbols": [
             "OxyFrameOpportunity",
-            "OxySubstrateCallbacks.on_frame_opportunity"
+            "OxySubstrateCallbacks.on_frame_opportunity",
+            "OxySubstrateCallbacks.on_presentation",
+            "OxySubstrateApi.submit_scene"
           ]
         }
       ]
@@ -1050,6 +1084,15 @@
         {
           "contract": "data-models/diagnostic-event.schema.json",
           "symbols": ["#/properties/name", "#/properties/fields"]
+        },
+        {
+          "contract": "contracts/oxyflut-public.rs",
+          "symbols": [
+            "LocalDiagnosticDestination",
+            "LocalDiagnosticSinkAdmission::open_local",
+            "LocalDiagnosticSink::try_emit",
+            "LocalDiagnosticSink::dropped_records"
+          ]
         }
       ]
     },

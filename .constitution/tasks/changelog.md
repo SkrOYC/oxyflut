@@ -2,6 +2,13 @@
 
 All notable changes to the Stage 4 execution plan appear in this file.
 
+## [v0.2.7] - 2026-08-26
+
+### Fixed
+
+- Moved the shared streaming SHA-256 primitive into schema foundation so dependency-ready validators can hash evidence without duplicating ownership.
+- Added reusable-scene, presentation-status, and machine-local diagnostic-admission parity fixtures.
+
 ## [v0.2.6] - 2026-08-26
 
 ### Fixed

@@ -2,6 +2,18 @@
 
 All notable changes to the technical specification appear in this file.
 
+## [v0.10.0] - 2026-08-26
+
+### Added
+
+- Added closed presentation outcomes with explicit success and failure timestamp semantics to the common substrate callback.
+- Added typed admission for bounded, user-controlled machine-local diagnostic sinks.
+- Pinned `sha2` 0.11.0 as the shared streaming SHA-256 implementation for qualification validators and evidence writers.
+
+### Changed
+
+- Unified reusable pictures with the immutable common scene type and bound scene recording, replay, submission, and presentation symbols into capability traceability.
+
 ## [v0.9.0] - 2026-08-26
 
 ### Added

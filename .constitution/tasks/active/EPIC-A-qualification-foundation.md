@@ -59,17 +59,18 @@ Command: cargo +1.98.0 test --workspace --all-features
   - `xtask/src/contracts/mod.rs`
   - `xtask/src/commands/contracts.rs`
   - `crates/oxyflut-qualification/src/schema.rs`
+  - `crates/oxyflut-qualification/src/hash.rs`
   - `qualification/fixtures/contracts/`
 - **Scope (Out-of-Scope Files):**
   - `.constitution/tech-spec/data-models/*.json` (binding inputs; don't redesign)
   - `.constitution/tech-spec/contracts/*.json` (binding instances; don't weaken)
   - Candidate and platform crates
-- **Verification Command:** `cargo +1.98.0 test --workspace --all-features schema`
+- **Verification Command:** `cargo +1.98.0 test --workspace --all-features schema && cargo +1.98.0 test --workspace --all-features hash`
 - **Expected Success Output:** `exit 0` with every local schema compiled and every committed instance validated without network access
 - **STOP Conditions:**
   - STOP if a schema requires remote resolution; route the missing snapshot to OXY-C001 instead of enabling network resolution.
   - STOP if validation requires changing a schema's meaning; trigger a Stage 3 correction.
-- **Description:** Replace the OXY-A001 contracts command placeholder with the offline JSON Schema 2020-12 entry point. Create and register compile-safe placeholder validator modules for OXY-A003, OXY-A004, and OXY-A005 so their code is compiled before OXY-A007 aggregates execution. Implement schema compilation, local reference resolution, instance discovery, deterministic error ordering, and positive and negative fixtures for every durable Stage 3 shape.
+- **Description:** Replace the OXY-A001 contracts command and shared hash placeholders with the offline JSON Schema 2020-12 entry point and the pinned streaming SHA-256 primitive. Create and register compile-safe placeholder validator modules for OXY-A003, OXY-A004, and OXY-A005 so their code is compiled before OXY-A007 aggregates execution. Implement schema compilation, local reference resolution, instance discovery, deterministic error ordering, shared file and byte hashing, and positive and negative fixtures for every durable Stage 3 shape.
 - **Acceptance:**
   - **Mode:** contract_test
   - **Evidence:**
@@ -78,10 +79,11 @@ Command: cargo +1.98.0 test --workspace --all-features
 Assertions:
 - Every .schema.json file compiles under the pinned validator.
 - Every committed contract instance validates against its declared local schema.
+- Streaming file and byte hashing returns the published SHA-256 vectors without loading whole evidence files into memory.
 - Network and undeclared schema resolution fail closed.
 - Invalid type, required-field, enum, additional-property, and conditional fixtures fail with stable paths.
 - Superseded pre-evidence schema identities have explicit rejection and supersession fixtures; migrations preserve source bytes after durable evidence exists.
-Command: cargo +1.98.0 test --workspace --all-features schema
+Command: cargo +1.98.0 test --workspace --all-features schema && cargo +1.98.0 test --workspace --all-features hash
 ```
 
 #### OXY-A003 Validate exact upstream sets and registries
@@ -104,15 +106,15 @@ Command: cargo +1.98.0 test --workspace --all-features schema
 - **STOP Conditions:**
   - STOP if the three 52-capability sets differ; report the owning upstream stage rather than normalizing the mismatch.
   - STOP if a symbol, contract path, or contract-test identifier doesn't resolve.
-- **Description:** Validate the exact 52 P0 IDs across PRD tables, architecture flow filenames, traceability, and the required capability-to-physical-contract edge matrix; the exact 27 constraint IDs; equality between the active specification version and every baseline or traceability instance; file-qualified contract symbols and contract-test identifiers; diagnostic names and fields; candidate names; Tier 1 environment identifiers; unique canonical artifact paths and link targets; and unique raw-sample keys. Resolve and hash every evidence reference behind a KK minimum-version, protocol, input method editor, timing, allocation, recovery, or accessibility claim. Dereference each platform accessibility map, verify its path digest, environment and candidate identity, required semantics categories, aggregate status, and nested mapping and action statuses. Resolve every hardlink to a regular-file entry and every symlink within the artifact root without dereferencing it. For diagnostics, resolve each event's registry version and validate the registered event and field privacy classes, field kind, range, and closed integer values.
+- **Description:** Validate the exact 52 P0 IDs across PRD tables, architecture flow filenames, traceability, and the required capability-to-physical-contract edge matrix; the exact 27 constraint IDs; equality between the active specification version and every baseline or traceability instance; file-qualified contract symbols and contract-test identifiers; diagnostic names and fields; the closed machine-local diagnostic destination set; candidate names; Tier 1 environment identifiers; unique canonical artifact paths and link targets; and unique raw-sample keys. Resolve and hash every evidence reference behind a KK minimum-version, protocol, input method editor, timing, allocation, recovery, or accessibility claim with the OXY-A002 primitive. Dereference each platform accessibility map, verify its path digest, environment and candidate identity, required semantics categories, aggregate status, and nested mapping and action statuses. Resolve every hardlink to a regular-file entry and every symlink within the artifact root without dereferencing it. For diagnostics, resolve each event's registry version and validate the registered event and field privacy classes, field kind, range, closed integer values, local sink admission, and bounded acknowledgement contract.
 - **Acceptance:**
   - **Mode:** invariant
   - **Evidence:**
 
 ```text
-Invariant: No identifier, file-qualified contract binding, canonical artifact path, canonical link target, or raw-sample key can be missing, duplicated, renamed, or added in one downstream set without the authoritative upstream set changing first. Every baseline and traceability instance names the active specification version. Each declared physical contract has exactly one binding with one or more symbols that resolve inside that file. Every nested KK platform claim resolves at least one immutable evidence path and digest. A KK platform accessibility reference resolves to the matching environment and candidate, has the declared digest, contains every required semantics category, has no nested KU, and binds each indexed reverse action to the live node's immutable text-layout generation. Hardlinks resolve to regular-file entries with equal size and digest; symlinks remain inside the artifact root; regular files carry no link target. Diagnostic values must resolve to the registry's event class and match the field class, kind, bounds, and closed integer values. Event files cannot override registry privacy metadata.
+Invariant: No identifier, file-qualified contract binding, canonical artifact path, canonical link target, or raw-sample key can be missing, duplicated, renamed, or added in one downstream set without the authoritative upstream set changing first. Every baseline and traceability instance names the active specification version. Each declared physical contract has exactly one binding with one or more symbols that resolve inside that file. Every nested KK platform claim resolves at least one immutable evidence path and digest. A KK platform accessibility reference resolves to the matching environment and candidate, has the declared digest, contains every required semantics category, has no nested KU, and binds each indexed reverse action to the live node's immutable text-layout generation. Hardlinks resolve to regular-file entries with equal size and digest; symlinks remain inside the artifact root; regular files carry no link target. Diagnostic values must resolve to the registry's event class and match the field class, kind, bounds, and closed integer values. Diagnostic sink admission accepts only the closed machine-local destinations with a nonzero queue bound; remote, undeclared, and unbounded destinations fail before record delivery. Event files cannot override registry privacy metadata.
 Checker: cargo +1.98.0 test -p xtask contracts::traceability
-Corpus: positive committed constitution plus fixtures for missing, duplicate, unknown, stale-path, omitted required capability-to-contract edge, omitted reverse-action ingress, unresolved file-qualified symbol, mismatched active specification version, missing or mismatched nested KK evidence, mismatched accessibility identity or digest, nested accessibility KU, stale accessibility text-layout generation, empty or trailing path segments, duplicate separators, and control-character paths.
+Corpus: positive committed constitution plus fixtures for missing, duplicate, unknown, stale-path, omitted required capability-to-contract edge, omitted reverse-action ingress, unresolved file-qualified symbol, mismatched active specification version, remote or undeclared diagnostic sink, unbounded sink acknowledgement, missing or mismatched nested KK evidence, mismatched accessibility identity or digest, nested accessibility KU, stale accessibility text-layout generation, empty or trailing path segments, duplicate separators, and control-character paths.
 ```
 
 #### OXY-A004 Enforce readiness, promotion, and immutable evidence bindings
@@ -211,11 +213,12 @@ Assertions:
 - Generated bindings are byte-stable under the locked toolchain.
 - ABI table prefix, struct_size, abi_version, OXY_CALL, OXY_EXPORT, opaque handles, and callback signatures match fixtures.
 - Native IME index-unit constants match the Rust enum and platform-contract strings; unknown numeric values fail before range conversion.
+- Every declared C presentation status maps to the matching common Rust presentation status, success and failure timestamp invariants are enforced, and unknown status values fail before callback delivery.
 - Deliberate layout and symbol mutations fail.
 Command: cargo +1.98.0 test -p xtask contracts::native
 ```
 
-#### OXY-A006 Implement canonical evidence writing and hashing
+#### OXY-A006 Implement canonical evidence writing
 
 - **Type:** Feature
 - **Effort:** 5
@@ -223,7 +226,6 @@ Command: cargo +1.98.0 test -p xtask contracts::native
 - **Category:** Correctness
 - **Scope (In-Scope Files):**
   - `crates/oxyflut-qualification/src/evidence.rs`
-  - `crates/oxyflut-qualification/src/hash.rs`
   - `xtask/src/evidence.rs`
   - `xtask/src/commands/evidence.rs`
   - `qualification/fixtures/evidence/`
@@ -236,7 +238,7 @@ Command: cargo +1.98.0 test -p xtask contracts::native
 - **STOP Conditions:**
   - STOP if canonicalization would rewrite preserved source evidence; derived records must retain the source bytes and digest.
   - STOP if a format needs an unpinned external schema; route it to OXY-C001.
-- **Description:** Replace the OXY-A001 root evidence and evidence-command placeholders. Implement local atomic writes, deterministic JSON encoding, repository-relative evidence references, streaming SHA-256 calculation, media-type recording, collision-safe paths, source/derived provenance, and verification APIs used by later lock-input tools.
+- **Description:** Replace the OXY-A001 root evidence and evidence-command placeholders. Reuse the OXY-A002 streaming SHA-256 primitive and implement local atomic writes, deterministic JSON encoding, repository-relative evidence references, media-type recording, collision-safe paths, source/derived provenance, and verification APIs used by later lock-input tools.
 - **Acceptance:**
   - **Mode:** invariant
   - **Evidence:**

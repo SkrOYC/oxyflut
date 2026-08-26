@@ -462,6 +462,7 @@ typedef struct OxySubstrateCallbacks {
   void (OXY_CALL *on_wakeup)(void* user_data);
   void (OXY_CALL *on_frame_opportunity)(void* user_data,
                                const OxyFrameOpportunity* opportunity);
+  /* OXY_STATUS_OK requires the monotonic presentation timestamp. Every terminal failure requires presentation_time_ns == 0. Receivers reject undeclared status values. */
   void (OXY_CALL *on_presentation)(void* user_data,
                           uint64_t view_generation,
                           uint64_t frame_generation,

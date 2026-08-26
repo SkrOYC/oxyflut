@@ -1215,9 +1215,37 @@ pub trait PlatformServices {
     fn cancel(&mut self, request: PlatformRequestId) -> Result<(), OxyError>;
 }
 
+/// Selects one built-in machine-local destination admitted by explicit user policy.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum LocalDiagnosticDestination {
+    /// A machine-local file selected by the user through the host.
+    UserSelectedMachineLocalFile,
+    /// An application-local file enabled by the user.
+    UserEnabledApplicationLocalFile,
+    /// An in-process bounded buffer enabled by the user.
+    UserEnabledMemoryBuffer,
+}
+
+/// Admits only a closed machine-local diagnostic destination.
+pub trait LocalDiagnosticSinkAdmission {
+    /// Concrete admitted sink type.
+    type Sink: LocalDiagnosticSink;
+
+    /// Opens one user-controlled destination with a nonzero bounded queue.
+    ///
+    /// The host verifies that file destinations are machine-local before this call. Remote, undeclared, or unverifiable destinations fail before a sink is created.
+    fn open_local(
+        &mut self,
+        destination: LocalDiagnosticDestination,
+        max_queued_records: std::num::NonZeroU32,
+    ) -> Result<Self::Sink, OxyError>;
+}
+
 /// Receives privacy-classified local diagnostic records without blocking producers.
 pub trait LocalDiagnosticSink {
-    /// Attempts to enqueue one schema-valid record.
+    /// Attempts to copy one schema-valid record into the bounded queue without waiting for destination I/O.
+    ///
+    /// `Ok` acknowledges queue ownership only. A full, unavailable, or failed sink returns promptly and increments the drop counter without exposing the record elsewhere.
     fn try_emit(&self, record: &[u8]) -> Result<(), OxyError>;
 
     /// Returns the number of records dropped since creation.

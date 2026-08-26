@@ -1,6 +1,6 @@
 # Qualification technical stack
 
-- **Version:** v0.9.0
+- **Version:** v0.10.0
 - **Status:** Phase 3A qualification specification
 - **Production ready:** no
 - **Required successor:** Phase 3B production specification
@@ -9,7 +9,7 @@
 
 This specification defines concrete builds for comparing both substrate candidates. It does not select a production substrate and cannot authorize a production implementation plan.
 
-Stage 4 can use v0.9.0 only for qualification infrastructure, candidate probes, common contract tests, measurements, and evidence collection. Stage 4 must not plan the production framework, release delivery, or removal of either candidate until Phase 3B reaches v1.0.0.
+Stage 4 can use v0.10.0 only for qualification infrastructure, candidate probes, common contract tests, measurements, and evidence collection. Stage 4 must not plan the production framework, release delivery, or removal of either candidate until Phase 3B reaches v1.0.0.
 
 The current qualification lock has `candidateImplementationReady: false` and `measurementReady: false`. Until `candidateImplementationReady` becomes true, Stage 4 is limited to qualification scaffolding, validators, environment discovery, baseline authoring, external-contract snapshotting, and pre-implementation lock finalization. Candidate implementation can then begin against the frozen suite. Comparable or scored evidence collection cannot begin until the completed candidate source identities are pinned and `measurementReady` becomes true.
 
@@ -31,6 +31,7 @@ The following entries are mandatory for both qualification candidates:
 | Text boundaries | `unicode-segmentation` 1.13.3 | Trial | Supplies grapheme and word boundaries for the shared editing model. Rendering geometry remains substrate-qualified. |
 | Image decoding | `image` 0.25.10 with default features disabled and `gif`, `jpeg`, `png`, and `webp` enabled | Trial | Gives the focused candidate one bounded Rust decoder surface. The integrated candidate must expose equivalent behavior through its adapter. |
 | Evidence serialization | `serde` 1.0.229 and `serde_json` 1.0.151 | Adopt for Phase 3A | Implements the owned JSON evidence formats in `data-models/`. |
+| Evidence hashing | `sha2` 0.11.0 with default features disabled | Adopt for Phase 3A | Supplies the shared streaming SHA-256 primitive used by validators and evidence writers; version 0.11.0 supports the pinned Rust toolchain with an MSRV of 1.85. |
 | JSON Schema validation | `jsonschema` 0.51.0 with default features disabled | Adopt for Phase 3A | Validates local schemas without network resolution. |
 | Property testing | `proptest` 1.11.0 | Adopt for Phase 3A | Exercises ownership, indices, reconciliation, and state-machine invariants. |
 | Benchmarks | `criterion` 0.8.2 with default features disabled | Trial | Supports local microbenchmarks. PRD qualification meters remain authoritative. |
