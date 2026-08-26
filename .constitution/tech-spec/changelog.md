@@ -2,6 +2,14 @@
 
 All notable changes to the technical specification appear in this file.
 
+## [v0.1.1] - 2026-08-26
+
+### Fixed
+
+- Split pre-implementation suite readiness from measurement readiness so the candidate source commits can be produced without creating a circular lock dependency.
+- Required the suite, environments, baselines, assessors, tools, corpora, security-patch rehearsal, external-contract snapshots, and layout cap before candidate implementation begins.
+- Kept comparable and scored evidence blocked until completed candidate and adapter source identities are pinned.
+
 ## [v0.1.0] - 2026-08-26
 
 ### Added

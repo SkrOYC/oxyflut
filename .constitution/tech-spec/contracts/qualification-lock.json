@@ -1,6 +1,7 @@
 {
   "$schema": "../data-models/qualification-lock.schema.json",
-  "schemaVersion": "2.0.0",
+  "schemaVersion": "3.0.0",
+  "candidateImplementationReady": false,
   "measurementReady": false,
   "sourcePins": {
     "rust": {
@@ -109,11 +110,27 @@
     "assessors": null,
     "fuzzCorpora": null,
     "securityPatchRehearsal": null,
+    "externalContractLock": null,
     "layoutVisitCap": null
   },
   "resolvedTools": [],
+  "preImplementationKnownUnknowns": [
+    "minimum-platform-and-protocol-versions",
+    "hardware-gpu-driver-and-system-package-locks",
+    "reference-application-scenes-scripts-fonts-assets-windows-cache-and-flags",
+    "raw-measurement-and-sample-validity-contracts",
+    "capability-and-platform-baselines",
+    "independent-presentation-opportunity-sources",
+    "complete-ime-editing-geometry-and-accessibility-maps",
+    "scoring-anchors-and-two-assessors",
+    "fuzz-corpora",
+    "security-patch-rehearsal",
+    "layout-visit-cap",
+    "external-distribution-schema-snapshots-and-verifiers",
+    "resolved-tool-digests"
+  ],
   "gatingKnownUnknowns": [
-    "integrated-fork-interface-and-commit",
+    "integrated-fork-commit",
     "oxyflut-adapter-commit",
     "minimum-platform-and-protocol-versions",
     "hardware-gpu-driver-and-system-package-locks",
