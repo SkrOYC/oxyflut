@@ -28,4 +28,4 @@ Phase 3B can accept this ADR only when:
 - Stage 3A isn't production-ready.
 - Stage 4 can plan only qualification work.
 - Neither candidate is described as the production architecture.
-- The integrated approach replaces the application runtime while retaining selected engine subsystems. Starling is an example of this and doesn't define this ABI or decision.
+- The integrated approach replaces the application runtime while retaining selected engine subsystems. Starling is an example of this. It provides feasibility evidence for runtime substitution.

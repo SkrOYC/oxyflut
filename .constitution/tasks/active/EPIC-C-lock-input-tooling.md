@@ -53,7 +53,7 @@ Checker: cargo +1.98.0 test -p xtask external_contracts
 - **STOP Conditions:**
   - STOP if authoring requires a capability exception or an additional test-vector field not defined by Stage 3.
   - STOP if a baseline could pass without all 52 exact capability keys.
-- **Description:** Replace the OXY-A001 baseline command placeholder. Implement parsing, exact-set validation, deterministic ordering, architecture-flow binding, evidence expectation validation, and content-addressed output for candidate-neutral capability baseline drafts. Include a synthetic complete fixture without pretending it is the approved product baseline.
+- **Description:** Replace the OXY-A001 baseline command placeholder. Implement parsing, exact-set validation, deterministic ordering, architecture-flow binding, evidence expectation validation, explicit synthetic or approved provenance, digest-bound approval evidence, and content-addressed output for candidate-neutral capability baseline drafts. Mark the complete fixture as synthetic with null approval evidence; only Stage 3 reconciliation can produce an approved baseline and matching typed lock reference.
 - **Acceptance:**
   - **Mode:** contract_test
   - **Evidence:**
@@ -63,7 +63,7 @@ Assertions:
 - Exactly the authoritative 52 capability keys are required.
 - Every entry resolves its architecture flow and has nonempty test vectors and expected evidence.
 - Canonical output is deterministic and content-addressed.
-- Synthetic fixtures are visibly marked and cannot be referenced by the qualification lock.
+- Synthetic fixtures carry `provenance.kind: synthetic` and null approval evidence. They cannot satisfy the qualification lock's typed approved-baseline reference.
 Command: cargo +1.98.0 run -p xtask -- baseline validate --input qualification/fixtures/baselines/complete.synthetic.json && cargo +1.98.0 test -p xtask baseline
 ```
 

@@ -1,6 +1,6 @@
 # Qualification technical stack
 
-- **Version:** v0.12.0
+- **Version:** v0.13.0
 - **Status:** Phase 3A qualification specification
 - **Production ready:** no
 - **Required successor:** Phase 3B production specification
@@ -9,7 +9,7 @@
 
 This specification defines concrete builds for comparing both substrate candidates. It does not select a production substrate and cannot authorize a production implementation plan.
 
-Stage 4 can use v0.12.0 only for qualification infrastructure, candidate probes, common contract tests, measurements, and evidence collection. Stage 4 must not plan the production framework, release delivery, or removal of either candidate until Phase 3B reaches v1.0.0.
+Stage 4 can use v0.13.0 only for qualification infrastructure, candidate probes, common contract tests, measurements, and evidence collection. Stage 4 must not plan the production framework, release delivery, or removal of either candidate until Phase 3B reaches v1.0.0.
 
 The current qualification lock has `candidateImplementationReady: false` and `measurementReady: false`. Until `candidateImplementationReady` becomes true, Stage 4 is limited to qualification scaffolding, validators, environment discovery, baseline authoring, external-contract snapshotting, and pre-implementation lock finalization. Candidate implementation can then begin against the frozen suite. Comparable or scored evidence collection cannot begin until the completed candidate source identities are pinned and `measurementReady` becomes true.
 
@@ -52,7 +52,7 @@ Both candidates use Flutter framework 3.47.0 at commit `4cf24164269a5ebf0c16a028
 | Focused drawing-and-text candidate | Standalone Impeller SDK artifacts retrieved under engine commit `5f77625673248ee5846fbcaf5d3e1a3878386fd7`; `impeller.h` Git blob `440f83aac6580495e488ba350e6d5cbbb32e2f11` from the framework checkout; `darwin-arm64`, `linux-x64`, and `windows-x64` downloads with SHA-256 and sizes in the qualification lock | Trial | Rust owns the Platform integration, View coordinator, asset decoding, and recovery policy. The Rust adapter implements `contracts/oxyflut-substrate.rs` through generated Impeller bindings. |
 | Integrated candidate | Oxyflut engine fork based on Flutter commit `4cf24164269a5ebf0c16a028a00727d0e77bbb05` with a language-neutral runtime controller and `flutter_enable_dart=false` production-configuration probe | Trial | The fork can transport platform and timing callbacks but must normalize through the same C contract. It cannot package, start, or execute the Dart runtime in scored artifacts. |
 
-The integrated approach replaces the application runtime while retaining selected engine subsystems. Starling is an example of this: it demonstrates runtime substitution and a Dart-free engine build with Swift. It is evidence for feasibility, not a dependency, fork base, contract, or design name.
+The integrated approach replaces the application runtime while retaining selected engine subsystems. Starling is an example of this. It demonstrates runtime substitution and a Dart-free engine build with Swift, serving only as feasibility evidence.
 
 ## Platform qualification pins
 

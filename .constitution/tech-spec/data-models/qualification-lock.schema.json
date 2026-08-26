@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:oxyflut:schema:qualification-lock:4",
+  "$id": "urn:oxyflut:schema:qualification-lock:5",
   "title": "Oxyflut qualification lock",
   "type": "object",
   "additionalProperties": false,
@@ -19,7 +19,7 @@
   ],
   "properties": {
     "$schema": { "type": "string" },
-    "schemaVersion": { "const": "4.0.0" },
+    "schemaVersion": { "const": "5.0.0" },
     "candidateImplementationReady": { "type": "boolean" },
     "measurementReady": { "type": "boolean" },
     "sourcePins": {
@@ -159,6 +159,39 @@
     "sha40": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
     "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
     "digestOrNull": { "type": ["string", "null"], "pattern": "^[0-9a-f]{64}$" },
+    "evidenceReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "approvedBaselineReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "sha256",
+        "schemaVersion",
+        "provenance",
+        "approvalEvidence"
+      ],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "sha256": { "$ref": "#/$defs/sha256" },
+        "schemaVersion": { "const": "4.0.0" },
+        "provenance": { "const": "approved" },
+        "approvalEvidence": { "$ref": "#/$defs/evidenceReference" }
+      }
+    },
+    "approvedBaselineReferenceOrNull": {
+      "oneOf": [
+        { "type": "null" },
+        { "$ref": "#/$defs/approvedBaselineReference" }
+      ]
+    },
     "versionCommit": {
       "type": "object",
       "additionalProperties": false,
@@ -293,7 +326,9 @@
       "properties": {
         "rawMeasurementSchema": { "$ref": "#/$defs/digestOrNull" },
         "sampleValidityRules": { "$ref": "#/$defs/digestOrNull" },
-        "capabilityBaseline": { "$ref": "#/$defs/digestOrNull" },
+        "capabilityBaseline": {
+          "$ref": "#/$defs/approvedBaselineReferenceOrNull"
+        },
         "platformContracts": { "$ref": "#/$defs/digestOrNull" },
         "scoringAnchors": { "$ref": "#/$defs/digestOrNull" },
         "assessors": { "$ref": "#/$defs/digestOrNull" },
@@ -308,7 +343,7 @@
       "properties": {
         "rawMeasurementSchema": { "$ref": "#/$defs/sha256" },
         "sampleValidityRules": { "$ref": "#/$defs/sha256" },
-        "capabilityBaseline": { "$ref": "#/$defs/sha256" },
+        "capabilityBaseline": { "$ref": "#/$defs/approvedBaselineReference" },
         "platformContracts": { "$ref": "#/$defs/sha256" },
         "scoringAnchors": { "$ref": "#/$defs/sha256" },
         "assessors": { "$ref": "#/$defs/sha256" },

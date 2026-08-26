@@ -2,6 +2,13 @@
 
 All notable changes to the Stage 4 execution plan appear in this file.
 
+## [v0.2.10] - 2026-08-26
+
+### Fixed
+
+- Added ABI-9 rejection and closed presence and reserved-field fixtures for the ABI-10 semantics-selection contract.
+- Required approved baseline provenance, digest-bound approval evidence, and matching typed lock references before readiness.
+
 ## [v0.2.9] - 2026-08-26
 
 ### Fixed

@@ -1,15 +1,45 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:oxyflut:schema:capability-baseline:3",
+  "$id": "urn:oxyflut:schema:capability-baseline:4",
   "title": "Oxyflut frozen capability baseline",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schemaVersion", "specificationVersion", "capabilities"],
+  "required": [
+    "schemaVersion",
+    "specificationVersion",
+    "provenance",
+    "capabilities"
+  ],
   "properties": {
-    "schemaVersion": { "const": "3.0.0" },
+    "schemaVersion": { "const": "4.0.0" },
     "specificationVersion": {
       "type": "string",
       "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "approvalEvidence"],
+      "properties": {
+        "kind": { "enum": ["synthetic", "approved"] },
+        "approvalEvidence": {
+          "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/evidenceReference" }]
+        }
+      },
+      "oneOf": [
+        {
+          "properties": {
+            "kind": { "const": "synthetic" },
+            "approvalEvidence": { "type": "null" }
+          }
+        },
+        {
+          "properties": {
+            "kind": { "const": "approved" },
+            "approvalEvidence": { "$ref": "#/$defs/evidenceReference" }
+          }
+        }
+      ]
     },
     "capabilities": {
       "type": "object",
@@ -95,6 +125,18 @@
       },
       "minProperties": 52,
       "maxProperties": 52
+    }
+  },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "evidenceReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "sha256": { "$ref": "#/$defs/sha256" }
+      }
     }
   }
 }

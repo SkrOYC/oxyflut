@@ -16,7 +16,7 @@ The original interview assumed that stock Flutter Engine binaries exposed the in
 Research completed on 2026-08-25 identified two candidate substrate paths:
 
 - Use the standalone Impeller C SDK as a rendering and text library. `oxyflut` owns the frame pipeline and every platform service above the GPU API.
-- Maintain a pinned Flutter Engine fork. The fork replaces Dart's runtime controller with a Rust runtime controller and retains the Flutter shell, rasterizer, compositor, and platform embedders. Starling is an example of this, with Swift as the framework language.
+- Maintain a pinned Flutter Engine fork. The fork replaces Dart's runtime controller with a Rust runtime controller and retains the Flutter shell, rasterizer, compositor, and platform embedders. Starling is an example of this. It uses Swift as the framework language.
 
 Neither candidate has demonstrated the complete P0 scope. The choice changes implementation cost, inherited platform behavior, distribution size, and long-term maintenance. The project can select a path only after it passes the validation gates in this report. If neither path passes, substrate research reopens without reducing P0.
 
@@ -45,7 +45,7 @@ Neither candidate has demonstrated the complete P0 scope. The choice changes imp
 - **Status:** Reopened on 2026-08-25.
 - **Ruling:** `oxyflut` must evaluate the following candidate paths:
   - **Path A: standalone Impeller.** Consume the version-pinned standalone Impeller C SDK. Don't depend on the Flutter shell or Flutter platform embedders.
-  - **Path B: full Flutter Engine.** Maintain a version-pinned engine fork that supplies a language-neutral runtime controller and C ABI. Don't expose Rust-specific code in the C++ engine layer when a language-neutral interface is practical. Starling is an example of this: it demonstrates runtime substitution but isn't the name or design basis of `oxyflut`.
+  - **Path B: full Flutter Engine.** Maintain a version-pinned engine fork that supplies a language-neutral runtime controller and C ABI. Don't expose Rust-specific code in the C++ engine layer when a language-neutral interface is practical. Starling is an example of this. It demonstrates runtime substitution with a language-specific framework.
 - **Constraint:** The project must not describe either path as using an unmodified Flutter Engine. Path A uses a published engine subsystem. Path B modifies the engine.
 - **Rationale:** These paths correspond to interfaces that exist and can be tested. The stock Flutter Embedder API alone can't implement the required framework replacement.
 
@@ -196,7 +196,7 @@ The project must pin an Impeller SDK to a Flutter commit. The SDK rejects an API
 
 ### Path B: full Flutter Engine
 
-Path B introduces a runtime controller interface between the Flutter shell and the framework implementation. A C callback table delivers frame, view, input, semantics, locale, lifecycle, and platform-message events to Rust. Starling is an example of this: it demonstrates runtime substitution with Swift.
+Path B introduces a runtime controller interface between the Flutter shell and the framework implementation. A C callback table delivers frame, view, input, semantics, locale, lifecycle, and platform-message events to Rust. Starling is an example of this. It demonstrates runtime substitution with Swift.
 
 Rust submits pictures, layer trees, and semantics updates through a separate C ABI that wraps the engine interfaces normally exposed through `dart:ui`. The Flutter shell continues to own animation timing, raster-thread submission, compositing, and interaction with platform embedders.
 
@@ -310,7 +310,7 @@ The register records the state of the substrate decision as follows:
 | :-- | :-- | :-- | :-- |
 | K-01 | KK | The standalone Impeller SDK exposes a versioned C API for rendering and text and doesn't promise API or ABI stability. | Pin the header and binary to one Flutter revision. |
 | K-02 | KK | The stock Flutter Embedder API doesn't expose the framework-to-engine scene and semantics submission boundary required by Path B. | Path B adds and owns that boundary. |
-| K-03 | KK | Runtime substitution can retain the Flutter shell; Starling is an example of this and uses a Swift-specific callback contract. | Use the example as evidence for feasibility, not as the `oxyflut` interface. |
+| K-03 | KK | Runtime substitution can retain the Flutter shell. Starling is an example of this. It uses a Swift-specific callback contract. | Use the example as evidence for feasibility, not as the `oxyflut` interface. |
 | K-04 | KK | Impeller is used on iOS inside Flutter, but the standalone SDK doesn't publish an iOS artifact. | Treat standalone iOS packaging as P1 validation work. |
 | K-05 | KK | Neither candidate has demonstrated all P0 behavior on macOS, Windows, Wayland, and X11 in these artifacts. | Don't treat either candidate as eligible from document evidence alone. |
 | K-06 | KU | Can Path B add independent per-display pacing and complete desktop service routing while retaining the selected engine components? | Run the multi-display and per-view tests in the full-engine spike. |

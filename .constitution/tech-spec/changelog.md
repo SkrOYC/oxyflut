@@ -2,6 +2,15 @@
 
 All notable changes to the technical specification appear in this file.
 
+## [v0.13.0] - 2026-08-26
+
+### Changed
+
+- Advanced the integrated C ABI to version 10 and closed semantics-selection presence to zero or one while reserving only zero.
+- Advanced capability baselines to v4 with synthetic or approved provenance and digest-bound approval evidence.
+- Advanced qualification locks to v5 with a typed approved-baseline reference that cannot accept synthetic provenance.
+- Normalized Starling feasibility references to the exact “Starling is an example of this” wording.
+
 ## [v0.12.0] - 2026-08-26
 
 ### Changed

@@ -19,7 +19,7 @@
 extern "C" {
 #endif
 
-#define OXY_SUBSTRATE_ABI_VERSION 9u
+#define OXY_SUBSTRATE_ABI_VERSION 10u
 
 /* Unless a field comment states otherwise, every pointer passed to or returned from this ABI is nonnull. An array pointer is null if and only if its count is zero. Every out pointer names writable storage and is cleared before a fallible call. All opaque handles belong to the creating substrate and can be used only on the execution domain declared for that operation. */
 
@@ -292,7 +292,7 @@ typedef struct OxySemanticsNode {
   uint32_t is_secure_field;
 } OxySemanticsNode;
 
-/* When has_text_selection is zero, both text-selection endpoints and text_selection_reserved are zero. When it is one, both endpoints are nonnegative and no greater than UINT32_MAX. When has_scroll is zero, scroll_position, scroll_minimum, and scroll_maximum must all be zero. A node with a selection or attributed text has has_text_layout set and binds every index to text_layout_generation. Replacing that text layout requires a new node_generation before publishing ranges or routing indexed actions. */
+/* has_text_selection is exactly zero or one, and text_selection_reserved is always zero. When has_text_selection is zero, both text-selection endpoints are zero. When it is one, both endpoints are nonnegative and no greater than UINT32_MAX. When has_scroll is zero, scroll_position, scroll_minimum, and scroll_maximum must all be zero. A node with a selection or attributed text has has_text_layout set and binds every index to text_layout_generation. Replacing that text layout requires a new node_generation before publishing ranges or routing indexed actions. */
 
 typedef struct OxySemanticsUpdate {
   uint32_t struct_size;
