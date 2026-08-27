@@ -96,12 +96,49 @@ fn rustfmt_identity_is_root_relative_and_digest_bound() -> Result<(), Box<dyn Er
     );
 
     let resolved_path = super::resolve_manifest_executable_path(rustfmt)?;
-    assert_eq!(resolved_path, super::rustfmt_path()?);
+    assert_eq!(
+        resolved_path,
+        super::rustup_component_path("rustfmt", super::RUSTFMT_RELATIVE_PATH)?
+    );
     assert_eq!(
         rustfmt.sha256,
         super::hash_file(&resolved_path)?.to_string()
     );
     verify(&manifest)?;
+    Ok(())
+}
+
+#[test]
+fn rustc_identity_is_root_relative_and_individually_verified() -> Result<(), Box<dyn Error>> {
+    if skip_on_unsupported_host()? {
+        return Ok(());
+    }
+    let manifest = resolve()?;
+    let rustc = manifest
+        .resolved_tools
+        .iter()
+        .find(|tool| tool.name == "rustc")
+        .ok_or("the staged manifest must resolve rustc")?;
+
+    assert_eq!(rustc.path_root.as_deref(), Some("rustup-home"));
+    assert_eq!(rustc.executable_path, super::RUSTC_RELATIVE_PATH);
+    assert!(!rustc.executable_path.contains("/home/"));
+    assert_eq!(
+        super::resolve_manifest_executable_path(rustc)?,
+        super::rustup_component_path("rustc", super::RUSTC_RELATIVE_PATH)?
+    );
+    assert_eq!(
+        rustc.sha256,
+        super::hash_file(&super::rustup_component_path(
+            "rustc",
+            super::RUSTC_RELATIVE_PATH,
+        )?)?
+        .to_string()
+    );
+    assert_eq!(
+        manifest.verified_executable_path("rustc")?,
+        super::rustup_component_path("rustc", super::RUSTC_RELATIVE_PATH)?
+    );
     Ok(())
 }
 

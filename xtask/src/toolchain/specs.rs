@@ -15,6 +15,7 @@ pub(super) struct ToolSpec {
 pub(super) enum ToolLocator {
     Path(&'static str),
     Rustfmt,
+    Rustc,
 }
 
 pub(super) const TOOL_SPECS: &[ToolSpec] = &[
@@ -102,6 +103,15 @@ pub(super) const TOOL_SPECS: &[ToolSpec] = &[
     ToolSpec {
         name: "rustfmt",
         locator: ToolLocator::Rustfmt,
+        version_arguments: &["--version"],
+        required_version_fragment: "88d9e12ae",
+        source_version: "1.98.0",
+        source_derivation_fragment: "",
+        license_id: "MIT OR Apache-2.0",
+    },
+    ToolSpec {
+        name: "rustc",
+        locator: ToolLocator::Rustc,
         version_arguments: &["--version"],
         required_version_fragment: "88d9e12ae",
         source_version: "1.98.0",
