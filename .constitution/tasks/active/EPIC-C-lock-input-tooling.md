@@ -123,6 +123,21 @@ Assertions:
 Command: cargo +1.98.0 run -p xtask -- measurement validate --input qualification/fixtures/measurements/complete.synthetic.json && cargo +1.98.0 run -p xtask -- measurement validate --input qualification/fixtures/sample-validity/complete.synthetic.json && cargo +1.98.0 test -p xtask measurement
 ```
 
+##### OXY-C003 Deviations & Justifications
+
+- **Touched Files:** `qualification/schemas/sample-validity.schema.json` and `qualification/schemas/README.md`.
+- **Justification:** Stage 3 defines no sample-validity schema. The lead ruling requires a documented staged, nonauthoritative proposal under `qualification/schemas/` without editing the Stage 3 data-model directory.
+- **Assumption for OXY-D001 Stage 3 revision:** `raw-measurement.schema.json` omits the `$schema` property that sibling schemas declare, so raw-measurement instances cannot self-declare their schema.
+- **Assumption for OXY-D001 Stage 3 revision:** no Stage 3 schema exists for `measurementPolicy.sampleValidityRules`; the staged schema's digest is the proposed binding value.
+- **Touched Files:** `crates/oxyflut-qualification/src/measurement_tests.rs`.
+- **Justification:** The measurement unit tests are split from the implementation module to keep the Rust library path below the repository's hard file-size limit.
+- **Touched Files:** `crates/oxyflut-qualification/src/schema.rs` and `xtask/src/contracts/schema.rs`.
+- **Justification:** The local schema-registry count increases from 17 to 18 when it compiles the required staged sample-validity schema.
+- **Touched Files:** `xtask/src/contracts/traceability/mod.rs`.
+- **Justification:** The measurement command reuses the existing exact PRD constraint authority instead of duplicating the constraint parser.
+- **Touched Files:** `.constitution/tasks/active/EPIC-C-lock-input-tooling.md`.
+- **Justification:** The execution rules require this scope-deviation record and the lead-ruling assumptions.
+
 #### OXY-C004 Implement reference-environment inspection
 
 - **Type:** Feature

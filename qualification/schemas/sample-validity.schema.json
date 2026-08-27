@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:oxyflut:staged:sample-validity:1",
+  "title": "Oxyflut staged sample-validity rules",
+  "authority": "staged-proposal",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "schemaVersion",
+    "lockDigest",
+    "environment",
+    "candidate",
+    "meterVersion",
+    "exclusionCategories",
+    "rules"
+  ],
+  "properties": {
+    "$schema": { "const": "urn:oxyflut:staged:sample-validity:1" },
+    "schemaVersion": { "const": "1.0.0" },
+    "lockDigest": { "$ref": "#/$defs/sha256" },
+    "environment": { "enum": ["macos", "windows", "wayland", "x11"] },
+    "candidate": { "enum": ["focused", "integrated"] },
+    "meterVersion": { "type": "string", "minLength": 1 },
+    "exclusionCategories": {
+      "type": "array",
+      "prefixItems": [
+        { "const": "measurement-tool-failure" },
+        { "const": "unrelated-operating-system-interruption" },
+        { "const": "physical-disconnect" }
+      ],
+      "items": false,
+      "minItems": 3,
+      "maxItems": 3
+    },
+    "rules": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/comparisonBoundInput" },
+      "minItems": 1
+    }
+  },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "comparisonBoundInput": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "constraintId",
+        "statistic",
+        "unit",
+        "retainAllValidObservations"
+      ],
+      "properties": {
+        "constraintId": {
+          "type": "string",
+          "pattern": "^CON-[A-Z0-9]+-[0-9]{3}$"
+        },
+        "statistic": { "enum": ["nearest-rank", "maximum-bound"] },
+        "percentile": { "type": "integer", "minimum": 1, "maximum": 100 },
+        "unit": { "type": "string", "minLength": 1 },
+        "retainAllValidObservations": { "const": true }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "statistic": { "const": "nearest-rank" } },
+            "required": ["statistic"]
+          },
+          "then": { "required": ["percentile"] },
+          "else": { "properties": { "percentile": false } }
+        }
+      ]
+    }
+  }
+}

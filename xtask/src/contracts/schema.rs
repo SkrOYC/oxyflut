@@ -607,7 +607,7 @@ mod tests {
     fn schema_compiles_committed_contract_instances_and_fixture_corpus()
     -> Result<(), Box<dyn Error>> {
         let report = validate_workspace(&workspace_root()?)?;
-        assert_eq!(report.schema_count, 17);
+        assert_eq!(report.schema_count, 18);
         assert_eq!(report.instance_count, 6);
         assert!(report.fixture_count >= 80);
         Ok(())

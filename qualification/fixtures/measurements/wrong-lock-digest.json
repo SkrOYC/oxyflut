@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "2.0.0",
+  "candidate": "focused",
+  "environment": "macos",
+  "lockDigest": "0000000000000000000000000000000000000000000000000000000000000000",
+  "meterVersion": "synthetic-meter-v1",
+  "samples": [
+    {
+      "constraintId": "CON-PERF-001",
+      "launch": 1,
+      "ordinal": 1,
+      "monotonicNs": 100,
+      "value": 1.0,
+      "unit": "ms",
+      "valid": true,
+      "harnessLog": {
+        "path": "qualification/fixtures/measurements/harness/perf-001-launch-1.log",
+        "sha256": "28ce149a8aa1e8b9fc82d3b955208995d6108a8e324977a177728aa9ec061f39"
+      }
+    }
+  ]
+}
