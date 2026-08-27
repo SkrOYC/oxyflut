@@ -138,6 +138,15 @@ Checker: cargo +1.98.0 test -p xtask contracts::traceability
 Corpus: positive committed constitution plus fixtures for missing, duplicate, unknown, stale-path, omitted required capability-to-contract edge, omitted texture-drawing edge, omitted reverse-action ingress, unresolved file-qualified symbol, mismatched active specification version, stale platform-baseline specification version, duplicate absent-event ID, synthetic baseline referenced by the lock, missing or mismatched baseline approval evidence, pass with a nonnull absence binding, not-applicable with a missing binding, mismatched platform-baseline path, digest, schema or specification version, unknown absent-event ID, mismatched gate, event, candidate, or parent environment, aggregate constraint without all four environments, remote or undeclared diagnostic sink, unbounded sink acknowledgement, missing or mismatched nested KK evidence, mismatched accessibility identity or digest, nested accessibility KU, stale accessibility text-layout generation, empty or trailing path segments, duplicate separators, and control-character paths.
 ```
 
+##### OXY-A003 Deviations & Justifications
+
+- **Touched Files:** `xtask/src/contracts/mod.rs`, `xtask/src/commands/contracts.rs`
+- **Justification:** Required wiring runs the completed traceability and registry families before the still-unimplemented families return fail-closed status.
+- **Touched Files:** `xtask/src/contracts/schema.rs`
+- **Justification:** The OXY-A003 semantic traceability corpus is intentionally not JSON Schema fixture input. The schema fixture discovery excludes its dedicated `traceability/` directory so the existing schema family continues to validate only directories named for local schemas.
+- **Assumption for OXY-D001 Stage 3 revision:** `no file location defined for contractTests identifiers`. Contract-test identifier syntax and the exact 52↔52 capability derivation are validated, but physical item resolution is deferred until candidate implementation.
+- **Assumption for OXY-D001 Stage 3 revision:** `accessibility-map.schema.json` `reverseActions[].textLayoutBinding` carries no generation value. The immutable generation symbol binding is validated, while live-node generation comparison is deferred.
+
 #### OXY-A004 Enforce readiness, promotion, and immutable evidence bindings
 
 - **Type:** Security
