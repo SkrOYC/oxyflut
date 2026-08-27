@@ -19,11 +19,18 @@ pub(crate) fn run(arguments: &[String]) -> CommandOutcome {
         Ok(root) => root,
         Err(()) => return CommandOutcome::failed(CommandError::Execution("root".to_owned())),
     };
-    let report = match validators::schema::validate_workspace(&root) {
-        Ok(report) => report,
+    let registry = match validators::schema::compile_workspace(&root) {
+        Ok(registry) => registry,
         Err(_) => {
             eprintln!("schema: failed");
             eprintln!("instances: not-run");
+            return CommandOutcome::failed(CommandError::ValidationFailed("schema".to_owned()));
+        }
+    };
+    let report = match validators::schema::validate_compiled_workspace(&root, &registry) {
+        Ok(report) => report,
+        Err(error) => {
+            report_schema_failure(&error, &root);
             return CommandOutcome::failed(CommandError::ValidationFailed("schema".to_owned()));
         }
     };
@@ -38,6 +45,39 @@ pub(crate) fn run(arguments: &[String]) -> CommandOutcome {
     CommandOutcome::not_implemented("contracts validation families")
 }
 
+fn report_schema_failure(error: &validators::schema::ContractSchemaError, root: &Path) {
+    for line in schema_failure_lines(error, root) {
+        eprintln!("{line}");
+    }
+}
+
+fn schema_failure_lines(
+    error: &validators::schema::ContractSchemaError,
+    root: &Path,
+) -> Vec<String> {
+    match error.failure_family(root) {
+        validators::schema::ContractSchemaFailure::Compilation => {
+            vec!["schema: failed".to_owned(), "instances: not-run".to_owned()]
+        }
+        validators::schema::ContractSchemaFailure::Instances(path) => vec![
+            "schema: ok".to_owned(),
+            format!("instances: failed ({})", summary_path(root, &path)),
+        ],
+        validators::schema::ContractSchemaFailure::Fixtures(path) => vec![
+            "schema: ok".to_owned(),
+            "instances: ok".to_owned(),
+            format!("fixtures: failed ({})", summary_path(root, &path)),
+        ],
+    }
+}
+
+fn summary_path(root: &Path, path: &Path) -> String {
+    match path.strip_prefix(root) {
+        Ok(relative) => relative.display().to_string(),
+        Err(_) => "unknown-local-path".to_owned(),
+    }
+}
+
 fn workspace_root() -> Result<PathBuf, ()> {
     Path::new(env!("CARGO_MANIFEST_DIR"))
         .parent()
@@ -47,7 +87,11 @@ fn workspace_root() -> Result<PathBuf, ()> {
 
 #[cfg(test)]
 mod tests {
-    use super::run;
+    use std::path::Path;
+
+    use oxyflut_qualification::schema::SchemaError;
+
+    use super::{run, schema_failure_lines, validators};
     use crate::CommandOutcome;
 
     #[test]
@@ -55,6 +99,40 @@ mod tests {
         assert_eq!(
             run(&[]),
             CommandOutcome::not_implemented("contracts validation families")
+        );
+    }
+
+    #[test]
+    fn contracts_schema_failure_summary_identifies_the_failure_family() {
+        let root = Path::new("/workspace");
+        let compilation =
+            validators::schema::ContractSchemaError::Registry(SchemaError::Compilation);
+        assert_eq!(
+            schema_failure_lines(&compilation, root),
+            vec!["schema: failed", "instances: not-run"]
+        );
+
+        let instance = validators::schema::ContractSchemaError::MissingSchema {
+            path: root.join(".constitution/tech-spec/contracts/invalid.json"),
+        };
+        assert_eq!(
+            schema_failure_lines(&instance, root),
+            vec![
+                "schema: ok",
+                "instances: failed (.constitution/tech-spec/contracts/invalid.json)",
+            ]
+        );
+
+        let fixture = validators::schema::ContractSchemaError::Fixture {
+            path: root.join("qualification/fixtures/contracts/example/invalid.json"),
+        };
+        assert_eq!(
+            schema_failure_lines(&fixture, root),
+            vec![
+                "schema: ok",
+                "instances: ok",
+                "fixtures: failed (qualification/fixtures/contracts/example/invalid.json)",
+            ]
         );
     }
 

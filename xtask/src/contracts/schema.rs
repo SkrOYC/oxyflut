@@ -1,12 +1,11 @@
 //! Local schema compilation, committed-instance discovery, and fixture-corpus validation.
 
-use std::collections::BTreeSet;
 use std::fs;
 use std::io;
 use std::path::{Path, PathBuf};
 
 use oxyflut_qualification::hash::{Sha256Digest, hash_file};
-use oxyflut_qualification::schema::{SchemaError, SchemaRegistry};
+use oxyflut_qualification::schema::{SchemaError, SchemaRegistry, ValidationIssue};
 use serde_json::Value;
 use thiserror::Error;
 
@@ -30,7 +29,19 @@ pub(crate) struct SchemaRunReport {
 #[derive(Debug, Error)]
 pub(crate) enum ContractSchemaError {
     #[error("local schema registry failed")]
-    Registry(#[from] SchemaError),
+    Registry(#[source] SchemaError),
+    #[error("committed contract instance failed schema processing")]
+    Instance {
+        path: PathBuf,
+        #[source]
+        source: SchemaError,
+    },
+    #[error("fixture schema failed schema processing")]
+    FixtureSchema {
+        path: PathBuf,
+        #[source]
+        source: SchemaError,
+    },
     #[error("could not read local contract input")]
     Io {
         path: PathBuf,
@@ -53,21 +64,85 @@ pub(crate) enum ContractSchemaError {
     MigrationFixture,
 }
 
+/// The validation family and path that should appear in a content-free command summary.
+pub(crate) enum ContractSchemaFailure {
+    /// The local schema registry did not compile.
+    Compilation,
+    /// A committed contract instance did not validate.
+    Instances(PathBuf),
+    /// A fixture or migration fixture did not validate.
+    Fixtures(PathBuf),
+}
+
+impl ContractSchemaError {
+    /// Returns the command-summary family for this schema error.
+    #[must_use]
+    pub(crate) fn failure_family(&self, root: &Path) -> ContractSchemaFailure {
+        let fixture_root = root.join(FIXTURES_DIRECTORY);
+        match self {
+            Self::Registry(_) => ContractSchemaFailure::Compilation,
+            Self::Instance { path, .. }
+            | Self::MissingSchema { path }
+            | Self::RemoteSchema { path } => ContractSchemaFailure::Instances(path.clone()),
+            Self::FixtureSchema { path, .. } | Self::Fixture { path } => {
+                ContractSchemaFailure::Fixtures(path.clone())
+            }
+            Self::MigrationFixture => {
+                ContractSchemaFailure::Fixtures(fixture_root.join("migration"))
+            }
+            Self::Io { path, .. } | Self::Json { path, .. } if path.starts_with(&fixture_root) => {
+                ContractSchemaFailure::Fixtures(path.clone())
+            }
+            Self::Io { path, .. } | Self::Json { path, .. } => {
+                ContractSchemaFailure::Instances(path.clone())
+            }
+        }
+    }
+}
+
 /// Compiles all local schemas, validates every committed instance, and runs the fixture corpus.
 ///
 /// # Errors
 ///
 /// Returns an error for invalid local inputs, schema violations, or fixture expectation drift.
+#[cfg(test)]
 pub(crate) fn validate_workspace(root: &Path) -> Result<SchemaRunReport, ContractSchemaError> {
-    let registry = SchemaRegistry::from_directories(&[
+    let registry = compile_workspace(root)?;
+    validate_compiled_workspace(root, &registry)
+}
+
+/// Compiles the local schema registry before validating any instance or fixture.
+///
+/// # Errors
+///
+/// Returns an error only when the local schema registry cannot be compiled.
+pub(crate) fn compile_workspace(root: &Path) -> Result<SchemaRegistry, ContractSchemaError> {
+    SchemaRegistry::from_directories(&[
         root.join(DATA_MODELS_DIRECTORY),
         root.join(SCHEMA_SNAPSHOTS_DIRECTORY),
-    ])?;
-    let instances = discover_contract_instances(root, &registry)?;
+    ])
+    .map_err(ContractSchemaError::Registry)
+}
+
+/// Validates committed instances and fixtures against a compiled local registry.
+///
+/// # Errors
+///
+/// Returns an error when a committed instance, fixture, or migration fixture fails validation.
+pub(crate) fn validate_compiled_workspace(
+    root: &Path,
+    registry: &SchemaRegistry,
+) -> Result<SchemaRunReport, ContractSchemaError> {
+    let instances = discover_contract_instances(root, registry)?;
     for instance in &instances {
-        registry.validate(&instance.schema_identity, &instance.value)?;
+        registry
+            .validate(&instance.schema_identity, &instance.value)
+            .map_err(|source| ContractSchemaError::Instance {
+                path: instance.path.clone(),
+                source,
+            })?;
     }
-    let fixture_count = run_fixture_corpus(root, &registry)?;
+    let fixture_count = run_fixture_corpus(root, registry)?;
     validate_migration_fixture(root)?;
 
     Ok(SchemaRunReport {
@@ -114,7 +189,13 @@ fn resolve_schema_reference(
         });
     }
     if reference.starts_with("urn:") {
-        return Ok(registry.require_current_identity(reference)?.to_owned());
+        return registry
+            .require_current_identity(reference)
+            .map(str::to_owned)
+            .map_err(|source| ContractSchemaError::Instance {
+                path: instance_path.to_path_buf(),
+                source,
+            });
     }
 
     let Some(parent) = instance_path.parent() else {
@@ -148,7 +229,13 @@ fn resolve_schema_reference(
         });
     }
 
-    Ok(registry.identity_for_path(&schema_path)?.to_owned())
+    registry
+        .identity_for_path(&schema_path)
+        .map(str::to_owned)
+        .map_err(|source| ContractSchemaError::Instance {
+            path: instance_path.to_path_buf(),
+            source,
+        })
 }
 
 fn run_fixture_corpus(
@@ -197,7 +284,13 @@ fn fixture_schema_identity(
         root.join(DATA_MODELS_DIRECTORY)
             .join(format!("{schema_name}{SCHEMA_FILE_SUFFIX}"))
     };
-    Ok(registry.identity_for_path(&schema_path)?.to_owned())
+    registry
+        .identity_for_path(&schema_path)
+        .map(str::to_owned)
+        .map_err(|source| ContractSchemaError::FixtureSchema {
+            path: schema_path,
+            source,
+        })
 }
 
 fn validate_fixture_directory(
@@ -273,23 +366,12 @@ fn validate_invalid_fixture(
         }
     }
 
-    let expected_paths = expected_error_paths(&expected, &expected_path)?;
+    let expected_errors = expected_errors(&expected, &expected_path)?;
     match registry.validate(schema_identity, value) {
-        Err(SchemaError::Validation { issues, .. }) => {
-            let actual_paths = issues
-                .iter()
-                .map(|issue| issue.instance_path.clone())
-                .collect::<BTreeSet<_>>();
-            if expected_paths
-                .iter()
-                .all(|path| actual_paths.contains(path))
-            {
-                Ok(())
-            } else {
-                Err(ContractSchemaError::Fixture {
-                    path: path.to_path_buf(),
-                })
-            }
+        Err(SchemaError::Validation { issues, .. })
+            if error_locations_match(&expected_errors, &issues) =>
+        {
+            Ok(())
         }
         _ => Err(ContractSchemaError::Fixture {
             path: path.to_path_buf(),
@@ -306,26 +388,59 @@ fn expected_sidecar_path(path: &Path) -> Result<PathBuf, ContractSchemaError> {
     Ok(path.with_file_name(format!("{stem}{EXPECTED_FILE_SUFFIX}")))
 }
 
-fn expected_error_paths(
+fn expected_errors(
     expected: &Value,
     path: &Path,
-) -> Result<BTreeSet<String>, ContractSchemaError> {
-    let Some(paths) = expected.get("errorPaths").and_then(Value::as_array) else {
+) -> Result<Vec<FixtureErrorLocation>, ContractSchemaError> {
+    let Some(errors) = expected.get("errorPaths").and_then(Value::as_array) else {
         return Err(ContractSchemaError::Fixture {
             path: path.to_path_buf(),
         });
     };
-    paths
+
+    let mut locations = errors
         .iter()
-        .map(|value| {
-            value
-                .as_str()
+        .map(|error| {
+            let instance_path = error
+                .get("instancePath")
+                .and_then(Value::as_str)
                 .map(str::to_owned)
                 .ok_or_else(|| ContractSchemaError::Fixture {
                     path: path.to_path_buf(),
-                })
+                })?;
+            let keyword = error
+                .get("keyword")
+                .and_then(Value::as_str)
+                .map(str::to_owned)
+                .ok_or_else(|| ContractSchemaError::Fixture {
+                    path: path.to_path_buf(),
+                })?;
+            Ok(FixtureErrorLocation {
+                instance_path,
+                keyword,
+            })
         })
-        .collect()
+        .collect::<Result<Vec<_>, ContractSchemaError>>()?;
+    locations.sort_unstable();
+    Ok(locations)
+}
+
+fn error_locations_match(expected: &[FixtureErrorLocation], actual: &[ValidationIssue]) -> bool {
+    let mut actual_locations = actual
+        .iter()
+        .map(|issue| FixtureErrorLocation {
+            instance_path: issue.instance_path.clone(),
+            keyword: issue.keyword.clone(),
+        })
+        .collect::<Vec<_>>();
+    actual_locations.sort_unstable();
+    expected == actual_locations
+}
+
+#[derive(Debug, Eq, Ord, PartialEq, PartialOrd)]
+struct FixtureErrorLocation {
+    instance_path: String,
+    keyword: String,
 }
 
 fn validate_supersession_fixture(
@@ -450,7 +565,9 @@ mod tests {
     use std::error::Error;
     use std::path::{Path, PathBuf};
 
-    use super::validate_workspace;
+    use oxyflut_qualification::schema::ValidationIssue;
+
+    use super::{FixtureErrorLocation, error_locations_match, validate_workspace};
 
     #[test]
     fn schema_compiles_committed_contract_instances_and_fixture_corpus()
@@ -460,6 +577,37 @@ mod tests {
         assert_eq!(report.instance_count, 6);
         assert!(report.fixture_count >= 80);
         Ok(())
+    }
+
+    #[test]
+    fn fixture_errors_require_an_exact_path_and_keyword_multiset() {
+        let expected = vec![FixtureErrorLocation {
+            instance_path: "/gate/status".to_owned(),
+            keyword: "enum".to_owned(),
+        }];
+        let matching = vec![ValidationIssue {
+            instance_path: "/gate/status".to_owned(),
+            schema_path: "/$defs/gate/status/enum".to_owned(),
+            keyword: "enum".to_owned(),
+        }];
+        assert!(error_locations_match(&expected, &matching));
+
+        let extra = vec![
+            matching[0].clone(),
+            ValidationIssue {
+                instance_path: "".to_owned(),
+                schema_path: "/required".to_owned(),
+                keyword: "required".to_owned(),
+            },
+        ];
+        assert!(!error_locations_match(&expected, &extra));
+
+        let different_keyword = vec![ValidationIssue {
+            instance_path: "/gate/status".to_owned(),
+            schema_path: "/$defs/gate/status/const".to_owned(),
+            keyword: "const".to_owned(),
+        }];
+        assert!(!error_locations_match(&expected, &different_keyword));
     }
 
     fn workspace_root() -> Result<PathBuf, Box<dyn Error>> {

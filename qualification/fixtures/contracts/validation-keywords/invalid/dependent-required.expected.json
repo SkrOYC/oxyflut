@@ -1,7 +1,10 @@
 {
+  "kind": "validation",
   "valid": false,
   "errorPaths": [
-    ""
-  ],
-  "kind": "validation"
+    {
+      "instancePath": "",
+      "keyword": "dependentRequired"
+    }
+  ]
 }

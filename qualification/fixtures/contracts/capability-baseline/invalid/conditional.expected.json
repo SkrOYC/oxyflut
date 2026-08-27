@@ -1,7 +1,10 @@
 {
+  "kind": "validation",
   "valid": false,
   "errorPaths": [
-    "/provenance"
-  ],
-  "kind": "validation"
+    {
+      "instancePath": "/provenance",
+      "keyword": "oneOf"
+    }
+  ]
 }

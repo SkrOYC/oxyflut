@@ -1,7 +1,14 @@
 {
+  "kind": "validation",
   "valid": false,
   "errorPaths": [
-    "/value"
-  ],
-  "kind": "validation"
+    {
+      "instancePath": "",
+      "keyword": "oneOf"
+    },
+    {
+      "instancePath": "/value",
+      "keyword": "type"
+    }
+  ]
 }

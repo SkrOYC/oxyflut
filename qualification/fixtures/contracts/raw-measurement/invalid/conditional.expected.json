@@ -1,7 +1,10 @@
 {
+  "kind": "validation",
   "valid": false,
   "errorPaths": [
-    "/samples/0/exclusionReason"
-  ],
-  "kind": "validation"
+    {
+      "instancePath": "/samples/0/exclusionReason",
+      "keyword": "exclusionReason"
+    }
+  ]
 }

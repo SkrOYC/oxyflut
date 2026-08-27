@@ -2606,5 +2606,114 @@
       "notApplicable": null
     }
   },
-  "eligibility": "open"
+  "eligibility": "eligible",
+  "assessors": [
+    {
+      "id": "assessor-one",
+      "frozenBeforeImplementation": true
+    },
+    {
+      "id": "assessor-two",
+      "frozenBeforeImplementation": true
+    }
+  ],
+  "scores": {
+    "platformCoverage": {
+      "weight": 30,
+      "assessorScores": [
+        5,
+        5
+      ],
+      "consensusScore": 5,
+      "consensusRationale": "Both assessors accepted the fixture evidence.",
+      "evidence": [
+        {
+          "path": "evidence/example.json",
+          "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "mediaType": "application/json"
+        }
+      ]
+    },
+    "upgradeMaintenance": {
+      "weight": 20,
+      "assessorScores": [
+        5,
+        5
+      ],
+      "consensusScore": 5,
+      "consensusRationale": "Both assessors accepted the fixture evidence.",
+      "evidence": [
+        {
+          "path": "evidence/example.json",
+          "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "mediaType": "application/json"
+        }
+      ]
+    },
+    "performance": {
+      "weight": 15,
+      "assessorScores": [
+        5,
+        5
+      ],
+      "consensusScore": 5,
+      "consensusRationale": "Both assessors accepted the fixture evidence.",
+      "evidence": [
+        {
+          "path": "evidence/example.json",
+          "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "mediaType": "application/json"
+        }
+      ]
+    },
+    "safetySecurityPrivacy": {
+      "weight": 15,
+      "assessorScores": [
+        5,
+        5
+      ],
+      "consensusScore": 5,
+      "consensusRationale": "Both assessors accepted the fixture evidence.",
+      "evidence": [
+        {
+          "path": "evidence/example.json",
+          "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "mediaType": "application/json"
+        }
+      ]
+    },
+    "distribution": {
+      "weight": 10,
+      "assessorScores": [
+        5,
+        5
+      ],
+      "consensusScore": 5,
+      "consensusRationale": "Both assessors accepted the fixture evidence.",
+      "evidence": [
+        {
+          "path": "evidence/example.json",
+          "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "mediaType": "application/json"
+        }
+      ]
+    },
+    "operationalClarity": {
+      "weight": 10,
+      "assessorScores": [
+        5,
+        5
+      ],
+      "consensusScore": 5,
+      "consensusRationale": "Both assessors accepted the fixture evidence.",
+      "evidence": [
+        {
+          "path": "evidence/example.json",
+          "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "mediaType": "application/json"
+        }
+      ]
+    }
+  },
+  "weightedTotal": 100
 }
