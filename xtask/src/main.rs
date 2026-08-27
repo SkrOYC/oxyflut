@@ -10,15 +10,15 @@ mod toolchain;
 fn main() -> ExitCode {
     let arguments = std::env::args().skip(1).collect::<Vec<_>>();
     let outcome = match dispatch(&arguments) {
-        Ok(route) => execute(route),
-        Err(error) => CommandOutcome::Failed(error),
+        Ok(invocation) => execute(invocation),
+        Err(error) => CommandOutcome::failed(error),
     };
 
     if let Some(diagnostic) = outcome.diagnostic() {
         eprintln!("{diagnostic}");
     }
 
-    ExitCode::from(outcome.exit_code())
+    outcome.exit_code()
 }
 
 /// Selects a registered qualification command placeholder.
@@ -46,54 +46,95 @@ enum CommandRoute {
     Qualify,
 }
 
-/// Classifies a command invocation without inspecting unimplemented arguments.
-fn dispatch(arguments: &[String]) -> Result<CommandRoute, DispatchError> {
+/// Couples a recognized command route with the arguments owned by its command module.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+struct CommandInvocation<'arguments> {
+    route: CommandRoute,
+    arguments: &'arguments [String],
+}
+
+/// Classifies a command invocation and preserves its command-specific arguments.
+fn dispatch(arguments: &[String]) -> Result<CommandInvocation<'_>, CommandError> {
     match arguments {
-        [command, action, ..] if command == "contracts" && action == "validate" => {
-            Ok(CommandRoute::Contracts)
+        [command, action, remaining @ ..] if command == "contracts" && action == "validate" => {
+            Ok(CommandInvocation {
+                route: CommandRoute::Contracts,
+                arguments: remaining,
+            })
         }
-        [command, action, ..] if command == "evidence" && action == "verify" => {
-            Ok(CommandRoute::Evidence)
+        [command, action, remaining @ ..] if command == "evidence" && action == "verify" => {
+            Ok(CommandInvocation {
+                route: CommandRoute::Evidence,
+                arguments: remaining,
+            })
         }
-        [command, action, ..] if command == "external-contracts" && action == "verify" => {
-            Ok(CommandRoute::ExternalContracts)
+        [command, action, remaining @ ..]
+            if command == "external-contracts" && action == "verify" =>
+        {
+            Ok(CommandInvocation {
+                route: CommandRoute::ExternalContracts,
+                arguments: remaining,
+            })
         }
-        [command, action, ..] if command == "baseline" && action == "validate" => {
-            Ok(CommandRoute::Baseline)
+        [command, action, remaining @ ..] if command == "baseline" && action == "validate" => {
+            Ok(CommandInvocation {
+                route: CommandRoute::Baseline,
+                arguments: remaining,
+            })
         }
-        [command, action, ..] if command == "measurement" && action == "validate" => {
-            Ok(CommandRoute::Measurement)
+        [command, action, remaining @ ..] if command == "measurement" && action == "validate" => {
+            Ok(CommandInvocation {
+                route: CommandRoute::Measurement,
+                arguments: remaining,
+            })
         }
-        [command, action, ..] if command == "environment" && action == "inspect" => {
-            Ok(CommandRoute::Environment)
+        [command, action, remaining @ ..] if command == "environment" && action == "inspect" => {
+            Ok(CommandInvocation {
+                route: CommandRoute::Environment,
+                arguments: remaining,
+            })
         }
-        [command, action, ..] if command == "lock" && action == "status" => Ok(CommandRoute::Lock),
-        [command, action, ..] if command == "candidate" && action == "build" => {
-            Ok(CommandRoute::Candidate)
+        [command, action, remaining @ ..] if command == "lock" && action == "status" => {
+            Ok(CommandInvocation {
+                route: CommandRoute::Lock,
+                arguments: remaining,
+            })
         }
-        [command, ..] if command == "probe" => Ok(CommandRoute::Probe),
-        [command, ..] if command == "qualify" => Ok(CommandRoute::Qualify),
-        _ => Err(DispatchError::InvalidCommand),
+        [command, action, remaining @ ..] if command == "candidate" && action == "build" => {
+            Ok(CommandInvocation {
+                route: CommandRoute::Candidate,
+                arguments: remaining,
+            })
+        }
+        [command, remaining @ ..] if command == "probe" => Ok(CommandInvocation {
+            route: CommandRoute::Probe,
+            arguments: remaining,
+        }),
+        [command, remaining @ ..] if command == "qualify" => Ok(CommandInvocation {
+            route: CommandRoute::Qualify,
+            arguments: remaining,
+        }),
+        _ => Err(CommandError::InvalidCommand),
     }
 }
 
-/// Routes a recognized command to its owned placeholder module.
-fn execute(route: CommandRoute) -> CommandOutcome {
-    match route {
-        CommandRoute::Contracts => commands::contracts::run(),
-        CommandRoute::Evidence => commands::evidence::run(),
-        CommandRoute::ExternalContracts => commands::external_contracts::run(),
-        CommandRoute::Baseline => commands::baseline::run(),
-        CommandRoute::Measurement => commands::measurement::run(),
-        CommandRoute::Environment => commands::environment::run(),
-        CommandRoute::Lock => commands::lock::run(),
-        CommandRoute::Candidate => commands::candidate::run(),
-        CommandRoute::Probe => commands::probe::run(),
-        CommandRoute::Qualify => commands::qualify::run(),
+/// Routes a recognized command and its arguments to the owning command module.
+fn execute(invocation: CommandInvocation<'_>) -> CommandOutcome {
+    match invocation.route {
+        CommandRoute::Contracts => commands::contracts::run(invocation.arguments),
+        CommandRoute::Evidence => commands::evidence::run(invocation.arguments),
+        CommandRoute::ExternalContracts => commands::external_contracts::run(invocation.arguments),
+        CommandRoute::Baseline => commands::baseline::run(invocation.arguments),
+        CommandRoute::Measurement => commands::measurement::run(invocation.arguments),
+        CommandRoute::Environment => commands::environment::run(invocation.arguments),
+        CommandRoute::Lock => commands::lock::run(invocation.arguments),
+        CommandRoute::Candidate => commands::candidate::run(invocation.arguments),
+        CommandRoute::Probe => commands::probe::run(invocation.arguments),
+        CommandRoute::Qualify => commands::qualify::run(invocation.arguments),
     }
 }
 
-/// Describes an exit outcome without allowing a command to claim success.
+/// Describes an exit outcome returned by a qualification command.
 #[derive(Debug, Eq, PartialEq)]
 pub(crate) enum CommandOutcome {
     /// The command completed successfully.
@@ -103,7 +144,7 @@ pub(crate) enum CommandOutcome {
     )]
     Success,
     /// The command failed validation or execution.
-    Failed(DispatchError),
+    Failed(CommandError),
     /// The lock was valid but the requested readiness gate remains open.
     #[allow(
         dead_code,
@@ -113,22 +154,27 @@ pub(crate) enum CommandOutcome {
 }
 
 impl CommandOutcome {
+    /// Creates a failed outcome from a command error.
+    pub(crate) const fn failed(error: CommandError) -> Self {
+        Self::Failed(error)
+    }
+
     /// Creates a named unimplemented-command failure.
     pub(crate) const fn not_implemented(command: &'static str) -> Self {
-        Self::Failed(DispatchError::NotImplemented { command })
+        Self::failed(CommandError::NotImplemented { command })
     }
 
     /// Returns the process exit code required by the qualification command contract.
-    const fn exit_code(&self) -> u8 {
+    fn exit_code(&self) -> ExitCode {
         match self {
-            Self::Success => 0,
-            Self::Failed(_) => 1,
-            Self::ValidButOpen => 2,
+            Self::Success => ExitCode::SUCCESS,
+            Self::Failed(error) => error.exit_code(),
+            Self::ValidButOpen => ExitCode::from(2),
         }
     }
 
     /// Returns a content-free failure diagnostic when one is available.
-    const fn diagnostic(&self) -> Option<&DispatchError> {
+    const fn diagnostic(&self) -> Option<&CommandError> {
         match self {
             Self::Success => None,
             Self::Failed(error) => Some(error),
@@ -137,9 +183,9 @@ impl CommandOutcome {
     }
 }
 
-/// Reports invalid or unimplemented qualification command invocations.
+/// Classifies invalid, validation, and execution failures from qualification commands.
 #[derive(Debug, thiserror::Error, Eq, PartialEq)]
-pub(crate) enum DispatchError {
+pub(crate) enum CommandError {
     /// The command name doesn't match the qualification command contract.
     #[error("invalid command")]
     InvalidCommand,
@@ -149,6 +195,34 @@ pub(crate) enum DispatchError {
         /// The content-free command name.
         command: &'static str,
     },
+    /// Command arguments or their referenced input were invalid.
+    #[error("invalid input")]
+    #[allow(
+        dead_code,
+        reason = "Later command modules use this category for invalid command-specific inputs."
+    )]
+    InvalidInput(String),
+    /// Command validation completed but its inputs didn't meet the required contract.
+    #[error("validation failed")]
+    #[allow(
+        dead_code,
+        reason = "Later command modules use this category for validation failures."
+    )]
+    ValidationFailed(String),
+    /// The command couldn't complete its local execution.
+    #[error("execution failed")]
+    #[allow(
+        dead_code,
+        reason = "Later command modules use this category for local execution failures."
+    )]
+    Execution(String),
+}
+
+impl CommandError {
+    /// Returns the failure exit code required by the qualification command contract.
+    fn exit_code(&self) -> ExitCode {
+        ExitCode::FAILURE
+    }
 }
 
 #[cfg(test)]
@@ -156,9 +230,9 @@ mod tests {
     use std::error::Error;
     use std::fs;
     use std::path::{Path, PathBuf};
-    use std::process::Command;
+    use std::process::{Command, ExitCode};
 
-    use super::{CommandOutcome, CommandRoute, DispatchError, dispatch, execute};
+    use super::{CommandError, CommandOutcome, CommandRoute, dispatch};
 
     const WORKSPACE_MEMBERS: &[&str] = &[
         "crates/oxyflut",
@@ -179,7 +253,9 @@ mod tests {
         "xtask",
     ];
 
-    const DOCUMENTATION_ONLY_CRATES: &[&str] = &[
+    const BEHAVIOR_FREE_CRATES: &[&str] = &[
+        "crates/oxyflut-substrate-impeller",
+        "crates/oxyflut-substrate-engine",
         "crates/oxyflut",
         "crates/oxyflut-runtime",
         "crates/oxyflut-layout",
@@ -192,19 +268,6 @@ mod tests {
         "crates/oxyflut-platform",
         "crates/oxyflut-diagnostics",
         "crates/oxyflut-substrate",
-        "crates/oxyflut-substrate-impeller",
-        "crates/oxyflut-substrate-engine",
-    ];
-
-    const QUALIFICATION_MODULES: &[&str] = &[
-        "schema",
-        "identifiers",
-        "readiness",
-        "evidence",
-        "hash",
-        "baseline",
-        "measurement",
-        "environment",
     ];
 
     const STACK_ALLOWED_DEPENDENCIES: &[(&str, &str)] = &[
@@ -291,23 +354,11 @@ mod tests {
     fn candidate_platform_and_product_crates_contain_documentation_only()
     -> Result<(), Box<dyn Error>> {
         let root = workspace_root()?;
-        for crate_path in DOCUMENTATION_ONLY_CRATES {
+        for crate_path in BEHAVIOR_FREE_CRATES {
             let source = read_file(&root.join(crate_path).join("src/lib.rs"))?;
             assert!(
                 is_documentation_only(&source),
                 "{crate_path} must not contain product, candidate, or platform behavior"
-            );
-        }
-
-        for module in QUALIFICATION_MODULES {
-            let source = read_file(
-                &root
-                    .join("crates/oxyflut-qualification/src")
-                    .join(format!("{module}.rs")),
-            )?;
-            assert!(
-                is_documentation_only(&source),
-                "qualification placeholder {module} must not contain behavior"
             );
         }
 
@@ -324,54 +375,62 @@ mod tests {
     }
 
     #[test]
-    fn dispatcher_routes_every_qualification_command_to_a_named_failure() {
+    fn dispatcher_recognizes_every_qualification_command_and_preserves_its_arguments() {
         let cases = [
-            (
-                &["contracts", "validate"][..],
-                CommandRoute::Contracts,
-                "contracts validate",
-            ),
+            (&["contracts", "validate"][..], CommandRoute::Contracts, 2),
             (
                 &["evidence", "verify", "PATH"][..],
                 CommandRoute::Evidence,
-                "evidence verify",
+                2,
             ),
             (
                 &["external-contracts", "verify"][..],
                 CommandRoute::ExternalContracts,
-                "external-contracts verify",
+                2,
             ),
             (
                 &["baseline", "validate", "--input", "PATH"][..],
                 CommandRoute::Baseline,
-                "baseline validate",
+                2,
             ),
             (
                 &["measurement", "validate", "--input", "PATH"][..],
                 CommandRoute::Measurement,
-                "measurement validate",
+                2,
             ),
             (
                 &[
                     "environment",
                     "inspect",
                     "--environment",
-                    "E",
+                    "ENVIRONMENT",
                     "--output",
-                    "P",
+                    "PATH",
                 ][..],
                 CommandRoute::Environment,
-                "environment inspect",
+                2,
             ),
             (
-                &["lock", "status", "--gate", "G"][..],
+                &["lock", "status", "--gate", "candidate-implementation"][..],
                 CommandRoute::Lock,
-                "lock status",
+                2,
             ),
             (
                 &["candidate", "build", "--candidate", "focused", "--locked"][..],
                 CommandRoute::Candidate,
-                "candidate build",
+                2,
+            ),
+            (
+                &[
+                    "candidate",
+                    "build",
+                    "--candidate",
+                    "integrated",
+                    "--locked",
+                    "--dart-disabled",
+                ][..],
+                CommandRoute::Candidate,
+                2,
             ),
             (
                 &[
@@ -382,30 +441,68 @@ mod tests {
                     "ENVIRONMENT",
                 ][..],
                 CommandRoute::Probe,
-                "probe",
+                1,
             ),
             (
                 &["qualify", "--all-candidates", "--locked"][..],
                 CommandRoute::Qualify,
-                "qualify",
+                1,
             ),
         ];
 
-        for (arguments, route, command) in cases {
+        for (arguments, route, argument_start) in cases {
             let arguments = arguments
                 .iter()
                 .map(|value| (*value).to_owned())
                 .collect::<Vec<_>>();
-            assert_eq!(dispatch(&arguments), Ok(route));
             assert_eq!(
-                execute(route),
-                CommandOutcome::not_implemented(command),
-                "{command} must route to its named placeholder"
+                dispatch(&arguments).map(|invocation| invocation.route),
+                Ok(route)
             );
-            assert_eq!(execute(route).exit_code(), 1);
+            assert_eq!(
+                dispatch(&arguments).map(|invocation| invocation.arguments),
+                Ok(&arguments[argument_start..])
+            );
         }
 
-        assert_eq!(dispatch(&[]), Err(DispatchError::InvalidCommand));
+        assert_eq!(dispatch(&[]), Err(CommandError::InvalidCommand));
+        assert_eq!(
+            dispatch(&["unknown".to_owned()]),
+            Err(CommandError::InvalidCommand)
+        );
+    }
+
+    #[test]
+    fn command_outcomes_follow_the_qualification_exit_code_contract() {
+        assert_eq!(CommandOutcome::Success.exit_code(), ExitCode::SUCCESS);
+        assert_eq!(CommandOutcome::ValidButOpen.exit_code(), ExitCode::from(2));
+        assert_eq!(
+            CommandOutcome::not_implemented("placeholder").exit_code(),
+            ExitCode::FAILURE
+        );
+    }
+
+    #[test]
+    fn runtime_errors_have_content_free_diagnostics_and_failure_exit_codes() {
+        let cases = [
+            (
+                CommandError::InvalidInput("input context".to_owned()),
+                "invalid input",
+            ),
+            (
+                CommandError::ValidationFailed("validation context".to_owned()),
+                "validation failed",
+            ),
+            (
+                CommandError::Execution("execution context".to_owned()),
+                "execution failed",
+            ),
+        ];
+
+        for (error, diagnostic) in cases {
+            assert_eq!(error.exit_code(), ExitCode::FAILURE);
+            assert_eq!(error.to_string(), diagnostic);
+        }
     }
 
     #[test]
