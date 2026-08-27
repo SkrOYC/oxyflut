@@ -275,6 +275,8 @@ Command: cargo +1.98.0 test -p xtask contracts::native
 - **Justification:** The ticket explicitly requires `contracts validate` to execute the native family and report `native: ok`; the command module is outside the ticket's original file list.
 - **Touched Files:** `.constitution/tasks/active/EPIC-A-qualification-foundation.md`.
 - **Justification:** The execution rules require this scope deviation to be recorded in the ticket block.
+- **Touched Files:** `xtask/build.rs`, `xtask/src/contracts/native_tests.rs`.
+- **Justification:** The source contracts begin with crate-level attributes, which Rust rejects when `include!` splices them directly into a nested test module. The build script copies their exact bytes inside generated test-only modules so the authoritative contracts compile without a mirror. The direct contract test module is separate to keep the native validator below the repository's 1000-line module limit.
 
 #### OXY-A006 Implement canonical evidence writing
 

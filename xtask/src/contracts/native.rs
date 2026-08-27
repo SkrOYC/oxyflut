@@ -18,13 +18,12 @@ pub(crate) const FAMILY: &str = "native";
 
 const MANIFEST_PATH: &str = "qualification/tools/native-contract-toolchain.json";
 const HEADER_PATH: &str = ".constitution/tech-spec/contracts/oxyflut-substrate.h";
-#[cfg(test)]
-const COMMON_CONTRACT_PATH: &str = ".constitution/tech-spec/contracts/oxyflut-substrate.rs";
 const BINDINGS_PATH: &str = "qualification/fixtures/generated-bindings/oxyflut-substrate.rs";
 const BINDINGS_DIGEST_PATH: &str =
     "qualification/fixtures/generated-bindings/oxyflut-substrate.rs.sha256";
 const INTERFACE_FIXTURE_PATH: &str = "qualification/fixtures/native/interface.json";
 const LAYOUT_PROBE_PATH: &str = "qualification/fixtures/native/layout-probe.c.in";
+const MACROS_FIXTURE_DIRECTORY: &str = "qualification/fixtures/native";
 static TEMP_SEQUENCE: AtomicU64 = AtomicU64::new(0);
 
 /// Validates the authoritative integrated C ABI using only staged native tools.
@@ -53,7 +52,7 @@ fn validate_header(
     let bindings = temporary.path().join("oxyflut-substrate.rs");
     generate_bindings(header, &bindings, tools)?;
     validate_bindings(root, &bindings)?;
-    validate_interface(root, header)?;
+    validate_interface(root, header, tools)?;
     validate_layout(root, header, tools, &temporary)?;
     Ok(())
 }
@@ -155,9 +154,14 @@ fn validate_bindings(root: &Path, generated: &Path) -> Result<(), NativeContract
     Ok(())
 }
 
-fn validate_interface(root: &Path, header: &Path) -> Result<(), NativeContractError> {
+fn validate_interface(
+    root: &Path,
+    header: &Path,
+    tools: &NativeTools,
+) -> Result<(), NativeContractError> {
     let fixture = read_json(&root.join(INTERFACE_FIXTURE_PATH), "native interface")?;
     let source = fs::read_to_string(header)?;
+    validate_macro_expansions(root, header, tools)?;
     let compact = source
         .chars()
         .filter(|character| !character.is_whitespace())
@@ -173,13 +177,6 @@ fn validate_interface(root: &Path, header: &Path) -> Result<(), NativeContractEr
     let calling_convention = required_object(&fixture, "callingConvention", "native interface")?;
     let export = required_object_string(calling_convention, "exportMacro", "native interface")?;
     let call = required_object_string(calling_convention, "callMacro", "native interface")?;
-    for macro_name in [&export, &call] {
-        if !source.contains(&format!("#define {macro_name}")) {
-            return Err(NativeContractError::InterfaceMismatch {
-                item: macro_name.to_owned(),
-            });
-        }
-    }
     if !compact.contains(&format!("{export}OxyStatus{call}{symbol}(")) {
         return Err(NativeContractError::InterfaceMismatch {
             item: symbol.to_owned(),
@@ -247,6 +244,318 @@ fn validate_interface(root: &Path, header: &Path) -> Result<(), NativeContractEr
     Ok(())
 }
 
+fn validate_macro_expansions(
+    root: &Path,
+    header: &Path,
+    tools: &NativeTools,
+) -> Result<(), NativeContractError> {
+    let fixture = read_json(
+        &root.join(format!(
+            "{MACROS_FIXTURE_DIRECTORY}/macros.{}.json",
+            tools.host_triple
+        )),
+        "native macro expansions",
+    )?;
+    let target = required_string(&fixture, "targetTriple", "native macro expansions")?;
+    if target != tools.host_triple {
+        return Err(NativeContractError::MacroFixtureTargetMismatch {
+            expected: tools.host_triple.clone(),
+            actual: target,
+        });
+    }
+    let expected = required_object(&fixture, "definitions", "native macro expansions")?;
+    let actual = preprocessed_macro_definitions(header, tools)?;
+    for name in ["OXY_EXPORT", "OXY_CALL"] {
+        let expected_expansion = expected
+            .get(name)
+            .and_then(Value::as_str)
+            .map(str::to_owned)
+            .ok_or(NativeContractError::InvalidFixture {
+                fixture: "native macro expansions",
+            })?;
+        let actual_expansion =
+            actual
+                .get(name)
+                .ok_or_else(|| NativeContractError::MacroExpansionMismatch {
+                    name: name.to_owned(),
+                    expected: expected_expansion.clone(),
+                    actual: None,
+                })?;
+        if actual_expansion != &expected_expansion {
+            return Err(NativeContractError::MacroExpansionMismatch {
+                name: name.to_owned(),
+                expected: expected_expansion,
+                actual: Some(actual_expansion.clone()),
+            });
+        }
+    }
+    Ok(())
+}
+
+fn preprocessed_macro_definitions(
+    header: &Path,
+    tools: &NativeTools,
+) -> Result<std::collections::BTreeMap<String, String>, NativeContractError> {
+    let output = run_tool_output(
+        &tools.c_header_checker,
+        "c-header-checker",
+        "macro expansion preprocessing",
+        [
+            OsStr::new("-Qunused-arguments"),
+            OsStr::new("-dM"),
+            OsStr::new("-E"),
+            OsStr::new("-x"),
+            OsStr::new("c"),
+            OsStr::new("-std=c11"),
+            header.as_os_str(),
+        ],
+    )?;
+    let definitions = String::from_utf8(output.stdout).map_err(|source| {
+        NativeContractError::ToolOutputEncoding {
+            tool: "c-header-checker",
+            operation: "macro expansion preprocessing",
+            source,
+        }
+    })?;
+    let mut macros = std::collections::BTreeMap::new();
+    for line in definitions.lines() {
+        let Some(definition) = line.strip_prefix("#define ") else {
+            continue;
+        };
+        let mut parts = definition.splitn(2, char::is_whitespace);
+        let Some(name) = parts.next() else {
+            continue;
+        };
+        let expansion = parts.next().map(str::trim_start).unwrap_or_default();
+        macros.insert(name.to_owned(), expansion.to_owned());
+    }
+    Ok(macros)
+}
+
+fn derive_header_nullability(
+    header: &Path,
+    tools: &NativeTools,
+    actual: &mut Value,
+) -> Result<(), NativeContractError> {
+    let source = fs::read_to_string(header)?;
+    let records = parse_header_records(header, tools)?;
+    if !source.contains("Unless a field comment states otherwise, every pointer passed to or returned from this ABI is nonnull. An array pointer is null if and only if its count is zero.") {
+        return Err(NativeContractError::MissingNullabilityAnnotation {
+            annotation: "default pointer and array rule",
+        });
+    }
+
+    let actual_structs = actual
+        .get_mut("structs")
+        .and_then(Value::as_array_mut)
+        .ok_or(NativeContractError::InvalidFixture {
+            fixture: "native layout probe",
+        })?;
+    let mut probe_fields = std::collections::BTreeMap::new();
+    for layout in actual_structs {
+        let layout_object = layout
+            .as_object_mut()
+            .ok_or(NativeContractError::InvalidFixture {
+                fixture: "native layout probe",
+            })?;
+        let name = layout_object
+            .get("name")
+            .and_then(Value::as_str)
+            .map(str::to_owned)
+            .ok_or(NativeContractError::InvalidFixture {
+                fixture: "native layout probe",
+            })?;
+        let fields = layout_object
+            .get_mut("fields")
+            .and_then(Value::as_array_mut)
+            .ok_or(NativeContractError::InvalidFixture {
+                fixture: "native layout probe",
+            })?;
+        let record = records
+            .get(&name)
+            .ok_or_else(|| NativeContractError::HeaderAstCoverageMismatch { item: name.clone() })?;
+        let mut names = std::collections::BTreeSet::new();
+        for layout_field in fields {
+            let field_object =
+                layout_field
+                    .as_object_mut()
+                    .ok_or(NativeContractError::InvalidFixture {
+                        fixture: "native layout probe",
+                    })?;
+            let field_name = field_object
+                .get("name")
+                .and_then(Value::as_str)
+                .map(str::to_owned)
+                .ok_or(NativeContractError::InvalidFixture {
+                    fixture: "native layout probe",
+                })?;
+            let field = record
+                .iter()
+                .find(|field| field.name == field_name)
+                .ok_or_else(|| NativeContractError::HeaderAstCoverageMismatch {
+                    item: format!("{name}.{field_name}"),
+                })?;
+            names.insert(field_name);
+            field_object.insert(
+                "nullability".to_owned(),
+                Value::String(header_field_nullability(&source, &name, field, record)?.to_owned()),
+            );
+        }
+        probe_fields.insert(name, names);
+    }
+
+    let header_fields = records
+        .iter()
+        .filter(|(_, fields)| !fields.is_empty())
+        .map(|(name, fields)| {
+            (
+                name.clone(),
+                fields.iter().map(|field| field.name.clone()).collect(),
+            )
+        })
+        .collect::<std::collections::BTreeMap<_, _>>();
+    if probe_fields != header_fields {
+        return Err(NativeContractError::HeaderAstCoverageMismatch {
+            item: "layout probe fields".to_owned(),
+        });
+    }
+    Ok(())
+}
+
+fn header_field_nullability(
+    source: &str,
+    record_name: &str,
+    field: &HeaderField,
+    record: &[HeaderField],
+) -> Result<&'static str, NativeContractError> {
+    if !field.is_pointer {
+        return Ok("not-pointer");
+    }
+    if field.comment.contains("Nullable;") {
+        return Ok("nullable");
+    }
+    if field.comment.contains("Nonnull;") {
+        return Ok("nonnull");
+    }
+    if record_name == "OxyBorrowedBytes" && field.name == "data" {
+        if source.contains("data is null if and only if length is zero.") {
+            return Ok("null-if-length-zero");
+        }
+        return Err(NativeContractError::MissingNullabilityAnnotation {
+            annotation: "OxyBorrowedBytes.data length rule",
+        });
+    }
+    if record_name == "OxyOwnedBytes" && matches!(field.name.as_str(), "data" | "release") {
+        if source.contains("Empty values have null data, zero length, and null release.") {
+            return Ok("null-if-length-zero");
+        }
+        return Err(NativeContractError::MissingNullabilityAnnotation {
+            annotation: "OxyOwnedBytes empty-value rule",
+        });
+    }
+    if record.iter().any(|candidate| {
+        candidate
+            .name
+            .strip_suffix("_count")
+            .is_some_and(|prefix| field.name.starts_with(prefix))
+    }) {
+        return Ok("null-if-count-zero");
+    }
+    Ok("nonnull")
+}
+
+fn parse_header_records(
+    header: &Path,
+    tools: &NativeTools,
+) -> Result<std::collections::BTreeMap<String, Vec<HeaderField>>, NativeContractError> {
+    let output = run_tool_output(
+        &tools.c_header_checker,
+        "c-header-checker",
+        "nullability AST inspection",
+        [
+            OsStr::new("-Qunused-arguments"),
+            OsStr::new("-Xclang"),
+            OsStr::new("-ast-dump=json"),
+            OsStr::new("-fparse-all-comments"),
+            OsStr::new("-fsyntax-only"),
+            OsStr::new("-x"),
+            OsStr::new("c"),
+            OsStr::new("-std=c11"),
+            header.as_os_str(),
+        ],
+    )?;
+    let ast: Value = serde_json::from_slice(&output.stdout)?;
+    let mut records = std::collections::BTreeMap::new();
+    collect_header_records(&ast, &mut records);
+    Ok(records)
+}
+
+fn collect_header_records(
+    value: &Value,
+    records: &mut std::collections::BTreeMap<String, Vec<HeaderField>>,
+) {
+    if value.get("kind").and_then(Value::as_str) == Some("RecordDecl")
+        && value.get("completeDefinition").and_then(Value::as_bool) == Some(true)
+        && let Some(name) = value.get("name").and_then(Value::as_str)
+        && name.starts_with("Oxy")
+    {
+        let fields = value
+            .get("inner")
+            .and_then(Value::as_array)
+            .map(|children| {
+                children
+                    .iter()
+                    .filter(|child| child.get("kind").and_then(Value::as_str) == Some("FieldDecl"))
+                    .filter_map(header_field)
+                    .collect::<Vec<_>>()
+            })
+            .unwrap_or_default();
+        records.insert(name.to_owned(), fields);
+    }
+    if let Some(children) = value.get("inner").and_then(Value::as_array) {
+        for child in children {
+            collect_header_records(child, records);
+        }
+    }
+}
+
+fn header_field(value: &Value) -> Option<HeaderField> {
+    let name = value.get("name")?.as_str()?.to_owned();
+    let type_name = value
+        .get("type")
+        .and_then(Value::as_object)
+        .and_then(|value| value.get("qualType"))
+        .and_then(Value::as_str)?;
+    Some(HeaderField {
+        name,
+        is_pointer: type_name.contains('*'),
+        comment: comment_text(value),
+    })
+}
+
+fn comment_text(value: &Value) -> String {
+    let mut text = String::new();
+    collect_comment_text(value, &mut text);
+    text
+}
+
+fn collect_comment_text(value: &Value, text: &mut String) {
+    if let Some(comment) = value.get("text").and_then(Value::as_str) {
+        text.push_str(comment);
+    }
+    if let Some(children) = value.get("inner").and_then(Value::as_array) {
+        for child in children {
+            collect_comment_text(child, text);
+        }
+    }
+}
+
+struct HeaderField {
+    name: String,
+    is_pointer: bool,
+    comment: String,
+}
+
 fn validate_layout(
     root: &Path,
     header: &Path,
@@ -292,7 +601,8 @@ fn validate_layout(
             operation: "layout probe execution",
         });
     }
-    let actual: Value = serde_json::from_slice(&output.stdout)?;
+    let mut actual: Value = serde_json::from_slice(&output.stdout)?;
+    derive_header_nullability(header, tools, &mut actual)?;
     let expected = read_json(
         &root.join(format!(
             "qualification/fixtures/native/layout.{}.json",
@@ -304,6 +614,33 @@ fn validate_layout(
         return Err(NativeContractError::LayoutMismatch);
     }
     Ok(())
+}
+
+fn run_tool_output<'arguments, I>(
+    tool: &Path,
+    name: &'static str,
+    operation: &'static str,
+    arguments: I,
+) -> Result<std::process::Output, NativeContractError>
+where
+    I: IntoIterator<Item = &'arguments OsStr>,
+{
+    let output = Command::new(tool)
+        .args(arguments)
+        .output()
+        .map_err(|source| NativeContractError::ToolExecution {
+            tool: name,
+            operation,
+            source,
+        })?;
+    if output.status.success() {
+        Ok(output)
+    } else {
+        Err(NativeContractError::ToolFailed {
+            tool: name,
+            operation,
+        })
+    }
 }
 
 fn run_tool<'arguments, I>(
@@ -551,6 +888,27 @@ pub(crate) enum NativeContractError {
         tool: &'static str,
         operation: &'static str,
     },
+    #[error("native contract tool emitted non-UTF-8 output: {tool} during {operation}")]
+    ToolOutputEncoding {
+        tool: &'static str,
+        operation: &'static str,
+        #[source]
+        source: std::string::FromUtf8Error,
+    },
+    #[error("the native macro fixture targets {actual}, not {expected}")]
+    MacroFixtureTargetMismatch { expected: String, actual: String },
+    #[error(
+        "native macro {name} expands differently from its fixture: expected {expected:?}, got {actual:?}"
+    )]
+    MacroExpansionMismatch {
+        name: String,
+        expected: String,
+        actual: Option<String>,
+    },
+    #[error("the header is missing a documented nullability annotation: {annotation}")]
+    MissingNullabilityAnnotation { annotation: &'static str },
+    #[error("the header AST and layout probe disagree about {item}")]
+    HeaderAstCoverageMismatch { item: String },
     #[error("the committed generated-binding SHA-256 doesn't match its bytes")]
     GoldenDigestMismatch,
     #[error("generated native bindings differ from the committed golden")]
@@ -564,343 +922,5 @@ pub(crate) enum NativeContractError {
 }
 
 #[cfg(test)]
-mod tests {
-    use std::error::Error;
-    use std::fs;
-    use std::path::{Path, PathBuf};
-
-    use serde_json::Value;
-
-    use super::{
-        BINDINGS_PATH, NativeContractError, NativeTools, TemporaryDirectory, generate_bindings,
-        validate_header, validate_workspace,
-    };
-
-    #[test]
-    fn authoritative_header_passes_strict_c11_cpp17_interface_and_layout_checks()
-    -> Result<(), Box<dyn Error>> {
-        let root = workspace_root()?;
-        validate_workspace(&root)?;
-        Ok(())
-    }
-
-    #[test]
-    fn generated_bindings_are_byte_stable_under_the_locked_toolchain() -> Result<(), Box<dyn Error>>
-    {
-        let root = workspace_root()?;
-        let tools = NativeTools::load(&root)?;
-        let temporary = TemporaryDirectory::new("native-bindings")?;
-        let first = temporary.path().join("first.rs");
-        let second = temporary.path().join("second.rs");
-        let header = root.join(super::HEADER_PATH);
-        generate_bindings(&header, &first, &tools)?;
-        generate_bindings(&header, &second, &tools)?;
-        assert_eq!(fs::read(&first)?, fs::read(&second)?);
-        assert_eq!(fs::read(&first)?, fs::read(root.join(BINDINGS_PATH))?);
-        Ok(())
-    }
-
-    #[test]
-    fn native_toolchain_failure_stops_before_header_validation() -> Result<(), Box<dyn Error>> {
-        let temporary = TemporaryDirectory::new("native-manifest")?;
-        let result = NativeTools::load(temporary.path());
-        assert!(matches!(
-            result,
-            Err(NativeContractError::MissingToolchainManifest)
-        ));
-        Ok(())
-    }
-
-    #[test]
-    fn deliberate_layout_type_and_symbol_mutations_fail() -> Result<(), Box<dyn Error>> {
-        let root = workspace_root()?;
-        let tools = NativeTools::load(&root)?;
-        let source = fs::read_to_string(root.join(super::HEADER_PATH))?;
-        let mutations = [
-            (
-                "reordered prefix",
-                "  uint32_t struct_size;\n  uint32_t abi_version;",
-                "  uint32_t abi_version;\n  uint32_t struct_size;",
-            ),
-            (
-                "changed type",
-                "  uint64_t view_generation;\n  uint64_t display_epoch;",
-                "  uint32_t view_generation;\n  uint64_t display_epoch;",
-            ),
-            (
-                "renamed symbol",
-                "OxySubstrateGetApi",
-                "OxySubstrateGetApiMutated",
-            ),
-        ];
-        for (name, original, replacement) in mutations {
-            let temporary = TemporaryDirectory::new("native-mutation")?;
-            let header = temporary.path().join("oxyflut-substrate.h");
-            let mutated = source.replacen(original, replacement, 1);
-            assert_ne!(mutated, source, "{name} must alter the header fixture");
-            fs::write(&header, mutated)?;
-            assert!(
-                validate_header(&root, &header, &tools).is_err(),
-                "{name} must fail"
-            );
-        }
-        Ok(())
-    }
-
-    #[test]
-    fn native_index_units_match_rust_and_platform_contracts_before_range_conversion()
-    -> Result<(), Box<dyn Error>> {
-        let root = workspace_root()?;
-        let platform: Value = serde_json::from_slice(&fs::read(
-            root.join(".constitution/tech-spec/data-models/platform-contracts.schema.json"),
-        )?)?;
-        let header = fs::read_to_string(root.join(super::HEADER_PATH))?;
-        let common = fs::read_to_string(root.join(super::COMMON_CONTRACT_PATH))?;
-        for item in [
-            "pub enum NativeTextIndexUnit",
-            "Utf8Bytes",
-            "Utf16Units",
-            "UnicodeScalars",
-        ] {
-            assert!(common.contains(item));
-        }
-        let expected = [
-            (
-                1,
-                "OXY_NATIVE_TEXT_INDEX_UTF8_BYTES = 1u",
-                NativeTextIndexUnit::Utf8Bytes,
-                "utf8-bytes",
-            ),
-            (
-                2,
-                "OXY_NATIVE_TEXT_INDEX_UTF16_UNITS = 2u",
-                NativeTextIndexUnit::Utf16Units,
-                "utf16-code-units",
-            ),
-            (
-                3,
-                "OXY_NATIVE_TEXT_INDEX_UNICODE_SCALARS = 3u",
-                NativeTextIndexUnit::UnicodeScalars,
-                "unicode-scalars",
-            ),
-        ];
-        for (raw, c_constant, unit, name) in expected {
-            assert!(header.contains(c_constant));
-            assert_eq!(NativeTextIndexUnit::try_from(raw)?, unit);
-            assert_eq!(unit.platform_name(), name);
-            assert!(platform_contract_defines(&platform, name));
-        }
-        assert!(matches!(
-            convert_native_range(99, 9, 1),
-            Err(MirrorError::UnknownNativeIndexUnit(99))
-        ));
-        Ok(())
-    }
-
-    #[test]
-    fn presentation_statuses_map_and_reject_invalid_timestamps_before_delivery()
-    -> Result<(), Box<dyn Error>> {
-        let root = workspace_root()?;
-        let header = fs::read_to_string(root.join(super::HEADER_PATH))?;
-        let common = fs::read_to_string(root.join(super::COMMON_CONTRACT_PATH))?;
-        assert!(common.contains("pub enum PresentationStatus"));
-        let expected = [
-            (0, "OXY_STATUS_OK = 0u", PresentationStatus::Presented),
-            (
-                1,
-                "OXY_STATUS_INVALID_ARGUMENT = 1u",
-                PresentationStatus::InvalidArgument,
-            ),
-            (
-                2,
-                "OXY_STATUS_INCOMPATIBLE_ABI = 2u",
-                PresentationStatus::IncompatibleAbi,
-            ),
-            (
-                3,
-                "OXY_STATUS_STALE_OWNER = 3u",
-                PresentationStatus::StaleOwner,
-            ),
-            (
-                4,
-                "OXY_STATUS_RESOURCE_LIMIT = 4u",
-                PresentationStatus::ResourceLimit,
-            ),
-            (
-                5,
-                "OXY_STATUS_UNSUPPORTED = 5u",
-                PresentationStatus::Unsupported,
-            ),
-            (
-                6,
-                "OXY_STATUS_SUBSTRATE_FAILURE = 6u",
-                PresentationStatus::SubstrateFailure,
-            ),
-            (
-                7,
-                "OXY_STATUS_CANCELLED = 7u",
-                PresentationStatus::Cancelled,
-            ),
-            (
-                8,
-                "OXY_STATUS_DEADLINE_EXCEEDED = 8u",
-                PresentationStatus::DeadlineExceeded,
-            ),
-        ];
-        for (raw, c_status, expected_status) in expected {
-            assert!(header.contains(c_status));
-            assert!(common.contains(&format!("{expected_status:?}")));
-            let timestamp = if raw == 0 { Some(42) } else { None };
-            let mut recorder = PresentationRecorder::default();
-            deliver_presentation(raw, timestamp, &mut recorder)?;
-            assert_eq!(recorder.deliveries, vec![expected_status]);
-            let invalid_timestamp = if raw == 0 { None } else { Some(42) };
-            assert!(matches!(
-                deliver_presentation(raw, invalid_timestamp, &mut recorder),
-                Err(MirrorError::InvalidPresentationTimestamp)
-            ));
-        }
-        let mut recorder = PresentationRecorder::default();
-        assert!(matches!(
-            deliver_presentation(99, Some(42), &mut recorder),
-            Err(MirrorError::UnknownPresentationStatus(99))
-        ));
-        assert!(recorder.deliveries.is_empty());
-        Ok(())
-    }
-
-    #[test]
-    fn texture_realization_contracts_accept_and_reject_the_same_inputs()
-    -> Result<(), Box<dyn Error>> {
-        let root = workspace_root()?;
-        let common = fs::read_to_string(root.join(super::COMMON_CONTRACT_PATH))?;
-        let header = fs::read_to_string(root.join(super::HEADER_PATH))?;
-        assert!(common.contains("pub enum PixelFormat"));
-        assert!(common.contains("Rgba8888"));
-        assert!(common.contains("fn realize_texture"));
-        assert!(header.contains("OXY_PIXEL_FORMAT_RGBA8888 = 1u"));
-        let accepted = (2, 3, 1, 24);
-        assert_eq!(
-            validate_common_texture(
-                accepted.0,
-                accepted.1,
-                CommonPixelFormat::Rgba8888,
-                accepted.3
-            ),
-            Ok(24)
-        );
-        assert_eq!(
-            validate_common_texture_from_native(accepted.0, accepted.1, accepted.2, accepted.3),
-            Ok(24)
-        );
-        assert_eq!(
-            validate_c_texture(accepted.0, accepted.1, accepted.2, accepted.3),
-            Ok(24)
-        );
-        for (width, height, format, bytes) in [
-            (0, 3, 1, 0),
-            (2, 0, 1, 0),
-            (2, 3, 99, 24),
-            (2, 3, 1, 23),
-            (u32::MAX, u32::MAX, 1, 0),
-        ] {
-            assert!(validate_common_texture_from_native(width, height, format, bytes).is_err());
-            assert!(validate_c_texture(width, height, format, bytes).is_err());
-        }
-        for (width, height, bytes) in [(0, 3, 0), (2, 0, 0), (2, 3, 23), (u32::MAX, u32::MAX, 0)] {
-            assert!(
-                validate_common_texture(width, height, CommonPixelFormat::Rgba8888, bytes).is_err()
-            );
-        }
-        Ok(())
-    }
-
-    #[test]
-    fn semantics_selection_projects_some_and_none_and_rejects_invalid_c_forms()
-    -> Result<(), Box<dyn Error>> {
-        let root = workspace_root()?;
-        let common = fs::read_to_string(root.join(super::COMMON_CONTRACT_PATH))?;
-        let header = fs::read_to_string(root.join(super::HEADER_PATH))?;
-        assert!(common.contains("selection_utf16: Option<(u32, u32)>"));
-        for field in [
-            "text_selection_base_utf16",
-            "text_selection_extent_utf16",
-            "has_text_selection",
-            "text_selection_reserved",
-        ] {
-            assert!(header.contains(field));
-        }
-        let some = CommonSelection::Some(4, 12);
-        assert_eq!(c_to_common_selection(common_to_c_selection(some)?)?, some);
-        let none = CommonSelection::None;
-        assert_eq!(c_to_common_selection(common_to_c_selection(none)?)?, none);
-        for c_selection in [
-            CSelection {
-                base: 1,
-                extent: 0,
-                has_selection: 0,
-                reserved: 0,
-            },
-            CSelection {
-                base: 0,
-                extent: 0,
-                has_selection: 2,
-                reserved: 0,
-            },
-            CSelection {
-                base: 0,
-                extent: 0,
-                has_selection: 1,
-                reserved: 1,
-            },
-            CSelection {
-                base: -1,
-                extent: 0,
-                has_selection: 1,
-                reserved: 0,
-            },
-            CSelection {
-                base: i64::from(u32::MAX) + 1,
-                extent: 0,
-                has_selection: 1,
-                reserved: 0,
-            },
-        ] {
-            assert!(c_to_common_selection(c_selection).is_err());
-        }
-        Ok(())
-    }
-
-    #[test]
-    fn abi_seven_through_nine_fail_before_callbacks_install() -> Result<(), Box<dyn Error>> {
-        let root = workspace_root()?;
-        let common = fs::read_to_string(root.join(super::COMMON_CONTRACT_PATH))?;
-        let header = fs::read_to_string(root.join(super::HEADER_PATH))?;
-        assert!(common.contains("fn check_compatibility"));
-        assert!(header.contains("#define OXY_SUBSTRATE_ABI_VERSION 10u"));
-        for abi_version in 7..=9 {
-            let mut callbacks_installed = false;
-            assert!(matches!(
-                negotiate_abi(abi_version, &mut callbacks_installed),
-                Err(MirrorError::IncompatibleAbi(version)) if version == abi_version
-            ));
-            assert!(!callbacks_installed);
-        }
-        let mut callbacks_installed = false;
-        negotiate_abi(10, &mut callbacks_installed)?;
-        assert!(callbacks_installed);
-        Ok(())
-    }
-
-    fn workspace_root() -> Result<PathBuf, Box<dyn Error>> {
-        Path::new(env!("CARGO_MANIFEST_DIR"))
-            .parent()
-            .map(Path::to_path_buf)
-            .ok_or_else(|| "xtask must remain directly below the workspace root".into())
-    }
-
-    include!(concat!(
-        env!("CARGO_MANIFEST_DIR"),
-        "/../qualification/fixtures/native/contract-mirrors.rs"
-    ));
-}
+#[path = "native_tests.rs"]
+mod tests;

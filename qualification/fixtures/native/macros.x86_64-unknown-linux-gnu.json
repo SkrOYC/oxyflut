@@ -1,0 +1,7 @@
+{
+  "targetTriple": "x86_64-unknown-linux-gnu",
+  "definitions": {
+    "OXY_EXPORT": "__attribute__((visibility(\"default\")))",
+    "OXY_CALL": ""
+  }
+}
