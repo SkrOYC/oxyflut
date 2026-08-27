@@ -1,11 +1,28 @@
 //! The fail-closed contract-validation command.
 
+use std::fs;
 use std::path::{Path, PathBuf};
+use std::process::Command;
+use std::sync::atomic::{AtomicU64, Ordering};
 
 use super::super::{CommandError, CommandOutcome};
 use crate::contracts as validators;
+use crate::toolchain::{self, ToolchainManifest};
 
-/// Runs every implemented contract-validation family in deterministic order.
+const DATA_MODELS_PATH: &str = ".constitution/tech-spec/data-models";
+const CONTRACTS_PATH: &str = ".constitution/tech-spec/contracts";
+const TRACEABILITY_PATH: &str = ".constitution/tech-spec/contracts/capability-traceability.json";
+const REGISTRY_PATH: &str = ".constitution/tech-spec/contracts/diagnostic-event-registry.json";
+const LOCK_PATH: &str = ".constitution/tech-spec/contracts/qualification-lock.json";
+const PHASE_PATH: &str = ".constitution/tech-spec/contracts/specification-phase.json";
+const RUST_CONTRACTS_PATH: &str = ".constitution/tech-spec/contracts";
+const HEADER_PATH: &str = ".constitution/tech-spec/contracts/oxyflut-substrate.h";
+const BINDINGS_PATH: &str = "qualification/fixtures/generated-bindings/oxyflut-substrate.rs";
+const TOOLCHAIN_MANIFEST_PATH: &str = "qualification/tools/native-contract-toolchain.json";
+const UNSUPPORTED_HOST: &str = "unsupported host";
+static TEMP_SEQUENCE: AtomicU64 = AtomicU64::new(0);
+
+/// Runs every contract-validation family in deterministic order.
 pub(crate) fn run(arguments: &[String]) -> CommandOutcome {
     if !arguments.is_empty() {
         return CommandOutcome::failed(CommandError::InvalidInput(
@@ -17,130 +34,299 @@ pub(crate) fn run(arguments: &[String]) -> CommandOutcome {
         Ok(root) => root,
         Err(()) => return CommandOutcome::failed(CommandError::Execution("root".to_owned())),
     };
-    let registry = match validators::schema::compile_workspace(&root) {
-        Ok(registry) => registry,
-        Err(_) => {
-            eprintln!("schema: failed");
-            eprintln!("instances: not-run");
-            return CommandOutcome::failed(CommandError::ValidationFailed("schema".to_owned()));
-        }
-    };
-    let report = match validators::schema::validate_compiled_workspace(&root, &registry) {
-        Ok(report) => report,
-        Err(error) => {
-            report_schema_failure(&error, &root);
-            return CommandOutcome::failed(CommandError::ValidationFailed("schema".to_owned()));
-        }
-    };
-
-    let _ = report;
-    let traceability = match validators::traceability::validate_workspace(&root) {
-        Ok(report) => report,
-        Err(_) => {
-            eprintln!("schema: ok");
-            eprintln!("instances: ok");
-            eprintln!("fixtures: ok");
-            eprintln!("traceability: failed");
-            return CommandOutcome::failed(CommandError::ValidationFailed(
-                "traceability".to_owned(),
-            ));
-        }
-    };
-    if validators::registries::validate_workspace(&root).is_err() {
-        eprintln!("schema: ok");
-        eprintln!("instances: ok");
-        eprintln!("fixtures: ok");
-        eprintln!("traceability: ok");
-        eprintln!("registries: failed");
-        return CommandOutcome::failed(CommandError::ValidationFailed("registries".to_owned()));
-    }
-
-    if validators::digests::validate_workspace(&root).is_err() {
-        eprintln!("schema: ok");
-        eprintln!("instances: ok");
-        eprintln!("fixtures: ok");
-        eprintln!("traceability: ok");
-        eprintln!("registries: ok");
-        eprintln!("digests: failed");
-        return CommandOutcome::failed(CommandError::ValidationFailed("digests".to_owned()));
-    }
-    let readiness = match validators::readiness::validate_workspace(&root) {
-        Ok(report) => report,
-        Err(error) => {
-            eprintln!("schema: ok");
-            eprintln!("instances: ok");
-            eprintln!("fixtures: ok");
-            eprintln!("traceability: ok");
-            eprintln!("registries: ok");
-            eprintln!("digests: ok");
-            eprintln!("readiness: failed");
-            eprintln!("{}", error.promotion_summary());
-            return CommandOutcome::failed(CommandError::ValidationFailed("readiness".to_owned()));
-        }
-    };
-
-    if validators::native::validate_workspace(&root).is_err() {
-        eprintln!("schema: ok");
-        eprintln!("instances: ok");
-        eprintln!("fixtures: ok");
-        eprintln!("traceability: ok");
-        eprintln!("registries: ok");
-        eprintln!("digests: ok");
-        eprintln!("readiness: ok");
-        eprintln!("native: failed");
-        return CommandOutcome::failed(CommandError::ValidationFailed("native".to_owned()));
-    }
-
-    eprintln!("schema: ok");
-    eprintln!("instances: ok");
-    eprintln!("fixtures: ok");
-    eprintln!("traceability: ok");
-    eprintln!(
-        "contract-tests: deferred ({} pending candidate implementation)",
-        traceability.deferred_contract_tests
-    );
-    eprintln!("accessibility-generation: deferred (schema lacks generation field)");
-    eprintln!("registries: ok");
-    eprintln!("digests: ok");
-    eprintln!("readiness: ok");
-    match readiness.promotion {
-        validators::readiness::PromotionStatus::NotClaimed => {
-            eprintln!("promotion: ok (not claimed)");
-        }
-    }
-    eprintln!("{}: ok", validators::native::FAMILY);
-    CommandOutcome::Success
+    let report = validate_workspace(&root);
+    report.emit();
+    report.outcome()
 }
 
-fn report_schema_failure(error: &validators::schema::ContractSchemaError, root: &Path) {
-    for line in schema_failure_lines(error, root) {
-        eprintln!("{line}");
+fn validate_workspace(root: &Path) -> ContractValidationReport {
+    let mut summaries = Vec::with_capacity(FAMILY_COUNT);
+    let registry = validators::schema::compile_workspace(root);
+    summaries.push(match &registry {
+        Ok(_) => FamilySummary::ok("schema", DATA_MODELS_PATH),
+        Err(_) => FamilySummary::failed("schema", DATA_MODELS_PATH),
+    });
+    summaries.push(match registry {
+        Ok(registry) => match validators::schema::validate_compiled_workspace(root, &registry) {
+            Ok(_) => FamilySummary::ok("instance", CONTRACTS_PATH),
+            Err(error) => FamilySummary::failed_path(
+                "instance",
+                schema_failure_path(root, &error, CONTRACTS_PATH),
+            ),
+        },
+        Err(_) => FamilySummary::failed("instance", DATA_MODELS_PATH),
+    });
+
+    summaries.push(summary_from_result(
+        "exact-set",
+        TRACEABILITY_PATH,
+        validators::traceability::validate_workspace(root),
+    ));
+    summaries.push(summary_from_result(
+        "registry",
+        REGISTRY_PATH,
+        validators::registries::validate_workspace(root),
+    ));
+    summaries.push(summary_from_result(
+        "digest",
+        CONTRACTS_PATH,
+        validators::digests::validate_workspace(root),
+    ));
+
+    match validators::readiness::validate_workspace(root) {
+        Ok(_) => {
+            summaries.push(FamilySummary::ok("readiness", LOCK_PATH));
+            summaries.push(FamilySummary::ok("promotion", PHASE_PATH));
+        }
+        Err(error) => {
+            summaries.push(FamilySummary::failed("readiness", LOCK_PATH));
+            let promotion_path = if error
+                .promotion_summary()
+                .starts_with("promotion: failed (artifact cannot prove lock binding:")
+            {
+                PHASE_PATH
+            } else {
+                LOCK_PATH
+            };
+            summaries.push(FamilySummary::failed("promotion", promotion_path));
+        }
     }
+
+    summaries.push(match validate_rust_contracts(root) {
+        Ok(()) => FamilySummary::ok("rust-contract", RUST_CONTRACTS_PATH),
+        Err(path) => FamilySummary::failed_path("rust-contract", path),
+    });
+    summaries.push(summary_from_native_result(
+        "c-cpp-header",
+        HEADER_PATH,
+        validators::native::validate_header_syntax(root),
+    ));
+    summaries.push(summary_from_native_result(
+        "binding",
+        BINDINGS_PATH,
+        validators::native::validate_generated_bindings(root),
+    ));
+    summaries.push(summary_from_native_result(
+        "symbol",
+        HEADER_PATH,
+        validators::native::validate_header_symbols(root),
+    ));
+    summaries.push(summary_from_native_result(
+        "layout",
+        HEADER_PATH,
+        validators::native::validate_host_layout(root),
+    ));
+
+    ContractValidationReport { summaries }
 }
 
-fn schema_failure_lines(
-    error: &validators::schema::ContractSchemaError,
+fn schema_failure_path(
     root: &Path,
-) -> Vec<String> {
+    error: &validators::schema::ContractSchemaError,
+    fallback: &str,
+) -> String {
     match error.failure_family(root) {
-        validators::schema::ContractSchemaFailure::Compilation => {
-            vec!["schema: failed".to_owned(), "instances: not-run".to_owned()]
-        }
-        validators::schema::ContractSchemaFailure::Instances(path) => vec![
-            "schema: ok".to_owned(),
-            format!("instances: failed ({})", summary_path(root, &path)),
-        ],
-        validators::schema::ContractSchemaFailure::Fixtures(path) => vec![
-            "schema: ok".to_owned(),
-            "instances: ok".to_owned(),
-            format!("fixtures: failed ({})", summary_path(root, &path)),
-        ],
+        validators::schema::ContractSchemaFailure::Compilation => fallback.to_owned(),
+        validators::schema::ContractSchemaFailure::Instances(path)
+        | validators::schema::ContractSchemaFailure::Fixtures(path) => summary_path(root, &path),
     }
+}
+
+fn summary_from_result<T, Error>(
+    family: &'static str,
+    contract_path: &'static str,
+    result: Result<T, Error>,
+) -> FamilySummary {
+    match result {
+        Ok(_) => FamilySummary::ok(family, contract_path),
+        Err(_) => FamilySummary::failed(family, contract_path),
+    }
+}
+
+fn summary_from_native_result(
+    family: &'static str,
+    contract_path: &'static str,
+    result: Result<(), validators::native::NativeContractError>,
+) -> FamilySummary {
+    match result {
+        Ok(()) => FamilySummary::ok(family, contract_path),
+        Err(validators::native::NativeContractError::Toolchain(
+            toolchain::ToolchainError::UnsupportedHost { .. },
+        )) => FamilySummary::failed(family, UNSUPPORTED_HOST),
+        Err(_) => FamilySummary::failed(family, contract_path),
+    }
+}
+
+/// Parses all authoritative Rust contracts with the verified pinned Rust toolchain.
+///
+/// The staged manifest verifies the pinned Rust toolchain through its rustfmt identity before
+/// `rustc` compiles each contract as an independent metadata-only library. This avoids adding
+/// `syn`; exact declared-symbol resolution remains the responsibility of the traceability family.
+fn validate_rust_contracts(root: &Path) -> Result<(), String> {
+    verify_staged_toolchain(root)?;
+    let temporary =
+        ContractTemporaryDirectory::new().map_err(|_| RUST_CONTRACTS_PATH.to_owned())?;
+    for (crate_name, contract_path) in [
+        ("oxyflut_public_contract", "oxyflut-public.rs"),
+        ("oxyflut_substrate_contract", "oxyflut-substrate.rs"),
+        ("oxyflut_qualification_contract", "oxyflut-qualification.rs"),
+    ] {
+        let path = root.join(RUST_CONTRACTS_PATH).join(contract_path);
+        let status = Command::new("rustup")
+            .args([
+                "run",
+                "1.98.0",
+                "rustc",
+                "--crate-name",
+                crate_name,
+                "--crate-type",
+                "lib",
+                "--edition",
+                "2024",
+                "--emit",
+                "metadata",
+                "--out-dir",
+            ])
+            .arg(temporary.path())
+            .arg(&path)
+            .output();
+        if !status.is_ok_and(|output| output.status.success()) {
+            return Err(summary_path(root, &path));
+        }
+    }
+    Ok(())
+}
+
+fn verify_staged_toolchain(root: &Path) -> Result<(), String> {
+    let path = root.join(TOOLCHAIN_MANIFEST_PATH);
+    let bytes = fs::read(&path).map_err(|_| summary_path(root, &path))?;
+    let manifest = ToolchainManifest::from_json(&bytes).map_err(|_| summary_path(root, &path))?;
+    toolchain::verify(&manifest).map_err(|error| {
+        if matches!(error, toolchain::ToolchainError::UnsupportedHost { .. }) {
+            UNSUPPORTED_HOST.to_owned()
+        } else {
+            summary_path(root, &path)
+        }
+    })
+}
+
+struct ContractTemporaryDirectory {
+    path: PathBuf,
+}
+
+impl ContractTemporaryDirectory {
+    fn new() -> Result<Self, std::io::Error> {
+        for _ in 0..128 {
+            let sequence = TEMP_SEQUENCE.fetch_add(1, Ordering::Relaxed);
+            let path = std::env::temp_dir().join(format!(
+                "oxyflut-contract-validation-{}-{sequence}",
+                std::process::id()
+            ));
+            match fs::create_dir(&path) {
+                Ok(()) => return Ok(Self { path }),
+                Err(error) if error.kind() == std::io::ErrorKind::AlreadyExists => continue,
+                Err(error) => return Err(error),
+            }
+        }
+        Err(std::io::Error::new(
+            std::io::ErrorKind::AlreadyExists,
+            "could not create a contract-validation temporary directory",
+        ))
+    }
+
+    fn path(&self) -> &Path {
+        &self.path
+    }
+}
+
+impl Drop for ContractTemporaryDirectory {
+    fn drop(&mut self) {
+        let _ = fs::remove_dir_all(&self.path);
+    }
+}
+
+const FAMILY_COUNT: usize = 12;
+
+#[derive(Debug, Eq, PartialEq)]
+struct ContractValidationReport {
+    summaries: Vec<FamilySummary>,
+}
+
+impl ContractValidationReport {
+    fn emit(&self) {
+        for summary in &self.summaries {
+            eprintln!("{}", summary.line());
+        }
+    }
+
+    fn outcome(&self) -> CommandOutcome {
+        if self
+            .summaries
+            .iter()
+            .all(|summary| matches!(summary.status, FamilyStatus::Ok))
+        {
+            CommandOutcome::Success
+        } else {
+            CommandOutcome::failed(CommandError::ValidationFailed("contracts".to_owned()))
+        }
+    }
+
+    #[cfg(test)]
+    fn summary_lines(&self) -> Vec<String> {
+        self.summaries.iter().map(FamilySummary::line).collect()
+    }
+}
+
+#[derive(Debug, Eq, PartialEq)]
+struct FamilySummary {
+    family: &'static str,
+    status: FamilyStatus,
+    contract_path: String,
+}
+
+impl FamilySummary {
+    fn ok(family: &'static str, contract_path: &'static str) -> Self {
+        Self {
+            family,
+            status: FamilyStatus::Ok,
+            contract_path: contract_path.to_owned(),
+        }
+    }
+
+    fn failed(family: &'static str, contract_path: &'static str) -> Self {
+        Self {
+            family,
+            status: FamilyStatus::Failed,
+            contract_path: contract_path.to_owned(),
+        }
+    }
+
+    fn failed_path(family: &'static str, contract_path: String) -> Self {
+        Self {
+            family,
+            status: FamilyStatus::Failed,
+            contract_path,
+        }
+    }
+
+    fn line(&self) -> String {
+        match self.status {
+            FamilyStatus::Ok => format!("{}: ok ({})", self.family, self.contract_path),
+            FamilyStatus::Failed => format!("{}: failed ({})", self.family, self.contract_path),
+        }
+    }
+}
+
+#[derive(Debug, Eq, PartialEq)]
+enum FamilyStatus {
+    Ok,
+    Failed,
 }
 
 fn summary_path(root: &Path, path: &Path) -> String {
     match path.strip_prefix(root) {
         Ok(relative) => relative.display().to_string(),
+        Err(_) if path.is_relative() => path.display().to_string(),
         Err(_) => "unknown-local-path".to_owned(),
     }
 }
@@ -154,58 +340,91 @@ fn workspace_root() -> Result<PathBuf, ()> {
 
 #[cfg(test)]
 mod tests {
+    use std::error::Error;
+    use std::fs;
     use std::path::Path;
 
-    use oxyflut_qualification::schema::SchemaError;
-
-    use super::{run, schema_failure_lines, validators};
+    use super::{ContractTemporaryDirectory, FAMILY_COUNT, validate_workspace, workspace_root};
     use crate::CommandOutcome;
 
     #[test]
-    fn contracts_validation_runs_the_native_family_after_prior_families() {
-        assert_eq!(run(&[]), CommandOutcome::Success);
+    fn contracts_validation_runs_all_families_with_stable_content_free_summaries()
+    -> Result<(), Box<dyn Error>> {
+        let root = workspace_root()
+            .map_err(|_| std::io::Error::other("xtask must remain below the workspace root"))?;
+        let report = validate_workspace(&root);
+        assert_eq!(report.summaries.len(), FAMILY_COUNT);
+        assert_eq!(
+            report.summary_lines(),
+            vec![
+                "schema: ok (.constitution/tech-spec/data-models)",
+                "instance: ok (.constitution/tech-spec/contracts)",
+                "exact-set: ok (.constitution/tech-spec/contracts/capability-traceability.json)",
+                "registry: ok (.constitution/tech-spec/contracts/diagnostic-event-registry.json)",
+                "digest: ok (.constitution/tech-spec/contracts)",
+                "readiness: ok (.constitution/tech-spec/contracts/qualification-lock.json)",
+                "promotion: ok (.constitution/tech-spec/contracts/specification-phase.json)",
+                "rust-contract: ok (.constitution/tech-spec/contracts)",
+                "c-cpp-header: ok (.constitution/tech-spec/contracts/oxyflut-substrate.h)",
+                "binding: ok (qualification/fixtures/generated-bindings/oxyflut-substrate.rs)",
+                "symbol: ok (.constitution/tech-spec/contracts/oxyflut-substrate.h)",
+                "layout: ok (.constitution/tech-spec/contracts/oxyflut-substrate.h)",
+            ]
+        );
+        assert_eq!(report.outcome(), CommandOutcome::Success);
+        Ok(())
     }
 
     #[test]
-    fn contracts_schema_failure_summary_identifies_the_failure_family() {
-        let root = Path::new("/workspace");
-        let compilation =
-            validators::schema::ContractSchemaError::Registry(SchemaError::Compilation);
-        assert_eq!(
-            schema_failure_lines(&compilation, root),
-            vec!["schema: failed", "instances: not-run"]
-        );
+    fn a_failed_family_returns_exit_one_and_identifies_its_contract_path()
+    -> Result<(), Box<dyn Error>> {
+        let source = workspace_root()
+            .map_err(|_| std::io::Error::other("xtask must remain below the workspace root"))?;
+        let temporary = ContractTemporaryDirectory::new()?;
+        copy_directory(
+            &source.join(".constitution"),
+            &temporary.path().join(".constitution"),
+        )?;
+        copy_directory(
+            &source.join("qualification"),
+            &temporary.path().join("qualification"),
+        )?;
+        fs::write(
+            temporary
+                .path()
+                .join(".constitution/tech-spec/contracts/diagnostic-event-registry.json"),
+            "{}\n",
+        )?;
 
-        let instance = validators::schema::ContractSchemaError::MissingSchema {
-            path: root.join(".constitution/tech-spec/contracts/invalid.json"),
-        };
-        assert_eq!(
-            schema_failure_lines(&instance, root),
-            vec![
-                "schema: ok",
-                "instances: failed (.constitution/tech-spec/contracts/invalid.json)",
-            ]
-        );
-
-        let fixture = validators::schema::ContractSchemaError::Fixture {
-            path: root.join("qualification/fixtures/contracts/example/invalid.json"),
-        };
-        assert_eq!(
-            schema_failure_lines(&fixture, root),
-            vec![
-                "schema: ok",
-                "instances: ok",
-                "fixtures: failed (qualification/fixtures/contracts/example/invalid.json)",
-            ]
-        );
+        let report = validate_workspace(temporary.path());
+        assert!(report.summary_lines().contains(&(
+            "registry: failed (.constitution/tech-spec/contracts/diagnostic-event-registry.json)"
+                .to_owned()
+        )));
+        assert!(matches!(report.outcome(), CommandOutcome::Failed(_)));
+        Ok(())
     }
 
     #[test]
-    fn contracts_schema_family_rejects_arguments() {
+    fn contracts_validation_rejects_arguments() {
         assert!(matches!(
-            run(&["unexpected".to_owned()]),
+            super::run(&["unexpected".to_owned()]),
             CommandOutcome::Failed(_)
         ));
+    }
+
+    fn copy_directory(source: &Path, destination: &Path) -> Result<(), std::io::Error> {
+        fs::create_dir_all(destination)?;
+        for entry in fs::read_dir(source)? {
+            let entry = entry?;
+            let destination_path = destination.join(entry.file_name());
+            if entry.file_type()?.is_dir() {
+                copy_directory(&entry.path(), &destination_path)?;
+            } else {
+                fs::copy(entry.path(), destination_path)?;
+            }
+        }
+        Ok(())
     }
 }
 

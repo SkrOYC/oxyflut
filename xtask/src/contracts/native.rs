@@ -13,9 +13,6 @@ use thiserror::Error;
 
 use crate::toolchain::{self, ToolchainManifest};
 
-/// The stable name reported by the contract-validation command.
-pub(crate) const FAMILY: &str = "native";
-
 const MANIFEST_PATH: &str = "qualification/tools/native-contract-toolchain.json";
 const HEADER_PATH: &str = ".constitution/tech-spec/contracts/oxyflut-substrate.h";
 const BINDINGS_PATH: &str = "qualification/fixtures/generated-bindings/oxyflut-substrate.rs";
@@ -26,6 +23,10 @@ const LAYOUT_PROBE_PATH: &str = "qualification/fixtures/native/layout-probe.c.in
 const MACROS_FIXTURE_DIRECTORY: &str = "qualification/fixtures/native";
 static TEMP_SEQUENCE: AtomicU64 = AtomicU64::new(0);
 
+#[allow(
+    dead_code,
+    reason = "The native unit suite exercises the complete compatibility check while the aggregate command reports each native phase separately."
+)]
 /// Validates the authoritative integrated C ABI using only staged native tools.
 ///
 /// The layout probe is a generated and linked standalone host executable. It neither imports nor
@@ -41,6 +42,54 @@ pub(crate) fn validate_workspace(root: &Path) -> Result<(), NativeContractError>
     validate_header(root, &root.join(HEADER_PATH), &tools)
 }
 
+/// Validates the authoritative header as strict C11 and C++17 without linking candidate code.
+///
+/// # Errors
+///
+/// Returns an error when the staged toolchain cannot be verified or either syntax check fails.
+pub(crate) fn validate_header_syntax(root: &Path) -> Result<(), NativeContractError> {
+    let tools = NativeTools::load(root)?;
+    syntax_check(&root.join(HEADER_PATH), &tools)
+}
+
+/// Regenerates and compares the checked-in Rust declarations for the authoritative header.
+///
+/// # Errors
+///
+/// Returns an error when the staged toolchain cannot generate byte-identical bindings.
+pub(crate) fn validate_generated_bindings(root: &Path) -> Result<(), NativeContractError> {
+    let tools = NativeTools::load(root)?;
+    let temporary = TemporaryDirectory::new("native-bindings")?;
+    let bindings = temporary.path().join("oxyflut-substrate.rs");
+    generate_bindings(&root.join(HEADER_PATH), &bindings, &tools)?;
+    validate_bindings(root, &bindings)
+}
+
+/// Validates the authoritative header's ABI symbols, macros, and calling conventions.
+///
+/// # Errors
+///
+/// Returns an error when the staged toolchain cannot verify a required header declaration.
+pub(crate) fn validate_header_symbols(root: &Path) -> Result<(), NativeContractError> {
+    let tools = NativeTools::load(root)?;
+    validate_interface(root, &root.join(HEADER_PATH), &tools)
+}
+
+/// Validates the authoritative header's host layout and nullability fixture.
+///
+/// # Errors
+///
+/// Returns an error when the staged toolchain cannot compile, run, or match the host layout probe.
+pub(crate) fn validate_host_layout(root: &Path) -> Result<(), NativeContractError> {
+    let tools = NativeTools::load(root)?;
+    let temporary = TemporaryDirectory::new("native-layout")?;
+    validate_layout(root, &root.join(HEADER_PATH), &tools, &temporary)
+}
+
+#[allow(
+    dead_code,
+    reason = "Native mutation tests validate the original all-phases helper against one altered header."
+)]
 fn validate_header(
     root: &Path,
     header: &Path,
@@ -652,15 +701,15 @@ fn run_tool<'arguments, I>(
 where
     I: IntoIterator<Item = &'arguments OsStr>,
 {
-    let status = Command::new(tool)
+    let output = Command::new(tool)
         .args(arguments)
-        .status()
+        .output()
         .map_err(|source| NativeContractError::ToolExecution {
             tool: name,
             operation,
             source,
         })?;
-    if status.success() {
+    if output.status.success() {
         Ok(())
     } else {
         Err(NativeContractError::ToolFailed {
