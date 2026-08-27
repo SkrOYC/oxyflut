@@ -16,6 +16,8 @@ use thiserror::Error;
 
 const STAGED_HOST: &str = "x86_64-unknown-linux-gnu";
 const RUST_TOOLCHAIN_COMMIT: &str = "88d9e12ae178fab0fb5cc050a94da85685d449ea";
+const RUST_TOOLCHAIN_NAME: &str = "1.98.0-x86_64-unknown-linux-gnu";
+const RUSTFMT_RELATIVE_PATH: &str = "toolchains/1.98.0-x86_64-unknown-linux-gnu/bin/rustfmt";
 const STAGED_AUTHORITY: &str = "staged-proposal";
 const STAGED_NOTE: &str = "Stage 3 reconciliation owns active qualification-lock pins; this host-local proposal cannot set readiness.";
 
@@ -178,7 +180,7 @@ impl ToolchainManifest {
     }
 }
 
-/// One schema-compatible `resolvedTools` entry proposed for reconciliation.
+/// One staged `resolvedTools` entry proposed for reconciliation.
 #[derive(Clone, Debug, Eq, PartialEq)]
 struct ResolvedTool {
     name: String,
@@ -187,6 +189,7 @@ struct ResolvedTool {
     host_triple: String,
     license_id: String,
     executable_path: String,
+    path_root: Option<String>,
     sha256: String,
 }
 
@@ -204,6 +207,7 @@ impl ResolvedTool {
                 "hostTriple",
                 "licenseId",
                 "executablePath",
+                "pathRoot",
                 "sha256",
             ],
         )?;
@@ -215,26 +219,37 @@ impl ResolvedTool {
             host_triple: required_string(object, "hostTriple")?,
             license_id: required_string(object, "licenseId")?,
             executable_path: required_string(object, "executablePath")?,
+            path_root: optional_string(object, "pathRoot")?,
             sha256: required_string(object, "sha256")?,
         })
     }
 
     fn to_value(&self) -> Value {
-        sorted_object([
+        let mut entries = BTreeMap::from([
             (
-                "executablePath",
+                "executablePath".to_owned(),
                 Value::String(self.executable_path.clone()),
             ),
-            ("hostTriple", Value::String(self.host_triple.clone())),
-            ("licenseId", Value::String(self.license_id.clone())),
-            ("name", Value::String(self.name.clone())),
-            ("sha256", Value::String(self.sha256.clone())),
             (
-                "sourceIdentity",
+                "hostTriple".to_owned(),
+                Value::String(self.host_triple.clone()),
+            ),
+            (
+                "licenseId".to_owned(),
+                Value::String(self.license_id.clone()),
+            ),
+            ("name".to_owned(), Value::String(self.name.clone())),
+            ("sha256".to_owned(), Value::String(self.sha256.clone())),
+            (
+                "sourceIdentity".to_owned(),
                 Value::String(self.source_identity.clone()),
             ),
-            ("version", Value::String(self.version.clone())),
-        ])
+            ("version".to_owned(), Value::String(self.version.clone())),
+        ]);
+        if let Some(path_root) = &self.path_root {
+            entries.insert("pathRoot".to_owned(), Value::String(path_root.clone()));
+        }
+        Value::Object(entries.into_iter().collect())
     }
 }
 
@@ -391,11 +406,11 @@ const TOOL_SPECS: &[ToolSpec] = &[
     },
     ToolSpec {
         name: "prettier",
-        locator: ToolLocator::Path("bunx"),
-        version_arguments: &["--no-install", "prettier@3.9.6", "--version"],
+        locator: ToolLocator::Path("prettier"),
+        version_arguments: &["--version"],
         required_version_fragment: "3.9.6",
-        source_version: "1.3.13",
-        source_derivation_fragment: "bun-1.3.13",
+        source_version: "3.9.6",
+        source_derivation_fragment: "prettier-3.9.6",
         license_id: "MIT",
     },
     ToolSpec {
@@ -537,7 +552,8 @@ fn resolve_tool(
         source_identity,
         host_triple: host_triple.to_owned(),
         license_id: specification.license_id.to_owned(),
-        executable_path: path_string(&executable_path)?,
+        executable_path: manifest_executable_path(specification, &executable_path)?,
+        path_root: manifest_path_root(specification).map(str::to_owned),
         sha256,
     })
 }
@@ -553,28 +569,37 @@ fn verify_tool(
         });
     }
 
-    let executable_path = executable_path(specification)?;
-    if path_string(&executable_path)? != tool.executable_path {
+    if tool.path_root.as_deref() != manifest_path_root(specification) {
         return Err(ToolchainError::ExecutableSubstitution {
             name: tool.name.clone(),
         });
     }
 
-    let source_identity = source_identity(specification, &executable_path)?;
+    let executable_path = executable_path(specification)?;
+    let resolved_manifest_path = resolve_manifest_executable_path(tool)?;
+    if manifest_executable_path(specification, &executable_path)? != tool.executable_path
+        || resolved_manifest_path != executable_path
+    {
+        return Err(ToolchainError::ExecutableSubstitution {
+            name: tool.name.clone(),
+        });
+    }
+
+    let source_identity = source_identity(specification, &resolved_manifest_path)?;
     if tool.source_identity != source_identity {
         return Err(ToolchainError::SourceIdentityMismatch {
             name: tool.name.clone(),
         });
     }
 
-    let version = command_version(specification, &executable_path)?;
+    let version = command_version(specification, &resolved_manifest_path)?;
     if !version.contains(specification.required_version_fragment) || tool.version != version {
         return Err(ToolchainError::VersionMismatch {
             name: tool.name.clone(),
         });
     }
 
-    let digest = hash_file(&executable_path)?.to_string();
+    let digest = hash_file(&resolved_manifest_path)?.to_string();
     if tool.sha256.parse::<Sha256Digest>().is_err() || tool.sha256 != digest {
         return Err(ToolchainError::DigestMismatch {
             name: tool.name.clone(),
@@ -702,12 +727,96 @@ fn rustfmt_path() -> Result<PathBuf, ToolchainError> {
     }
     let path = String::from_utf8_lossy(&output.stdout).trim().to_owned();
     let executable_path = PathBuf::from(path);
-    if !executable_path.is_file() {
+    if !executable_path.is_file()
+        || rustup_relative_path(&executable_path)? != RUSTFMT_RELATIVE_PATH
+    {
         return Err(ToolchainError::MissingTool {
             name: "rustfmt".to_owned(),
         });
     }
     Ok(executable_path)
+}
+
+fn manifest_path_root(specification: &ToolSpec) -> Option<&'static str> {
+    match specification.locator {
+        ToolLocator::Path(_) => None,
+        ToolLocator::Rustfmt => Some("rustup-home"),
+    }
+}
+
+fn manifest_executable_path(
+    specification: &ToolSpec,
+    executable_path: &Path,
+) -> Result<String, ToolchainError> {
+    match manifest_path_root(specification) {
+        None => path_string(executable_path),
+        Some("rustup-home") => rustup_relative_path(executable_path),
+        Some(_) => Err(ToolchainError::InvalidManifest {
+            reason: "a staged executable path root is invalid".to_owned(),
+        }),
+    }
+}
+
+fn resolve_manifest_executable_path(tool: &ResolvedTool) -> Result<PathBuf, ToolchainError> {
+    match tool.path_root.as_deref() {
+        None => {
+            let executable_path = PathBuf::from(&tool.executable_path);
+            if !executable_path.is_absolute() {
+                return Err(ToolchainError::InvalidManifest {
+                    reason: "an executable path without a root must be absolute".to_owned(),
+                });
+            }
+            Ok(executable_path)
+        }
+        Some("rustup-home") => {
+            let relative_path = Path::new(&tool.executable_path);
+            if !is_safe_relative_path(relative_path) {
+                return Err(ToolchainError::InvalidManifest {
+                    reason: "a rustup-home executable path must be relative and confined"
+                        .to_owned(),
+                });
+            }
+            Ok(rustup_home()?.join(relative_path))
+        }
+        Some(_) => Err(ToolchainError::InvalidManifest {
+            reason: "an executable path root is invalid".to_owned(),
+        }),
+    }
+}
+
+fn rustup_relative_path(executable_path: &Path) -> Result<String, ToolchainError> {
+    let relative_path = executable_path.strip_prefix(rustup_home()?).map_err(|_| {
+        ToolchainError::SourceIdentityMismatch {
+            name: "rustfmt".to_owned(),
+        }
+    })?;
+    if !is_safe_relative_path(relative_path) {
+        return Err(ToolchainError::SourceIdentityMismatch {
+            name: "rustfmt".to_owned(),
+        });
+    }
+    path_string(relative_path)
+}
+
+fn rustup_home() -> Result<PathBuf, ToolchainError> {
+    let path = std::env::var_os("RUSTUP_HOME")
+        .map(PathBuf::from)
+        .or_else(|| std::env::var_os("HOME").map(|home| PathBuf::from(home).join(".rustup")))
+        .ok_or_else(|| ToolchainError::MissingTool {
+            name: "rustup home".to_owned(),
+        })?;
+    if path.is_absolute() {
+        Ok(path)
+    } else {
+        Ok(std::env::current_dir()?.join(path))
+    }
+}
+
+fn is_safe_relative_path(path: &Path) -> bool {
+    !path.as_os_str().is_empty()
+        && path
+            .components()
+            .all(|component| matches!(component, std::path::Component::Normal(_)))
 }
 
 fn find_in_path(command: &str) -> Option<PathBuf> {
@@ -771,10 +880,58 @@ fn source_identity(
                 specification.source_version
             ))
         }
-        ToolLocator::Rustfmt => Ok(format!(
-            "rustup-toolchain: 1.98.0; commit: {RUST_TOOLCHAIN_COMMIT}"
-        )),
+        ToolLocator::Rustfmt => rustup_toolchain_identity(),
     }
+}
+
+fn rustup_toolchain_identity() -> Result<String, ToolchainError> {
+    let rustc = find_in_path("rustc").ok_or_else(|| ToolchainError::MissingTool {
+        name: "rustc".to_owned(),
+    })?;
+    let output = Command::new(rustc)
+        .args(["+1.98.0", "-vV"])
+        .output()
+        .map_err(|source| ToolchainError::ToolExecution {
+            name: "rustfmt".to_owned(),
+            source,
+        })?;
+    if !output.status.success() {
+        return Err(ToolchainError::ToolExecutionFailed {
+            name: "rustfmt".to_owned(),
+        });
+    }
+
+    let version = String::from_utf8_lossy(&output.stdout);
+    let release = rustc_verbose_field(&version, "release").ok_or_else(|| {
+        ToolchainError::SourceIdentityMismatch {
+            name: "rustfmt".to_owned(),
+        }
+    })?;
+    let host = rustc_verbose_field(&version, "host").ok_or_else(|| {
+        ToolchainError::SourceIdentityMismatch {
+            name: "rustfmt".to_owned(),
+        }
+    })?;
+    let commit = rustc_verbose_field(&version, "commit-hash").ok_or_else(|| {
+        ToolchainError::SourceIdentityMismatch {
+            name: "rustfmt".to_owned(),
+        }
+    })?;
+    let toolchain = format!("{release}-{host}");
+
+    if toolchain != RUST_TOOLCHAIN_NAME || commit != RUST_TOOLCHAIN_COMMIT {
+        return Err(ToolchainError::SourceIdentityMismatch {
+            name: "rustfmt".to_owned(),
+        });
+    }
+
+    Ok(format!("rustup-toolchain: {toolchain}; commit: {commit}"))
+}
+
+fn rustc_verbose_field<'output>(output: &'output str, field: &str) -> Option<&'output str> {
+    output
+        .lines()
+        .find_map(|line| line.strip_prefix(&format!("{field}: ")))
 }
 
 fn nix_store_identity(path: &Path) -> Result<(PathBuf, String), ToolchainError> {
@@ -953,6 +1110,19 @@ fn required_string(
         })
 }
 
+fn optional_string(
+    object: &serde_json::Map<String, Value>,
+    field: &str,
+) -> Result<Option<String>, ToolchainError> {
+    match object.get(field) {
+        None => Ok(None),
+        Some(Value::String(value)) if !value.is_empty() => Ok(Some(value.clone())),
+        Some(_) => Err(ToolchainError::InvalidManifest {
+            reason: format!("{field} must be a nonempty string when present"),
+        }),
+    }
+}
+
 fn required_array<'a>(
     object: &'a serde_json::Map<String, Value>,
     field: &str,
@@ -1003,7 +1173,7 @@ mod tests {
             assert!(!tool.source_identity.is_empty());
             assert_eq!(tool.host_triple, STAGED_HOST);
             assert!(!tool.license_id.is_empty());
-            assert!(Path::new(&tool.executable_path).is_file());
+            assert!(super::resolve_manifest_executable_path(tool)?.is_file());
             assert!(tool.sha256.parse::<super::Sha256Digest>().is_ok());
         }
 
@@ -1016,6 +1186,66 @@ mod tests {
         assert!(Path::new(&sdk.path).is_dir());
         assert!(sdk.sha256.parse::<super::Sha256Digest>().is_ok());
         assert!(sdk.purpose.contains("syntax-only"));
+        Ok(())
+    }
+
+    #[test]
+    fn prettier_is_a_declared_immutable_executable() -> Result<(), Box<dyn Error>> {
+        let manifest = resolve()?;
+        let prettier = manifest
+            .resolved_tools
+            .iter()
+            .find(|tool| tool.name == "prettier")
+            .ok_or("the staged manifest must resolve Prettier")?;
+
+        assert_eq!(prettier.version, "3.9.6");
+        assert!(
+            prettier.executable_path.ends_with("/bin/prettier"),
+            "the manifest must record the Prettier executable rather than a package launcher"
+        );
+        assert!(
+            prettier.source_identity.contains("prettier-3.9.6"),
+            "the manifest must bind Prettier to its immutable Nix derivation"
+        );
+        assert!(
+            prettier.executable_path.starts_with("/nix/store/"),
+            "the manifest must not resolve Prettier from a mutable package cache"
+        );
+        assert_eq!(
+            super::resolve_manifest_executable_path(prettier)?,
+            super::executable_path(super::tool_specification("prettier")?)?
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn rustfmt_identity_is_root_relative_and_digest_bound() -> Result<(), Box<dyn Error>> {
+        let manifest = resolve()?;
+        let rustfmt = manifest
+            .resolved_tools
+            .iter()
+            .find(|tool| tool.name == "rustfmt")
+            .ok_or("the staged manifest must resolve rustfmt")?;
+
+        assert_eq!(rustfmt.path_root.as_deref(), Some("rustup-home"));
+        assert_eq!(rustfmt.executable_path, super::RUSTFMT_RELATIVE_PATH);
+        assert!(!rustfmt.executable_path.contains("/home/"));
+        assert_eq!(
+            rustfmt.source_identity,
+            format!(
+                "rustup-toolchain: {}; commit: {}",
+                super::RUST_TOOLCHAIN_NAME,
+                super::RUST_TOOLCHAIN_COMMIT
+            )
+        );
+
+        let resolved_path = super::resolve_manifest_executable_path(rustfmt)?;
+        assert_eq!(resolved_path, super::rustfmt_path()?);
+        assert_eq!(
+            rustfmt.sha256,
+            super::hash_file(&resolved_path)?.to_string()
+        );
+        verify(&manifest)?;
         Ok(())
     }
 
@@ -1051,6 +1281,10 @@ mod tests {
         let cases = [
             ("missing-tool.json", "missing"),
             ("substituted-executable.json", "substituted"),
+            (
+                "prettier-substituted-executable.json",
+                "prettier-substituted",
+            ),
             ("digest-mismatch.json", "digest"),
             ("wrong-version.json", "version"),
         ];
@@ -1063,6 +1297,7 @@ mod tests {
             match (reason, error) {
                 ("missing", ToolchainError::MissingTool { .. })
                 | ("substituted", ToolchainError::ExecutableSubstitution { .. })
+                | ("prettier-substituted", ToolchainError::ExecutableSubstitution { .. })
                 | ("digest", ToolchainError::DigestMismatch { .. })
                 | ("version", ToolchainError::VersionMismatch { .. }) => {}
                 (_, error) => return Err(format!("fixture {fixture} failed for {error}").into()),

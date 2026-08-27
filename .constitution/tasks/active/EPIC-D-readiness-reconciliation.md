@@ -15,7 +15,7 @@ Close this Stage 4 iteration without crossing an unresolved upstream decision. T
   - `.constitution/tasks/` (the next Stage 4 version follows upstream reconciliation)
   - Candidate source trees
   - Qualification measurements
-- **Verification Command:** `bunx prettier@3.9.6 --prose-wrap never --check '.constitution/**/*.md'`
+- **Verification Command:** `prettier --prose-wrap never --check '.constitution/**/*.md'`
 - **Expected Success Output:** `exit 0` and a report that classifies every pre-implementation KU as resolved KK, retained KU, or blocked external input
 - **STOP Conditions:**
   - STOP if any result is inferred from a plan, implementation intention, inaccessible hardware, or candidate-internal counter.
@@ -32,5 +32,5 @@ Invariants:
 - The report contains no candidate implementation ticket, measurement result, score, selection, or production plan.
 - The report states that this Stage 4 iteration cannot set candidateImplementationReady and identifies every missing approved or captured lock input.
 - The next action is either an exact Stage 3 reconciliation pass or an explicit blocked state with required user/external input.
-Checker: bunx prettier@3.9.6 --prose-wrap never --check '.constitution/**/*.md'
+Checker: prettier --prose-wrap never --check '.constitution/**/*.md'
 ```

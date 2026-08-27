@@ -110,7 +110,7 @@ Qualification planning has three states. While `contracts/qualification-lock.jso
 
 | Command | Purpose | Availability at v0.15.0 |
 | :-- | :-- | :-- |
-| `bunx prettier@3.9.6 --prose-wrap never --check '.constitution/**/*.md'` | Check constitution formatting without hard wrapping. | Available. |
+| `prettier --prose-wrap never --check '.constitution/**/*.md'` | Check constitution formatting without hard wrapping. | Available. |
 | `cargo +1.98.0 fmt --all --check` | Check Rust formatting. | Missing until the workspace exists. |
 | `cargo +1.98.0 clippy --workspace --all-targets --all-features -- -D warnings` | Check Rust code and all feature combinations. | Missing until the workspace exists. |
 | `cargo +1.98.0 test --workspace --all-features` | Run unit, integration, contract, and documentation tests. | Missing until the workspace exists. |
