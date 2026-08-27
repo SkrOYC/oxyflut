@@ -47,6 +47,11 @@ Assertions:
 Command: cargo +1.98.0 test --workspace --all-features
 ```
 
+##### OXY-A001 Deviations & Justifications
+
+- **Touched Files:** `devenv.*`, `.envrc`, `.gitignore`
+- **Justification:** The host lacks a C toolchain; devenv provides the reproducible, hashable tool set that OXY-A008 will record.
+
 #### OXY-A002 Implement offline JSON Schema and instance validation
 
 - **Type:** Feature
