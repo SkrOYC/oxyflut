@@ -1,5 +1,7 @@
 //! Deterministic JSON encoding for derived evidence.
 
+use std::io;
+
 use serde_json::Value;
 
 use super::EvidenceError;
@@ -24,7 +26,7 @@ pub(super) fn write_canonical_json_value(
         Value::Null => output.extend_from_slice(b"null"),
         Value::Bool(true) => output.extend_from_slice(b"true"),
         Value::Bool(false) => output.extend_from_slice(b"false"),
-        Value::Number(number) => write_canonical_number(output, number),
+        Value::Number(number) => write_canonical_number(output, number)?,
         Value::String(string) => serde_json::to_writer(&mut *output, string)
             .map_err(|source| EvidenceError::JsonEncoding { source })?,
         Value::Array(values) => {
@@ -56,7 +58,10 @@ pub(super) fn write_canonical_json_value(
     Ok(())
 }
 
-fn write_canonical_number(output: &mut Vec<u8>, number: &serde_json::Number) {
+fn write_canonical_number(
+    output: &mut Vec<u8>,
+    number: &serde_json::Number,
+) -> Result<(), EvidenceError> {
     if let Some(integer) = number.as_i64() {
         output.extend_from_slice(integer.to_string().as_bytes());
     } else if let Some(integer) = number.as_u64() {
@@ -67,5 +72,10 @@ fn write_canonical_number(output: &mut Vec<u8>, number: &serde_json::Number) {
         } else {
             output.extend_from_slice(float.to_string().as_bytes());
         }
+    } else {
+        return Err(EvidenceError::JsonEncoding {
+            source: serde_json::Error::io(io::Error::other("JSON number has no representation")),
+        });
     }
+    Ok(())
 }

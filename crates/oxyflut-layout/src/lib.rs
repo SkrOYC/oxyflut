@@ -1,1 +1,1 @@
-//! Qualification-only scaffold for the layout and viewport boundary.
+//! Qualification-only scaffold for the layout and view boundary.

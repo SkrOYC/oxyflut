@@ -5,7 +5,8 @@ use std::io;
 use std::path::{Path, PathBuf};
 
 use oxyflut_qualification::evidence::{
-    EvidenceError as CoreEvidenceError, MediaType, verify_file, verify_path_digest,
+    EvidenceError as CoreEvidenceError, MediaType, declared_references, verify_file,
+    verify_path_digest,
 };
 use oxyflut_qualification::hash::Sha256Digest;
 use oxyflut_qualification::identifiers::RepositoryPath;
@@ -61,8 +62,9 @@ pub(crate) fn verify(root: &Path, input: &str) -> Result<(), EvidenceAdapterErro
         return Ok(());
     };
 
-    validate_declared_schema(root, &path, value)?;
-    verify_declared_digests(root, value)?;
+    if let Some(schema_identity) = validate_declared_schema(root, &path, value)? {
+        verify_declared_digests(root, &schema_identity, value)?;
+    }
     Ok(())
 }
 
@@ -78,9 +80,9 @@ fn validate_declared_schema(
     root: &Path,
     instance_path: &RepositoryPath,
     value: &Value,
-) -> Result<(), EvidenceAdapterError> {
+) -> Result<Option<String>, EvidenceAdapterError> {
     let Some(reference) = value.get("$schema").and_then(Value::as_str) else {
-        return Ok(());
+        return Ok(None);
     };
     let registry = SchemaRegistry::from_directories(&[
         root.join(DATA_MODELS_DIRECTORY),
@@ -90,7 +92,8 @@ fn validate_declared_schema(
     let identity = resolve_schema_reference(root, instance_path, reference, &registry)?;
     registry
         .validate(&identity, value)
-        .map_err(EvidenceAdapterError::SchemaValidation)
+        .map_err(EvidenceAdapterError::SchemaValidation)?;
+    Ok(Some(identity))
 }
 
 fn resolve_schema_reference(
@@ -138,22 +141,15 @@ fn resolve_schema_reference(
         .map_err(EvidenceAdapterError::SchemaValidation)
 }
 
-fn verify_declared_digests(root: &Path, value: &Value) -> Result<(), EvidenceAdapterError> {
-    match value {
-        Value::Array(values) => {
-            for item in values {
-                verify_declared_digests(root, item)?;
-            }
-        }
-        Value::Object(object) => {
-            if object.contains_key("path") && object.contains_key("sha256") {
-                verify_evidence_reference(root, object)?;
-            }
-            for item in object.values() {
-                verify_declared_digests(root, item)?;
-            }
-        }
-        Value::Null | Value::Bool(_) | Value::Number(_) | Value::String(_) => {}
+fn verify_declared_digests(
+    root: &Path,
+    schema_identity: &str,
+    value: &Value,
+) -> Result<(), EvidenceAdapterError> {
+    for reference in declared_references(schema_identity, value)
+        .map_err(|_| EvidenceAdapterError::SchemaDeclaration)?
+    {
+        verify_evidence_reference(root, reference.object)?;
     }
     Ok(())
 }
@@ -241,7 +237,7 @@ mod tests {
     }
 
     #[test]
-    fn verifies_canonical_reference_shapes_without_a_size_field() -> Result<(), Box<dyn Error>> {
+    fn skips_untyped_canonical_reference_shapes() -> Result<(), Box<dyn Error>> {
         let root = repository_root()?;
         verify(
             &root,
@@ -259,23 +255,27 @@ mod tests {
     }
 
     #[test]
-    fn verifies_typed_digest_references_and_rejects_bad_optional_size() -> Result<(), Box<dyn Error>>
+    fn skips_untyped_path_and_digest_objects() -> Result<(), Box<dyn Error>> {
+        let root = repository_root()?;
+        verify(
+            &root,
+            "qualification/fixtures/evidence/bad-platform-baseline-reference.json",
+        )?;
+        verify(
+            &root,
+            "qualification/fixtures/evidence/canonical-reference-wrong-size.json",
+        )?;
+        Ok(())
+    }
+
+    #[test]
+    fn artifact_manifest_paths_are_not_repository_evidence_references() -> Result<(), Box<dyn Error>>
     {
         let root = repository_root()?;
-        assert!(matches!(
-            verify(
-                &root,
-                "qualification/fixtures/evidence/bad-platform-baseline-reference.json",
-            ),
-            Err(EvidenceAdapterError::Evidence(_))
-        ));
-        assert!(matches!(
-            verify(
-                &root,
-                "qualification/fixtures/evidence/canonical-reference-wrong-size.json",
-            ),
-            Err(EvidenceAdapterError::Evidence(_))
-        ));
+        verify(
+            &root,
+            "qualification/fixtures/contracts/artifact-manifest/valid/minimal.json",
+        )?;
         Ok(())
     }
 

@@ -47,9 +47,11 @@ pub(crate) fn validate_workspace(root: &Path) -> Result<(), NativeContractError>
 /// # Errors
 ///
 /// Returns an error when the staged toolchain cannot be verified or either syntax check fails.
-pub(crate) fn validate_header_syntax(root: &Path) -> Result<(), NativeContractError> {
-    let tools = NativeTools::load(root)?;
-    syntax_check(&root.join(HEADER_PATH), &tools)
+pub(crate) fn validate_header_syntax(
+    root: &Path,
+    tools: &NativeTools,
+) -> Result<(), NativeContractError> {
+    syntax_check(&root.join(HEADER_PATH), tools)
 }
 
 /// Regenerates and compares the checked-in Rust declarations for the authoritative header.
@@ -57,11 +59,13 @@ pub(crate) fn validate_header_syntax(root: &Path) -> Result<(), NativeContractEr
 /// # Errors
 ///
 /// Returns an error when the staged toolchain cannot generate byte-identical bindings.
-pub(crate) fn validate_generated_bindings(root: &Path) -> Result<(), NativeContractError> {
-    let tools = NativeTools::load(root)?;
+pub(crate) fn validate_generated_bindings(
+    root: &Path,
+    tools: &NativeTools,
+) -> Result<(), NativeContractError> {
     let temporary = TemporaryDirectory::new("native-bindings")?;
     let bindings = temporary.path().join("oxyflut-substrate.rs");
-    generate_bindings(&root.join(HEADER_PATH), &bindings, &tools)?;
+    generate_bindings(&root.join(HEADER_PATH), &bindings, tools)?;
     validate_bindings(root, &bindings)
 }
 
@@ -70,9 +74,11 @@ pub(crate) fn validate_generated_bindings(root: &Path) -> Result<(), NativeContr
 /// # Errors
 ///
 /// Returns an error when the staged toolchain cannot verify a required header declaration.
-pub(crate) fn validate_header_symbols(root: &Path) -> Result<(), NativeContractError> {
-    let tools = NativeTools::load(root)?;
-    validate_interface(root, &root.join(HEADER_PATH), &tools)
+pub(crate) fn validate_header_symbols(
+    root: &Path,
+    tools: &NativeTools,
+) -> Result<(), NativeContractError> {
+    validate_interface(root, &root.join(HEADER_PATH), tools)
 }
 
 /// Validates the authoritative header's host layout and nullability fixture.
@@ -80,10 +86,12 @@ pub(crate) fn validate_header_symbols(root: &Path) -> Result<(), NativeContractE
 /// # Errors
 ///
 /// Returns an error when the staged toolchain cannot compile, run, or match the host layout probe.
-pub(crate) fn validate_host_layout(root: &Path) -> Result<(), NativeContractError> {
-    let tools = NativeTools::load(root)?;
+pub(crate) fn validate_host_layout(
+    root: &Path,
+    tools: &NativeTools,
+) -> Result<(), NativeContractError> {
     let temporary = TemporaryDirectory::new("native-layout")?;
-    validate_layout(root, &root.join(HEADER_PATH), &tools, &temporary)
+    validate_layout(root, &root.join(HEADER_PATH), tools, &temporary)
 }
 
 #[allow(
@@ -719,7 +727,7 @@ where
     }
 }
 
-struct NativeTools {
+pub(crate) struct NativeTools {
     c_header_checker: PathBuf,
     cxx_compiler: PathBuf,
     bindgen: PathBuf,
@@ -728,7 +736,7 @@ struct NativeTools {
 }
 
 impl NativeTools {
-    fn load(root: &Path) -> Result<Self, NativeContractError> {
+    pub(crate) fn load(root: &Path) -> Result<Self, NativeContractError> {
         let manifest_path = root.join(MANIFEST_PATH);
         let bytes = fs::read(&manifest_path).map_err(|source| {
             if source.kind() == io::ErrorKind::NotFound {

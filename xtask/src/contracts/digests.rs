@@ -4,6 +4,7 @@ use std::fs;
 use std::io;
 use std::path::{Path, PathBuf};
 
+use oxyflut_qualification::evidence::declared_references;
 use oxyflut_qualification::hash::{DigestParseError, Sha256Digest};
 use oxyflut_qualification::identifiers::{IdentifierError, RepositoryPath};
 use serde_json::{Map, Value};
@@ -271,32 +272,37 @@ pub(crate) fn verify_object_reference(
     verify_reference(root, path, digest)
 }
 
-/// Verifies every nested direct immutable reference in a JSON value.
+/// Verifies every immutable reference declared by the JSON value's `$schema` identity.
+///
+/// Objects with a `path` or `localPath` but no `sha256` key aren't references and are skipped.
 ///
 /// # Errors
 ///
-/// Returns a typed error for any incomplete, missing, escaping, or mismatched nested reference.
+/// Returns a typed error for an incomplete, missing, escaping, or mismatched schema-typed reference.
 pub(crate) fn verify_references_in_value(root: &Path, value: &Value) -> Result<(), DigestError> {
-    match value {
-        Value::Array(values) => {
-            for value in values {
-                verify_references_in_value(root, value)?;
-            }
-        }
-        Value::Object(values) => {
-            let has_path = values.contains_key("path") || values.contains_key("localPath");
-            if has_path {
-                let path = values.get("path").or_else(|| values.get("localPath"));
-                let digest = values.get("sha256");
-                if !(path.is_some_and(Value::is_null) && digest.is_some_and(Value::is_null)) {
-                    let _ = verify_object_reference(root, values)?;
-                }
-            }
-            for value in values.values() {
-                verify_references_in_value(root, value)?;
-            }
-        }
-        Value::Null | Value::Bool(_) | Value::Number(_) | Value::String(_) => {}
+    let Some(schema_identity) = value.get("$schema").and_then(Value::as_str) else {
+        return Ok(());
+    };
+    verify_references_for_schema(root, schema_identity, value)
+}
+
+/// Verifies every immutable reference declared by one known durable schema identity.
+///
+/// Callers that obtain a document through a typed parent binding pass its schema identity directly,
+/// because preserved child documents don't need to repeat `$schema`.
+///
+/// # Errors
+///
+/// Returns a typed error for an incomplete, missing, escaping, or mismatched schema-typed reference.
+pub(crate) fn verify_references_for_schema(
+    root: &Path,
+    schema_identity: &str,
+    value: &Value,
+) -> Result<(), DigestError> {
+    for reference in
+        declared_references(schema_identity, value).map_err(|_| DigestError::IncompleteReference)?
+    {
+        let _ = verify_reference(root, reference.path, reference.sha256)?;
     }
     Ok(())
 }
@@ -309,7 +315,9 @@ mod tests {
 
     use oxyflut_qualification::hash::hash_file;
 
-    use super::{DigestError, verify_reference};
+    use serde_json::json;
+
+    use super::{DigestError, verify_reference, verify_references_in_value};
 
     #[test]
     fn verifies_a_confined_streamed_digest() -> Result<(), Box<dyn Error>> {
@@ -324,6 +332,29 @@ mod tests {
             expected.to_string(),
             "fa9c0a5ee6a0e72bdb81dd8a330ed0c74c878f83cd5e03ffeb00a6011d2ff838"
         );
+        fs::remove_dir_all(root)?;
+        Ok(())
+    }
+
+    #[test]
+    fn schema_typed_walker_skips_path_without_sha256_and_rejects_null_digests()
+    -> Result<(), Box<dyn Error>> {
+        let root = temporary_directory("reference-policy");
+        fs::create_dir_all(&root)?;
+        let skipped = json!({
+            "$schema": "urn:oxyflut:schema:qualification-evidence:5",
+            "path": "ordinary-data"
+        });
+        verify_references_in_value(&root, &skipped)?;
+        let null_digest = json!({
+            "$schema": "urn:oxyflut:schema:qualification-evidence:5",
+            "path": "proof.txt",
+            "sha256": null
+        });
+        assert!(matches!(
+            verify_references_in_value(&root, &null_digest),
+            Err(DigestError::IncompleteReference)
+        ));
         fs::remove_dir_all(root)?;
         Ok(())
     }

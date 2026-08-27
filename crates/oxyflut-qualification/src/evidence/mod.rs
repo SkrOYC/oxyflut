@@ -1,9 +1,10 @@
 //! Canonical local evidence writing and verification.
 //!
-//! ADR-0008 requires immutable UTF-8 JSON evidence below the repository's `qualification/` evidence root. Content-addressed derived paths deduplicate equal bytes and reject collisions.
+//! ADR-0008 requires immutable UTF-8 JSON evidence below the repository's `qualification/` evidence root. Content-addressed derived paths deduplicate equal bytes and reject collisions. Schema-typed reference discovery treats a `path` without `sha256` as ordinary data; a declared `sha256` requires paired string path and digest values, except for a paired null optional reference.
 
 mod canonical;
 mod publish;
+mod references;
 mod verify;
 
 use crate::hash::{DigestParseError, Sha256Digest};
@@ -15,6 +16,7 @@ use thiserror::Error;
 
 pub use canonical::canonical_json_bytes;
 pub use publish::write_derived_json;
+pub use references::{DeclaredEvidenceReference, DeclaredReferenceError, declared_references};
 pub use verify::{preserve_source, verify_file, verify_path_digest, verify_reference};
 
 /// The repository-relative root that contains all qualification evidence.
@@ -316,7 +318,7 @@ mod tests {
     use std::io::{self, Write};
     use std::path::{Path, PathBuf};
 
-    use serde_json::Value;
+    use serde_json::{Value, json};
 
     use super::publish::{WriterLock, acquire_lock, lock_path, prepare_destination, release_lock};
     use super::{
@@ -325,6 +327,25 @@ mod tests {
     };
 
     const FIXTURE_DIRECTORY: &str = "qualification/fixtures/evidence";
+
+    #[test]
+    fn declared_reference_walker_skips_untyped_paths_and_rejects_mismatched_digests() {
+        let skipped = json!({"path": "ordinary-data"});
+        assert_eq!(
+            super::declared_references("urn:oxyflut:schema:qualification-evidence:5", &skipped),
+            Ok(Vec::new())
+        );
+        let null_digest = json!({"path": "qualification/proof.json", "sha256": null});
+        assert!(matches!(
+            super::declared_references("urn:oxyflut:schema:qualification-evidence:5", &null_digest),
+            Err(super::DeclaredReferenceError::IncompleteReference)
+        ));
+        let artifact = json!({"files": [{"path": "bin/oxyflut", "sha256": "not-a-reference"}]});
+        assert_eq!(
+            super::declared_references("urn:oxyflut:schema:artifact-manifest:4", &artifact),
+            Ok(Vec::new())
+        );
+    }
 
     #[test]
     fn equal_logical_records_produce_byte_identical_derived_json() -> Result<(), Box<dyn Error>> {
