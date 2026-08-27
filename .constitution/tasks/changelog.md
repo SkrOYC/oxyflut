@@ -6,7 +6,9 @@ All notable changes to the Stage 4 execution plan appear in this file.
 
 ### Completed
 
-- Completed and archived Epic A tickets OXY-A001–OXY-A008: `9d9cece`, `000448d`, `ce3019b`, `971f12e`, `ddbc70c`, `f2c9087`, `7ceea79`, `6a8447e`, `a245e4b`, `538fde1`, `908c265`, `1a0545f`, `93999fe`, `8b23150`, `5e38738`, `8162b47`, and `39dd00c`.
+- Completed and archived Epic A tickets OXY-A001–OXY-A008: `94966fc`, `9d9cece`, `000448d`, `ce3019b`, `971f12e`, `ddbc70c`, `f2c9087`, `7ceea79`, `6a8447e`, `a245e4b`, `538fde1`, `908c265`, `1a0545f`, `93999fe`, `8b23150`, `5e38738`, `8162b47`, and `39dd00c`.
+- Reconciled and archived Epic A with `ced1cd7`.
+- Completed PR review rounds 1–4: `e2d362e`, `923ad31`, `0f9aa53`, `f80e27a`, `13536a9`, `62019ad`, `09041ab`, `03ab783`, `fe3e533`, `4339a01`, `73b58e6`, and `chore: final review polish for the qualification foundation (PR review round 4)`.
 
 ### Changed
 

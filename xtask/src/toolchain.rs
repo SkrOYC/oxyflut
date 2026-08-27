@@ -22,7 +22,7 @@ mod specs;
 mod tests;
 
 pub(crate) use error::ToolchainError;
-use specs::{TOOL_SPECS, ToolLocator, ToolSpec};
+use specs::{LINUX_LIBC_HEADERS_VERSION, TOOL_SPECS, ToolLocator, ToolSpec};
 pub(crate) const STAGED_HOST: &str = "x86_64-unknown-linux-gnu";
 const RUST_TOOLCHAIN_COMMIT: &str = "88d9e12ae178fab0fb5cc050a94da85685d449ea";
 const RUST_TOOLCHAIN_NAME: &str = "1.98.0-x86_64-unknown-linux-gnu";
@@ -527,7 +527,7 @@ fn verify_sdk_utilities(
     let include_path = libc_header_path(Path::new(&header_checker.executable_path))?;
     if utility.path != path_string(&include_path)?
         || utility.source_identity != sdk_source_identity(&include_path)?
-        || utility.version != "glibc-2.42-67"
+        || utility.version != LINUX_LIBC_HEADERS_VERSION
         || utility.sha256.parse::<Sha256Digest>().is_err()
         || utility.sha256 != hash_directory(&include_path)?
     {

@@ -5,6 +5,9 @@ use std::process::Command;
 
 #[test]
 fn contract_reports_use_stdout_and_keep_diagnostics_empty() -> Result<(), Box<dyn Error>> {
+    if skip_on_unsupported_host() {
+        return Ok(());
+    }
     let output = Command::new(env!("CARGO_BIN_EXE_xtask"))
         .args(["contracts", "validate"])
         .output()?;
@@ -17,6 +20,9 @@ fn contract_reports_use_stdout_and_keep_diagnostics_empty() -> Result<(), Box<dy
 
 #[test]
 fn open_lock_reports_use_stdout_and_keep_diagnostics_empty() -> Result<(), Box<dyn Error>> {
+    if skip_on_unsupported_host() {
+        return Ok(());
+    }
     let output = Command::new(env!("CARGO_BIN_EXE_xtask"))
         .args(["lock", "status", "--gate", "candidate-implementation"])
         .output()?;
@@ -25,4 +31,17 @@ fn open_lock_reports_use_stdout_and_keep_diagnostics_empty() -> Result<(), Box<d
     assert!(stdout.contains("lock status: open (candidate-implementation)"));
     assert!(output.stderr.is_empty());
     Ok(())
+}
+
+fn skip_on_unsupported_host() -> bool {
+    if cfg!(all(
+        target_arch = "x86_64",
+        target_os = "linux",
+        target_env = "gnu"
+    )) {
+        false
+    } else {
+        eprintln!("skipped: staged toolchain host is x86_64-unknown-linux-gnu");
+        true
+    }
 }
