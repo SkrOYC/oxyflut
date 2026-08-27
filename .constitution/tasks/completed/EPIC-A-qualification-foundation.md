@@ -232,8 +232,8 @@ Command: cargo +1.98.0 test --workspace --all-features
 - **Justification:** An immutable Prettier identity is required for OXY-A008.
 - **Touched Files:** `xtask/src/toolchain/{error,specs}.rs`, `xtask/src/toolchain_tests.rs`.
 - **Justification:** PR review required moving staged-toolchain definitions, errors, and tests below the hard file-size ceiling.
-- **Touched Files:** `.constitution/tech-spec/{guidelines,stack}.md`, `.constitution/tasks/active/{EPIC-B-readiness-research,EPIC-D-readiness-reconciliation}.md`, and `.constitution/tasks/active/EPIC-A-qualification-foundation.md`.
-- **Justification:** The documented formatter commands must use the declared immutable Prettier executable.
+- **Touched Files:** `.constitution/tech-spec/{changelog,guidelines,stack}.md`, `.constitution/tasks/active/{EPIC-B-readiness-research,EPIC-D-readiness-reconciliation}.md`, and `.constitution/tasks/active/EPIC-A-qualification-foundation.md`.
+- **Justification:** Review fixes record the locked staged-toolchain host and its OXY-D001 lock input alongside the immutable formatter command.
 
 #### OXY-A005 Compile and layout-check native contract headers
 
@@ -368,6 +368,8 @@ Command: cargo +1.98.0 run -p xtask -- contracts validate
 - **Justification:** PR review required an offline dependency-policy gate, the corresponding CI scripts, canonical KU and KK glossary entries, and a recorded advisory-database deferral. The glossary and OXY-D001 input additions are explicitly authorized by the review request.
 - **Touched Files:** `xtask/tests/cli_output.rs`.
 - **Justification:** PR review required process-level assertions that reports use standard output and diagnostics use standard error.
+- **Touched Files:** `xtask/src/main.rs`.
+- **Justification:** PR review required stable content-free command failure codes and reproduction hints at the shared command-error boundary.
 
 ## Completion
 

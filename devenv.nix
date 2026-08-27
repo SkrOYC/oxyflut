@@ -5,10 +5,10 @@ let
   # no project-local cargo installation is needed.
   clangWithCc = pkgs.runCommand "oxyflut-clang-with-cc" {} ''
     mkdir -p "$out/bin"
-    ln -s ${pkgs.llvmPackages.clang}/bin/clang "$out/bin/cc"
-    ln -s ${pkgs.llvmPackages.clang}/bin/clang "$out/bin/clang"
-    ln -s ${pkgs.llvmPackages.clang}/bin/clang++ "$out/bin/c++"
-    ln -s ${pkgs.llvmPackages.clang}/bin/clang++ "$out/bin/clang++"
+    ln -s ${pkgs.llvmPackages_21.clang}/bin/clang "$out/bin/cc"
+    ln -s ${pkgs.llvmPackages_21.clang}/bin/clang "$out/bin/clang"
+    ln -s ${pkgs.llvmPackages_21.clang}/bin/clang++ "$out/bin/c++"
+    ln -s ${pkgs.llvmPackages_21.clang}/bin/clang++ "$out/bin/clang++"
   '';
   prettier396 = pkgs.buildNpmPackage {
     pname = "prettier";
@@ -66,8 +66,8 @@ in
 
   # Rust remains managed by the host rustup installation and rust-toolchain.toml.
   env = {
-    CC = "${pkgs.llvmPackages.clang}/bin/clang";
-    CXX = "${pkgs.llvmPackages.clang}/bin/clang++";
+    CC = "${pkgs.llvmPackages_21.clang}/bin/clang";
+    CXX = "${pkgs.llvmPackages_21.clang}/bin/clang++";
     LD = "${pkgs.lld}/bin/ld.lld";
     RUSTFLAGS = "-C link-arg=-fuse-ld=lld";
   };

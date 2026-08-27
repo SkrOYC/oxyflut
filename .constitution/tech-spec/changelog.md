@@ -8,6 +8,7 @@ All notable changes to the technical specification appear in this file.
 
 - Amended 2026-08-27: Replaced `bunx prettier@3.9.6` with the immutable Nix-declared `prettier` 3.9.6 executable from the hash-pinned npm tarball. This doesn't change evidence formats or their compatibility.
 - Amended 2026-08-27: Added `devenv.nix`, `devenv.yaml`, `devenv.lock`, and `.envrc` as the required reproducible verification shell. Every verification command runs inside `devenv shell`.
+- Amended 2026-08-27: The staged native toolchain supports only `x86_64-unknown-linux-gnu`; other Tier 1 hosts remain an OXY-D001 lock input.
 - The specification remains v0.15.0 because `contracts/specification-phase.json` and committed baselines require exact `specificationVersion` equality. Updating only the specification version would invalidate those bindings, so this amendment doesn't change the version.
 - Advanced platform contracts to v5 with the active specification version and typed immutable absent-event entries keyed by gate, event, environment, and candidate.
 - Advanced qualification evidence to v5 so every `not-applicable-kk` gate names an exact absent-event entry through a versioned, digest-bound platform-baseline reference.
