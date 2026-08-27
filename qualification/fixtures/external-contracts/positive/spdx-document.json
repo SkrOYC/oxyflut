@@ -1,0 +1,6 @@
+{
+  "@context": "https://spdx.org/rdf/3.0.1/spdx-context.jsonld",
+  "type": "SpdxDocument",
+  "spdxId": "urn:uuid:71e5aef5-b71f-4be0-8c00-83e04ad0c001",
+  "creationInfo": {}
+}

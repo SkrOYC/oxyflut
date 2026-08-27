@@ -1,0 +1,10 @@
+{
+  "kind": "authoritative",
+  "repository": "https://github.com/secure-systems-lab/dsse",
+  "commit": "cacf247ea07024437c91e69ae65f3f4a2df3c657",
+  "path": "envelope.proto",
+  "retrievalUrl": "https://raw.githubusercontent.com/secure-systems-lab/dsse/cacf247ea07024437c91e69ae65f3f4a2df3c657/envelope.proto",
+  "license": "Apache-2.0",
+  "version": "1",
+  "sha256": "cee196c0679fb38e164a8ed71f362cf2667fb697939a41e39d692c4092f0fc12"
+}

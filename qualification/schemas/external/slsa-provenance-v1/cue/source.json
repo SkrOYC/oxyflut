@@ -1,0 +1,10 @@
+{
+  "kind": "authoritative",
+  "repository": "https://github.com/slsa-framework/slsa",
+  "commit": "4d7f142300264276bd3d45ab91d2b0eeb4227932",
+  "path": "docs/provenance/schema/v1/provenance.cue",
+  "retrievalUrl": "https://raw.githubusercontent.com/slsa-framework/slsa/4d7f142300264276bd3d45ab91d2b0eeb4227932/docs/provenance/schema/v1/provenance.cue",
+  "license": "CC-BY-4.0",
+  "version": "1.0",
+  "sha256": "0d68f4ce799a5152151e0efd0fc7ae3b3769b512810d8667eab2ce77e25de40f"
+}

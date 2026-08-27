@@ -1,0 +1,10 @@
+{
+  "kind": "derived",
+  "derivedFrom": {
+    "localPath": "qualification/schemas/external/dsse-envelope-v1/proto/envelope.proto",
+    "sha256": "cee196c0679fb38e164a8ed71f362cf2667fb697939a41e39d692c4092f0fc12"
+  },
+  "derivation": "Draft 2020-12 structural JSON Schema transcribed from the authoritative DSSE Envelope v1 protobuf schema.",
+  "verifier": "jsonschema-0.51.0-draft-2020-12 plus dsse-pae-test-sha256-keyed-v1",
+  "sha256": "03507cf10198bd79d9e64d20efcb69966966024603ea69c3fbedc45eb31ae924"
+}

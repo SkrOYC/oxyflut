@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:oxyflut:schema:external-slsa-provenance-v1:1",
+  "title": "Oxyflut derived SLSA Provenance v1 structural schema",
+  "allOf": [
+    { "$ref": "urn:oxyflut:schema:external-in-toto-statement-v1:1" },
+    {
+      "type": "object",
+      "required": ["predicate"],
+      "properties": {
+        "predicateType": { "const": "https://slsa.dev/provenance/v1" },
+        "predicate": {
+          "type": "object",
+          "required": ["buildDefinition", "runDetails"],
+          "properties": {
+            "buildDefinition": {
+              "type": "object",
+              "required": ["buildType", "externalParameters"],
+              "properties": {
+                "buildType": { "type": "string", "minLength": 1 },
+                "externalParameters": { "type": "object" },
+                "internalParameters": { "type": "object" },
+                "resolvedDependencies": { "type": "array" }
+              }
+            },
+            "runDetails": {
+              "type": "object",
+              "required": ["builder"],
+              "properties": {
+                "builder": {
+                  "type": "object",
+                  "required": ["id"],
+                  "properties": {
+                    "id": { "type": "string", "minLength": 1 },
+                    "builderDependencies": { "type": "array" },
+                    "version": { "type": "object" }
+                  }
+                },
+                "metadata": { "type": "object" },
+                "byproducts": { "type": "array" }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

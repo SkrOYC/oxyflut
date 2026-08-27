@@ -1,0 +1,38 @@
+{
+  "$schema": "../../../.constitution/tech-spec/data-models/external-contract-lock.schema.json",
+  "schemaVersion": "1.0.0",
+  "contracts": {
+    "spdx-3.0.1": {
+      "version": "3.0.1",
+      "source": "https://raw.githubusercontent.com/spdx/spdx-spec/61a649da8ca27924ac1ca8d2a061cb228839b24c/rdf/spdx-context.jsonld",
+      "epistemicStatus": "kk-locked",
+      "localPath": "qualification/schemas/external/spdx-3.0.1/jsonld-context/spdx-context.jsonld",
+      "sha256": "c72b0928f094c83e5c127784edb1ebca2af74a104fcacc007c332b23cbc788bd",
+      "verifier": "jsonschema-0.51.0-draft-2020-12:derived-spdx-jsonld-structural-v1"
+    },
+    "in-toto-statement-v1": {
+      "version": "1",
+      "source": "https://raw.githubusercontent.com/in-toto/attestation/ee16c68a11dfcfbdc891600cacd767896fe6e724/spec/v1.0/statement.md",
+      "epistemicStatus": "kk-locked",
+      "localPath": "qualification/schemas/external/in-toto-statement-v1/spec/statement.source",
+      "sha256": "e8fce554c62cd1ea6d7a18cf8bd75f4eb0cc85c761ccde596133968ded093d9e",
+      "verifier": "jsonschema-0.51.0-draft-2020-12:derived-in-toto-statement-v1"
+    },
+    "slsa-provenance-v1": {
+      "version": "1.0",
+      "source": "https://raw.githubusercontent.com/slsa-framework/slsa/4d7f142300264276bd3d45ab91d2b0eeb4227932/docs/provenance/v1.md",
+      "epistemicStatus": "kk-locked",
+      "localPath": "qualification/schemas/external/slsa-provenance-v1/spec/provenance-v1.source",
+      "sha256": "7639cd8644d5e3f6faec32cdb5891e9fe368c31976e1020fe639bd56639bd877",
+      "verifier": "jsonschema-0.51.0-draft-2020-12:derived-slsa-provenance-v1"
+    },
+    "dsse-envelope-v1": {
+      "version": "1",
+      "source": "https://raw.githubusercontent.com/secure-systems-lab/dsse/cacf247ea07024437c91e69ae65f3f4a2df3c657/envelope.md",
+      "epistemicStatus": "kk-locked",
+      "localPath": "qualification/schemas/external/dsse-envelope-v1/spec/envelope.source",
+      "sha256": "3607b3e4702c4dfd2f3dc90a38546d89b95993227691fdfeb6a38c43759e6f2e",
+      "verifier": "jsonschema-0.51.0-draft-2020-12:derived-dsse-envelope-v1-plus-pae-test-sha256-keyed-v1"
+    }
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "payload": "eyJfdHlwZSI6Imh0dHBzOi8vaW4tdG90by5pby9TdGF0ZW1lbnQvdjEiLCJzdWJqZWN0IjpbeyJuYW1lIjoib3h5Zmx1dCIsImRpZ2VzdCI6eyJzaGEyNTYiOiIwMTIzNDU2Nzg5YWJjZGVmMDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWYwMTIzNDU2Nzg5YWJjZGVmIn19XSwicHJlZGljYXRlVHlwZSI6Imh0dHBzOi8vZXhhbXBsZS50ZXN0L2ZpeHR1cmUiLCJwcmVkaWNhdGUiOnt9fQ==",
+  "payloadType": "application/vnd.in-toto+json",
+  "signatures": [
+    {
+      "keyid": "oxyflut-fixture-sha256-test-key-v1",
+      "sig": "QWNZ7RaQMh75MJoeS0LqTulM7Lncy7ARlgVsGIGMXJQ="
+    }
+  ]
+}
