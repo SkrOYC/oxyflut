@@ -1,3 +1,1 @@
-{
-  "case": "stale-platform-baseline-specification-version"
-}
+{"case":"stale-platform-baseline-specification-version","expectedCode":"platform-specification-version","expectedPath":"/specificationVersion"}

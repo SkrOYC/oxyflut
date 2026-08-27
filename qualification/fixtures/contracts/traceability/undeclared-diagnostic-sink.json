@@ -1,3 +1,1 @@
-{
-  "case": "undeclared-diagnostic-sink"
-}
+{"case":"undeclared-diagnostic-sink","expectedCode":"diagnostic-sink-destination","expectedPath":"/destination"}

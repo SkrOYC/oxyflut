@@ -1,3 +1,1 @@
-{
-  "case": "mismatched-platform-baseline-schema-version"
-}
+{"case":"mismatched-platform-baseline-schema-version","expectedCode":"not-applicable-baseline-schema-version","expectedPath":"/platformBaseline/schemaVersion"}

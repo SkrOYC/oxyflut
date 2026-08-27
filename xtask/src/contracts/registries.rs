@@ -13,7 +13,6 @@ use thiserror::Error;
 
 const REGISTRY_PATH: &str = ".constitution/tech-spec/contracts/diagnostic-event-registry.json";
 const REGISTRY_VERSION: &str = "2.0.0";
-const MAX_QUEUE_RECORDS: u32 = 65_536;
 const DIAGNOSTIC_EVENTS: [&str; 13] = [
     "runtime.lifecycle",
     "view.lifecycle",
@@ -217,7 +216,7 @@ pub(crate) fn admit_local_sink(
     let maximum_queued_records = maximum_queued_records.ok_or(RegistryError::Invariant {
         code: "diagnostic-sink-acknowledgement",
     })?;
-    if maximum_queued_records == 0 || maximum_queued_records > MAX_QUEUE_RECORDS {
+    if maximum_queued_records == 0 {
         return Err(RegistryError::Invariant {
             code: "diagnostic-sink-acknowledgement",
         });
@@ -481,8 +480,8 @@ mod tests {
     }
 
     #[test]
-    fn only_closed_machine_local_sinks_have_a_nonzero_bounded_acknowledgement()
-    -> Result<(), Box<dyn Error>> {
+    fn only_closed_machine_local_sinks_have_a_nonzero_acknowledgement() -> Result<(), Box<dyn Error>>
+    {
         let admission = admit_local_sink("user-enabled-memory-buffer", Some(1))?;
         assert_eq!(admission.destination, LocalSinkDestination::MemoryBuffer);
         assert_eq!(admission.maximum_queued_records, 1);
@@ -498,10 +497,10 @@ mod tests {
             admit_local_sink("user-enabled-memory-buffer", Some(0)),
             "diagnostic-sink-acknowledgement",
         );
-        assert_code(
-            admit_local_sink("user-enabled-memory-buffer", Some(65_537)),
-            "diagnostic-sink-acknowledgement",
-        );
+        let large_admission = admit_local_sink("user-enabled-memory-buffer", Some(65_537))?;
+        assert_eq!(large_admission.maximum_queued_records, 65_537);
+        let maximum_admission = admit_local_sink("user-enabled-memory-buffer", Some(u32::MAX))?;
+        assert_eq!(maximum_admission.maximum_queued_records, u32::MAX);
         Ok(())
     }
 

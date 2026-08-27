@@ -1,3 +1,1 @@
-{
-  "case": "mismatched-accessibility-identity"
-}
+{"case":"mismatched-accessibility-identity","expectedCode":"accessibility-identity","expectedPath":"/environments/windows/accessibilityMaps/focused"}

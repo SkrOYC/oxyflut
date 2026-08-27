@@ -1,3 +1,1 @@
-{
-  "case": "missing"
-}
+{"case":"missing","expectedCode":"capability-set","expectedPath":"/mappings"}

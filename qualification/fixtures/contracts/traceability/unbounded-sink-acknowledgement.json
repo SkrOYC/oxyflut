@@ -1,3 +1,1 @@
-{
-  "case": "unbounded-sink-acknowledgement"
-}
+{"case":"unbounded-sink-acknowledgement","expectedCode":"diagnostic-sink-acknowledgement","expectedPath":"/maximumQueuedRecords"}

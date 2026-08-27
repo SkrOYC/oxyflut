@@ -1,3 +1,1 @@
-{
-  "case": "synthetic-baseline-referenced-by-lock"
-}
+{"case":"synthetic-baseline-referenced-by-lock","expectedCode":"lock-baseline-provenance","expectedPath":"/measurementPolicy/capabilityBaseline/path"}

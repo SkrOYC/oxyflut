@@ -1,3 +1,1 @@
-{
-  "case": "mismatched-active-specification-version"
-}
+{"case":"mismatched-active-specification-version","expectedCode":"traceability-specification-version","expectedPath":"/specificationVersion"}

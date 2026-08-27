@@ -1,3 +1,1 @@
-{
-  "case": "missing-nested-kk-evidence"
-}
+{"case":"missing-nested-kk-evidence","expectedCode":"kk-evidence-missing","expectedPath":"/environments/macos/ime/evidence"}

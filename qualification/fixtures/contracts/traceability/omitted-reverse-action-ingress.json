@@ -1,3 +1,1 @@
-{
-  "case": "omitted-reverse-action-ingress"
-}
+{"case":"omitted-reverse-action-ingress","expectedCode":"capability-symbol-edge","expectedPath":"/mappings/CAP-SEM-002/bindings/2/symbols"}

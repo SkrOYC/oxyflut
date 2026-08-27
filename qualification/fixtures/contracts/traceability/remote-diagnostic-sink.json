@@ -1,3 +1,1 @@
-{
-  "case": "remote-diagnostic-sink"
-}
+{"case":"remote-diagnostic-sink","expectedCode":"diagnostic-sink-destination","expectedPath":"/destination"}

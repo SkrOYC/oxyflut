@@ -1,3 +1,1 @@
-{
-  "case": "mismatched-platform-baseline-path"
-}
+{"case":"mismatched-platform-baseline-path","expectedCode":"not-applicable-baseline-path","expectedPath":"/platformBaseline/path"}

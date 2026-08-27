@@ -1,3 +1,1 @@
-{
-  "case": "mismatched-platform-baseline-specification-version"
-}
+{"case":"mismatched-platform-baseline-specification-version","expectedCode":"not-applicable-baseline-specification-version","expectedPath":"/platformBaseline/specificationVersion"}

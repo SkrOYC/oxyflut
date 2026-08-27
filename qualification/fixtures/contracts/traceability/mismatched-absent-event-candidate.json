@@ -1,3 +1,1 @@
-{
-  "case": "mismatched-absent-event-candidate"
-}
+{"case":"mismatched-absent-event-candidate","expectedCode":"absent-event-candidate","expectedPath":"/absentEvents/0/candidates"}

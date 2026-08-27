@@ -1,3 +1,1 @@
-{
-  "case": "mismatched-nested-kk-evidence"
-}
+{"case":"mismatched-nested-kk-evidence","expectedCode":"evidence-digest","expectedPath":"/environments/macos/ime/evidence/0/sha256"}
