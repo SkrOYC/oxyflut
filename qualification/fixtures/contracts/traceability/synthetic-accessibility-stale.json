@@ -1,0 +1,14 @@
+{
+  "environment": "macos",
+  "candidate": "focused",
+  "epistemicStatus": "kk-complete",
+  "forward": {
+    "roles": { "status": "kk" }, "states": { "status": "kk" }, "actions": { "status": "kk" }, "values": { "status": "kk" }, "labels": { "status": "kk" }, "accessibleNames": { "status": "kk" }, "descriptions": { "status": "kk" }, "hints": { "status": "kk" }, "helpOrFullDescriptions": { "status": "kk" }, "tooltips": { "status": "kk" }, "attributedText": { "status": "kk" }, "identifiers": { "status": "kk" }, "bounds": { "status": "kk" }, "transforms": { "status": "kk" }, "traversal": { "status": "kk" }, "labelledByRelations": { "status": "kk" }, "describedByRelations": { "status": "kk" }, "roleApplicableRelations": { "status": "kk" }, "accessibilityFocus": { "status": "kk" }, "inputFocus": { "status": "kk" }, "hitTesting": { "status": "kk" }, "textRanges": { "status": "kk" }, "selection": { "status": "kk" }, "scrollExtents": { "status": "kk" }, "language": { "status": "kk" }, "direction": { "status": "kk" }, "headingLevels": { "status": "kk" }, "liveRegions": { "status": "kk" }, "hidden": { "status": "kk" }, "disabled": { "status": "kk" }, "secureFieldRedaction": { "status": "kk" }, "multiViewIsolation": { "status": "kk" }
+  },
+  "reverseActions": [
+    { "status": "kk", "textIndexUnit": "utf16-code-units", "textLayoutBinding": "StaleGeneration" }
+  ],
+  "evidence": [
+    { "path": "qualification/fixtures/contracts/traceability/evidence.txt", "sha256": "6ab11a71e6e2c7be933b6e2c3481a795e56ccd5bc7dfb51b72d6dcfd68458f4d" }
+  ]
+}
