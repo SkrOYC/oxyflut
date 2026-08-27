@@ -1,3 +1,1 @@
-{
-  "case": "duplicated-contract-test-id"
-}
+{"case":"duplicated-contract-test-id","expectedCode":"contract-test-cardinality","expectedPath":"/mappings/0/contractTests/1"}

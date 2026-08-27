@@ -1,3 +1,1 @@
-{
-  "case": "missing-baseline-approval-evidence"
-}
+{"case":"missing-baseline-approval-evidence","expectedCode":"capability-baseline-schema","expectedPath":"/provenance/approvalEvidence"}

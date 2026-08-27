@@ -1,3 +1,1 @@
-{
-  "case": "non-derivable-contract-test-id"
-}
+{"case":"non-derivable-contract-test-id","expectedCode":"contract-test-derivation","expectedPath":"/mappings/0/contractTests/0"}

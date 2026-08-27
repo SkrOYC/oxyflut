@@ -1,3 +1,1 @@
-{
-  "case": "empty-path-segment"
-}
+{"case":"empty-path-segment","expectedCode":"artifact-path","expectedPath":"/files/0/path"}

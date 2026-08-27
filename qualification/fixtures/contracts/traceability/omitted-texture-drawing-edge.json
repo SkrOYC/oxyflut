@@ -1,3 +1,1 @@
-{
-  "case": "omitted-texture-drawing-edge"
-}
+{"case":"omitted-texture-drawing-edge","expectedCode":"capability-symbol-edge","expectedPath":"/mappings/CAP-REN-002/bindings/0/symbols"}

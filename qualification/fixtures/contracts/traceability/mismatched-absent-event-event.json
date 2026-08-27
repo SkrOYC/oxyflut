@@ -1,3 +1,1 @@
-{
-  "case": "mismatched-absent-event-event"
-}
+{"case":"mismatched-absent-event-event","expectedCode":"absent-event-event","expectedPath":"/absentEvents/0/eventId"}

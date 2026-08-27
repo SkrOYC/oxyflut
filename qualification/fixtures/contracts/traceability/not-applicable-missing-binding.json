@@ -1,3 +1,1 @@
-{
-  "case": "not-applicable-missing-binding"
-}
+{"case":"not-applicable-missing-binding","expectedCode":"not-applicable-binding","expectedPath":"/environmentResults/macos/CAP-CMP-001/notApplicable"}

@@ -1,3 +1,1 @@
-{
-  "case": "pass-with-nonnull-absence-binding"
-}
+{"case":"pass-with-nonnull-absence-binding","expectedCode":"pass-absence-binding","expectedPath":"/environmentResults/macos/CAP-CMP-001/notApplicable"}
