@@ -26,6 +26,7 @@ use specs::{TOOL_SPECS, ToolLocator, ToolSpec};
 pub(crate) const STAGED_HOST: &str = "x86_64-unknown-linux-gnu";
 const RUST_TOOLCHAIN_COMMIT: &str = "88d9e12ae178fab0fb5cc050a94da85685d449ea";
 const RUST_TOOLCHAIN_NAME: &str = "1.98.0-x86_64-unknown-linux-gnu";
+const RUSTC_RELATIVE_PATH: &str = "toolchains/1.98.0-x86_64-unknown-linux-gnu/bin/rustc";
 const RUSTFMT_RELATIVE_PATH: &str = "toolchains/1.98.0-x86_64-unknown-linux-gnu/bin/rustfmt";
 const STAGED_AUTHORITY: &str = "staged-proposal";
 const STAGED_NOTE: &str = "Stage 3 reconciliation owns active qualification-lock pins; this host-local proposal cannot set readiness.";
@@ -188,6 +189,15 @@ impl ToolchainManifest {
     /// Returns an error when the named tool is absent.
     pub(crate) fn host_triple(&self, name: &str) -> Result<&str, ToolchainError> {
         Ok(&self.tool(name)?.host_triple)
+    }
+
+    /// Returns a manifest tool's verified path without requiring native host support.
+    pub(crate) fn verified_executable_path(&self, name: &str) -> Result<PathBuf, ToolchainError> {
+        let tool = self.tool(name)?;
+        let specification = tool_specification(name)?;
+        let host_triple = host_triple()?;
+        verify_tool(tool, specification, &host_triple)?;
+        resolve_manifest_executable_path(tool)
     }
 
     fn tool(&self, name: &str) -> Result<&ResolvedTool, ToolchainError> {
@@ -533,33 +543,37 @@ fn executable_path(specification: &ToolSpec) -> Result<PathBuf, ToolchainError> 
                 name: specification.name.to_owned(),
             })
         }
-        ToolLocator::Rustfmt => rustfmt_path(),
+        ToolLocator::Rustfmt => rustup_component_path("rustfmt", RUSTFMT_RELATIVE_PATH),
+        ToolLocator::Rustc => rustup_component_path("rustc", RUSTC_RELATIVE_PATH),
     }
 }
 
-fn rustfmt_path() -> Result<PathBuf, ToolchainError> {
+fn rustup_component_path(
+    component: &'static str,
+    expected_relative_path: &str,
+) -> Result<PathBuf, ToolchainError> {
     let rustup = find_in_path("rustup").ok_or_else(|| ToolchainError::MissingTool {
-        name: "rustfmt".to_owned(),
+        name: component.to_owned(),
     })?;
     let output = Command::new(rustup)
-        .args(["which", "--toolchain", "1.98.0", "rustfmt"])
+        .args(["which", "--toolchain", "1.98.0", component])
         .output()
         .map_err(|source| ToolchainError::ToolExecution {
-            name: "rustfmt".to_owned(),
+            name: component.to_owned(),
             source,
         })?;
     if !output.status.success() {
         return Err(ToolchainError::ToolExecutionFailed {
-            name: "rustfmt".to_owned(),
+            name: component.to_owned(),
         });
     }
     let path = String::from_utf8_lossy(&output.stdout).trim().to_owned();
     let executable_path = PathBuf::from(path);
     if !executable_path.is_file()
-        || rustup_relative_path(&executable_path)? != RUSTFMT_RELATIVE_PATH
+        || rustup_relative_path(&executable_path, component)? != expected_relative_path
     {
         return Err(ToolchainError::MissingTool {
-            name: "rustfmt".to_owned(),
+            name: component.to_owned(),
         });
     }
     Ok(executable_path)
@@ -568,7 +582,7 @@ fn rustfmt_path() -> Result<PathBuf, ToolchainError> {
 fn manifest_path_root(specification: &ToolSpec) -> Option<&'static str> {
     match specification.locator {
         ToolLocator::Path(_) => None,
-        ToolLocator::Rustfmt => Some("rustup-home"),
+        ToolLocator::Rustfmt | ToolLocator::Rustc => Some("rustup-home"),
     }
 }
 
@@ -578,7 +592,7 @@ fn manifest_executable_path(
 ) -> Result<String, ToolchainError> {
     match manifest_path_root(specification) {
         None => path_string(executable_path),
-        Some("rustup-home") => rustup_relative_path(executable_path),
+        Some("rustup-home") => rustup_relative_path(executable_path, specification.name),
         Some(_) => Err(ToolchainError::InvalidManifest {
             reason: "a staged executable path root is invalid".to_owned(),
         }),
@@ -612,15 +626,15 @@ fn resolve_manifest_executable_path(tool: &ResolvedTool) -> Result<PathBuf, Tool
     }
 }
 
-fn rustup_relative_path(executable_path: &Path) -> Result<String, ToolchainError> {
+fn rustup_relative_path(executable_path: &Path, component: &str) -> Result<String, ToolchainError> {
     let relative_path = executable_path.strip_prefix(rustup_home()?).map_err(|_| {
         ToolchainError::SourceIdentityMismatch {
-            name: "rustfmt".to_owned(),
+            name: component.to_owned(),
         }
     })?;
     if !is_safe_relative_path(relative_path) {
         return Err(ToolchainError::SourceIdentityMismatch {
-            name: "rustfmt".to_owned(),
+            name: component.to_owned(),
         });
     }
     path_string(relative_path)
@@ -708,48 +722,45 @@ fn source_identity(
                 specification.source_version
             ))
         }
-        ToolLocator::Rustfmt => rustup_toolchain_identity(),
+        ToolLocator::Rustfmt | ToolLocator::Rustc => rustup_toolchain_identity(),
     }
 }
 
 fn rustup_toolchain_identity() -> Result<String, ToolchainError> {
-    let rustc = find_in_path("rustc").ok_or_else(|| ToolchainError::MissingTool {
-        name: "rustc".to_owned(),
-    })?;
-    let output = Command::new(rustc)
-        .args(["+1.98.0", "-vV"])
+    let output = Command::new(rustup_component_path("rustc", RUSTC_RELATIVE_PATH)?)
+        .arg("-vV")
         .output()
         .map_err(|source| ToolchainError::ToolExecution {
-            name: "rustfmt".to_owned(),
+            name: "rustc".to_owned(),
             source,
         })?;
     if !output.status.success() {
         return Err(ToolchainError::ToolExecutionFailed {
-            name: "rustfmt".to_owned(),
+            name: "rustc".to_owned(),
         });
     }
 
     let version = String::from_utf8_lossy(&output.stdout);
     let release = rustc_verbose_field(&version, "release").ok_or_else(|| {
         ToolchainError::SourceIdentityMismatch {
-            name: "rustfmt".to_owned(),
+            name: "rustc".to_owned(),
         }
     })?;
     let host = rustc_verbose_field(&version, "host").ok_or_else(|| {
         ToolchainError::SourceIdentityMismatch {
-            name: "rustfmt".to_owned(),
+            name: "rustc".to_owned(),
         }
     })?;
     let commit = rustc_verbose_field(&version, "commit-hash").ok_or_else(|| {
         ToolchainError::SourceIdentityMismatch {
-            name: "rustfmt".to_owned(),
+            name: "rustc".to_owned(),
         }
     })?;
     let toolchain = format!("{release}-{host}");
 
     if toolchain != RUST_TOOLCHAIN_NAME || commit != RUST_TOOLCHAIN_COMMIT {
         return Err(ToolchainError::SourceIdentityMismatch {
-            name: "rustfmt".to_owned(),
+            name: "rustc".to_owned(),
         });
     }
 
@@ -883,11 +894,8 @@ pub(crate) fn is_staged_host() -> Result<bool, ToolchainError> {
 }
 
 fn host_triple() -> Result<String, ToolchainError> {
-    let rustc = find_in_path("rustc").ok_or_else(|| ToolchainError::MissingTool {
-        name: "rustc".to_owned(),
-    })?;
-    let output = Command::new(rustc)
-        .args(["+1.98.0", "-vV"])
+    let output = Command::new(rustup_component_path("rustc", RUSTC_RELATIVE_PATH)?)
+        .arg("-vV")
         .output()
         .map_err(|source| ToolchainError::ToolExecution {
             name: "rustc".to_owned(),
