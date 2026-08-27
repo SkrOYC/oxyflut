@@ -155,11 +155,9 @@ impl TraceabilityError {
 ///
 /// Returns an error for a local input failure or any exact-set, identifier, symbol, version, or immutable-reference mismatch.
 pub(crate) fn validate_workspace(root: &Path) -> Result<TraceabilityRunReport, TraceabilityError> {
-    let active = active_specification(root)?;
-    let capabilities = prd_capabilities(root)?;
+    let (active, capabilities) = capability_baseline_authority(root)?;
     let constraints = prd_constraints(root)?;
     let flows = architecture_flows(root)?;
-    validate_capability_sets(&capabilities, &flows, None)?;
     validate_constraint_set(&constraints)?;
 
     let traceability = read_json(&root.join(TRACEABILITY_PATH))?;
@@ -181,6 +179,21 @@ pub(crate) fn validate_workspace(root: &Path) -> Result<TraceabilityRunReport, T
         deferred_contract_tests: CAPABILITY_COUNT,
         accessibility_generation_deferred: true,
     })
+}
+
+/// Resolves the exact active specification and 52-capability authority for baseline validation.
+///
+/// # Errors
+///
+/// Returns an error if the PRD or architecture flow sets are missing, malformed, duplicated, or not the same exact 52-capability set.
+pub(crate) fn capability_baseline_authority(
+    root: &Path,
+) -> Result<(SpecificationVersion, BTreeSet<CapabilityId>), TraceabilityError> {
+    let active = active_specification(root)?;
+    let capabilities = prd_capabilities(root)?;
+    let flows = architecture_flows(root)?;
+    validate_capability_sets(&capabilities, &flows, None)?;
+    Ok((active, capabilities))
 }
 
 fn validate_traceability(

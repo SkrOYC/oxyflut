@@ -21,7 +21,7 @@ const LOCK_RECOVERY_ATTEMPTS: u8 = 2;
 const STALE_LOCK_AGE: Duration = Duration::from_secs(5 * 60);
 static TEMPORARY_SEQUENCE: AtomicU64 = AtomicU64::new(0);
 
-/// Writes a content-addressed derived JSON record with verified `sourcePath` and `sourceSha256` provenance without opening its source for writing.
+/// Writes a content-addressed derived JSON record below the default evidence directory with verified `sourcePath` and `sourceSha256` provenance without opening its source for writing.
 ///
 /// # Errors
 ///
@@ -31,11 +31,34 @@ pub fn write_derived_json(
     record: &Value,
     source: &EvidenceRef,
 ) -> Result<EvidenceRef, EvidenceError> {
-    write_derived_json_with(root, record, source, |writer, bytes| {
+    let directory = RepositoryPath::parse(DERIVED_EVIDENCE_DIRECTORY).map_err(|source| {
+        EvidenceError::InvalidPath {
+            path: DERIVED_EVIDENCE_DIRECTORY.to_owned(),
+            source,
+        }
+    })?;
+    write_derived_json_to_directory(root, &directory, record, source)
+}
+
+/// Writes a content-addressed derived JSON record below one repository-relative evidence directory.
+///
+/// The directory must itself be below `qualification/`. The returned reference is named by the canonical record digest and retains the verified source path and digest as derived provenance.
+///
+/// # Errors
+///
+/// Returns an error when the output directory is outside the evidence root, provenance is invalid, the record isn't an object, or publication fails.
+pub fn write_derived_json_to_directory(
+    root: &Path,
+    directory: &RepositoryPath,
+    record: &Value,
+    source: &EvidenceRef,
+) -> Result<EvidenceRef, EvidenceError> {
+    write_derived_json_to_directory_with(root, directory, record, source, |writer, bytes| {
         writer.write_all(bytes)
     })
 }
 
+#[cfg(test)]
 pub(super) fn write_derived_json_with<F>(
     root: &Path,
     record: &Value,
@@ -45,6 +68,26 @@ pub(super) fn write_derived_json_with<F>(
 where
     F: FnOnce(&mut dyn Write, &[u8]) -> io::Result<()>,
 {
+    let directory = RepositoryPath::parse(DERIVED_EVIDENCE_DIRECTORY).map_err(|source| {
+        EvidenceError::InvalidPath {
+            path: DERIVED_EVIDENCE_DIRECTORY.to_owned(),
+            source,
+        }
+    })?;
+    write_derived_json_to_directory_with(root, &directory, record, source, write)
+}
+
+fn write_derived_json_to_directory_with<F>(
+    root: &Path,
+    directory: &RepositoryPath,
+    record: &Value,
+    source: &EvidenceRef,
+    write: F,
+) -> Result<EvidenceRef, EvidenceError>
+where
+    F: FnOnce(&mut dyn Write, &[u8]) -> io::Result<()>,
+{
+    super::ensure_evidence_path(directory)?;
     let _ = super::verify_reference(root, source)?;
     let mut record = record
         .as_object()
@@ -64,16 +107,17 @@ where
 
     let bytes = canonical_json_bytes(&Value::Object(record))?;
     let digest = hash_reader(Cursor::new(&bytes)).map_err(|source| EvidenceError::Io {
-        path: root.join(DERIVED_EVIDENCE_DIRECTORY),
+        path: root.join(directory.as_str()),
         source,
     })?;
-    let path = RepositoryPath::parse(&format!("{DERIVED_EVIDENCE_DIRECTORY}/{digest}.json"))
-        .map_err(|source| EvidenceError::InvalidPath {
-            path: DERIVED_EVIDENCE_DIRECTORY.to_owned(),
+    let path = RepositoryPath::parse(&format!("{}/{digest}.json", directory.as_str())).map_err(
+        |source| EvidenceError::InvalidPath {
+            path: directory.as_str().to_owned(),
             source,
-        })?;
+        },
+    )?;
     let size_bytes = u64::try_from(bytes.len()).map_err(|_| EvidenceError::Io {
-        path: root.join(DERIVED_EVIDENCE_DIRECTORY),
+        path: root.join(directory.as_str()),
         source: io::Error::other("derived evidence exceeds supported file size"),
     })?;
     let reference = EvidenceRef {
