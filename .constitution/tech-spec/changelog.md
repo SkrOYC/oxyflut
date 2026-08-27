@@ -6,8 +6,17 @@ All notable changes to the technical specification appear in this file.
 
 ### Changed
 
+- Amended 2026-08-27: Replaced `bunx prettier@3.9.6` with the immutable Nix-declared `prettier` 3.9.6 executable from the hash-pinned npm tarball. This doesn't change evidence formats or their compatibility.
+- Amended 2026-08-27: Added `devenv.nix`, `devenv.yaml`, `devenv.lock`, and `.envrc` as the required reproducible verification shell. Every verification command runs inside `devenv shell`.
+- The specification remains v0.15.0 because `contracts/specification-phase.json` and committed baselines require exact `specificationVersion` equality. Updating only the specification version would invalidate those bindings, so this amendment doesn't change the version.
 - Advanced platform contracts to v5 with the active specification version and typed immutable absent-event entries keyed by gate, event, environment, and candidate.
 - Advanced qualification evidence to v5 so every `not-applicable-kk` gate names an exact absent-event entry through a versioned, digest-bound platform-baseline reference.
+
+### Known gaps routed to OXY-D001
+
+- `.constitution/tech-spec/data-models/capability-traceability.schema.json` `mappings[].contractTests[]` identifies a contract test but has no physical file location.
+- `.constitution/tech-spec/data-models/accessibility-map.schema.json` `reverseActions[].textLayoutBinding` has no text-layout generation value.
+- `.constitution/tech-spec/data-models/specification-phase.schema.json` `promotionEvidence.layoutQualification`, `finalContractSet`, `targetMatrix`, `losingCandidateRemoval`, and `billOfMaterials` use generic evidence references instead of typed schemas.
 
 ## [v0.14.0] - 2026-08-26
 

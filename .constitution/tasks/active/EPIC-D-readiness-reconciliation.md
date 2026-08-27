@@ -21,6 +21,15 @@ Close this Stage 4 iteration without crossing an unresolved upstream decision. T
   - STOP if any result is inferred from a plan, implementation intention, inaccessible hardware, or candidate-internal counter.
   - STOP after naming the exact Stage 3 revisions and remaining user or external inputs; don't set `candidateImplementationReady` from Stage 4.
 - **Description:** Consolidate the contract-validator results, six spike recommendations, hardware-access register, assessor confirmations, staged tool and external-contract manifests, baseline tooling, measurement templates, environment tooling, and read-only lock report. Produce an exact Stage 3 reconciliation checklist and the conditions for the next Stage 4 minor release. The checklist must separately name the approved 52-capability baseline, reference application, scenes, interaction scripts, fonts, assets, window matrix, cache states, release flags, scoring anchors, assessor assignments, reference-environment captures, and authoritative resolved-tool lock.
+
+##### OXY-D001 Inputs from Epic A
+
+The reconciliation report must name these Stage 3 revisions:
+
+- `.constitution/tech-spec/data-models/capability-traceability.schema.json` `mappings[].contractTests[]` identifies a contract test but has no physical file location.
+- `.constitution/tech-spec/data-models/accessibility-map.schema.json` `reverseActions[].textLayoutBinding` has no text-layout generation value.
+- `.constitution/tech-spec/data-models/specification-phase.schema.json` `promotionEvidence.layoutQualification`, `finalContractSet`, `targetMatrix`, `losingCandidateRemoval`, and `billOfMaterials` use generic evidence references instead of typed schemas.
+
 - **Acceptance:**
   - **Mode:** invariant
   - **Evidence:**
