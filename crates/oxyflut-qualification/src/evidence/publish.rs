@@ -21,6 +21,47 @@ const LOCK_RECOVERY_ATTEMPTS: u8 = 2;
 const STALE_LOCK_AGE: Duration = Duration::from_secs(5 * 60);
 static TEMPORARY_SEQUENCE: AtomicU64 = AtomicU64::new(0);
 
+/// Writes canonical JSON below one repository-relative directory at a content-addressed path.
+///
+/// # Errors
+///
+/// Returns an error when the output directory is outside the evidence root, canonical encoding fails, or publication fails.
+pub fn write_canonical_json_to_directory(
+    root: &Path,
+    directory: &RepositoryPath,
+    record: &Value,
+) -> Result<EvidenceRef, EvidenceError> {
+    super::ensure_evidence_path(directory)?;
+    let bytes = canonical_json_bytes(record)?;
+    let digest = hash_reader(Cursor::new(&bytes)).map_err(|source| EvidenceError::Io {
+        path: root.join(directory.as_str()),
+        source,
+    })?;
+    let path = RepositoryPath::parse(&format!("{}/{digest}.json", directory.as_str())).map_err(
+        |source| EvidenceError::InvalidPath {
+            path: directory.as_str().to_owned(),
+            source,
+        },
+    )?;
+    write_canonical_json_bytes_to_path(root, &path, &bytes, |writer, bytes| writer.write_all(bytes))
+}
+
+/// Writes canonical JSON at one repository-relative immutable evidence path.
+///
+/// The returned reference contains the canonical bytes' SHA-256 even when the caller-selected file name binds another immutable record, such as a provenance sidecar.
+///
+/// # Errors
+///
+/// Returns an error when the output path is outside the evidence root, canonical encoding fails, or publication fails.
+pub fn write_canonical_json_to_path(
+    root: &Path,
+    path: &RepositoryPath,
+    record: &Value,
+) -> Result<EvidenceRef, EvidenceError> {
+    let bytes = canonical_json_bytes(record)?;
+    write_canonical_json_bytes_to_path(root, path, &bytes, |writer, bytes| writer.write_all(bytes))
+}
+
 /// Writes a content-addressed derived JSON record below the default evidence directory with verified `sourcePath` and `sourceSha256` provenance without opening its source for writing.
 ///
 /// # Errors
@@ -116,21 +157,38 @@ where
             source,
         },
     )?;
+    write_canonical_json_bytes_to_path(root, &path, &bytes, write)
+}
+
+fn write_canonical_json_bytes_to_path<F>(
+    root: &Path,
+    path: &RepositoryPath,
+    bytes: &[u8],
+    write: F,
+) -> Result<EvidenceRef, EvidenceError>
+where
+    F: FnOnce(&mut dyn Write, &[u8]) -> io::Result<()>,
+{
+    super::ensure_evidence_path(path)?;
+    let digest = hash_reader(Cursor::new(bytes)).map_err(|source| EvidenceError::Io {
+        path: root.join(path.as_str()),
+        source,
+    })?;
     let size_bytes = u64::try_from(bytes.len()).map_err(|_| EvidenceError::Io {
-        path: root.join(directory.as_str()),
-        source: io::Error::other("derived evidence exceeds supported file size"),
+        path: root.join(path.as_str()),
+        source: io::Error::other("canonical evidence exceeds supported file size"),
     })?;
     let reference = EvidenceRef {
-        path,
+        path: path.clone(),
         sha256: digest,
         media_type: MediaType::application_json(),
         size_bytes,
     };
-    publish_content_addressed(root, &reference, &bytes, write)?;
+    publish_immutable(root, &reference, bytes, write)?;
     Ok(reference)
 }
 
-fn publish_content_addressed<F>(
+fn publish_immutable<F>(
     root: &Path,
     reference: &EvidenceRef,
     bytes: &[u8],
