@@ -4,7 +4,7 @@
     "localPath": "qualification/schemas/external/slsa-provenance-v1/cue/provenance.cue",
     "sha256": "0d68f4ce799a5152151e0efd0fc7ae3b3769b512810d8667eab2ce77e25de40f"
   },
-  "derivation": "Draft 2020-12 structural JSON Schema transcribed from the authoritative SLSA Provenance v1 CUE schema and validated with the local in-toto Statement v1 schema.",
-  "verifier": "jsonschema-0.51.0-draft-2020-12",
-  "sha256": "4969ef98828ddcca7932af375eced1bd7cb24556d9ab16dbbaa2fc588e0fc9f0"
+  "derivation": "Draft 2020-12 JSON Schema transcribed from the authoritative SLSA Provenance v1 CUE contract, including typed resource descriptors, builder details, and metadata, and validated with the local in-toto Statement v1 schema.",
+  "verifier": "jsonschema-0.51.0-draft-2020-12-format-assertions",
+  "sha256": "4679b0c1ed9958f9bcbf267c5859a5b945603b9b6601a7b17a4813126a228fb5"
 }

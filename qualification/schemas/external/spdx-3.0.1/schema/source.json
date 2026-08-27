@@ -1,0 +1,20 @@
+{
+  "kind": "authoritative",
+  "repository": "https://github.com/spdx/spdx-spec",
+  "commit": "61a649da8ca27924ac1ca8d2a061cb228839b24c",
+  "path": "schema/3.0.1/spdx-json-schema.json",
+  "retrievalUrl": "https://spdx.org/schema/3.0.1/spdx-json-schema.json",
+  "publicationSource": {
+    "localPath": "qualification/schemas/external/spdx-3.0.1/spec/serializations.source",
+    "sha256": "cd62cd4edc55a80a2ca8ca4bb431405f017312f640eccf8f1a7bebdbdf84031a",
+    "path": "docs/serializations.md",
+    "commit": "61a649da8ca27924ac1ca8d2a061cb228839b24c"
+  },
+  "license": "Community-Spec-1.0 AND CC-BY-3.0",
+  "licenseSource": {
+    "path": "LICENSE",
+    "commit": "61a649da8ca27924ac1ca8d2a061cb228839b24c"
+  },
+  "version": "3.0.1",
+  "sha256": "582c64e809d5b3ef9bd0c4de13a32391b47b0284a3e8d199569fb96f649234b1"
+}

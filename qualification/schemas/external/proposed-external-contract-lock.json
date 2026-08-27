@@ -4,11 +4,11 @@
   "contracts": {
     "spdx-3.0.1": {
       "version": "3.0.1",
-      "source": "https://raw.githubusercontent.com/spdx/spdx-spec/61a649da8ca27924ac1ca8d2a061cb228839b24c/rdf/spdx-context.jsonld",
+      "source": "https://spdx.org/schema/3.0.1/spdx-json-schema.json",
       "epistemicStatus": "kk-locked",
-      "localPath": "qualification/schemas/external/spdx-3.0.1/jsonld-context/spdx-context.jsonld",
-      "sha256": "c72b0928f094c83e5c127784edb1ebca2af74a104fcacc007c332b23cbc788bd",
-      "verifier": "jsonschema-0.51.0-draft-2020-12:derived-spdx-jsonld-structural-v1"
+      "localPath": "qualification/schemas/external/spdx-3.0.1/schema/spdx-json-schema.json",
+      "sha256": "582c64e809d5b3ef9bd0c4de13a32391b47b0284a3e8d199569fb96f649234b1",
+      "verifier": "jsonschema-0.51.0-draft-2020-12:spdx-3.0.1-authoritative-json-schema-plus-jsonld-context-v1"
     },
     "in-toto-statement-v1": {
       "version": "1",

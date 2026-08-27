@@ -15,34 +15,91 @@
           "properties": {
             "buildDefinition": {
               "type": "object",
-              "required": ["buildType", "externalParameters"],
+              "required": [
+                "buildType",
+                "externalParameters",
+                "internalParameters",
+                "resolvedDependencies"
+              ],
               "properties": {
-                "buildType": { "type": "string", "minLength": 1 },
+                "buildType": { "type": "string" },
                 "externalParameters": { "type": "object" },
                 "internalParameters": { "type": "object" },
-                "resolvedDependencies": { "type": "array" }
+                "resolvedDependencies": {
+                  "type": "array",
+                  "items": { "$ref": "#/$defs/resourceDescriptor" }
+                }
               }
             },
             "runDetails": {
               "type": "object",
-              "required": ["builder"],
+              "required": ["builder", "metadata", "byproducts"],
               "properties": {
                 "builder": {
                   "type": "object",
-                  "required": ["id"],
+                  "required": ["id", "builderDependencies", "version"],
                   "properties": {
-                    "id": { "type": "string", "minLength": 1 },
-                    "builderDependencies": { "type": "array" },
-                    "version": { "type": "object" }
+                    "id": { "type": "string" },
+                    "builderDependencies": {
+                      "type": "array",
+                      "items": { "$ref": "#/$defs/resourceDescriptor" }
+                    },
+                    "version": {
+                      "type": "object",
+                      "additionalProperties": { "type": "string" }
+                    }
                   }
                 },
-                "metadata": { "type": "object" },
-                "byproducts": { "type": "array" }
+                "metadata": {
+                  "type": "object",
+                  "required": ["invocationId", "startedOn", "finishedOn"],
+                  "properties": {
+                    "invocationId": { "type": "string" },
+                    "startedOn": { "type": "string", "format": "date-time" },
+                    "finishedOn": { "type": "string", "format": "date-time" }
+                  }
+                },
+                "byproducts": {
+                  "type": "array",
+                  "items": { "$ref": "#/$defs/resourceDescriptor" }
+                }
               }
             }
           }
         }
       }
     }
-  ]
+  ],
+  "$defs": {
+    "resourceDescriptor": {
+      "type": "object",
+      "required": [
+        "uri",
+        "digest",
+        "name",
+        "downloadLocation",
+        "mediaType",
+        "content",
+        "annotations"
+      ],
+      "properties": {
+        "uri": { "type": "string" },
+        "digest": {
+          "type": "object",
+          "required": ["sha256", "sha512", "gitCommit"],
+          "properties": {
+            "sha256": { "type": "string", "pattern": "^[0-9a-f]+$" },
+            "sha512": { "type": "string", "pattern": "^[0-9a-f]+$" },
+            "gitCommit": { "type": "string", "pattern": "^[0-9a-f]+$" }
+          },
+          "additionalProperties": { "type": "string", "pattern": "^[0-9a-f]+$" }
+        },
+        "name": { "type": "string" },
+        "downloadLocation": { "type": "string" },
+        "mediaType": { "type": "string" },
+        "content": { "type": "string", "contentEncoding": "base64" },
+        "annotations": { "type": "object" }
+      }
+    }
+  }
 }

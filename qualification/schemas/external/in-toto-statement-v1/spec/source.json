@@ -5,6 +5,10 @@
   "path": "spec/v1.0/statement.md",
   "retrievalUrl": "https://raw.githubusercontent.com/in-toto/attestation/ee16c68a11dfcfbdc891600cacd767896fe6e724/spec/v1.0/statement.md",
   "license": "Apache-2.0",
+  "licenseSource": {
+    "path": "LICENSE",
+    "commit": "ee16c68a11dfcfbdc891600cacd767896fe6e724"
+  },
   "version": "1",
   "sha256": "e8fce554c62cd1ea6d7a18cf8bd75f4eb0cc85c761ccde596133968ded093d9e"
 }
