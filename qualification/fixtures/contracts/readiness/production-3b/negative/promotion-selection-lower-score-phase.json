@@ -10,24 +10,24 @@
   "requiredSuccessor": "none",
   "blockers": [],
   "candidateStates": {
-    "focused": "selected",
-    "integrated": "removed"
+    "focused": "removed",
+    "integrated": "selected"
   },
   "requiredProductionVersion": ">=1.0.0",
   "promotionEvidence": {
     "qualificationLockDigest": "bd965282e577ba3b8e6e80c1e3ecb879f9e95ffa6f4c8bf2f5505208301872bf",
-    "selectedCandidate": "focused",
+    "selectedCandidate": "integrated",
     "selectionDecision": {
-      "path": "evidence/selection-decision.json",
-      "sha256": "82d081b06dcd8b8badc34f2af7eb5e32c86b2f334aa2038dcc0964ca186799b6"
+      "path": "negative/fabricated-selection-decision.json",
+      "sha256": "1c14e35ffbe481b518026020bc0ef64af02f82b494c74c8cfab3d424c9345422"
     },
     "selectedCandidateQualification": {
-      "path": "evidence/selected-qualification.json",
-      "sha256": "d9da988d9ef03ef2ec0b596163f56626d90250724da13b1a269f06e8925a9130"
+      "path": "evidence/eligible-integrated-qualification.json",
+      "sha256": "fce8f82926abf93ed09f8ed7e9ea166da524d456e56909c55362009d8d65d7d4"
     },
     "layoutQualification": {
-      "path": "evidence/missing-artifact.txt",
-      "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+      "path": "evidence/layoutQualification.txt",
+      "sha256": "14fd383035a3791b1d0c0b65cf32157bc2ce2e07ee88398f4fc1eb2fac0d4f8f"
     },
     "acceptedAdr0010": {
       "path": ".constitution/tech-spec/adrs/ADR-0010-production-substrate.md",

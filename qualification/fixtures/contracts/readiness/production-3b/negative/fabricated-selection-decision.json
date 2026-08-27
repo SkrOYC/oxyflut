@@ -8,22 +8,22 @@
       "sha256": "d9da988d9ef03ef2ec0b596163f56626d90250724da13b1a269f06e8925a9130"
     },
     "integrated": {
-      "path": "evidence/integrated-qualification.json",
-      "sha256": "93a960feae3a547ce3455630c213e829254f25f180eb2f4c2e2899d3aa35760e"
+      "path": "evidence/eligible-integrated-qualification.json",
+      "sha256": "fce8f82926abf93ed09f8ed7e9ea166da524d456e56909c55362009d8d65d7d4"
     }
   },
   "eligibility": {
     "focused": "eligible",
-    "integrated": "ineligible"
+    "integrated": "eligible"
   },
-  "decisionBasis": "sole-focused-eligible",
-  "outcome": "select-focused",
-  "selectedCandidate": "focused",
+  "decisionBasis": "score-margin",
+  "outcome": "select-integrated",
+  "selectedCandidate": "integrated",
   "calculation": {
     "algorithmVersion": "prd-v1.0.0",
-    "focusedScore": null,
-    "integratedScore": null,
-    "absoluteDifference": null,
+    "focusedScore": 100,
+    "integratedScore": 80,
+    "absoluteDifference": 20,
     "tieBreakApplied": false
   },
   "rationale": "Focused is the sole eligible candidate."

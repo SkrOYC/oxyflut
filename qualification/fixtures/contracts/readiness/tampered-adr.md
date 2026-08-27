@@ -1,5 +1,11 @@
 # Production rendering substrate
 
-**Status:** proposed
+**Status:** accepted
 
-Selected candidate: focused.
+## Context
+
+The focused and integrated candidates remain under consideration.
+
+## Decision
+
+Continue investigation.

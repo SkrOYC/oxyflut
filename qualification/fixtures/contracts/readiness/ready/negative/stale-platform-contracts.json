@@ -1,6 +1,6 @@
 {
   "schemaVersion": "5.0.0",
-  "specificationVersion": "1.0.0",
+  "specificationVersion": "0.14.0",
   "environments": {
     "macos": {
       "status": "kk",
@@ -587,24 +587,5 @@
       "openQuestions": []
     }
   },
-  "absentEvents": [
-    {
-      "id": "ABS-CMP-001",
-      "gateId": "CAP-CMP-001",
-      "eventId": "runtime.lifecycle",
-      "status": "absent-kk",
-      "environments": [
-        "macos"
-      ],
-      "candidates": [
-        "focused"
-      ],
-      "evidence": [
-        {
-          "path": "evidence/platform.txt",
-          "sha256": "37b80593f75ca28567d6e0e5b15d228ea68e6e119d6d65dacdb9cf8036a988a2"
-        }
-      ]
-    }
-  ]
+  "absentEvents": []
 }

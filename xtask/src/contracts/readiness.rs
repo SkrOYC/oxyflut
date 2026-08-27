@@ -26,6 +26,7 @@ const LOCK_SCHEMA: &str = "urn:oxyflut:schema:qualification-lock:5";
 const PHASE_SCHEMA: &str = "urn:oxyflut:schema:specification-phase:1";
 const BASELINE_SCHEMA: &str = "urn:oxyflut:schema:capability-baseline:4";
 const PLATFORM_SCHEMA: &str = "urn:oxyflut:schema:platform-contracts:5";
+const EXTERNAL_LOCK_SCHEMA: &str = "urn:oxyflut:schema:external-contract-lock:1";
 
 /// The validation state of one readiness gate.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -113,6 +114,9 @@ pub(crate) enum ReadinessError {
         /// The incorrectly claimed gate.
         gate: &'static str,
     },
+    /// A qualification evidence record failed the shared semantic validator.
+    #[error("qualification evidence semantic validation failed")]
+    Traceability(#[from] super::traceability::TraceabilityError),
     /// A production artifact cannot prove its required lock, candidate, and version binding.
     #[error("artifact cannot prove lock binding: {key}")]
     ArtifactCannotProveBinding {
@@ -135,7 +139,8 @@ impl ReadinessError {
             | Self::Json { .. }
             | Self::Digest(_)
             | Self::Invariant { .. }
-            | Self::InvalidClaim { .. } => "promotion: failed".to_owned(),
+            | Self::InvalidClaim { .. }
+            | Self::Traceability(_) => "promotion: failed".to_owned(),
         }
     }
 }
@@ -216,6 +221,8 @@ fn candidate_input_issues(
     registry: &SchemaRegistry,
 ) -> Result<Vec<String>, ReadinessError> {
     let mut issues = string_array_field(lock, "preImplementationKnownUnknowns")?;
+    let source_pins = object_field(lock, "sourcePins")?;
+    let engine_commit = string_field(object_value(source_pins, "flutterEngine")?, "commit")?;
     let artifacts = object_field(lock, "candidateArtifacts")?;
     for artifact in ["darwin-arm64", "linux-x64", "windows-x64"] {
         let artifact = object_value(artifacts, artifact)?
@@ -228,6 +235,11 @@ fn candidate_input_issues(
         {
             issues.push("candidate-artifact-http-verification".to_owned());
         }
+        require_equal(
+            string_from(artifact, "sourceRevision")?,
+            engine_commit,
+            "candidate-artifact-source-revision",
+        )?;
         require_digest_or_issue(artifact, "sha256", "candidate-artifact-digest", &mut issues)?;
         require_positive_integer_or_issue(
             artifact,
@@ -294,14 +306,7 @@ fn candidate_input_issues(
         "platform-contracts",
         &mut issues,
     )?;
-    require_bound_digest_or_issue(
-        root,
-        policy,
-        "externalContractLock",
-        EXTERNAL_CONTRACT_LOCK_PATH,
-        "external-contract-lock",
-        &mut issues,
-    )?;
+    validate_external_contract_lock(root, policy, registry, &mut issues)?;
     for field in [
         "sampleValidityRules",
         "scoringAnchors",
@@ -313,7 +318,7 @@ fn candidate_input_issues(
     }
     require_positive_integer_or_issue(policy, "layoutVisitCap", "layout-visit-cap", &mut issues)?;
     validate_capability_baseline(root, policy, active_version, registry, &mut issues)?;
-    validate_platform_contracts(root, policy, registry, &mut issues)?;
+    validate_platform_contracts(root, policy, active_version, registry, &mut issues)?;
 
     let tools = array_field(lock, "resolvedTools")?;
     if tools.is_empty() {
@@ -332,6 +337,11 @@ fn candidate_input_issues(
             require_nonempty_string_or_issue(tool, field, "resolved-tool", &mut issues)?;
         }
         require_digest_or_issue(tool, "sha256", "resolved-tool", &mut issues)?;
+        let _ = digests::verify_reference(
+            root,
+            string_from(tool, "executablePath")?,
+            string_from(tool, "sha256")?,
+        )?;
     }
 
     sort_and_deduplicate(&mut issues);
@@ -357,6 +367,62 @@ fn measurement_input_issues(
     issues.extend(gating);
     sort_and_deduplicate(&mut issues);
     Ok(issues)
+}
+
+fn validate_external_contract_lock(
+    root: &Path,
+    policy: &Map<String, Value>,
+    registry: &SchemaRegistry,
+    issues: &mut Vec<String>,
+) -> Result<(), ReadinessError> {
+    let Some(value) = policy.get("externalContractLock") else {
+        return fail("external-contract-lock");
+    };
+    if value.is_null() {
+        issues.push("external-contract-lock".to_owned());
+        return Ok(());
+    }
+    let digest = value
+        .as_str()
+        .ok_or_else(|| invariant("external-contract-lock"))?;
+    let verified = digests::verify_reference(root, EXTERNAL_CONTRACT_LOCK_PATH, digest)?;
+    let external_lock = read_json(&verified.resolved_path)?;
+    validate_schema(
+        registry,
+        EXTERNAL_LOCK_SCHEMA,
+        &external_lock,
+        "external-contract-lock",
+    )?;
+    let contracts = object_field(&external_lock, "contracts")?;
+    for contract in contracts.values() {
+        let contract = contract
+            .as_object()
+            .ok_or_else(|| invariant("external-contract"))?;
+        match string_from(contract, "epistemicStatus")? {
+            "ku-gating" => issues.push("external-contract-known-unknown".to_owned()),
+            "kk-locked" => {
+                let path = contract
+                    .get("localPath")
+                    .and_then(Value::as_str)
+                    .filter(|path| !path.is_empty())
+                    .ok_or_else(|| invariant("external-contract-snapshot"))?;
+                let digest = contract
+                    .get("sha256")
+                    .and_then(Value::as_str)
+                    .ok_or_else(|| invariant("external-contract-snapshot"))?;
+                if contract
+                    .get("verifier")
+                    .and_then(Value::as_str)
+                    .is_none_or(str::is_empty)
+                {
+                    return fail("external-contract-verifier");
+                }
+                let _ = digests::verify_reference(root, path, digest)?;
+            }
+            _ => return fail("external-contract-status"),
+        }
+    }
+    Ok(())
 }
 
 fn validate_capability_baseline(
@@ -405,6 +471,7 @@ fn validate_capability_baseline(
 fn validate_platform_contracts(
     root: &Path,
     policy: &Map<String, Value>,
+    active_version: &str,
     registry: &SchemaRegistry,
     issues: &mut Vec<String>,
 ) -> Result<(), ReadinessError> {
@@ -420,6 +487,11 @@ fn validate_platform_contracts(
     let verified = digests::verify_reference(root, PLATFORM_CONTRACTS_PATH, digest)?;
     let platform = read_json(&verified.resolved_path)?;
     validate_schema(registry, PLATFORM_SCHEMA, &platform, "platform-contracts")?;
+    require_equal(
+        string_field(&platform, "specificationVersion")?,
+        active_version,
+        "platform-contracts-specification-version",
+    )?;
     validate_platform_value(root, &platform, issues)
 }
 

@@ -5,10 +5,10 @@
     "spdx-3.0.1": {
       "version": "3.0.1",
       "source": "https://spdx.github.io/spdx-spec/v3.0.1/",
-      "epistemicStatus": "kk-locked",
-      "localPath": "external/spdx-3.0.1.snapshot",
-      "sha256": "273b5618299bcbaeabe43ea6a7ccf58e7b8d076b258f0ff17e108f8678caf3d6",
-      "verifier": "fixture-verifier"
+      "epistemicStatus": "ku-gating",
+      "localPath": null,
+      "sha256": null,
+      "verifier": null
     },
     "in-toto-statement-v1": {
       "version": "1",

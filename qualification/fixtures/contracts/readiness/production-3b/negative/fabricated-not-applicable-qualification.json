@@ -1,11 +1,11 @@
 {
   "schemaVersion": "5.0.0",
-  "candidate": "integrated",
+  "candidate": "focused",
   "source": {
     "oxyflutCommit": "0000000000000000000000000000000000000000",
     "flutterFrameworkCommit": "4cf24164269a5ebf0c16a028a00727d0e77bbb05",
     "flutterEngineCommit": "5f77625673248ee5846fbcaf5d3e1a3878386fd7",
-    "candidateCommit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "candidateCommit": "5f77625673248ee5846fbcaf5d3e1a3878386fd7",
     "adapterCommit": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
   },
   "lockDigest": "bd965282e577ba3b8e6e80c1e3ecb879f9e95ffa6f4c8bf2f5505208301872bf",
@@ -23,7 +23,7 @@
         "notApplicable": null
       },
       "CAP-CMP-002": {
-        "status": "pass",
+        "status": "not-applicable-kk",
         "evidence": [
           {
             "path": "evidence/nested-evidence.json",
@@ -31,7 +31,15 @@
             "mediaType": "application/json"
           }
         ],
-        "notApplicable": null
+        "notApplicable": {
+          "platformBaseline": {
+            "path": ".constitution/tech-spec/contracts/platform-contracts.json",
+            "sha256": "d9bbd262df08789fef4bcaa1165278db2dc607d65798555602d99d0a15be77c1",
+            "schemaVersion": "5.0.0",
+            "specificationVersion": "1.0.0"
+          },
+          "absentEventId": "ABS-CMP-001"
+        }
       },
       "CAP-CMP-003": {
         "status": "pass",
@@ -2606,5 +2614,114 @@
       "notApplicable": null
     }
   },
-  "eligibility": "ineligible"
+  "eligibility": "eligible",
+  "assessors": [
+    {
+      "id": "assessor-one",
+      "frozenBeforeImplementation": true
+    },
+    {
+      "id": "assessor-two",
+      "frozenBeforeImplementation": true
+    }
+  ],
+  "scores": {
+    "platformCoverage": {
+      "weight": 30,
+      "assessorScores": [
+        5,
+        5
+      ],
+      "consensusScore": 5,
+      "consensusRationale": "Both assessors accepted the fixture evidence.",
+      "evidence": [
+        {
+          "path": "evidence/nested-evidence.json",
+          "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+          "mediaType": "application/json"
+        }
+      ]
+    },
+    "upgradeMaintenance": {
+      "weight": 20,
+      "assessorScores": [
+        5,
+        5
+      ],
+      "consensusScore": 5,
+      "consensusRationale": "Both assessors accepted the fixture evidence.",
+      "evidence": [
+        {
+          "path": "evidence/nested-evidence.json",
+          "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+          "mediaType": "application/json"
+        }
+      ]
+    },
+    "performance": {
+      "weight": 15,
+      "assessorScores": [
+        5,
+        5
+      ],
+      "consensusScore": 5,
+      "consensusRationale": "Both assessors accepted the fixture evidence.",
+      "evidence": [
+        {
+          "path": "evidence/nested-evidence.json",
+          "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+          "mediaType": "application/json"
+        }
+      ]
+    },
+    "safetySecurityPrivacy": {
+      "weight": 15,
+      "assessorScores": [
+        5,
+        5
+      ],
+      "consensusScore": 5,
+      "consensusRationale": "Both assessors accepted the fixture evidence.",
+      "evidence": [
+        {
+          "path": "evidence/nested-evidence.json",
+          "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+          "mediaType": "application/json"
+        }
+      ]
+    },
+    "distribution": {
+      "weight": 10,
+      "assessorScores": [
+        5,
+        5
+      ],
+      "consensusScore": 5,
+      "consensusRationale": "Both assessors accepted the fixture evidence.",
+      "evidence": [
+        {
+          "path": "evidence/nested-evidence.json",
+          "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+          "mediaType": "application/json"
+        }
+      ]
+    },
+    "operationalClarity": {
+      "weight": 10,
+      "assessorScores": [
+        5,
+        5
+      ],
+      "consensusScore": 5,
+      "consensusRationale": "Both assessors accepted the fixture evidence.",
+      "evidence": [
+        {
+          "path": "evidence/nested-evidence.json",
+          "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+          "mediaType": "application/json"
+        }
+      ]
+    }
+  },
+  "weightedTotal": 100
 }
