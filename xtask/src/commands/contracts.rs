@@ -12,6 +12,10 @@ use crate::toolchain::{self, ToolchainManifest};
 const DATA_MODELS_PATH: &str = ".constitution/tech-spec/data-models";
 const CONTRACTS_PATH: &str = ".constitution/tech-spec/contracts";
 const TRACEABILITY_PATH: &str = ".constitution/tech-spec/contracts/capability-traceability.json";
+const CONTRACT_TESTS_DEFERRED_REASON: &str = "52 pending candidate implementation";
+const ACCESSIBILITY_GENERATION_PATH: &str =
+    ".constitution/tech-spec/data-models/accessibility-map.schema.json";
+const ACCESSIBILITY_GENERATION_DEFERRED_REASON: &str = "schema lacks generation field";
 const REGISTRY_PATH: &str = ".constitution/tech-spec/contracts/diagnostic-event-registry.json";
 const LOCK_PATH: &str = ".constitution/tech-spec/contracts/qualification-lock.json";
 const PHASE_PATH: &str = ".constitution/tech-spec/contracts/specification-phase.json";
@@ -62,6 +66,16 @@ fn validate_workspace(root: &Path) -> ContractValidationReport {
         TRACEABILITY_PATH,
         validators::traceability::validate_workspace(root),
     ));
+    summaries.push(FamilySummary::deferred(
+        "contract-tests",
+        CONTRACT_TESTS_DEFERRED_REASON,
+        TRACEABILITY_PATH,
+    ));
+    summaries.push(FamilySummary::deferred(
+        "accessibility-generation",
+        ACCESSIBILITY_GENERATION_DEFERRED_REASON,
+        ACCESSIBILITY_GENERATION_PATH,
+    ));
     summaries.push(summary_from_result(
         "registry",
         REGISTRY_PATH,
@@ -73,24 +87,9 @@ fn validate_workspace(root: &Path) -> ContractValidationReport {
         validators::digests::validate_workspace(root),
     ));
 
-    match validators::readiness::validate_workspace(root) {
-        Ok(_) => {
-            summaries.push(FamilySummary::ok("readiness", LOCK_PATH));
-            summaries.push(FamilySummary::ok("promotion", PHASE_PATH));
-        }
-        Err(error) => {
-            summaries.push(FamilySummary::failed("readiness", LOCK_PATH));
-            let promotion_path = if error
-                .promotion_summary()
-                .starts_with("promotion: failed (artifact cannot prove lock binding:")
-            {
-                PHASE_PATH
-            } else {
-                LOCK_PATH
-            };
-            summaries.push(FamilySummary::failed("promotion", promotion_path));
-        }
-    }
+    summaries.extend(readiness_summaries(
+        validators::readiness::validate_workspace(root),
+    ));
 
     summaries.push(match validate_rust_contracts(root) {
         Ok(()) => FamilySummary::ok("rust-contract", RUST_CONTRACTS_PATH),
@@ -154,6 +153,28 @@ fn summary_from_native_result(
             toolchain::ToolchainError::UnsupportedHost { .. },
         )) => FamilySummary::failed(family, UNSUPPORTED_HOST),
         Err(_) => FamilySummary::failed(family, contract_path),
+    }
+}
+
+fn readiness_summaries(
+    result: Result<
+        validators::readiness::ReadinessReport,
+        validators::readiness::ReadinessValidationError,
+    >,
+) -> [FamilySummary; 2] {
+    match result {
+        Ok(_) => [
+            FamilySummary::ok("readiness", LOCK_PATH),
+            FamilySummary::ok("promotion", PHASE_PATH),
+        ],
+        Err(error) if error.is_promotion_only() => [
+            FamilySummary::ok("readiness", LOCK_PATH),
+            FamilySummary::failed("promotion", PHASE_PATH),
+        ],
+        Err(_) => [
+            FamilySummary::failed("readiness", LOCK_PATH),
+            FamilySummary::failed("promotion", LOCK_PATH),
+        ],
     }
 }
 
@@ -245,7 +266,7 @@ impl Drop for ContractTemporaryDirectory {
     }
 }
 
-const FAMILY_COUNT: usize = 12;
+const FAMILY_COUNT: usize = 14;
 
 #[derive(Debug, Eq, PartialEq)]
 struct ContractValidationReport {
@@ -263,7 +284,7 @@ impl ContractValidationReport {
         if self
             .summaries
             .iter()
-            .all(|summary| matches!(summary.status, FamilyStatus::Ok))
+            .all(|summary| !matches!(summary.status, FamilyStatus::Failed))
         {
             CommandOutcome::Success
         } else {
@@ -309,10 +330,24 @@ impl FamilySummary {
         }
     }
 
+    fn deferred(family: &'static str, reason: &'static str, contract_path: &'static str) -> Self {
+        Self {
+            family,
+            status: FamilyStatus::Deferred { reason },
+            contract_path: contract_path.to_owned(),
+        }
+    }
+
     fn line(&self) -> String {
         match self.status {
             FamilyStatus::Ok => format!("{}: ok ({})", self.family, self.contract_path),
             FamilyStatus::Failed => format!("{}: failed ({})", self.family, self.contract_path),
+            FamilyStatus::Deferred { reason } => {
+                format!(
+                    "{}: deferred ({}; {})",
+                    self.family, reason, self.contract_path
+                )
+            }
         }
     }
 }
@@ -321,6 +356,7 @@ impl FamilySummary {
 enum FamilyStatus {
     Ok,
     Failed,
+    Deferred { reason: &'static str },
 }
 
 fn summary_path(root: &Path, path: &Path) -> String {
@@ -344,7 +380,10 @@ mod tests {
     use std::fs;
     use std::path::Path;
 
-    use super::{ContractTemporaryDirectory, FAMILY_COUNT, validate_workspace, workspace_root};
+    use super::{
+        ContractTemporaryDirectory, FAMILY_COUNT, readiness_summaries, validate_workspace,
+        validators, workspace_root,
+    };
     use crate::CommandOutcome;
 
     #[test]
@@ -360,6 +399,8 @@ mod tests {
                 "schema: ok (.constitution/tech-spec/data-models)",
                 "instance: ok (.constitution/tech-spec/contracts)",
                 "exact-set: ok (.constitution/tech-spec/contracts/capability-traceability.json)",
+                "contract-tests: deferred (52 pending candidate implementation; .constitution/tech-spec/contracts/capability-traceability.json)",
+                "accessibility-generation: deferred (schema lacks generation field; .constitution/tech-spec/data-models/accessibility-map.schema.json)",
                 "registry: ok (.constitution/tech-spec/contracts/diagnostic-event-registry.json)",
                 "digest: ok (.constitution/tech-spec/contracts)",
                 "readiness: ok (.constitution/tech-spec/contracts/qualification-lock.json)",
@@ -402,6 +443,53 @@ mod tests {
                 .to_owned()
         )));
         assert!(matches!(report.outcome(), CommandOutcome::Failed(_)));
+        Ok(())
+    }
+
+    #[test]
+    fn production_promotion_failure_is_not_attributed_to_readiness() -> Result<(), Box<dyn Error>> {
+        let source = workspace_root()
+            .map_err(|_| std::io::Error::other("xtask must remain below the workspace root"))?;
+        let temporary = ContractTemporaryDirectory::new()?;
+        copy_directory(
+            &source.join(".constitution"),
+            &temporary.path().join(".constitution"),
+        )?;
+        copy_directory(
+            &source.join("qualification"),
+            &temporary.path().join("qualification"),
+        )?;
+        let fixture = source.join("qualification/fixtures/contracts/readiness/production-3b");
+        copy_directory(&fixture, temporary.path())?;
+        fs::copy(
+            fixture.join("production-3b-phase.json"),
+            temporary
+                .path()
+                .join(".constitution/tech-spec/contracts/specification-phase.json"),
+        )?;
+
+        let result = validators::readiness::validate_workspace(temporary.path());
+        assert!(
+            matches!(
+                &result,
+                Err(validators::readiness::ReadinessValidationError::Promotion(
+                    validators::readiness::ReadinessError::ArtifactCannotProveBinding {
+                        key: "layoutQualification"
+                    }
+                ))
+            ),
+            "{result:?}"
+        );
+        let summaries = readiness_summaries(result);
+        assert_eq!(
+            summaries.map(|summary| summary.line()),
+            [
+                "readiness: ok (.constitution/tech-spec/contracts/qualification-lock.json)"
+                    .to_owned(),
+                "promotion: failed (.constitution/tech-spec/contracts/specification-phase.json)"
+                    .to_owned(),
+            ]
+        );
         Ok(())
     }
 

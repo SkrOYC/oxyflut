@@ -125,22 +125,28 @@ pub(crate) enum ReadinessError {
     },
 }
 
-impl ReadinessError {
-    /// Returns the permitted content-free promotion diagnostic when promotion resolution fails.
+/// Distinguishes readiness-gate errors from promotion-only errors.
+#[derive(Debug, Error)]
+pub(crate) enum ReadinessValidationError {
+    /// A lock input or readiness gate failed validation.
+    #[error("readiness validation failed")]
+    Readiness(#[from] ReadinessError),
+    /// A Phase 3B promotion artifact failed validation after readiness succeeded.
+    #[error("promotion validation failed")]
+    Promotion(#[source] ReadinessError),
+}
+
+impl ReadinessValidationError {
+    /// Returns whether the failure occurred only while resolving Phase 3B promotion artifacts.
     #[must_use]
-    pub(crate) fn promotion_summary(&self) -> String {
+    pub(crate) fn is_promotion_only(&self) -> bool {
+        matches!(self, Self::Promotion(_))
+    }
+
+    #[cfg(test)]
+    fn into_readiness_error(self) -> ReadinessError {
         match self {
-            Self::ArtifactCannotProveBinding { key } => {
-                format!("promotion: failed (artifact cannot prove lock binding: {key})")
-            }
-            Self::SchemaRegistry(_)
-            | Self::Schema { .. }
-            | Self::Io { .. }
-            | Self::Json { .. }
-            | Self::Digest(_)
-            | Self::Invariant { .. }
-            | Self::InvalidClaim { .. }
-            | Self::Traceability(_) => "promotion: failed".to_owned(),
+            Self::Readiness(error) | Self::Promotion(error) => error,
         }
     }
 }
@@ -149,8 +155,8 @@ impl ReadinessError {
 ///
 /// # Errors
 ///
-/// Returns an error for an invalid lock claim, a malformed local input, a missing or mismatched immutable reference, or unresolved production promotion.
-pub(crate) fn validate_workspace(root: &Path) -> Result<ReadinessReport, ReadinessError> {
+/// Returns a typed readiness or promotion error for an invalid lock claim, a malformed local input, a missing or mismatched immutable reference, or unresolved production promotion.
+pub(crate) fn validate_workspace(root: &Path) -> Result<ReadinessReport, ReadinessValidationError> {
     let registry =
         super::schema::compile_workspace(root).map_err(ReadinessError::SchemaRegistry)?;
     let lock_path = root.join(LOCK_PATH);
@@ -159,22 +165,34 @@ pub(crate) fn validate_workspace(root: &Path) -> Result<ReadinessReport, Readine
     let phase = read_json(&phase_path)?;
     validate_schema(&registry, LOCK_SCHEMA, &lock, "qualification-lock")?;
     validate_schema(&registry, PHASE_SCHEMA, &phase, "specification-phase")?;
-    validate_documents(root, &lock, &phase, &registry)
+    validate_documents_with_attribution(root, &lock, &phase, &registry)
 }
 
+#[cfg(test)]
 fn validate_documents(
     root: &Path,
     lock: &Value,
     phase: &Value,
     registry: &SchemaRegistry,
 ) -> Result<ReadinessReport, ReadinessError> {
+    validate_documents_with_attribution(root, lock, phase, registry)
+        .map_err(ReadinessValidationError::into_readiness_error)
+}
+
+fn validate_documents_with_attribution(
+    root: &Path,
+    lock: &Value,
+    phase: &Value,
+    registry: &SchemaRegistry,
+) -> Result<ReadinessReport, ReadinessValidationError> {
     let active_version = string_field(phase, "specificationVersion")?;
     let candidate_issues = candidate_input_issues(root, lock, active_version, registry)?;
     let candidate_claimed = bool_field(lock, "candidateImplementationReady")?;
     if candidate_claimed && !candidate_issues.is_empty() {
         return Err(ReadinessError::InvalidClaim {
             gate: "candidate-implementation",
-        });
+        }
+        .into());
     }
     let candidate_implementation = gate_status(
         candidate_claimed,
@@ -187,7 +205,8 @@ fn validate_documents(
     if measurement_claimed && !measurement_issues.is_empty() {
         return Err(ReadinessError::InvalidClaim {
             gate: "measurement",
-        });
+        }
+        .into());
     }
     let measurement = gate_status(
         measurement_claimed,
@@ -199,12 +218,15 @@ fn validate_documents(
         "qualification-3a" => PromotionStatus::NotClaimed,
         "production-3b" => {
             if !matches!(measurement, GateStatus::Ready) {
-                return fail("promotion-measurement-readiness");
+                return Err(invariant("promotion-measurement-readiness").into());
             }
-            promotion::resolve(root, lock, phase, registry)?;
-            return fail("promotion-untyped-artifact-set");
+            promotion::resolve(root, lock, phase, registry)
+                .map_err(ReadinessValidationError::Promotion)?;
+            return Err(ReadinessValidationError::Promotion(invariant(
+                "promotion-untyped-artifact-set",
+            )));
         }
-        _ => return fail("specification-phase"),
+        _ => return Err(invariant("specification-phase").into()),
     };
 
     Ok(ReadinessReport {

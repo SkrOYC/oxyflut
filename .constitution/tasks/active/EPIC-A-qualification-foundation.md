@@ -356,3 +356,7 @@ Command: cargo +1.98.0 run -p xtask -- contracts validate
 
 - **Touched Files:** `xtask/src/contracts/native.rs`.
 - **Justification:** The aggregate command needs separate C/C++ syntax, generated-binding, symbol, and layout calls. It reports every required native validation family without silently skipping failed prerequisites.
+- **Touched Files:** `.constitution/tasks/active/EPIC-A-qualification-foundation.md`.
+- **Justification:** The execution rules require deviations to be recorded in the ticket block.
+- **Touched Files:** `xtask/src/contracts/readiness.rs`.
+- **Justification:** The aggregate command needs a typed distinction between readiness-gate and Phase 3B promotion-only errors to report their statuses independently.
