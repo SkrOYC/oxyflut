@@ -68,7 +68,7 @@ pub fn verify_path_digest(
 ) -> Result<VerifiedEvidence, EvidenceError> {
     ensure_evidence_path(path)?;
     let resolved_path = resolve_regular_file(root, path)?;
-    let snapshot = read_snapshot(path, &resolved_path)?;
+    let snapshot = read_digest_snapshot(path, &resolved_path)?;
     if snapshot.sha256 != *expected_digest {
         return Err(EvidenceError::DigestMismatch { path: path.clone() });
     }
@@ -93,7 +93,7 @@ pub fn verify_file(
 ) -> Result<VerifiedEvidence, EvidenceError> {
     ensure_evidence_path(path)?;
     let resolved_path = resolve_regular_file(root, path)?;
-    let snapshot = read_snapshot(path, &resolved_path)?;
+    let snapshot = read_buffered_snapshot(path, &resolved_path)?;
     let json = if media_type.is_json() {
         let value =
             serde_json::from_slice(&snapshot.bytes).map_err(|source| EvidenceError::Json {
@@ -195,38 +195,50 @@ fn resolve_regular_file(root: &Path, path: &RepositoryPath) -> Result<PathBuf, E
     Ok(resolved_path)
 }
 
-struct FileSnapshot {
+struct DigestSnapshot {
+    sha256: Sha256Digest,
+    size_bytes: u64,
+}
+
+struct BufferedFileSnapshot {
     bytes: Vec<u8>,
     sha256: Sha256Digest,
     size_bytes: u64,
 }
 
-fn read_snapshot(
+fn read_digest_snapshot(
     path: &RepositoryPath,
     resolved_path: &Path,
-) -> Result<FileSnapshot, EvidenceError> {
-    let mut file = File::open(resolved_path).map_err(|source| EvidenceError::Io {
+) -> Result<DigestSnapshot, EvidenceError> {
+    let mut file = open_snapshot(resolved_path)?;
+    let before = metadata(path, resolved_path, &file)?;
+    let sha256 = hash_reader(&mut file).map_err(|source| EvidenceError::Io {
         path: resolved_path.to_path_buf(),
         source,
     })?;
-    let before = file.metadata().map_err(|source| EvidenceError::Io {
-        path: resolved_path.to_path_buf(),
-        source,
-    })?;
-    if !before.is_file() {
-        return Err(EvidenceError::NotRegularFile { path: path.clone() });
+    let after = metadata(path, resolved_path, &file)?;
+    if !metadata_matches(&before, &after, before.len(), resolved_path)? {
+        return Err(EvidenceError::ChangedDuringRead { path: path.clone() });
     }
+    Ok(DigestSnapshot {
+        sha256,
+        size_bytes: before.len(),
+    })
+}
 
+fn read_buffered_snapshot(
+    path: &RepositoryPath,
+    resolved_path: &Path,
+) -> Result<BufferedFileSnapshot, EvidenceError> {
+    let mut file = open_snapshot(resolved_path)?;
+    let before = metadata(path, resolved_path, &file)?;
     let mut bytes = Vec::new();
     file.read_to_end(&mut bytes)
         .map_err(|source| EvidenceError::Io {
             path: resolved_path.to_path_buf(),
             source,
         })?;
-    let after = file.metadata().map_err(|source| EvidenceError::Io {
-        path: resolved_path.to_path_buf(),
-        source,
-    })?;
+    let after = metadata(path, resolved_path, &file)?;
     let size_bytes = u64::try_from(bytes.len()).map_err(|_| EvidenceError::Io {
         path: resolved_path.to_path_buf(),
         source: io::Error::other("evidence exceeds supported file size"),
@@ -238,11 +250,34 @@ fn read_snapshot(
         path: resolved_path.to_path_buf(),
         source,
     })?;
-    Ok(FileSnapshot {
+    Ok(BufferedFileSnapshot {
         bytes,
         sha256,
         size_bytes,
     })
+}
+
+fn open_snapshot(resolved_path: &Path) -> Result<File, EvidenceError> {
+    File::open(resolved_path).map_err(|source| EvidenceError::Io {
+        path: resolved_path.to_path_buf(),
+        source,
+    })
+}
+
+fn metadata(
+    path: &RepositoryPath,
+    resolved_path: &Path,
+    file: &File,
+) -> Result<Metadata, EvidenceError> {
+    let metadata = file.metadata().map_err(|source| EvidenceError::Io {
+        path: resolved_path.to_path_buf(),
+        source,
+    })?;
+    if metadata.is_file() {
+        Ok(metadata)
+    } else {
+        Err(EvidenceError::NotRegularFile { path: path.clone() })
+    }
 }
 
 fn metadata_matches(

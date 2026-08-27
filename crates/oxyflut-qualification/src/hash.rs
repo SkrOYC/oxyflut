@@ -92,7 +92,11 @@ pub fn hash_reader<R: Read>(mut reader: R) -> io::Result<Sha256Digest> {
     let mut buffer = [0_u8; STREAM_BUFFER_BYTES];
 
     loop {
-        let bytes_read = reader.read(&mut buffer)?;
+        let bytes_read = match reader.read(&mut buffer) {
+            Ok(bytes_read) => bytes_read,
+            Err(error) if error.kind() == io::ErrorKind::Interrupted => continue,
+            Err(error) => return Err(error),
+        };
         if bytes_read == 0 {
             break;
         }
@@ -189,6 +193,16 @@ mod tests {
     }
 
     #[test]
+    fn hash_reader_retries_interrupted_reads() -> Result<(), Box<dyn Error>> {
+        let digest = hash_reader(InterruptedReader::new(b"abc"))?;
+        assert_eq!(
+            digest.to_string(),
+            "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
+        );
+        Ok(())
+    }
+
+    #[test]
     fn hash_digest_parsing_requires_lowercase_hex() {
         assert!(
             "BA7816BF8F01CFEA414140DE5DAE2223B00361A396177A9CB410FF61F20015AD"
@@ -219,6 +233,30 @@ mod tests {
             buffer[..count].fill(self.byte);
             self.remaining -= count;
             Ok(count)
+        }
+    }
+
+    struct InterruptedReader {
+        bytes: Cursor<&'static [u8]>,
+        interrupted: bool,
+    }
+
+    impl InterruptedReader {
+        fn new(bytes: &'static [u8]) -> Self {
+            Self {
+                bytes: Cursor::new(bytes),
+                interrupted: false,
+            }
+        }
+    }
+
+    impl Read for InterruptedReader {
+        fn read(&mut self, buffer: &mut [u8]) -> io::Result<usize> {
+            if !self.interrupted {
+                self.interrupted = true;
+                return Err(io::Error::from(io::ErrorKind::Interrupted));
+            }
+            self.bytes.read(buffer)
         }
     }
 
