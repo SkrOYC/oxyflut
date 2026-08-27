@@ -4,7 +4,10 @@ use std::path::Path;
 use oxyflut_qualification::schema::SchemaRegistry;
 use serde_json::Value;
 
-use crate::contracts::digests::{self, VerifiedReference};
+use crate::contracts::{
+    digests::{self, VerifiedReference},
+    traceability,
+};
 
 use super::{
     ReadinessError, fail, invariant, object_field, object_value, read_json, require_equal,
@@ -38,6 +41,15 @@ const UNTYPED_PROMOTION_KEYS: [&str; 5] = [
     "billOfMaterials",
 ];
 
+struct PromotionBinding<'a> {
+    root: &'a Path,
+    registry: &'a SchemaRegistry,
+    lock: &'a Value,
+    lock_digest: &'a str,
+    candidate: &'a str,
+    phase: &'a Value,
+}
+
 pub(super) fn resolve(
     root: &Path,
     lock: &Value,
@@ -50,6 +62,14 @@ pub(super) fn resolve(
     let candidate = string_from(promotion, "selectedCandidate")?;
     let version = string_field(phase, "specificationVersion")?;
     validate_candidate_state(phase, candidate)?;
+    let binding = PromotionBinding {
+        root,
+        registry,
+        lock,
+        lock_digest,
+        candidate,
+        phase,
+    };
 
     let mut references = Vec::with_capacity(PROMOTION_KEYS.len());
     for key in PROMOTION_KEYS {
@@ -83,24 +103,9 @@ pub(super) fn resolve(
         "selection-specification-version",
     )?;
     let selected = promotion_reference(&references, "selectedCandidateQualification")?;
-    validate_selection_evidence(
-        root,
-        registry,
-        &selection_value,
-        lock,
-        lock_digest,
-        candidate,
-        selected.1,
-    )?;
-    validate_qualification_evidence(
-        root,
-        registry,
-        &selected.2,
-        lock,
-        lock_digest,
-        candidate,
-        "selected-candidate-qualification",
-    )?;
+    validate_selection_evidence(&binding, &selection_value, selected.1)?;
+    validate_selection_consistency(root, &selection_value)?;
+    validate_qualification_evidence(&binding, &selected.2, "selected-candidate-qualification")?;
     if !same_reference(
         object_value(
             object_field(&selection_value, "candidateEvidence")?,
@@ -112,15 +117,7 @@ pub(super) fn resolve(
     }
 
     let all_tier_one = promotion_reference(&references, "allTier1Results")?;
-    validate_qualification_evidence(
-        root,
-        registry,
-        &all_tier_one.2,
-        lock,
-        lock_digest,
-        candidate,
-        "all-tier-one-results",
-    )?;
+    validate_qualification_evidence(&binding, &all_tier_one.2, "all-tier-one-results")?;
 
     let release = promotion_reference(&references, "releaseQualification")?;
     let release_value = read_json(&release.2.resolved_path)?;
@@ -153,12 +150,11 @@ pub(super) fn resolve(
         path: adr.2.resolved_path.clone(),
         source,
     })?;
-    if !adr_bytes
-        .windows(b"**Status:** accepted".len())
-        .any(|value| value == b"**Status:** accepted")
-        || !adr_bytes
-            .windows(candidate.len())
-            .any(|value| value == candidate.as_bytes())
+    let adr_text =
+        std::str::from_utf8(&adr_bytes).map_err(|_| invariant("accepted-adr-content"))?;
+    if !adr_has_accepted_status(adr_text)
+        || !adr_selects_candidate(adr_text, candidate)
+        || !adr_cites_verified_evidence(root, adr_text)
     {
         return fail("accepted-adr-content");
     }
@@ -179,6 +175,66 @@ pub(super) fn resolve(
     Err(ReadinessError::ArtifactCannotProveBinding { key: first_untyped })
 }
 
+fn adr_has_accepted_status(adr: &str) -> bool {
+    adr.lines()
+        .any(|line| line.trim() == "**Status:** accepted")
+}
+
+fn adr_selects_candidate(adr: &str, candidate: &str) -> bool {
+    let expected = format!("Selected candidate: {candidate}.");
+    let mut in_decision = false;
+    let mut selections = 0_u8;
+    for line in adr.lines() {
+        let line = line.trim();
+        if line == "## Decision" {
+            in_decision = true;
+            continue;
+        }
+        if in_decision && line.starts_with("## ") {
+            break;
+        }
+        if in_decision && line.starts_with("Selected candidate:") {
+            if line != expected {
+                return false;
+            }
+            selections = selections.saturating_add(1);
+        }
+    }
+    selections == 1
+}
+
+fn adr_cites_verified_evidence(root: &Path, adr: &str) -> bool {
+    for line in adr.lines() {
+        let digests = line
+            .split(|character: char| !character.is_ascii_hexdigit())
+            .filter(|value| {
+                value.len() == 64
+                    && value
+                        .bytes()
+                        .all(|byte| byte.is_ascii_digit() || matches!(byte, b'a'..=b'f'))
+            })
+            .collect::<Vec<_>>();
+        if digests.is_empty() {
+            continue;
+        }
+        let mut fragments = line.split('`');
+        let _ = fragments.next();
+        while let Some(path) = fragments.next() {
+            let _ = fragments.next();
+            if !path.starts_with("evidence/") {
+                continue;
+            }
+            if digests
+                .iter()
+                .any(|digest| digests::verify_reference(root, path, digest).is_ok())
+            {
+                return true;
+            }
+        }
+    }
+    false
+}
+
 fn validate_candidate_state(phase: &Value, candidate: &str) -> Result<(), ReadinessError> {
     let states = object_field(phase, "candidateStates")?;
     let other = match candidate {
@@ -193,31 +249,32 @@ fn validate_candidate_state(phase: &Value, candidate: &str) -> Result<(), Readin
 }
 
 fn validate_selection_evidence(
-    root: &Path,
-    registry: &SchemaRegistry,
+    binding: &PromotionBinding<'_>,
     selection: &Value,
-    lock: &Value,
-    lock_digest: &str,
-    selected_candidate: &str,
     selected_reference: &Value,
 ) -> Result<(), ReadinessError> {
     let evidence = object_field(selection, "candidateEvidence")?;
     let eligibility = object_field(selection, "eligibility")?;
     for candidate in ["focused", "integrated"] {
         let reference = object_value(evidence, candidate)?;
-        let verified = digests::verify_value_reference(root, reference)?;
+        let verified = digests::verify_value_reference(binding.root, reference)?;
         let value = read_json(&verified.resolved_path)?;
-        digests::verify_references_in_value(root, &value)?;
+        digests::verify_references_in_value(binding.root, &value)?;
         validate_schema(
-            registry,
+            binding.registry,
             EVIDENCE_SCHEMA,
             &value,
             "selection-candidate-evidence",
         )?;
-        validate_evidence_source_identity(&value, lock, candidate)?;
+        traceability::validate_promotion_qualification_evidence(
+            binding.root,
+            &value,
+            binding.phase,
+        )?;
+        validate_evidence_source_identity(&value, binding.lock, candidate)?;
         require_equal(
             string_field(&value, "lockDigest")?,
-            lock_digest,
+            binding.lock_digest,
             "selection-evidence-lock-digest",
         )?;
         require_equal(
@@ -230,7 +287,7 @@ fn validate_selection_evidence(
             string_from(eligibility, candidate)?,
             "selection-evidence-eligibility",
         )?;
-        if candidate == selected_candidate && !same_reference(reference, selected_reference)? {
+        if candidate == binding.candidate && !same_reference(reference, selected_reference)? {
             return fail("selection-selected-evidence");
         }
     }
@@ -238,26 +295,27 @@ fn validate_selection_evidence(
 }
 
 fn validate_qualification_evidence(
-    root: &Path,
-    registry: &SchemaRegistry,
+    binding: &PromotionBinding<'_>,
     reference: &VerifiedReference,
-    lock: &Value,
-    lock_digest: &str,
-    candidate: &str,
     family: &'static str,
 ) -> Result<(), ReadinessError> {
     let evidence = read_json(&reference.resolved_path)?;
-    digests::verify_references_in_value(root, &evidence)?;
-    validate_schema(registry, EVIDENCE_SCHEMA, &evidence, family)?;
-    validate_evidence_source_identity(&evidence, lock, candidate)?;
+    digests::verify_references_in_value(binding.root, &evidence)?;
+    validate_schema(binding.registry, EVIDENCE_SCHEMA, &evidence, family)?;
+    traceability::validate_promotion_qualification_evidence(
+        binding.root,
+        &evidence,
+        binding.phase,
+    )?;
+    validate_evidence_source_identity(&evidence, binding.lock, binding.candidate)?;
     require_equal(
         string_field(&evidence, "lockDigest")?,
-        lock_digest,
+        binding.lock_digest,
         "qualification-evidence-lock-digest",
     )?;
     require_equal(
         string_field(&evidence, "candidate")?,
-        candidate,
+        binding.candidate,
         "qualification-evidence-candidate",
     )?;
     if string_field(&evidence, "eligibility")? != "eligible" {
@@ -292,6 +350,296 @@ fn validate_evidence_source_identity(
         )?;
     }
     Ok(())
+}
+
+/// Recomputes a schema-valid selection decision from its immutable candidate evidence.
+///
+/// # Errors
+///
+/// Returns an error when eligibility, weighted totals, the margin winner, or the maintenance tie-break differs from the cited evidence.
+pub(super) fn validate_selection_consistency(
+    root: &Path,
+    selection: &Value,
+) -> Result<(), ReadinessError> {
+    let eligibility = object_field(selection, "eligibility")?;
+    let focused_eligible = selection_eligibility(eligibility, "focused")?;
+    let integrated_eligible = selection_eligibility(eligibility, "integrated")?;
+    let calculation = object_field(selection, "calculation")?;
+
+    match (focused_eligible, integrated_eligible) {
+        (false, false) => {
+            require_selection_decision(
+                selection,
+                calculation,
+                "no-eligible-candidate",
+                "reopen-research",
+                "none",
+                false,
+            )?;
+            require_null_calculation(calculation, "focusedScore")?;
+            require_null_calculation(calculation, "integratedScore")?;
+            require_null_calculation(calculation, "absoluteDifference")?;
+            require_no_maintenance_evidence(calculation)
+        }
+        (true, false) => {
+            require_selection_decision(
+                selection,
+                calculation,
+                "sole-focused-eligible",
+                "select-focused",
+                "focused",
+                false,
+            )?;
+            require_null_calculation(calculation, "focusedScore")?;
+            require_null_calculation(calculation, "integratedScore")?;
+            require_null_calculation(calculation, "absoluteDifference")?;
+            require_no_maintenance_evidence(calculation)
+        }
+        (false, true) => {
+            require_selection_decision(
+                selection,
+                calculation,
+                "sole-integrated-eligible",
+                "select-integrated",
+                "integrated",
+                false,
+            )?;
+            require_null_calculation(calculation, "focusedScore")?;
+            require_null_calculation(calculation, "integratedScore")?;
+            require_null_calculation(calculation, "absoluteDifference")?;
+            require_no_maintenance_evidence(calculation)
+        }
+        (true, true) => validate_two_eligible_selection(root, selection, calculation),
+    }
+}
+
+fn selection_eligibility(
+    eligibility: &serde_json::Map<String, Value>,
+    candidate: &str,
+) -> Result<bool, ReadinessError> {
+    match string_from(eligibility, candidate)? {
+        "eligible" => Ok(true),
+        "ineligible" => Ok(false),
+        _ => fail("selection-eligibility"),
+    }
+}
+
+fn validate_two_eligible_selection(
+    root: &Path,
+    selection: &Value,
+    calculation: &serde_json::Map<String, Value>,
+) -> Result<(), ReadinessError> {
+    let evidence = object_field(selection, "candidateEvidence")?;
+    let focused = read_selection_evidence(root, object_value(evidence, "focused")?)?;
+    let integrated = read_selection_evidence(root, object_value(evidence, "integrated")?)?;
+    let focused_total = weighted_total(&focused)?;
+    let integrated_total = weighted_total(&integrated)?;
+    let difference = focused_total.abs_diff(integrated_total);
+    require_calculation_score(calculation, "focusedScore", focused_total)?;
+    require_calculation_score(calculation, "integratedScore", integrated_total)?;
+    require_calculation_score(calculation, "absoluteDifference", difference)?;
+
+    if difference >= 25 {
+        let (outcome, selected) = if focused_total > integrated_total {
+            ("select-focused", "focused")
+        } else {
+            ("select-integrated", "integrated")
+        };
+        require_selection_decision(
+            selection,
+            calculation,
+            "score-margin",
+            outcome,
+            selected,
+            false,
+        )?;
+        return require_no_maintenance_evidence(calculation);
+    }
+
+    let maintenance = object_value(calculation, "maintenanceEvidence")?;
+    let _ = digests::verify_value_reference(root, maintenance)?;
+    if !maintenance_evidence_is_cited(&focused, maintenance)?
+        && !maintenance_evidence_is_cited(&integrated, maintenance)?
+    {
+        return fail("selection-maintenance-evidence");
+    }
+    let focused_maintenance = maintenance_score(&focused)?;
+    let integrated_maintenance = maintenance_score(&integrated)?;
+    if focused_maintenance == integrated_maintenance {
+        require_selection_decision(
+            selection,
+            calculation,
+            "inconclusive-tie-break",
+            "continue-investigation",
+            "none",
+            true,
+        )
+    } else {
+        let (outcome, selected) = if focused_maintenance > integrated_maintenance {
+            ("select-focused", "focused")
+        } else {
+            ("select-integrated", "integrated")
+        };
+        require_selection_decision(
+            selection,
+            calculation,
+            "maintenance-tie-break",
+            outcome,
+            selected,
+            true,
+        )
+    }
+}
+
+fn read_selection_evidence(root: &Path, reference: &Value) -> Result<Value, ReadinessError> {
+    let verified = digests::verify_value_reference(root, reference)?;
+    read_json(&verified.resolved_path)
+}
+
+fn weighted_total(evidence: &Value) -> Result<u32, ReadinessError> {
+    let scores = object_field(evidence, "scores")?;
+    let mut total = 0_u32;
+    for (criterion, expected_weight) in [
+        ("platformCoverage", 30_u32),
+        ("upgradeMaintenance", 20),
+        ("performance", 15),
+        ("safetySecurityPrivacy", 15),
+        ("distribution", 10),
+        ("operationalClarity", 10),
+    ] {
+        let score = object_value(scores, criterion)?;
+        let weight = u32::try_from(
+            score
+                .get("weight")
+                .and_then(Value::as_u64)
+                .ok_or_else(|| invariant("selection-score"))?,
+        )
+        .map_err(|_| invariant("selection-score"))?;
+        let consensus = u32::try_from(
+            score
+                .get("consensusScore")
+                .and_then(Value::as_u64)
+                .ok_or_else(|| invariant("selection-score"))?,
+        )
+        .map_err(|_| invariant("selection-score"))?;
+        if weight != expected_weight || !(3..=5).contains(&consensus) {
+            return fail("selection-score");
+        }
+        let weighted = weight
+            .checked_mul(consensus)
+            .ok_or_else(|| invariant("selection-score"))?;
+        total = total
+            .checked_add(weighted)
+            .ok_or_else(|| invariant("selection-score"))?;
+    }
+    let declared = evidence
+        .get("weightedTotal")
+        .and_then(Value::as_f64)
+        .ok_or_else(|| invariant("selection-weighted-total"))?;
+    let expected = f64::from(total) / 5.0;
+    if (declared - expected).abs() > f64::EPSILON {
+        return fail("selection-weighted-total");
+    }
+    Ok(total)
+}
+
+fn maintenance_score(evidence: &Value) -> Result<u32, ReadinessError> {
+    let score = object_value(object_field(evidence, "scores")?, "upgradeMaintenance")?;
+    u32::try_from(
+        score
+            .get("consensusScore")
+            .and_then(Value::as_u64)
+            .ok_or_else(|| invariant("selection-maintenance-score"))?,
+    )
+    .map_err(|_| invariant("selection-maintenance-score"))
+}
+
+fn maintenance_evidence_is_cited(
+    candidate: &Value,
+    maintenance: &Value,
+) -> Result<bool, ReadinessError> {
+    let score = object_value(object_field(candidate, "scores")?, "upgradeMaintenance")?;
+    let evidence = score
+        .get("evidence")
+        .and_then(Value::as_array)
+        .ok_or_else(|| invariant("selection-maintenance-evidence"))?;
+    for reference in evidence {
+        if same_reference(reference, maintenance)? {
+            return Ok(true);
+        }
+    }
+    Ok(false)
+}
+
+fn require_selection_decision(
+    selection: &Value,
+    calculation: &serde_json::Map<String, Value>,
+    basis: &str,
+    outcome: &str,
+    candidate: &str,
+    tie_break_applied: bool,
+) -> Result<(), ReadinessError> {
+    require_equal(
+        string_field(selection, "decisionBasis")?,
+        basis,
+        "selection-decision-basis",
+    )?;
+    require_equal(
+        string_field(selection, "selectedCandidate")?,
+        candidate,
+        "selection-selected-candidate",
+    )?;
+    require_equal(
+        string_field(selection, "outcome")?,
+        outcome,
+        "selection-outcome",
+    )?;
+    if calculation.get("tieBreakApplied").and_then(Value::as_bool) != Some(tie_break_applied) {
+        return fail("selection-tie-break");
+    }
+    Ok(())
+}
+
+fn require_null_calculation(
+    calculation: &serde_json::Map<String, Value>,
+    field: &str,
+) -> Result<(), ReadinessError> {
+    if calculation.get(field).is_some_and(Value::is_null) {
+        Ok(())
+    } else {
+        fail("selection-calculation")
+    }
+}
+
+fn require_calculation_score(
+    calculation: &serde_json::Map<String, Value>,
+    field: &str,
+    fifths: u32,
+) -> Result<(), ReadinessError> {
+    let actual = calculation
+        .get(field)
+        .and_then(Value::as_f64)
+        .ok_or_else(|| invariant("selection-calculation"))?;
+    let expected = f64::from(fifths) / 5.0;
+    if (actual - expected).abs() > f64::EPSILON {
+        return fail(match field {
+            "focusedScore" => "selection-focused-score",
+            "integratedScore" => "selection-integrated-score",
+            "absoluteDifference" => "selection-absolute-difference",
+            _ => "selection-calculation",
+        });
+    }
+    Ok(())
+}
+
+fn require_no_maintenance_evidence(
+    calculation: &serde_json::Map<String, Value>,
+) -> Result<(), ReadinessError> {
+    if calculation.contains_key("maintenanceEvidence") {
+        fail("selection-maintenance-evidence")
+    } else {
+        Ok(())
+    }
 }
 
 fn validate_exposed_untyped_identity(

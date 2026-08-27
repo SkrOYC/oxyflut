@@ -188,6 +188,8 @@ Checker: cargo +1.98.0 test -p xtask contracts::readiness
 - **Assumption for OXY-D001 Stage 3 revision:** `specification-phase.schema.json` promotion artifacts `layoutQualification`, `finalContractSet`, `targetMatrix`, `losingCandidateRemoval`, and `billOfMaterials` have no typed Stage 3 schema; Phase 3B must type them before promotion can validate.
 - **Touched Files:** `.constitution/tasks/active/EPIC-A-qualification-foundation.md`.
 - **Justification:** The execution rules require scope deviations and the Phase 3B schema gap to be recorded in the ticket block.
+- **Touched Files:** `xtask/src/contracts/traceability.rs`.
+- **Justification:** Phase 3B promotion reuses the OXY-A003 qualification-evidence semantic validator instead of duplicating its typed absence-binding checks.
 
 #### OXY-A008 Resolve the native contract toolchain
 

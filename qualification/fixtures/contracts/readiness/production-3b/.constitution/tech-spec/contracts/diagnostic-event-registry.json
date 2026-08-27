@@ -1,0 +1,269 @@
+{
+  "$schema": "../data-models/diagnostic-event-registry.schema.json",
+  "schemaVersion": "2.0.0",
+  "events": {
+    "runtime.lifecycle": {
+      "privacyClass": "operational",
+      "fields": {
+        "state": {
+          "privacyClass": "operational",
+          "kind": "integer",
+          "enumValues": [1, 2, 3, 4]
+        },
+        "reason": {
+          "privacyClass": "operational",
+          "kind": "integer",
+          "enumValues": [0, 1, 2, 3, 4, 5]
+        }
+      }
+    },
+    "view.lifecycle": {
+      "privacyClass": "operational",
+      "fields": {
+        "state": {
+          "privacyClass": "operational",
+          "kind": "integer",
+          "enumValues": [1, 2, 3, 4, 5]
+        },
+        "reason": {
+          "privacyClass": "operational",
+          "kind": "integer",
+          "enumValues": [0, 1, 2, 3, 4, 5]
+        },
+        "displayEpoch": {
+          "privacyClass": "operational",
+          "kind": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "frame.scheduled": {
+      "privacyClass": "operational",
+      "fields": {
+        "displayEpoch": {
+          "privacyClass": "operational",
+          "kind": "integer",
+          "minimum": 0
+        },
+        "targetNs": {
+          "privacyClass": "operational",
+          "kind": "integer",
+          "minimum": 0
+        },
+        "coalescedInvalidations": {
+          "privacyClass": "operational",
+          "kind": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "frame.presented": {
+      "privacyClass": "operational",
+      "fields": {
+        "displayEpoch": {
+          "privacyClass": "operational",
+          "kind": "integer",
+          "minimum": 0
+        },
+        "presentationNs": {
+          "privacyClass": "operational",
+          "kind": "integer",
+          "minimum": 0
+        },
+        "status": {
+          "privacyClass": "operational",
+          "kind": "integer",
+          "enumValues": [1, 2, 3]
+        }
+      }
+    },
+    "frame.missed": {
+      "privacyClass": "operational",
+      "fields": {
+        "displayEpoch": {
+          "privacyClass": "operational",
+          "kind": "integer",
+          "minimum": 0
+        },
+        "targetNs": {
+          "privacyClass": "operational",
+          "kind": "integer",
+          "minimum": 0
+        },
+        "reason": {
+          "privacyClass": "operational",
+          "kind": "integer",
+          "enumValues": [1, 2, 3, 4]
+        }
+      }
+    },
+    "input.rejected": {
+      "privacyClass": "private-redacted",
+      "fields": {
+        "kind": {
+          "privacyClass": "private-redacted",
+          "kind": "integer",
+          "enumValues": [1, 2, 3, 4]
+        },
+        "reason": {
+          "privacyClass": "private-redacted",
+          "kind": "integer",
+          "enumValues": [1, 2, 3, 4, 5]
+        },
+        "payloadBytes": {
+          "privacyClass": "private-redacted",
+          "kind": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "text.transaction": {
+      "privacyClass": "private-redacted",
+      "fields": {
+        "kind": {
+          "privacyClass": "private-redacted",
+          "kind": "integer",
+          "enumValues": [1, 2, 3, 4]
+        },
+        "status": {
+          "privacyClass": "private-redacted",
+          "kind": "integer",
+          "enumValues": [1, 2, 3, 4]
+        },
+        "inputUnits": {
+          "privacyClass": "private-redacted",
+          "kind": "integer",
+          "minimum": 0
+        },
+        "outputUnits": {
+          "privacyClass": "private-redacted",
+          "kind": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "semantics.update": {
+      "privacyClass": "private-redacted",
+      "fields": {
+        "nodeCount": {
+          "privacyClass": "private-redacted",
+          "kind": "integer",
+          "minimum": 0
+        },
+        "deletedCount": {
+          "privacyClass": "private-redacted",
+          "kind": "integer",
+          "minimum": 0
+        },
+        "status": {
+          "privacyClass": "private-redacted",
+          "kind": "integer",
+          "enumValues": [1, 2, 3]
+        }
+      }
+    },
+    "semantics.action": {
+      "privacyClass": "private-redacted",
+      "fields": {
+        "action": {
+          "privacyClass": "private-redacted",
+          "kind": "integer",
+          "minimum": 0
+        },
+        "status": {
+          "privacyClass": "private-redacted",
+          "kind": "integer",
+          "enumValues": [1, 2, 3, 4]
+        },
+        "staleTarget": { "privacyClass": "private-redacted", "kind": "boolean" }
+      }
+    },
+    "asset.lifecycle": {
+      "privacyClass": "private-redacted",
+      "fields": {
+        "stage": {
+          "privacyClass": "private-redacted",
+          "kind": "integer",
+          "enumValues": [1, 2, 3, 4]
+        },
+        "status": {
+          "privacyClass": "private-redacted",
+          "kind": "integer",
+          "enumValues": [1, 2, 3, 4]
+        },
+        "encodedBytes": {
+          "privacyClass": "private-redacted",
+          "kind": "integer",
+          "minimum": 0
+        },
+        "decodedBytes": {
+          "privacyClass": "private-redacted",
+          "kind": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "recovery.transition": {
+      "privacyClass": "operational",
+      "fields": {
+        "fault": {
+          "privacyClass": "operational",
+          "kind": "integer",
+          "enumValues": [1, 2, 3, 4]
+        },
+        "attempt": {
+          "privacyClass": "operational",
+          "kind": "integer",
+          "minimum": 1,
+          "maximum": 3
+        },
+        "state": {
+          "privacyClass": "operational",
+          "kind": "integer",
+          "enumValues": [1, 2, 3, 4, 5]
+        },
+        "elapsedNs": {
+          "privacyClass": "operational",
+          "kind": "integer",
+          "minimum": 0
+        },
+        "releasedBytes": {
+          "privacyClass": "operational",
+          "kind": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "boundary.failure": {
+      "privacyClass": "operational",
+      "fields": {
+        "boundary": {
+          "privacyClass": "operational",
+          "kind": "integer",
+          "enumValues": [1, 2, 3, 4]
+        },
+        "code": { "privacyClass": "operational", "kind": "integer" },
+        "operation": {
+          "privacyClass": "operational",
+          "kind": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "diagnostics.dropped": {
+      "privacyClass": "operational",
+      "fields": {
+        "reason": {
+          "privacyClass": "operational",
+          "kind": "integer",
+          "enumValues": [1, 2, 3]
+        },
+        "count": {
+          "privacyClass": "operational",
+          "kind": "integer",
+          "minimum": 1
+        }
+      }
+    }
+  }
+}

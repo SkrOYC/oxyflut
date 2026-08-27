@@ -293,6 +293,33 @@ pub(crate) fn validate_raw_measurement(
     Ok(())
 }
 
+/// Validates a promotion qualification-evidence record against the active fixture or workspace authority.
+///
+/// # Errors
+///
+/// Returns an error when the active specification, exact PRD gate sets, diagnostic registry, platform baseline, or typed absence proof is invalid.
+pub(super) fn validate_promotion_qualification_evidence(
+    root: &Path,
+    record: &Value,
+    phase: &Value,
+) -> Result<(), TraceabilityError> {
+    let active = specification_field(phase)?;
+    let capabilities = prd_capabilities(root)?;
+    let constraints = prd_constraints(root)?;
+    let registry = read_json(&root.join(REGISTRY_PATH))?;
+    let active_platform_path =
+        RepositoryPath::parse(PLATFORM_PATH).map_err(|_| error("not-applicable-baseline-path"))?;
+    validate_qualification_evidence(
+        root,
+        record,
+        &active,
+        &capabilities,
+        &constraints,
+        &registry,
+        &active_platform_path,
+    )
+}
+
 /// Validates a qualification evidence record's exact gate sets and typed absence proof.
 ///
 /// # Errors

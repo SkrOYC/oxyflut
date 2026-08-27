@@ -7,7 +7,7 @@
       "source": "https://spdx.github.io/spdx-spec/v3.0.1/",
       "epistemicStatus": "kk-locked",
       "localPath": "external/spdx-3.0.1.snapshot",
-      "sha256": "273b5618299bcbaeabe43ea6a7ccf58e7b8d076b258f0ff17e108f8678caf3d6",
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
       "verifier": "fixture-verifier"
     },
     "in-toto-statement-v1": {

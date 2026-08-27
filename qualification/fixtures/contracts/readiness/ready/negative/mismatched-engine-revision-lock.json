@@ -50,7 +50,7 @@
     },
     "linux-x64": {
       "url": "https://storage.googleapis.com/flutter_infra_release/flutter/5f77625673248ee5846fbcaf5d3e1a3878386fd7/linux-x64/impeller_sdk.zip",
-      "sourceRevision": "5f77625673248ee5846fbcaf5d3e1a3878386fd7",
+      "sourceRevision": "cccccccccccccccccccccccccccccccccccccccc",
       "httpVerified": true,
       "sha256": "e4c3e81fe8c857a349f7077680c95d44a2f264cdbaf797f7310e8dc3c6201a93",
       "sizeBytes": 22528769

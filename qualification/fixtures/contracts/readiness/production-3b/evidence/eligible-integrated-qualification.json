@@ -2606,5 +2606,114 @@
       "notApplicable": null
     }
   },
-  "eligibility": "ineligible"
+  "eligibility": "eligible",
+  "assessors": [
+    {
+      "id": "assessor-one",
+      "frozenBeforeImplementation": true
+    },
+    {
+      "id": "assessor-two",
+      "frozenBeforeImplementation": true
+    }
+  ],
+  "scores": {
+    "platformCoverage": {
+      "weight": 30,
+      "assessorScores": [
+        4,
+        4
+      ],
+      "consensusScore": 4,
+      "consensusRationale": "Fixture consensus.",
+      "evidence": [
+        {
+          "path": "evidence/nested-evidence.json",
+          "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+          "mediaType": "application/json"
+        }
+      ]
+    },
+    "upgradeMaintenance": {
+      "weight": 20,
+      "assessorScores": [
+        4,
+        4
+      ],
+      "consensusScore": 4,
+      "consensusRationale": "Fixture consensus.",
+      "evidence": [
+        {
+          "path": "evidence/nested-evidence.json",
+          "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+          "mediaType": "application/json"
+        }
+      ]
+    },
+    "performance": {
+      "weight": 15,
+      "assessorScores": [
+        4,
+        4
+      ],
+      "consensusScore": 4,
+      "consensusRationale": "Fixture consensus.",
+      "evidence": [
+        {
+          "path": "evidence/nested-evidence.json",
+          "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+          "mediaType": "application/json"
+        }
+      ]
+    },
+    "safetySecurityPrivacy": {
+      "weight": 15,
+      "assessorScores": [
+        4,
+        4
+      ],
+      "consensusScore": 4,
+      "consensusRationale": "Fixture consensus.",
+      "evidence": [
+        {
+          "path": "evidence/nested-evidence.json",
+          "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+          "mediaType": "application/json"
+        }
+      ]
+    },
+    "distribution": {
+      "weight": 10,
+      "assessorScores": [
+        4,
+        4
+      ],
+      "consensusScore": 4,
+      "consensusRationale": "Fixture consensus.",
+      "evidence": [
+        {
+          "path": "evidence/nested-evidence.json",
+          "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+          "mediaType": "application/json"
+        }
+      ]
+    },
+    "operationalClarity": {
+      "weight": 10,
+      "assessorScores": [
+        4,
+        4
+      ],
+      "consensusScore": 4,
+      "consensusRationale": "Fixture consensus.",
+      "evidence": [
+        {
+          "path": "evidence/nested-evidence.json",
+          "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+          "mediaType": "application/json"
+        }
+      ]
+    }
+  },
+  "weightedTotal": 80
 }
