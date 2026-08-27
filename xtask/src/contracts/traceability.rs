@@ -1957,13 +1957,67 @@ mod tests {
             super::validate_platform_baseline(&root, &stale_platform, &active, &registry),
             "platform-specification-version",
         );
-        let mut missing_kk = committed;
+        let mut missing_kk = committed.clone();
         *missing_kk
             .pointer_mut("/environments/macos/ime/status")
             .ok_or("IME status must exist")? = Value::String("kk".to_owned());
         assert_code(
             super::validate_platform_baseline(&root, &missing_kk, &active, &registry),
             "kk-evidence-missing",
+        );
+
+        let stale_reference = json!({
+            "status": "kk",
+            "path": "qualification/fixtures/contracts/traceability/synthetic-accessibility-stale.json",
+            "sha256": "2b933b3b8093f35619e6dc703a910eef1049720bd2fda14925a506b5ce41e045"
+        });
+        let mut stale_accessibility = committed.clone();
+        *stale_accessibility
+            .pointer_mut("/environments/macos/accessibilityMaps/focused")
+            .ok_or("accessibility reference must exist")? = stale_reference.clone();
+        assert_code(
+            super::validate_platform_baseline(&root, &stale_accessibility, &active, &registry),
+            "accessibility-text-layout-generation",
+        );
+        let mut wrong_accessibility_digest = stale_accessibility.clone();
+        *wrong_accessibility_digest
+            .pointer_mut("/environments/macos/accessibilityMaps/focused/sha256")
+            .ok_or("accessibility digest must exist")? = Value::String(
+            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa".to_owned(),
+        );
+        assert_code(
+            super::validate_platform_baseline(
+                &root,
+                &wrong_accessibility_digest,
+                &active,
+                &registry,
+            ),
+            "accessibility-digest",
+        );
+        let mut wrong_accessibility_identity = committed.clone();
+        *wrong_accessibility_identity
+            .pointer_mut("/environments/windows/accessibilityMaps/focused")
+            .ok_or("accessibility reference must exist")? = stale_reference;
+        assert_code(
+            super::validate_platform_baseline(
+                &root,
+                &wrong_accessibility_identity,
+                &active,
+                &registry,
+            ),
+            "accessibility-identity",
+        );
+        let mut nested_accessibility_ku = committed;
+        *nested_accessibility_ku
+            .pointer_mut("/environments/macos/accessibilityMaps/focused")
+            .ok_or("accessibility reference must exist")? = json!({
+            "status": "kk",
+            "path": "qualification/fixtures/contracts/traceability/synthetic-accessibility-ku.json",
+            "sha256": "5ab80313abfd55a93eae5d8fc9c1ce14cf7234a4fe5ec9feff4e72380bec3ab2"
+        });
+        assert_code(
+            super::validate_platform_baseline(&root, &nested_accessibility_ku, &active, &registry),
+            "accessibility-ku",
         );
         Ok(())
     }
