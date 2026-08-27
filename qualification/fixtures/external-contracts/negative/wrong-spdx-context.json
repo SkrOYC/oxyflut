@@ -1,11 +1,13 @@
 {
-  "@context": "https://spdx.org/rdf/3.0.1/spdx-context.jsonld",
+  "@context": "https://example.com/not-spdx-context.jsonld",
   "@graph": [
     {
       "type": "CreationInfo",
       "@id": "_:creation-info",
       "created": "2026-01-01T00:00:00Z",
-      "createdBy": ["https://example.com/agents/oxyflut-fixture"],
+      "createdBy": [
+        "https://example.com/agents/oxyflut-fixture"
+      ],
       "specVersion": "3.0.1"
     },
     {

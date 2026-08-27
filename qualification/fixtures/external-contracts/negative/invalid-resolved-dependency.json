@@ -1,0 +1,39 @@
+{
+  "_type": "https://in-toto.io/Statement/v1",
+  "subject": [
+    {
+      "name": "oxyflut",
+      "digest": {
+        "sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+      }
+    }
+  ],
+  "predicateType": "https://slsa.dev/provenance/v1",
+  "predicate": {
+    "buildDefinition": {
+      "buildType": "https://example.test/build/v1",
+      "externalParameters": {
+        "repository": "https://example.test/oxyflut"
+      },
+      "internalParameters": {},
+      "resolvedDependencies": [
+        42
+      ]
+    },
+    "runDetails": {
+      "builder": {
+        "id": "https://example.test/builder/v1",
+        "builderDependencies": [],
+        "version": {
+          "tool": "1"
+        }
+      },
+      "metadata": {
+        "invocationId": "fixture-invocation",
+        "startedOn": "2026-01-01T00:00:00Z",
+        "finishedOn": "2026-01-01T00:00:01Z"
+      },
+      "byproducts": []
+    }
+  }
+}

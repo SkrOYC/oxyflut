@@ -138,6 +138,7 @@ impl SchemaRegistry {
         let mut identities_by_path = BTreeMap::new();
         for source in &sources {
             let validator = jsonschema::draft202012::options()
+                .should_validate_formats(true)
                 .with_registry(&registry)
                 .with_retriever(retriever.clone())
                 .build(&source.value)

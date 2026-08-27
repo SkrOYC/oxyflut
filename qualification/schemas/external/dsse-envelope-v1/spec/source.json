@@ -5,6 +5,10 @@
   "path": "envelope.md",
   "retrievalUrl": "https://raw.githubusercontent.com/secure-systems-lab/dsse/cacf247ea07024437c91e69ae65f3f4a2df3c657/envelope.md",
   "license": "Apache-2.0",
+  "licenseSource": {
+    "path": "LICENSE",
+    "commit": "cacf247ea07024437c91e69ae65f3f4a2df3c657"
+  },
   "version": "1",
   "sha256": "3607b3e4702c4dfd2f3dc90a38546d89b95993227691fdfeb6a38c43759e6f2e"
 }

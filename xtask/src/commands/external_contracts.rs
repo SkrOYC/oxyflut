@@ -17,13 +17,19 @@ const DATA_MODELS_DIRECTORY: &str = ".constitution/tech-spec/data-models";
 const PROPOSAL_PATH: &str = "qualification/schemas/external/proposed-external-contract-lock.json";
 const STATEMENT_SCHEMA: &str = "urn:oxyflut:schema:external-in-toto-statement-v1:1";
 const PROVENANCE_SCHEMA: &str = "urn:oxyflut:schema:external-slsa-provenance-v1:1";
-const SPDX_SCHEMA: &str = "urn:oxyflut:schema:external-spdx-3.0.1:1";
 const DSSE_SCHEMA: &str = "urn:oxyflut:schema:external-dsse-envelope-v1:1";
 const EXTERNAL_LOCK_SCHEMA: &str = "urn:oxyflut:schema:external-contract-lock:1";
 const DSSE_PAYLOAD_TYPE: &str = "application/vnd.in-toto+json";
 const DSSE_TEST_KEY_ID: &str = "oxyflut-fixture-sha256-test-key-v1";
 const DSSE_TEST_ALGORITHM: &str = "OXYFLUT-TEST-SHA256-KEYED-V1";
-const MAX_DSSE_LENGTH: u64 = 9_223_372_036_854_775_807;
+const DSSE_PAE_PREFIX: &[u8] = b"DSSEv1";
+const SPDX_CONTEXT_PATH: &str =
+    "qualification/schemas/external/spdx-3.0.1/jsonld-context/spdx-context.jsonld";
+const SPDX_CONTEXT_URI: &str = "https://spdx.org/rdf/3.0.1/spdx-context.jsonld";
+const SPDX_DOCUMENT_TERM: &str = "https://spdx.org/rdf/3.0.1/terms/Core/SpdxDocument";
+const SPDX_SCHEMA_PATH: &str =
+    "qualification/schemas/external/spdx-3.0.1/schema/spdx-json-schema.json";
+const SPDX_SCHEMA_URL: &str = "https://spdx.org/schema/3.0.1/spdx-json-schema.json";
 static TEMP_SEQUENCE: AtomicU64 = AtomicU64::new(0);
 
 /// Verifies every immutable external-contract snapshot and local fixture without network access.
@@ -72,7 +78,7 @@ fn verify_at(root: &Path) -> Result<(), ExternalContractsError> {
     verify_snapshots(root)?;
     verify_proposal(root)?;
     let registry = DerivedSchemaRegistry::load(root)?;
-    verify_fixtures(root, registry.registry())
+    verify_fixtures(root, registry.registry(), registry.spdx_schema_identity())
 }
 
 fn verify_snapshots(root: &Path) -> Result<(), ExternalContractsError> {
@@ -107,6 +113,7 @@ fn verify_snapshots(root: &Path) -> Result<(), ExternalContractsError> {
                 require_string(object, "path", identity.path, &metadata)?;
                 require_string(object, "retrievalUrl", identity.retrieval_url, &metadata)?;
                 require_string(object, "license", identity.license, &metadata)?;
+                require_license_source(object, identity, &metadata)?;
                 require_string(object, "version", identity.version, &metadata)?;
             }
             SnapshotIdentity::Derived(identity) => {
@@ -147,6 +154,26 @@ fn require_string(
     }
 }
 
+fn require_license_source(
+    object: &serde_json::Map<String, Value>,
+    identity: &AuthoritativeIdentity,
+    metadata_path: &Path,
+) -> Result<(), ExternalContractsError> {
+    let license_source = object
+        .get("licenseSource")
+        .and_then(Value::as_object)
+        .ok_or(ExternalContractsError::SourceIdentity {
+            path: metadata_path.to_path_buf(),
+        })?;
+    let license_path = if identity.repository == "https://github.com/slsa-framework/slsa" {
+        "LICENSE.md"
+    } else {
+        "LICENSE"
+    };
+    require_string(license_source, "path", license_path, metadata_path)?;
+    require_string(license_source, "commit", identity.commit, metadata_path)
+}
+
 fn verify_proposal(root: &Path) -> Result<(), ExternalContractsError> {
     let proposal_path = root.join(PROPOSAL_PATH);
     let proposal = read_json(&proposal_path)?;
@@ -154,48 +181,112 @@ fn verify_proposal(root: &Path) -> Result<(), ExternalContractsError> {
         .map_err(ExternalContractsError::ProposalSchema)?;
     schema_registry
         .validate(EXTERNAL_LOCK_SCHEMA, &proposal)
-        .map_err(ExternalContractsError::ProposalSchema)?;
+        .map_err(|source| proposal_schema_error(&proposal, source, &proposal_path))?;
 
     let contracts = proposal.get("contracts").and_then(Value::as_object).ok_or(
         ExternalContractsError::Proposal {
             path: proposal_path.clone(),
+            code: ProposalCode::ContractIdentityMismatch,
         },
     )?;
     for contract in PROPOSED_CONTRACTS {
         let Some(value) = contracts.get(contract.name).and_then(Value::as_object) else {
             return Err(ExternalContractsError::Proposal {
                 path: proposal_path.clone(),
+                code: ProposalCode::ContractIdentityMismatch,
             });
         };
-        require_proposal_string(value, "version", contract.version, &proposal_path)?;
-        require_proposal_string(value, "source", contract.source, &proposal_path)?;
-        require_proposal_string(value, "epistemicStatus", "kk-locked", &proposal_path)?;
-        require_proposal_string(value, "localPath", contract.local_path, &proposal_path)?;
-        require_proposal_string(value, "sha256", contract.sha256, &proposal_path)?;
-        require_proposal_string(value, "verifier", contract.verifier, &proposal_path)?;
+        require_proposal_string(
+            value,
+            "version",
+            contract.version,
+            ProposalCode::ContractIdentityMismatch,
+            &proposal_path,
+        )?;
+        require_proposal_string(
+            value,
+            "source",
+            contract.source,
+            ProposalCode::ContractIdentityMismatch,
+            &proposal_path,
+        )?;
+        require_proposal_string(
+            value,
+            "epistemicStatus",
+            "kk-locked",
+            ProposalCode::ContractIdentityMismatch,
+            &proposal_path,
+        )?;
+        require_proposal_string(
+            value,
+            "localPath",
+            contract.local_path,
+            ProposalCode::ContractIdentityMismatch,
+            &proposal_path,
+        )?;
+        require_proposal_string(
+            value,
+            "sha256",
+            contract.sha256,
+            ProposalCode::RegistryDigestMismatch,
+            &proposal_path,
+        )?;
+        require_proposal_string(
+            value,
+            "verifier",
+            contract.verifier,
+            ProposalCode::ContractIdentityMismatch,
+            &proposal_path,
+        )?;
     }
     if contracts.len() != PROPOSED_CONTRACTS.len() {
         return Err(ExternalContractsError::Proposal {
             path: proposal_path,
+            code: ProposalCode::ContractIdentityMismatch,
         });
     }
     Ok(())
+}
+
+fn proposal_schema_error(
+    proposal: &Value,
+    source: SchemaError,
+    proposal_path: &Path,
+) -> ExternalContractsError {
+    let missing_dsse_envelope = proposal
+        .get("contracts")
+        .and_then(Value::as_object)
+        .is_some_and(|contracts| !contracts.contains_key("dsse-envelope-v1"));
+    if missing_dsse_envelope {
+        ExternalContractsError::Proposal {
+            path: proposal_path.to_path_buf(),
+            code: ProposalCode::MissingDsseEnvelopeEntry,
+        }
+    } else {
+        ExternalContractsError::ProposalSchema(source)
+    }
 }
 
 fn require_proposal_string(
     object: &serde_json::Map<String, Value>,
     key: &str,
     expected: &str,
+    code: ProposalCode,
     proposal_path: &Path,
 ) -> Result<(), ExternalContractsError> {
     require_string(object, key, expected, proposal_path).map_err(|_| {
         ExternalContractsError::Proposal {
             path: proposal_path.to_path_buf(),
+            code,
         }
     })
 }
 
-fn verify_fixtures(root: &Path, registry: &SchemaRegistry) -> Result<(), ExternalContractsError> {
+fn verify_fixtures(
+    root: &Path,
+    registry: &SchemaRegistry,
+    spdx_schema_identity: &str,
+) -> Result<(), ExternalContractsError> {
     let fixtures = root.join(FIXTURES_DIRECTORY).join("positive");
     let statement = read_json(&fixtures.join("statement.json"))?;
     validate_schema(registry, STATEMENT_SCHEMA, &statement, &fixtures)?;
@@ -204,11 +295,50 @@ fn verify_fixtures(root: &Path, registry: &SchemaRegistry) -> Result<(), Externa
     validate_schema(registry, PROVENANCE_SCHEMA, &provenance, &fixtures)?;
 
     let spdx = read_json(&fixtures.join("spdx-document.json"))?;
-    validate_schema(registry, SPDX_SCHEMA, &spdx, &fixtures)?;
+    verify_spdx_document(root, registry, spdx_schema_identity, &spdx, &fixtures)?;
 
     let envelope = read_json(&fixtures.join("envelope.json"))?;
     validate_schema(registry, DSSE_SCHEMA, &envelope, &fixtures)?;
     verify_dsse_envelope(root, registry, &envelope, &fixtures)
+}
+
+fn verify_spdx_document(
+    root: &Path,
+    registry: &SchemaRegistry,
+    schema_identity: &str,
+    document: &Value,
+    fixture_root: &Path,
+) -> Result<(), ExternalContractsError> {
+    verify_spdx_context(root, document, fixture_root)?;
+    registry
+        .validate(schema_identity, document)
+        .map_err(|_| ExternalContractsError::SpdxSchema {
+            path: fixture_root.to_path_buf(),
+        })
+}
+
+fn verify_spdx_context(
+    root: &Path,
+    document: &Value,
+    fixture_root: &Path,
+) -> Result<(), ExternalContractsError> {
+    if document.get("@context").and_then(Value::as_str) != Some(SPDX_CONTEXT_URI) {
+        return Err(ExternalContractsError::SpdxContext {
+            path: fixture_root.to_path_buf(),
+        });
+    }
+
+    let context_path = root.join(SPDX_CONTEXT_PATH);
+    let context = read_json(&context_path)?;
+    if context
+        .pointer("/@context/SpdxDocument")
+        .and_then(Value::as_str)
+        == Some(SPDX_DOCUMENT_TERM)
+    {
+        Ok(())
+    } else {
+        Err(ExternalContractsError::SpdxContext { path: context_path })
+    }
 }
 
 fn validate_schema(
@@ -281,21 +411,28 @@ fn verify_dsse_envelope(
 }
 
 fn dsse_pae(payload_type: &[u8], payload: &[u8]) -> Result<Vec<u8>, ExternalContractsError> {
-    let payload_type_length =
-        u64::try_from(payload_type.len()).map_err(|_| ExternalContractsError::Pae)?;
-    let payload_length = u64::try_from(payload.len()).map_err(|_| ExternalContractsError::Pae)?;
-    if payload_type_length > MAX_DSSE_LENGTH || payload_length > MAX_DSSE_LENGTH {
-        return Err(ExternalContractsError::Pae);
-    }
-    let capacity = 24_usize
-        .checked_add(payload_type.len())
+    let payload_type_length = payload_type.len().to_string();
+    let payload_length = payload.len().to_string();
+    let capacity = DSSE_PAE_PREFIX
+        .len()
+        .checked_add(1)
+        .and_then(|value| value.checked_add(payload_type_length.len()))
+        .and_then(|value| value.checked_add(1))
+        .and_then(|value| value.checked_add(payload_type.len()))
+        .and_then(|value| value.checked_add(1))
+        .and_then(|value| value.checked_add(payload_length.len()))
+        .and_then(|value| value.checked_add(1))
         .and_then(|value| value.checked_add(payload.len()))
         .ok_or(ExternalContractsError::Pae)?;
     let mut pae = Vec::with_capacity(capacity);
-    pae.extend_from_slice(&2_u64.to_le_bytes());
-    pae.extend_from_slice(&payload_type_length.to_le_bytes());
+    pae.extend_from_slice(DSSE_PAE_PREFIX);
+    pae.push(b' ');
+    pae.extend_from_slice(payload_type_length.as_bytes());
+    pae.push(b' ');
     pae.extend_from_slice(payload_type);
-    pae.extend_from_slice(&payload_length.to_le_bytes());
+    pae.push(b' ');
+    pae.extend_from_slice(payload_length.as_bytes());
+    pae.push(b' ');
     pae.extend_from_slice(payload);
     Ok(pae)
 }
@@ -449,6 +586,7 @@ fn workspace_root() -> Result<PathBuf, ()> {
 struct DerivedSchemaRegistry {
     temporary_directory: TemporaryDirectory,
     registry: SchemaRegistry,
+    spdx_schema_identity: String,
 }
 
 impl DerivedSchemaRegistry {
@@ -466,15 +604,24 @@ impl DerivedSchemaRegistry {
         let registry =
             SchemaRegistry::from_directories(&[temporary_directory.path().to_path_buf()])
                 .map_err(ExternalContractsError::DerivedSchema)?;
+        let spdx_schema_identity = registry
+            .identity_for_path(&temporary_directory.path().join("spdx-document.schema.json"))
+            .map_err(ExternalContractsError::DerivedSchema)?
+            .to_owned();
         Ok(Self {
             temporary_directory,
             registry,
+            spdx_schema_identity,
         })
     }
 
     fn registry(&self) -> &SchemaRegistry {
         let _ = self.temporary_directory.path();
         &self.registry
+    }
+
+    fn spdx_schema_identity(&self) -> &str {
+        &self.spdx_schema_identity
     }
 }
 
@@ -535,18 +682,29 @@ enum ExternalContractsError {
     Snapshot { path: PathBuf },
     #[error("external-contract snapshot identity does not match")]
     SourceIdentity { path: PathBuf },
-    #[error("external-contract proposal is invalid")]
-    Proposal { path: PathBuf },
+    #[error("external-contract proposal is invalid ({code:?})")]
+    Proposal { path: PathBuf, code: ProposalCode },
     #[error("external-contract proposal schema validation failed")]
     ProposalSchema(#[source] SchemaError),
     #[error("derived external-contract schema validation failed")]
     DerivedSchema(#[source] SchemaError),
     #[error("external-contract fixture is invalid")]
     Fixture { path: PathBuf },
+    #[error("SPDX document does not bind the local JSON-LD context")]
+    SpdxContext { path: PathBuf },
+    #[error("SPDX document does not satisfy the authoritative local schema")]
+    SpdxSchema { path: PathBuf },
     #[error("DSSE pre-authentication encoding is invalid")]
     Pae,
     #[error("could not create external-contract temporary directory")]
     TemporaryDirectory,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum ProposalCode {
+    MissingDsseEnvelopeEntry,
+    RegistryDigestMismatch,
+    ContractIdentityMismatch,
 }
 
 struct SnapshotSpec {
@@ -595,7 +753,33 @@ const SNAPSHOTS: &[SnapshotSpec] = &[
             commit: "61a649da8ca27924ac1ca8d2a061cb228839b24c",
             path: "rdf/spdx-context.jsonld",
             retrieval_url: "https://raw.githubusercontent.com/spdx/spdx-spec/61a649da8ca27924ac1ca8d2a061cb228839b24c/rdf/spdx-context.jsonld",
-            license: "CC-BY-4.0",
+            license: "Community-Spec-1.0 AND CC-BY-3.0",
+            version: "3.0.1",
+        }),
+    },
+    SnapshotSpec {
+        artifact_path: "qualification/schemas/external/spdx-3.0.1/spec/serializations.source",
+        metadata_path: "qualification/schemas/external/spdx-3.0.1/spec/source.json",
+        sha256: "cd62cd4edc55a80a2ca8ca4bb431405f017312f640eccf8f1a7bebdbdf84031a",
+        identity: SnapshotIdentity::Authoritative(AuthoritativeIdentity {
+            repository: "https://github.com/spdx/spdx-spec",
+            commit: "61a649da8ca27924ac1ca8d2a061cb228839b24c",
+            path: "docs/serializations.md",
+            retrieval_url: "https://raw.githubusercontent.com/spdx/spdx-spec/61a649da8ca27924ac1ca8d2a061cb228839b24c/docs/serializations.md",
+            license: "Community-Spec-1.0 AND CC-BY-3.0",
+            version: "3.0.1",
+        }),
+    },
+    SnapshotSpec {
+        artifact_path: SPDX_SCHEMA_PATH,
+        metadata_path: "qualification/schemas/external/spdx-3.0.1/schema/source.json",
+        sha256: "582c64e809d5b3ef9bd0c4de13a32391b47b0284a3e8d199569fb96f649234b1",
+        identity: SnapshotIdentity::Authoritative(AuthoritativeIdentity {
+            repository: "https://github.com/spdx/spdx-spec",
+            commit: "61a649da8ca27924ac1ca8d2a061cb228839b24c",
+            path: "schema/3.0.1/spdx-json-schema.json",
+            retrieval_url: SPDX_SCHEMA_URL,
+            license: "Community-Spec-1.0 AND CC-BY-3.0",
             version: "3.0.1",
         }),
     },
@@ -634,7 +818,7 @@ const SNAPSHOTS: &[SnapshotSpec] = &[
             commit: "4d7f142300264276bd3d45ab91d2b0eeb4227932",
             path: "docs/provenance/v1.md",
             retrieval_url: "https://raw.githubusercontent.com/slsa-framework/slsa/4d7f142300264276bd3d45ab91d2b0eeb4227932/docs/provenance/v1.md",
-            license: "CC-BY-4.0",
+            license: "Community-Spec-1.0 AND Apache-2.0",
             version: "1.0",
         }),
     },
@@ -647,7 +831,7 @@ const SNAPSHOTS: &[SnapshotSpec] = &[
             commit: "4d7f142300264276bd3d45ab91d2b0eeb4227932",
             path: "docs/provenance/schema/v1/provenance.cue",
             retrieval_url: "https://raw.githubusercontent.com/slsa-framework/slsa/4d7f142300264276bd3d45ab91d2b0eeb4227932/docs/provenance/schema/v1/provenance.cue",
-            license: "CC-BY-4.0",
+            license: "Community-Spec-1.0 AND Apache-2.0",
             version: "1.0",
         }),
     },
@@ -665,6 +849,19 @@ const SNAPSHOTS: &[SnapshotSpec] = &[
         }),
     },
     SnapshotSpec {
+        artifact_path: "qualification/schemas/external/dsse-envelope-v1/spec/protocol.source",
+        metadata_path: "qualification/schemas/external/dsse-envelope-v1/spec/protocol.source.json",
+        sha256: "d37115be77f71f793f411b02de02c58a040ad2c421782e5c87a06fb8264b1a48",
+        identity: SnapshotIdentity::Authoritative(AuthoritativeIdentity {
+            repository: "https://github.com/secure-systems-lab/dsse",
+            commit: "cacf247ea07024437c91e69ae65f3f4a2df3c657",
+            path: "protocol.md",
+            retrieval_url: "https://raw.githubusercontent.com/secure-systems-lab/dsse/cacf247ea07024437c91e69ae65f3f4a2df3c657/protocol.md",
+            license: "Apache-2.0",
+            version: "1.0.0",
+        }),
+    },
+    SnapshotSpec {
         artifact_path: "qualification/schemas/external/dsse-envelope-v1/proto/envelope.proto",
         metadata_path: "qualification/schemas/external/dsse-envelope-v1/proto/source.json",
         sha256: "cee196c0679fb38e164a8ed71f362cf2667fb697939a41e39d692c4092f0fc12",
@@ -675,16 +872,6 @@ const SNAPSHOTS: &[SnapshotSpec] = &[
             retrieval_url: "https://raw.githubusercontent.com/secure-systems-lab/dsse/cacf247ea07024437c91e69ae65f3f4a2df3c657/envelope.proto",
             license: "Apache-2.0",
             version: "1",
-        }),
-    },
-    SnapshotSpec {
-        artifact_path: "qualification/schemas/external/spdx-3.0.1/derived/spdx-document.derived.json",
-        metadata_path: "qualification/schemas/external/spdx-3.0.1/derived/source.json",
-        sha256: "2397a7e74ed57e3cf7495e01ebe87e463ae60b79cad7a9ff1e4eaf0512ff3cdd",
-        identity: SnapshotIdentity::Derived(DerivedIdentity {
-            local_path: "qualification/schemas/external/spdx-3.0.1/jsonld-context/spdx-context.jsonld",
-            sha256: "c72b0928f094c83e5c127784edb1ebca2af74a104fcacc007c332b23cbc788bd",
-            verifier: "jsonschema-0.51.0-draft-2020-12",
         }),
     },
     SnapshotSpec {
@@ -700,11 +887,11 @@ const SNAPSHOTS: &[SnapshotSpec] = &[
     SnapshotSpec {
         artifact_path: "qualification/schemas/external/slsa-provenance-v1/derived/provenance.derived.json",
         metadata_path: "qualification/schemas/external/slsa-provenance-v1/derived/source.json",
-        sha256: "4969ef98828ddcca7932af375eced1bd7cb24556d9ab16dbbaa2fc588e0fc9f0",
+        sha256: "4679b0c1ed9958f9bcbf267c5859a5b945603b9b6601a7b17a4813126a228fb5",
         identity: SnapshotIdentity::Derived(DerivedIdentity {
             local_path: "qualification/schemas/external/slsa-provenance-v1/cue/provenance.cue",
             sha256: "0d68f4ce799a5152151e0efd0fc7ae3b3769b512810d8667eab2ce77e25de40f",
-            verifier: "jsonschema-0.51.0-draft-2020-12",
+            verifier: "jsonschema-0.51.0-draft-2020-12-format-assertions",
         }),
     },
     SnapshotSpec {
@@ -728,10 +915,7 @@ const DERIVED_SCHEMA_FILES: &[(&str, &str)] = &[
         "qualification/schemas/external/slsa-provenance-v1/derived/provenance.derived.json",
         "provenance.schema.json",
     ),
-    (
-        "qualification/schemas/external/spdx-3.0.1/derived/spdx-document.derived.json",
-        "spdx-document.schema.json",
-    ),
+    (SPDX_SCHEMA_PATH, "spdx-document.schema.json"),
     (
         "qualification/schemas/external/dsse-envelope-v1/derived/envelope.derived.json",
         "envelope.schema.json",
@@ -742,10 +926,10 @@ const PROPOSED_CONTRACTS: &[ProposedContract] = &[
     ProposedContract {
         name: "spdx-3.0.1",
         version: "3.0.1",
-        source: "https://raw.githubusercontent.com/spdx/spdx-spec/61a649da8ca27924ac1ca8d2a061cb228839b24c/rdf/spdx-context.jsonld",
-        local_path: "qualification/schemas/external/spdx-3.0.1/jsonld-context/spdx-context.jsonld",
-        sha256: "c72b0928f094c83e5c127784edb1ebca2af74a104fcacc007c332b23cbc788bd",
-        verifier: "jsonschema-0.51.0-draft-2020-12:derived-spdx-jsonld-structural-v1",
+        source: SPDX_SCHEMA_URL,
+        local_path: SPDX_SCHEMA_PATH,
+        sha256: "582c64e809d5b3ef9bd0c4de13a32391b47b0284a3e8d199569fb96f649234b1",
+        verifier: "jsonschema-0.51.0-draft-2020-12:spdx-3.0.1-authoritative-json-schema-plus-jsonld-context-v1",
     },
     ProposedContract {
         name: "in-toto-statement-v1",
@@ -774,143 +958,5 @@ const PROPOSED_CONTRACTS: &[ProposedContract] = &[
 ];
 
 #[cfg(test)]
-mod tests {
-    use std::error::Error;
-    use std::fs;
-    use std::path::Path;
-
-    use super::{
-        ExternalContractsError, PROPOSAL_PATH, SNAPSHOTS, TemporaryDirectory, decode_base64,
-        outcome_at, run, verify_at, workspace_root,
-    };
-    use crate::CommandOutcome;
-
-    #[test]
-    fn verifies_authoritative_snapshots_and_local_semantics_without_network()
-    -> Result<(), Box<dyn Error>> {
-        let root = workspace_root().map_err(|_| "xtask must remain below the workspace root")?;
-        verify_at(&root)?;
-        assert_eq!(run(&[]), CommandOutcome::Success);
-        Ok(())
-    }
-
-    #[test]
-    fn mutated_snapshot_bytes_fail_the_recorded_digest() -> Result<(), Box<dyn Error>> {
-        let temporary = staged_root()?;
-        let fixture = temporary
-            .path()
-            .join("qualification/fixtures/external-contracts/negative/mutated-schema.bytes");
-        fs::copy(&fixture, temporary.path().join(SNAPSHOTS[7].artifact_path))?;
-
-        let error = verify_at(temporary.path())
-            .err()
-            .ok_or("mutation must fail")?;
-        assert!(matches!(error, ExternalContractsError::Snapshot { .. }));
-        Ok(())
-    }
-
-    #[test]
-    fn mutated_statement_predicate_and_envelope_fail_local_semantics() -> Result<(), Box<dyn Error>>
-    {
-        for (fixture_name, target_name) in [
-            ("mutated-statement.json", "statement.json"),
-            ("mutated-predicate.json", "provenance.json"),
-            ("mutated-envelope.json", "envelope.json"),
-        ] {
-            let temporary = staged_root()?;
-            let fixture = temporary
-                .path()
-                .join("qualification/fixtures/external-contracts/negative")
-                .join(fixture_name);
-            let target = temporary
-                .path()
-                .join("qualification/fixtures/external-contracts/positive")
-                .join(target_name);
-            fs::copy(fixture, target)?;
-
-            let error = verify_at(temporary.path())
-                .err()
-                .ok_or("mutated semantic fixture must fail")?;
-            assert!(matches!(error, ExternalContractsError::Fixture { .. }));
-        }
-        Ok(())
-    }
-
-    #[test]
-    fn wrong_registry_digest_and_incomplete_proposal_fail_without_touching_active_lock()
-    -> Result<(), Box<dyn Error>> {
-        for fixture_name in [
-            "wrong-registry-digest.json",
-            "incomplete-proposed-lock.json",
-        ] {
-            let temporary = staged_root()?;
-            let active_lock = temporary
-                .path()
-                .join(".constitution/tech-spec/contracts/external-contract-lock.json");
-            let before = fs::read(&active_lock)?;
-            let fixture = temporary
-                .path()
-                .join("qualification/fixtures/external-contracts/negative")
-                .join(fixture_name);
-            fs::copy(fixture, temporary.path().join(PROPOSAL_PATH))?;
-
-            let error = verify_at(temporary.path())
-                .err()
-                .ok_or("invalid proposal fixture must fail")?;
-            assert!(
-                matches!(
-                    error,
-                    ExternalContractsError::Proposal { .. }
-                        | ExternalContractsError::ProposalSchema(_)
-                ),
-                "unexpected proposal failure: {error:?}"
-            );
-            assert!(matches!(
-                outcome_at(temporary.path()),
-                CommandOutcome::Failed(_)
-            ));
-            assert_eq!(fs::read(active_lock)?, before);
-        }
-        Ok(())
-    }
-
-    #[test]
-    fn base64_decoder_accepts_dsse_standard_and_url_safe_forms() {
-        assert_eq!(decode_base64("AA=="), Some(vec![0]));
-        assert_eq!(decode_base64("-_8="), Some(vec![251, 255]));
-        assert_eq!(decode_base64("A"), None);
-        assert_eq!(decode_base64("A=AA"), None);
-    }
-
-    fn staged_root() -> Result<TemporaryDirectory, Box<dyn Error>> {
-        let source = workspace_root().map_err(|_| "xtask must remain below the workspace root")?;
-        let temporary = TemporaryDirectory::new()?;
-        copy_directory(
-            &source.join("qualification"),
-            &temporary.path().join("qualification"),
-        )?;
-        copy_directory(
-            &source.join(".constitution/tech-spec/data-models"),
-            &temporary.path().join(".constitution/tech-spec/data-models"),
-        )?;
-        copy_directory(
-            &source.join(".constitution/tech-spec/contracts"),
-            &temporary.path().join(".constitution/tech-spec/contracts"),
-        )?;
-        Ok(temporary)
-    }
-
-    fn copy_directory(source: &Path, destination: &Path) -> Result<(), std::io::Error> {
-        fs::create_dir_all(destination)?;
-        for entry in fs::read_dir(source)? {
-            let entry = entry?;
-            let destination_path = destination.join(entry.file_name());
-            if entry.file_type()?.is_dir() {
-                copy_directory(&entry.path(), &destination_path)?;
-            } else {
-                fs::copy(entry.path(), destination_path)?;
-            }
-        }
-        Ok(())
-    }
-}
+#[path = "external_contracts_tests.rs"]
+mod tests;

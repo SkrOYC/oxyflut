@@ -34,6 +34,17 @@ Invariants:
 Checker: cargo +1.98.0 test -p xtask external_contracts
 ```
 
+##### OXY-C001 Deviations & Justifications
+
+- **Touched Files:** `crates/oxyflut-qualification/src/schema.rs`
+- **Justification:** The shared offline validator must assert JSON Schema `format` values for the SLSA RFC 3339 timestamp contract.
+- **Touched Files:** `xtask/src/commands/external_contracts_tests.rs`
+- **Justification:** The focused external-contract test module keeps the command implementation below the repository file-size limit while exercising the required external fixtures.
+- **Touched Files:** `.gitattributes`
+- **Justification:** The authoritative SPDX schema preserves upstream CRLF bytes, so its path disables Git trailing-whitespace diagnostics without rewriting the snapshot.
+- **Touched Files:** `.constitution/tasks/active/EPIC-C-lock-input-tooling.md`
+- **Justification:** The execution rules require this scope-deviation record.
+
 #### OXY-C002 Implement capability-baseline authoring and validation
 
 - **Type:** Feature
