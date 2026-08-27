@@ -53,6 +53,12 @@ const CAPABILITY_BASELINE_SCHEMA: &str = "urn:oxyflut:schema:capability-baseline
 pub(crate) enum ContractTestResolution {
     /// No Stage 3 document defines a file location for the identifiers.
     DeferredUntilCandidateImplementation,
+    /// Every common candidate contract test resolves to a physical test location.
+    #[allow(
+        dead_code,
+        reason = "Candidate implementation owns the future physical-test resolution report."
+    )]
+    Resolved,
 }
 
 /// A content-free report for the exact-set validation family.

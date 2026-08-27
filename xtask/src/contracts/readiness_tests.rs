@@ -95,6 +95,20 @@ fn nested_kk_claim_without_digest_bound_evidence_fails_closed() -> Result<(), Bo
 }
 
 #[test]
+fn schema_valid_platform_containers_validate_their_nested_kk_claims() -> Result<(), Box<dyn Error>>
+{
+    let root = ready_fixture_root()?;
+    let registry = schema::compile_workspace(&workspace_root()?)?;
+    let platform = read_json(&root.join(super::PLATFORM_CONTRACTS_PATH))?;
+    registry.validate(super::PLATFORM_SCHEMA, &platform)?;
+
+    let mut issues = Vec::new();
+    validate_platform_value(&root, &platform, &mut issues)?;
+    assert!(issues.is_empty());
+    Ok(())
+}
+
+#[test]
 fn ready_fixture_exercises_candidate_and_measurement_true_paths() -> Result<(), Box<dyn Error>> {
     let root = ready_fixture_root()?;
     let registry = schema::compile_workspace(&workspace_root()?)?;

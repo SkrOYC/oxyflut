@@ -546,9 +546,9 @@ mod tests {
         }
     }
 
+    /// Checks only direct dependencies declared by workspace packages, not Cargo's transitive graph.
     #[test]
-    fn lockfile_direct_workspace_dependencies_are_pinned_stack_dependencies()
-    -> Result<(), Box<dyn Error>> {
+    fn workspace_direct_dependencies_use_allowed_stack_pins() -> Result<(), Box<dyn Error>> {
         let root = workspace_root()?;
         let lockfile = read_file(&root.join("Cargo.lock"))?;
 
@@ -557,14 +557,14 @@ mod tests {
                 .rsplit('/')
                 .next()
                 .ok_or("workspace member must have a name")?;
-            let package = lock_package(&lockfile, package_name)
+            let package = lock_package(&lockfile, package_name)?
                 .ok_or("every workspace package must have a Cargo.lock entry")?;
             for dependency in lock_dependencies(package) {
                 let (_, expected_version) = STACK_ALLOWED_DEPENDENCIES
                     .iter()
                     .find(|(allowed_name, _)| *allowed_name == dependency)
                     .ok_or("workspace dependency must be allowlisted by stack.md")?;
-                let dependency_package = lock_package(&lockfile, dependency)
+                let dependency_package = lock_package(&lockfile, dependency)?
                     .ok_or("workspace dependency must have a Cargo.lock entry")?;
                 let actual_version = package_version(dependency_package)
                     .ok_or("Cargo.lock package entries must state a version")?;
@@ -604,11 +604,24 @@ mod tests {
         Ok(())
     }
 
-    fn lock_package<'a>(lockfile: &'a str, name: &str) -> Option<&'a str> {
+    #[test]
+    fn lock_package_rejects_duplicate_package_names() {
+        let lockfile = "[[package]]\nname = \"duplicate\"\nversion = \"1.0.0\"\n\n[[package]]\nname = \"duplicate\"\nversion = \"2.0.0\"\n";
+        assert!(lock_package(lockfile, "duplicate").is_err());
+    }
+
+    fn lock_package<'a>(lockfile: &'a str, name: &str) -> Result<Option<&'a str>, String> {
         let name_line = format!("name = \"{name}\"");
-        lockfile
+        let mut matching_package = None;
+        for package in lockfile
             .split("[[package]]")
-            .find(|package| package.lines().any(|line| line == name_line))
+            .filter(|package| package.lines().any(|line| line == name_line))
+        {
+            if matching_package.replace(package).is_some() {
+                return Err(format!("Cargo.lock contains duplicate package name {name}"));
+            }
+        }
+        Ok(matching_package)
     }
 
     fn lock_dependencies(package: &str) -> Vec<&str> {

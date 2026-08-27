@@ -12,10 +12,8 @@ use crate::toolchain;
 const DATA_MODELS_PATH: &str = ".constitution/tech-spec/data-models";
 const CONTRACTS_PATH: &str = ".constitution/tech-spec/contracts";
 const TRACEABILITY_PATH: &str = ".constitution/tech-spec/contracts/capability-traceability.json";
-const CONTRACT_TESTS_DEFERRED_REASON: &str = "52 pending candidate implementation";
 const ACCESSIBILITY_GENERATION_PATH: &str =
     ".constitution/tech-spec/data-models/accessibility-map.schema.json";
-const ACCESSIBILITY_GENERATION_DEFERRED_REASON: &str = "schema lacks generation field";
 const REGISTRY_PATH: &str = ".constitution/tech-spec/contracts/diagnostic-event-registry.json";
 const LOCK_PATH: &str = ".constitution/tech-spec/contracts/qualification-lock.json";
 const PHASE_PATH: &str = ".constitution/tech-spec/contracts/specification-phase.json";
@@ -50,6 +48,47 @@ pub(crate) fn run(arguments: &[String]) -> CommandOutcome {
 
 fn validate_workspace(root: &Path) -> ContractValidationReport {
     let mut summaries = Vec::with_capacity(FAMILY_COUNT);
+    summaries.extend(pre_implementation_summaries(root));
+    summaries.extend(readiness_summaries(
+        validators::readiness::validate_workspace(root),
+    ));
+    summaries.push(match validate_rust_contracts(root) {
+        Ok(()) => FamilySummary::ok("rust-contract", RUST_CONTRACTS_PATH),
+        Err(path) => FamilySummary::failed_path("rust-contract", path),
+    });
+
+    match validators::native::NativeTools::load(root) {
+        Ok(tools) => summaries.extend(native_summaries(root, &tools)),
+        Err(error) => summaries.extend(native_load_failure(native_failure_path(&error))),
+    }
+
+    ContractValidationReport { summaries }
+}
+
+/// Returns the first failed pre-implementation validation family in command order.
+pub(crate) fn first_pre_implementation_input_failure(
+    root: &Path,
+) -> Option<ValidationFamilyFailure> {
+    pre_implementation_summaries(root)
+        .into_iter()
+        .find(FamilySummary::is_failed)
+        .map(|summary| ValidationFamilyFailure {
+            family: summary.family,
+            contract_path: summary.contract_path,
+        })
+}
+
+/// Identifies one failed pre-implementation validation family.
+#[derive(Debug, Eq, PartialEq)]
+pub(crate) struct ValidationFamilyFailure {
+    /// The stable validation family name.
+    pub(crate) family: &'static str,
+    /// The contract path reported by the validation family.
+    pub(crate) contract_path: String,
+}
+
+fn pre_implementation_summaries(root: &Path) -> Vec<FamilySummary> {
+    let mut summaries = Vec::with_capacity(7);
     let registry = validators::schema::compile_workspace(root);
     summaries.push(match &registry {
         Ok(_) => FamilySummary::ok("schema", DATA_MODELS_PATH),
@@ -65,21 +104,8 @@ fn validate_workspace(root: &Path) -> ContractValidationReport {
         },
         Err(_) => FamilySummary::failed("instance", DATA_MODELS_PATH),
     });
-
-    summaries.push(summary_from_result(
-        "exact-set",
-        TRACEABILITY_PATH,
+    summaries.extend(traceability_summaries(
         validators::traceability::validate_workspace(root),
-    ));
-    summaries.push(FamilySummary::deferred(
-        "contract-tests",
-        CONTRACT_TESTS_DEFERRED_REASON,
-        TRACEABILITY_PATH,
-    ));
-    summaries.push(FamilySummary::deferred(
-        "accessibility-generation",
-        ACCESSIBILITY_GENERATION_DEFERRED_REASON,
-        ACCESSIBILITY_GENERATION_PATH,
     ));
     summaries.push(summary_from_result(
         "registry",
@@ -91,27 +117,61 @@ fn validate_workspace(root: &Path) -> ContractValidationReport {
         CONTRACTS_PATH,
         validators::digests::validate_workspace(root),
     ));
+    summaries
+}
 
-    summaries.extend(readiness_summaries(
-        validators::readiness::validate_workspace(root),
-    ));
+fn traceability_summaries(
+    result: Result<
+        validators::traceability::TraceabilityRunReport,
+        validators::traceability::TraceabilityError,
+    >,
+) -> [FamilySummary; 3] {
+    match result {
+        Ok(report) => [
+            FamilySummary::ok("exact-set", TRACEABILITY_PATH),
+            contract_test_summary(&report),
+            accessibility_generation_summary(&report),
+        ],
+        Err(_) => [
+            FamilySummary::failed("exact-set", TRACEABILITY_PATH),
+            FamilySummary::failed("contract-tests", TRACEABILITY_PATH),
+            FamilySummary::failed("accessibility-generation", ACCESSIBILITY_GENERATION_PATH),
+        ],
+    }
+}
 
-    match validators::native::NativeTools::load(root) {
-        Ok(tools) => {
-            summaries.push(match validate_rust_contracts(root) {
-                Ok(()) => FamilySummary::ok("rust-contract", RUST_CONTRACTS_PATH),
-                Err(path) => FamilySummary::failed_path("rust-contract", path),
-            });
-            summaries.extend(native_summaries(root, &tools));
+fn contract_test_summary(
+    report: &validators::traceability::TraceabilityRunReport,
+) -> FamilySummary {
+    match report.contract_test_resolution {
+        validators::traceability::ContractTestResolution::DeferredUntilCandidateImplementation => {
+            FamilySummary::deferred(
+                "contract-tests",
+                format!(
+                    "{} pending candidate implementation",
+                    report.deferred_contract_tests
+                ),
+                TRACEABILITY_PATH,
+            )
         }
-        Err(error) => {
-            let failure_path = native_failure_path(&error);
-            summaries.push(FamilySummary::failed("rust-contract", failure_path));
-            summaries.extend(native_load_failure(failure_path));
+        validators::traceability::ContractTestResolution::Resolved => {
+            FamilySummary::ok("contract-tests", TRACEABILITY_PATH)
         }
     }
+}
 
-    ContractValidationReport { summaries }
+fn accessibility_generation_summary(
+    report: &validators::traceability::TraceabilityRunReport,
+) -> FamilySummary {
+    if report.accessibility_generation_deferred {
+        FamilySummary::deferred(
+            "accessibility-generation",
+            "schema lacks generation field",
+            ACCESSIBILITY_GENERATION_PATH,
+        )
+    } else {
+        FamilySummary::ok("accessibility-generation", ACCESSIBILITY_GENERATION_PATH)
+    }
 }
 
 fn schema_failure_path(
@@ -233,13 +293,15 @@ fn readiness_summaries(
     }
 }
 
-/// Parses all authoritative Rust contracts with the verified pinned Rust toolchain.
+/// Parses all authoritative Rust contracts with the manifest-verified pinned compiler.
 ///
-/// The shared [`validators::native::NativeTools`] instance already verifies the staged manifest
-/// before this function invokes `rustc` for each independent metadata-only library. This avoids
-/// adding `syn`; exact declared-symbol resolution remains the responsibility of the traceability
+/// This validation loads the staged manifest independently from native-tool validation. It uses
+/// the manifest's verified `rustc` path for each metadata-only library and doesn't require a C
+/// toolchain. Exact declared-symbol resolution remains the responsibility of the traceability
 /// family.
 fn validate_rust_contracts(root: &Path) -> Result<(), String> {
+    let rustc = validators::native::load_rust_contract_compiler(root)
+        .map_err(|_| RUST_CONTRACTS_PATH.to_owned())?;
     let temporary =
         ContractTemporaryDirectory::new().map_err(|_| RUST_CONTRACTS_PATH.to_owned())?;
     for (crate_name, contract_path) in [
@@ -248,11 +310,8 @@ fn validate_rust_contracts(root: &Path) -> Result<(), String> {
         ("oxyflut_qualification_contract", "oxyflut-qualification.rs"),
     ] {
         let path = root.join(RUST_CONTRACTS_PATH).join(contract_path);
-        let status = Command::new("rustup")
+        let status = Command::new(&rustc)
             .args([
-                "run",
-                "1.98.0",
-                "rustc",
                 "--crate-name",
                 crate_name,
                 "--crate-type",
@@ -375,16 +434,26 @@ impl FamilySummary {
         }
     }
 
-    fn deferred(family: &'static str, reason: &'static str, contract_path: &'static str) -> Self {
+    fn deferred(
+        family: &'static str,
+        reason: impl Into<String>,
+        contract_path: &'static str,
+    ) -> Self {
         Self {
             family,
-            status: FamilyStatus::Deferred { reason },
+            status: FamilyStatus::Deferred {
+                reason: reason.into(),
+            },
             contract_path: contract_path.to_owned(),
         }
     }
 
+    fn is_failed(&self) -> bool {
+        matches!(&self.status, FamilyStatus::Failed)
+    }
+
     fn line(&self) -> String {
-        match self.status {
+        match &self.status {
             FamilyStatus::Ok => format!("{}: ok ({})", self.family, self.contract_path),
             FamilyStatus::Failed => format!("{}: failed ({})", self.family, self.contract_path),
             FamilyStatus::Deferred { reason } => {
@@ -401,7 +470,7 @@ impl FamilySummary {
 enum FamilyStatus {
     Ok,
     Failed,
-    Deferred { reason: &'static str },
+    Deferred { reason: String },
 }
 
 fn summary_path(root: &Path, path: &Path) -> String {
@@ -426,8 +495,8 @@ mod tests {
     use std::path::Path;
 
     use super::{
-        ContractTemporaryDirectory, FAMILY_COUNT, readiness_summaries, validate_workspace,
-        validators, workspace_root,
+        ContractTemporaryDirectory, FAMILY_COUNT, accessibility_generation_summary,
+        contract_test_summary, readiness_summaries, validate_workspace, validators, workspace_root,
     };
     use crate::CommandOutcome;
 
@@ -459,6 +528,25 @@ mod tests {
         );
         assert_eq!(report.outcome(), CommandOutcome::Success);
         Ok(())
+    }
+
+    #[test]
+    fn traceability_deferred_summaries_retire_when_the_report_resolves_them() {
+        let report = validators::traceability::TraceabilityRunReport {
+            capability_count: 52,
+            constraint_count: 27,
+            contract_test_resolution: validators::traceability::ContractTestResolution::Resolved,
+            deferred_contract_tests: 0,
+            accessibility_generation_deferred: false,
+        };
+        assert_eq!(
+            contract_test_summary(&report).line(),
+            "contract-tests: ok (.constitution/tech-spec/contracts/capability-traceability.json)"
+        );
+        assert_eq!(
+            accessibility_generation_summary(&report).line(),
+            "accessibility-generation: ok (.constitution/tech-spec/data-models/accessibility-map.schema.json)"
+        );
     }
 
     #[test]

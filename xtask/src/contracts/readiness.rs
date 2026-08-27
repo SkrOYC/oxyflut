@@ -533,6 +533,7 @@ fn validate_platform_value(
             if let Some(status) = values.get("status") {
                 match status.as_str() {
                     Some("ku-gating") => issues.push("platform-known-unknown".to_owned()),
+                    Some("kk") if is_platform_environment_container(values) => {}
                     Some("kk") => validate_kk_platform_claim(root, values)?,
                     Some("absent-kk") => {}
                     Some(_) | None => return fail("platform-claim-status"),
@@ -552,6 +553,22 @@ fn validate_platform_value(
         Value::Null | Value::Bool(_) | Value::Number(_) | Value::String(_) => {}
     }
     Ok(())
+}
+
+fn is_platform_environment_container(value: &Map<String, Value>) -> bool {
+    [
+        "reference",
+        "minimumVersion",
+        "protocols",
+        "ime",
+        "accessibilityMaps",
+        "timing",
+        "recoveryBaseline",
+        "allocations",
+        "openQuestions",
+    ]
+    .iter()
+    .all(|field| value.contains_key(*field))
 }
 
 fn validate_kk_platform_claim(
@@ -574,22 +591,7 @@ fn validate_kk_platform_claim(
         let _ = digests::verify_object_reference(root, claim)?;
         return Ok(());
     }
-    if contains_nested_status(claim) {
-        return Ok(());
-    }
     fail("platform-claim-evidence")
-}
-
-fn contains_nested_status(value: &Map<String, Value>) -> bool {
-    value.values().any(|value| match value {
-        Value::Array(values) => values.iter().any(|value| {
-            value
-                .as_object()
-                .is_some_and(|value| value.contains_key("status"))
-        }),
-        Value::Object(values) => values.contains_key("status"),
-        Value::Null | Value::Bool(_) | Value::Number(_) | Value::String(_) => false,
-    })
 }
 
 fn validate_schema(

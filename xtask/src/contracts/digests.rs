@@ -4,7 +4,9 @@ use std::fs;
 use std::io;
 use std::path::{Path, PathBuf};
 
-use oxyflut_qualification::evidence::declared_references;
+use oxyflut_qualification::evidence::{
+    ReferenceDeclaration, declared_references, reference_declaration,
+};
 use oxyflut_qualification::hash::{DigestParseError, Sha256Digest};
 use oxyflut_qualification::identifiers::{IdentifierError, RepositoryPath};
 use serde_json::{Map, Value};
@@ -114,6 +116,9 @@ pub(crate) enum DigestError {
         #[source]
         source: serde_json::Error,
     },
+    /// A contract declares an immutable reference outside a registered schema family.
+    #[error("contract declares an unclassified immutable reference")]
+    UnclassifiedReference,
 }
 
 /// Verifies one repository-relative path and SHA-256 binding without regenerating either value.
@@ -246,7 +251,7 @@ pub(crate) fn validate_workspace(root: &Path) -> Result<(), DigestError> {
         })?;
         let value = serde_json::from_slice(&bytes)
             .map_err(|source| DigestError::ContractJson { path, source })?;
-        verify_references_in_value(root, &value)?;
+        let _ = verify_references_in_value(root, &value)?;
     }
     Ok(())
 }
@@ -274,16 +279,37 @@ pub(crate) fn verify_object_reference(
 
 /// Verifies every immutable reference declared by the JSON value's `$schema` identity.
 ///
-/// Objects with a `path` or `localPath` but no `sha256` key aren't references and are skipped.
+/// Returns the number of verified immutable references. Objects with a `path` or `localPath` but
+/// no `sha256` key aren't references and are skipped. A reference-shaped object without a known
+/// schema family fails closed instead of allowing the digest family to report success.
 ///
 /// # Errors
 ///
-/// Returns a typed error for an incomplete, missing, escaping, or mismatched schema-typed reference.
-pub(crate) fn verify_references_in_value(root: &Path, value: &Value) -> Result<(), DigestError> {
-    let Some(schema_identity) = value.get("$schema").and_then(Value::as_str) else {
-        return Ok(());
-    };
-    verify_references_for_schema(root, schema_identity, value)
+/// Returns a typed error for an unclassified, incomplete, missing, escaping, or mismatched
+/// schema-typed reference.
+pub(crate) fn verify_references_in_value(root: &Path, value: &Value) -> Result<usize, DigestError> {
+    let declaration = value
+        .get("$schema")
+        .and_then(Value::as_str)
+        .map(reference_declaration)
+        .unwrap_or(ReferenceDeclaration::Unknown);
+    match declaration {
+        ReferenceDeclaration::References => {
+            let schema_identity = value
+                .get("$schema")
+                .and_then(Value::as_str)
+                .ok_or(DigestError::UnclassifiedReference)?;
+            verify_references_for_schema(root, schema_identity, value)
+        }
+        ReferenceDeclaration::ReferenceFree => Ok(0),
+        ReferenceDeclaration::Unknown => {
+            if reference_object_count(value) == 0 {
+                Ok(0)
+            } else {
+                Err(DigestError::UnclassifiedReference)
+            }
+        }
+    }
 }
 
 /// Verifies every immutable reference declared by one known durable schema identity.
@@ -293,18 +319,40 @@ pub(crate) fn verify_references_in_value(root: &Path, value: &Value) -> Result<(
 ///
 /// # Errors
 ///
-/// Returns a typed error for an incomplete, missing, escaping, or mismatched schema-typed reference.
+/// Returns the number of verified immutable references or a typed error for an incomplete,
+/// missing, escaping, or mismatched schema-typed reference.
 pub(crate) fn verify_references_for_schema(
     root: &Path,
     schema_identity: &str,
     value: &Value,
-) -> Result<(), DigestError> {
-    for reference in
-        declared_references(schema_identity, value).map_err(|_| DigestError::IncompleteReference)?
-    {
+) -> Result<usize, DigestError> {
+    let references = declared_references(schema_identity, value)
+        .map_err(|_| DigestError::IncompleteReference)?;
+    for reference in &references {
         let _ = verify_reference(root, reference.path, reference.sha256)?;
     }
-    Ok(())
+    Ok(references.len())
+}
+
+fn reference_object_count(value: &Value) -> usize {
+    match value {
+        Value::Array(values) => values.iter().map(reference_object_count).sum(),
+        Value::Object(values) => {
+            let is_absent_optional_reference = matches!(
+                (
+                    values.get("path").or_else(|| values.get("localPath")),
+                    values.get("sha256")
+                ),
+                (Some(Value::Null), Some(Value::Null))
+            );
+            let is_reference_object = values.contains_key("sha256")
+                && (values.contains_key("path") || values.contains_key("localPath"))
+                && !is_absent_optional_reference;
+            usize::from(is_reference_object)
+                + values.values().map(reference_object_count).sum::<usize>()
+        }
+        Value::Null | Value::Bool(_) | Value::Number(_) | Value::String(_) => 0,
+    }
 }
 
 #[cfg(test)]
@@ -345,7 +393,7 @@ mod tests {
             "$schema": "urn:oxyflut:schema:qualification-evidence:5",
             "path": "ordinary-data"
         });
-        verify_references_in_value(&root, &skipped)?;
+        assert_eq!(verify_references_in_value(&root, &skipped)?, 0);
         let null_digest = json!({
             "$schema": "urn:oxyflut:schema:qualification-evidence:5",
             "path": "proof.txt",
@@ -354,6 +402,23 @@ mod tests {
         assert!(matches!(
             verify_references_in_value(&root, &null_digest),
             Err(DigestError::IncompleteReference)
+        ));
+        let unclassified = json!({
+            "path": "proof.txt",
+            "sha256": "0".repeat(64)
+        });
+        assert!(matches!(
+            verify_references_in_value(&root, &unclassified),
+            Err(DigestError::UnclassifiedReference)
+        ));
+        let unknown_schema = json!({
+            "$schema": "urn:oxyflut:schema:unknown:1",
+            "path": "proof.txt",
+            "sha256": "0".repeat(64)
+        });
+        assert!(matches!(
+            verify_references_in_value(&root, &unknown_schema),
+            Err(DigestError::UnclassifiedReference)
         ));
         fs::remove_dir_all(root)?;
         Ok(())
