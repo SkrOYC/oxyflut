@@ -51,6 +51,8 @@ Command: cargo +1.98.0 test --workspace --all-features
 
 - **Touched Files:** `devenv.*`, `.envrc`, `.gitignore`
 - **Justification:** The host lacks a C toolchain; devenv provides the reproducible, hashable tool set that OXY-A008 will record.
+- **Touched Files:** `native/engine-bridge/README.md`, `platform/{macos,windows,linux}/README.md`
+- **Justification:** The required target structure specifies documented empty placeholder directories; they contain no candidate or operating-environment implementation.
 
 #### OXY-A002 Implement offline JSON Schema and instance validation
 
