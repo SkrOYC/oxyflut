@@ -312,6 +312,13 @@ Invariants:
 Checker: cargo +1.98.0 test --workspace --all-features
 ```
 
+##### OXY-A006 Deviations & Justifications
+
+- **Touched Files:** `crates/oxyflut-qualification/src/evidence/{mod.rs,canonical.rs,publish.rs,verify.rs}` replace the ticket's single `evidence.rs` module.
+- **Justification:** The required review fix splits canonical encoding, publication, and verification into cohesive modules while preserving the `evidence` module path registered by `lib.rs`.
+- **Touched Files:** `.constitution/tasks/active/EPIC-A-qualification-foundation.md`.
+- **Justification:** The execution rules require this scope deviation to be recorded in the ticket block.
+
 #### OXY-A007 Assemble the contract-validation command
 
 - **Type:** Chore
