@@ -39,7 +39,7 @@ The following entries are mandatory for both qualification candidates:
 | Fuzzing | `cargo-fuzz` 0.13.2 | Adopt for Phase 3A | Runs the required parser and callback campaigns. |
 | Dependency policy | `cargo-deny` 0.20.2 and `cargo-audit` 0.22.2 | Adopt for Phase 3A | Enforces license, source, duplicate, and advisory policies. |
 | Coverage | `cargo-llvm-cov` 0.9.0 | Trial | Produces qualification coverage evidence without defining a product acceptance percentage. |
-| Documentation formatting | Prettier 3.9.6 executed as `bunx prettier@3.9.6` | Adopt for Phase 3A | Makes constitution formatting repeatable without adding a package manifest before repository scaffolding. |
+| Documentation formatting | Prettier 3.9.6 from a hash-pinned npm tarball, executed as `prettier` | Adopt for Phase 3A | Uses a declared immutable executable for repeatable constitution formatting. |
 
 No database, network service, remote telemetry system, application plugin runtime, or custom-shader API is part of Phase 3A.
 

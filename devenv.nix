@@ -10,6 +10,43 @@ let
     ln -s ${pkgs.llvmPackages.clang}/bin/clang++ "$out/bin/c++"
     ln -s ${pkgs.llvmPackages.clang}/bin/clang++ "$out/bin/clang++"
   '';
+  prettier396 = pkgs.buildNpmPackage {
+    pname = "prettier";
+    version = "3.9.6";
+    src = pkgs.fetchurl {
+      url = "https://registry.npmjs.org/prettier/-/prettier-3.9.6.tgz";
+      hash = "sha512-OpN0zzVdiaiAhxpuuj5efpIS4sY9j7bY6uR5mnj5yPzGkdkjNKSJeUThPb60Jw29QuAZgA4o+/iB49kFiaBX6g==";
+    };
+    sourceRoot = "package";
+    postPatch = ''
+      cat > package-lock.json <<'EOF'
+      {
+        "name": "prettier",
+        "version": "3.9.6",
+        "lockfileVersion": 3,
+        "requires": true,
+        "packages": {
+          "": {
+            "name": "prettier",
+            "version": "3.9.6"
+          }
+        }
+      }
+      EOF
+    '';
+    forceEmptyCache = true;
+    npmDepsHash = "sha256-VERkDP5Al98PLAIprM2+dIVrSsvUJ/Stozmey30AOLY=";
+    dontNpmBuild = true;
+    nativeBuildInputs = [ pkgs.makeWrapper ];
+    installPhase = ''
+      runHook preInstall
+      mkdir -p "$out/lib/node_modules"
+      cp --recursive . "$out/lib/node_modules/prettier"
+      makeWrapper ${pkgs.nodejs}/bin/node "$out/bin/prettier" \
+        --add-flags "$out/lib/node_modules/prettier/bin/prettier.cjs"
+      runHook postInstall
+    '';
+  };
 in
 {
   packages = [
@@ -18,7 +55,7 @@ in
     pkgs.binutils
     pkgs.rust-bindgen
     pkgs.rust-cbindgen
-    pkgs.bun
+    prettier396
     pkgs.git
     pkgs.jq
     pkgs.cargo-deny
@@ -39,6 +76,6 @@ in
     fmt-check.exec = "cargo +1.98.0 fmt --all --check";
     clippy-check.exec = "cargo +1.98.0 clippy --workspace --all-targets --all-features -- -D warnings";
     test-all.exec = "cargo +1.98.0 test --workspace --all-features";
-    docs-check.exec = "bunx prettier@3.9.6 --prose-wrap never --check '.constitution/**/*.md'";
+    docs-check.exec = "prettier --prose-wrap never --check '.constitution/**/*.md'";
   };
 }

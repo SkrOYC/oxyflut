@@ -224,6 +224,13 @@ Assertions:
 Command: cargo +1.98.0 test --workspace --all-features
 ```
 
+##### OXY-A008 Deviations & Justifications
+
+- **Touched Files:** `devenv.nix`.
+- **Justification:** An immutable Prettier identity is required for OXY-A008.
+- **Touched Files:** `.constitution/tech-spec/{guidelines,stack}.md`, `.constitution/tasks/active/{EPIC-B-readiness-research,EPIC-D-readiness-reconciliation}.md`, and `.constitution/tasks/active/EPIC-A-qualification-foundation.md`.
+- **Justification:** The documented formatter commands must use the declared immutable Prettier executable.
+
 #### OXY-A005 Compile and layout-check native contract headers
 
 - **Type:** Chore
