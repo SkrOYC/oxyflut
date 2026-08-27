@@ -1,0 +1,446 @@
+#include <stddef.h>
+#include <stdio.h>
+
+#include "oxyflut-substrate.h"
+
+static int first_struct = 1;
+static int first_field = 1;
+
+static void begin_struct(const char *name, size_t size, size_t alignment) {
+  if (!first_struct) {
+    putchar(',');
+  }
+  first_struct = 0;
+  first_field = 1;
+  printf("{\"name\":\"%s\",\"size\":%zu,\"align\":%zu,\"fields\":[", name, size, alignment);
+}
+
+static void emit_field(const char *name, size_t offset, const char *nullability) {
+  if (!first_field) {
+    putchar(',');
+  }
+  first_field = 0;
+  printf("{\"name\":\"%s\",\"offset\":%zu,\"nullability\":\"%s\"}", name, offset, nullability);
+}
+
+static void end_struct(void) {
+  fputs("]}", stdout);
+}
+
+#define BEGIN_STRUCT(type) begin_struct(#type, sizeof(type), _Alignof(type))
+#define FIELD(type, member, nullability) emit_field(#member, offsetof(type, member), nullability)
+
+int main(void) {
+  printf("{\"abiVersion\":%u,\"structs\":[", OXY_SUBSTRATE_ABI_VERSION);
+
+  BEGIN_STRUCT(OxyBorrowedBytes);
+  FIELD(OxyBorrowedBytes, data, "null-if-length-zero");
+  FIELD(OxyBorrowedBytes, length, "not-pointer");
+  end_struct();
+
+  BEGIN_STRUCT(OxyOwnedBytes);
+  FIELD(OxyOwnedBytes, data, "null-if-length-zero");
+  FIELD(OxyOwnedBytes, length, "not-pointer");
+  FIELD(OxyOwnedBytes, release, "null-if-length-zero");
+  FIELD(OxyOwnedBytes, user_data, "nonnull");
+  end_struct();
+
+  BEGIN_STRUCT(OxyPoint);
+  FIELD(OxyPoint, x, "not-pointer");
+  FIELD(OxyPoint, y, "not-pointer");
+  end_struct();
+
+  BEGIN_STRUCT(OxyRect);
+  FIELD(OxyRect, x, "not-pointer");
+  FIELD(OxyRect, y, "not-pointer");
+  FIELD(OxyRect, width, "not-pointer");
+  FIELD(OxyRect, height, "not-pointer");
+  end_struct();
+
+  BEGIN_STRUCT(OxyColor);
+  FIELD(OxyColor, red, "not-pointer");
+  FIELD(OxyColor, green, "not-pointer");
+  FIELD(OxyColor, blue, "not-pointer");
+  FIELD(OxyColor, alpha, "not-pointer");
+  end_struct();
+
+  BEGIN_STRUCT(OxyTransform);
+  FIELD(OxyTransform, column_major, "not-pointer");
+  end_struct();
+
+  BEGIN_STRUCT(OxyPathData);
+  FIELD(OxyPathData, struct_size, "not-pointer");
+  FIELD(OxyPathData, abi_version, "not-pointer");
+  FIELD(OxyPathData, verbs, "null-if-count-zero");
+  FIELD(OxyPathData, verb_count, "not-pointer");
+  FIELD(OxyPathData, points, "null-if-count-zero");
+  FIELD(OxyPathData, point_count, "not-pointer");
+  FIELD(OxyPathData, fill_type, "not-pointer");
+  end_struct();
+
+  BEGIN_STRUCT(OxyPaint);
+  FIELD(OxyPaint, struct_size, "not-pointer");
+  FIELD(OxyPaint, abi_version, "not-pointer");
+  FIELD(OxyPaint, color, "not-pointer");
+  FIELD(OxyPaint, stroke_width, "not-pointer");
+  FIELD(OxyPaint, miter_limit, "not-pointer");
+  FIELD(OxyPaint, draw_style, "not-pointer");
+  FIELD(OxyPaint, stroke_cap, "not-pointer");
+  FIELD(OxyPaint, stroke_join, "not-pointer");
+  FIELD(OxyPaint, blend_mode, "not-pointer");
+  FIELD(OxyPaint, color_source, "nullable");
+  FIELD(OxyPaint, color_filter, "nullable");
+  FIELD(OxyPaint, image_filter, "nullable");
+  end_struct();
+
+  BEGIN_STRUCT(OxyRasterDescriptor);
+  FIELD(OxyRasterDescriptor, struct_size, "not-pointer");
+  FIELD(OxyRasterDescriptor, abi_version, "not-pointer");
+  FIELD(OxyRasterDescriptor, width, "not-pointer");
+  FIELD(OxyRasterDescriptor, height, "not-pointer");
+  FIELD(OxyRasterDescriptor, row_bytes, "not-pointer");
+  FIELD(OxyRasterDescriptor, pixel_format, "not-pointer");
+  FIELD(OxyRasterDescriptor, alpha_type, "not-pointer");
+  FIELD(OxyRasterDescriptor, color_space, "not-pointer");
+  end_struct();
+
+  BEGIN_STRUCT(OxyHeadlessMetrics);
+  FIELD(OxyHeadlessMetrics, struct_size, "not-pointer");
+  FIELD(OxyHeadlessMetrics, abi_version, "not-pointer");
+  FIELD(OxyHeadlessMetrics, logical_width, "not-pointer");
+  FIELD(OxyHeadlessMetrics, logical_height, "not-pointer");
+  FIELD(OxyHeadlessMetrics, physical_width, "not-pointer");
+  FIELD(OxyHeadlessMetrics, physical_height, "not-pointer");
+  FIELD(OxyHeadlessMetrics, device_pixel_ratio, "not-pointer");
+  end_struct();
+
+  BEGIN_STRUCT(OxyTextStyle);
+  FIELD(OxyTextStyle, struct_size, "not-pointer");
+  FIELD(OxyTextStyle, abi_version, "not-pointer");
+  FIELD(OxyTextStyle, color, "not-pointer");
+  FIELD(OxyTextStyle, font_size, "not-pointer");
+  FIELD(OxyTextStyle, font_weight, "not-pointer");
+  FIELD(OxyTextStyle, font_style, "not-pointer");
+  FIELD(OxyTextStyle, font_family_utf8, "not-pointer");
+  FIELD(OxyTextStyle, locale_utf8, "not-pointer");
+  end_struct();
+
+  BEGIN_STRUCT(OxyTextIndex);
+  FIELD(OxyTextIndex, unit, "not-pointer");
+  FIELD(OxyTextIndex, reserved, "not-pointer");
+  FIELD(OxyTextIndex, offset, "not-pointer");
+  end_struct();
+
+  BEGIN_STRUCT(OxyTextHit);
+  FIELD(OxyTextHit, index, "not-pointer");
+  FIELD(OxyTextHit, affinity, "not-pointer");
+  FIELD(OxyTextHit, grapheme_boundary, "not-pointer");
+  FIELD(OxyTextHit, inside, "not-pointer");
+  FIELD(OxyTextHit, reserved, "not-pointer");
+  end_struct();
+
+  BEGIN_STRUCT(OxyTextBox);
+  FIELD(OxyTextBox, rect, "not-pointer");
+  FIELD(OxyTextBox, direction, "not-pointer");
+  end_struct();
+
+  BEGIN_STRUCT(OxySemanticsRelation);
+  FIELD(OxySemanticsRelation, kind, "not-pointer");
+  FIELD(OxySemanticsRelation, reserved, "not-pointer");
+  FIELD(OxySemanticsRelation, target_generation, "not-pointer");
+  end_struct();
+
+  BEGIN_STRUCT(OxySemanticsNode);
+  FIELD(OxySemanticsNode, struct_size, "not-pointer");
+  FIELD(OxySemanticsNode, abi_version, "not-pointer");
+  FIELD(OxySemanticsNode, node_generation, "not-pointer");
+  FIELD(OxySemanticsNode, flags, "not-pointer");
+  FIELD(OxySemanticsNode, actions, "not-pointer");
+  FIELD(OxySemanticsNode, role, "not-pointer");
+  FIELD(OxySemanticsNode, live_region, "not-pointer");
+  FIELD(OxySemanticsNode, bounds, "not-pointer");
+  FIELD(OxySemanticsNode, transform, "not-pointer");
+  FIELD(OxySemanticsNode, label_utf8, "not-pointer");
+  FIELD(OxySemanticsNode, accessible_name_utf8, "not-pointer");
+  FIELD(OxySemanticsNode, description_utf8, "not-pointer");
+  FIELD(OxySemanticsNode, value_utf8, "not-pointer");
+  FIELD(OxySemanticsNode, hint_utf8, "not-pointer");
+  FIELD(OxySemanticsNode, help_utf8, "not-pointer");
+  FIELD(OxySemanticsNode, tooltip_utf8, "not-pointer");
+  FIELD(OxySemanticsNode, attributed_text_index_unit, "not-pointer");
+  FIELD(OxySemanticsNode, attributed_text_reserved, "not-pointer");
+  FIELD(OxySemanticsNode, attributed_text_segments, "null-if-count-zero");
+  FIELD(OxySemanticsNode, attributed_text_segment_count, "not-pointer");
+  FIELD(OxySemanticsNode, identifier_utf8, "not-pointer");
+  FIELD(OxySemanticsNode, language_bcp47_utf8, "not-pointer");
+  FIELD(OxySemanticsNode, traversal_children, "null-if-count-zero");
+  FIELD(OxySemanticsNode, traversal_child_count, "not-pointer");
+  FIELD(OxySemanticsNode, hit_test_children, "null-if-count-zero");
+  FIELD(OxySemanticsNode, hit_test_child_count, "not-pointer");
+  FIELD(OxySemanticsNode, relations, "null-if-count-zero");
+  FIELD(OxySemanticsNode, relation_count, "not-pointer");
+  FIELD(OxySemanticsNode, text_selection_base_utf16, "not-pointer");
+  FIELD(OxySemanticsNode, text_selection_extent_utf16, "not-pointer");
+  FIELD(OxySemanticsNode, has_text_selection, "not-pointer");
+  FIELD(OxySemanticsNode, text_selection_reserved, "not-pointer");
+  FIELD(OxySemanticsNode, text_layout_generation, "not-pointer");
+  FIELD(OxySemanticsNode, has_text_layout, "not-pointer");
+  FIELD(OxySemanticsNode, text_layout_reserved, "not-pointer");
+  FIELD(OxySemanticsNode, scroll_position, "not-pointer");
+  FIELD(OxySemanticsNode, scroll_minimum, "not-pointer");
+  FIELD(OxySemanticsNode, scroll_maximum, "not-pointer");
+  FIELD(OxySemanticsNode, has_scroll, "not-pointer");
+  FIELD(OxySemanticsNode, heading_level, "not-pointer");
+  FIELD(OxySemanticsNode, text_direction, "not-pointer");
+  FIELD(OxySemanticsNode, has_input_focus, "not-pointer");
+  FIELD(OxySemanticsNode, has_accessibility_focus, "not-pointer");
+  FIELD(OxySemanticsNode, is_hidden, "not-pointer");
+  FIELD(OxySemanticsNode, is_disabled, "not-pointer");
+  FIELD(OxySemanticsNode, is_secure_field, "not-pointer");
+  end_struct();
+
+  BEGIN_STRUCT(OxySemanticsUpdate);
+  FIELD(OxySemanticsUpdate, struct_size, "not-pointer");
+  FIELD(OxySemanticsUpdate, abi_version, "not-pointer");
+  FIELD(OxySemanticsUpdate, view_generation, "not-pointer");
+  FIELD(OxySemanticsUpdate, nodes, "null-if-count-zero");
+  FIELD(OxySemanticsUpdate, node_count, "not-pointer");
+  FIELD(OxySemanticsUpdate, deleted_node_generations, "null-if-count-zero");
+  FIELD(OxySemanticsUpdate, deleted_node_count, "not-pointer");
+  end_struct();
+
+  BEGIN_STRUCT(OxyViewMetrics);
+  FIELD(OxyViewMetrics, struct_size, "not-pointer");
+  FIELD(OxyViewMetrics, abi_version, "not-pointer");
+  FIELD(OxyViewMetrics, logical_width, "not-pointer");
+  FIELD(OxyViewMetrics, logical_height, "not-pointer");
+  FIELD(OxyViewMetrics, device_pixel_ratio, "not-pointer");
+  FIELD(OxyViewMetrics, display_id, "not-pointer");
+  end_struct();
+
+  BEGIN_STRUCT(OxyFrameOpportunity);
+  FIELD(OxyFrameOpportunity, struct_size, "not-pointer");
+  FIELD(OxyFrameOpportunity, abi_version, "not-pointer");
+  FIELD(OxyFrameOpportunity, view_generation, "not-pointer");
+  FIELD(OxyFrameOpportunity, display_epoch, "not-pointer");
+  FIELD(OxyFrameOpportunity, monotonic_time_ns, "not-pointer");
+  FIELD(OxyFrameOpportunity, target_time_ns, "not-pointer");
+  FIELD(OxyFrameOpportunity, interval_ns, "not-pointer");
+  end_struct();
+
+  BEGIN_STRUCT(OxyPointerEvent);
+  FIELD(OxyPointerEvent, pointer_generation, "not-pointer");
+  FIELD(OxyPointerEvent, monotonic_time_ns, "not-pointer");
+  FIELD(OxyPointerEvent, x, "not-pointer");
+  FIELD(OxyPointerEvent, y, "not-pointer");
+  FIELD(OxyPointerEvent, delta_x, "not-pointer");
+  FIELD(OxyPointerEvent, delta_y, "not-pointer");
+  FIELD(OxyPointerEvent, buttons, "not-pointer");
+  FIELD(OxyPointerEvent, modifiers, "not-pointer");
+  FIELD(OxyPointerEvent, phase, "not-pointer");
+  FIELD(OxyPointerEvent, device_kind, "not-pointer");
+  end_struct();
+
+  BEGIN_STRUCT(OxyKeyEvent);
+  FIELD(OxyKeyEvent, monotonic_time_ns, "not-pointer");
+  FIELD(OxyKeyEvent, modifiers, "not-pointer");
+  FIELD(OxyKeyEvent, physical_key, "not-pointer");
+  FIELD(OxyKeyEvent, logical_key, "not-pointer");
+  FIELD(OxyKeyEvent, action, "not-pointer");
+  FIELD(OxyKeyEvent, repeat, "not-pointer");
+  end_struct();
+
+  BEGIN_STRUCT(OxyImeTextSegment);
+  FIELD(OxyImeTextSegment, start, "not-pointer");
+  FIELD(OxyImeTextSegment, end, "not-pointer");
+  FIELD(OxyImeTextSegment, attributes, "not-pointer");
+  end_struct();
+
+  BEGIN_STRUCT(OxyImeEvent);
+  FIELD(OxyImeEvent, transaction_generation, "not-pointer");
+  FIELD(OxyImeEvent, kind, "not-pointer");
+  FIELD(OxyImeEvent, native_index_unit, "not-pointer");
+  FIELD(OxyImeEvent, replacement_start, "not-pointer");
+  FIELD(OxyImeEvent, replacement_end, "not-pointer");
+  FIELD(OxyImeEvent, selection_start, "not-pointer");
+  FIELD(OxyImeEvent, selection_end, "not-pointer");
+  FIELD(OxyImeEvent, marked_start, "not-pointer");
+  FIELD(OxyImeEvent, marked_end, "not-pointer");
+  FIELD(OxyImeEvent, candidate_rect, "not-pointer");
+  FIELD(OxyImeEvent, action, "not-pointer");
+  FIELD(OxyImeEvent, input_context, "not-pointer");
+  FIELD(OxyImeEvent, sensitive_field, "not-pointer");
+  FIELD(OxyImeEvent, reserved, "not-pointer");
+  FIELD(OxyImeEvent, segments, "null-if-count-zero");
+  FIELD(OxyImeEvent, segment_count, "not-pointer");
+  FIELD(OxyImeEvent, text_utf8, "not-pointer");
+  end_struct();
+
+  BEGIN_STRUCT(OxyImeRequest);
+  FIELD(OxyImeRequest, request_generation, "not-pointer");
+  FIELD(OxyImeRequest, kind, "not-pointer");
+  FIELD(OxyImeRequest, native_index_unit, "not-pointer");
+  FIELD(OxyImeRequest, range_start, "not-pointer");
+  FIELD(OxyImeRequest, range_end, "not-pointer");
+  FIELD(OxyImeRequest, point, "not-pointer");
+  FIELD(OxyImeRequest, maximum_units, "not-pointer");
+  FIELD(OxyImeRequest, reserved, "not-pointer");
+  end_struct();
+
+  BEGIN_STRUCT(OxyImeResponse);
+  FIELD(OxyImeResponse, struct_size, "not-pointer");
+  FIELD(OxyImeResponse, abi_version, "not-pointer");
+  FIELD(OxyImeResponse, text_range_start, "not-pointer");
+  FIELD(OxyImeResponse, text_range_end, "not-pointer");
+  FIELD(OxyImeResponse, selection_start, "not-pointer");
+  FIELD(OxyImeResponse, selection_end, "not-pointer");
+  FIELD(OxyImeResponse, marked_start, "not-pointer");
+  FIELD(OxyImeResponse, marked_end, "not-pointer");
+  FIELD(OxyImeResponse, text_rect, "not-pointer");
+  FIELD(OxyImeResponse, character_index, "not-pointer");
+  FIELD(OxyImeResponse, input_context, "not-pointer");
+  FIELD(OxyImeResponse, sensitive_field, "not-pointer");
+  FIELD(OxyImeResponse, text_utf8, "not-pointer");
+  FIELD(OxyImeResponse, segments, "null-if-count-zero");
+  FIELD(OxyImeResponse, segment_count, "not-pointer");
+  end_struct();
+
+  BEGIN_STRUCT(OxyLifecycleEvent);
+  FIELD(OxyLifecycleEvent, kind, "not-pointer");
+  FIELD(OxyLifecycleEvent, reserved, "not-pointer");
+  FIELD(OxyLifecycleEvent, display_id, "not-pointer");
+  FIELD(OxyLifecycleEvent, metrics, "not-pointer");
+  end_struct();
+
+  BEGIN_STRUCT(OxyPlatformEventPayload);
+  FIELD(OxyPlatformEventPayload, pointer, "not-pointer");
+  FIELD(OxyPlatformEventPayload, key, "not-pointer");
+  FIELD(OxyPlatformEventPayload, ime, "not-pointer");
+  FIELD(OxyPlatformEventPayload, ime_request, "not-pointer");
+  FIELD(OxyPlatformEventPayload, lifecycle, "not-pointer");
+  end_struct();
+
+  BEGIN_STRUCT(OxyPlatformEvent);
+  FIELD(OxyPlatformEvent, struct_size, "not-pointer");
+  FIELD(OxyPlatformEvent, abi_version, "not-pointer");
+  FIELD(OxyPlatformEvent, view_generation, "not-pointer");
+  FIELD(OxyPlatformEvent, kind, "not-pointer");
+  FIELD(OxyPlatformEvent, reserved, "not-pointer");
+  FIELD(OxyPlatformEvent, payload, "not-pointer");
+  end_struct();
+
+  BEGIN_STRUCT(OxyPlatformServiceRequest);
+  FIELD(OxyPlatformServiceRequest, struct_size, "not-pointer");
+  FIELD(OxyPlatformServiceRequest, abi_version, "not-pointer");
+  FIELD(OxyPlatformServiceRequest, request_generation, "not-pointer");
+  FIELD(OxyPlatformServiceRequest, view_generation, "not-pointer");
+  FIELD(OxyPlatformServiceRequest, service_kind, "not-pointer");
+  FIELD(OxyPlatformServiceRequest, payload_version, "not-pointer");
+  FIELD(OxyPlatformServiceRequest, payload, "not-pointer");
+  end_struct();
+
+  BEGIN_STRUCT(OxySceneSubmission);
+  FIELD(OxySceneSubmission, struct_size, "not-pointer");
+  FIELD(OxySceneSubmission, abi_version, "not-pointer");
+  FIELD(OxySceneSubmission, view_generation, "not-pointer");
+  FIELD(OxySceneSubmission, frame_generation, "not-pointer");
+  FIELD(OxySceneSubmission, target_time_ns, "not-pointer");
+  FIELD(OxySceneSubmission, scene, "nonnull");
+  end_struct();
+
+  BEGIN_STRUCT(OxyRecoveryRequest);
+  FIELD(OxyRecoveryRequest, struct_size, "not-pointer");
+  FIELD(OxyRecoveryRequest, abi_version, "not-pointer");
+  FIELD(OxyRecoveryRequest, view_generation, "not-pointer");
+  FIELD(OxyRecoveryRequest, fault_kind, "not-pointer");
+  FIELD(OxyRecoveryRequest, attempt, "not-pointer");
+  FIELD(OxyRecoveryRequest, deadline_ns, "not-pointer");
+  FIELD(OxyRecoveryRequest, transient_memory_cap_bytes, "not-pointer");
+  end_struct();
+
+  BEGIN_STRUCT(OxySubstrateCallbacks);
+  FIELD(OxySubstrateCallbacks, struct_size, "not-pointer");
+  FIELD(OxySubstrateCallbacks, abi_version, "not-pointer");
+  FIELD(OxySubstrateCallbacks, user_data, "nonnull");
+  FIELD(OxySubstrateCallbacks, on_wakeup, "nonnull");
+  FIELD(OxySubstrateCallbacks, on_frame_opportunity, "nonnull");
+  FIELD(OxySubstrateCallbacks, on_presentation, "nonnull");
+  FIELD(OxySubstrateCallbacks, on_platform_event, "nonnull");
+  FIELD(OxySubstrateCallbacks, on_platform_response, "nonnull");
+  FIELD(OxySubstrateCallbacks, on_semantics_action, "nonnull");
+  FIELD(OxySubstrateCallbacks, on_log, "nonnull");
+  end_struct();
+
+  BEGIN_STRUCT(OxySubstrateConfig);
+  FIELD(OxySubstrateConfig, struct_size, "not-pointer");
+  FIELD(OxySubstrateConfig, abi_version, "not-pointer");
+  FIELD(OxySubstrateConfig, callbacks, "not-pointer");
+  FIELD(OxySubstrateConfig, maximum_buffer_bytes, "not-pointer");
+  FIELD(OxySubstrateConfig, maximum_texture_bytes, "not-pointer");
+  FIELD(OxySubstrateConfig, flags, "not-pointer");
+  end_struct();
+
+  BEGIN_STRUCT(OxySubstrateApi);
+  FIELD(OxySubstrateApi, struct_size, "not-pointer");
+  FIELD(OxySubstrateApi, abi_version, "not-pointer");
+  FIELD(OxySubstrateApi, get_abi_version, "nonnull");
+  FIELD(OxySubstrateApi, create, "nonnull");
+  FIELD(OxySubstrateApi, destroy, "nonnull");
+  FIELD(OxySubstrateApi, create_view, "nonnull");
+  FIELD(OxySubstrateApi, destroy_view, "nonnull");
+  FIELD(OxySubstrateApi, update_view_metrics, "nonnull");
+  FIELD(OxySubstrateApi, create_scene_builder, "nonnull");
+  FIELD(OxySubstrateApi, scene_builder_save, "nonnull");
+  FIELD(OxySubstrateApi, scene_builder_restore, "nonnull");
+  FIELD(OxySubstrateApi, scene_builder_transform, "nonnull");
+  FIELD(OxySubstrateApi, scene_builder_clip_rect, "nonnull");
+  FIELD(OxySubstrateApi, scene_builder_clip_path, "nonnull");
+  FIELD(OxySubstrateApi, scene_builder_draw_rect, "nonnull");
+  FIELD(OxySubstrateApi, scene_builder_draw_path, "nonnull");
+  FIELD(OxySubstrateApi, scene_builder_draw_texture, "nonnull");
+  FIELD(OxySubstrateApi, scene_builder_draw_scene, "nonnull");
+  FIELD(OxySubstrateApi, scene_builder_begin_layer, "nonnull");
+  FIELD(OxySubstrateApi, scene_builder_end_layer, "nonnull");
+  FIELD(OxySubstrateApi, scene_builder_build, "nonnull");
+  FIELD(OxySubstrateApi, destroy_scene_builder, "nonnull");
+  FIELD(OxySubstrateApi, retain_scene, "nonnull");
+  FIELD(OxySubstrateApi, release_scene, "nonnull");
+  FIELD(OxySubstrateApi, create_linear_gradient, "nonnull");
+  FIELD(OxySubstrateApi, release_color_source, "nonnull");
+  FIELD(OxySubstrateApi, create_color_matrix_filter, "nonnull");
+  FIELD(OxySubstrateApi, release_color_filter, "nonnull");
+  FIELD(OxySubstrateApi, create_blur_filter, "nonnull");
+  FIELD(OxySubstrateApi, release_image_filter, "nonnull");
+  FIELD(OxySubstrateApi, register_font, "nonnull");
+  FIELD(OxySubstrateApi, create_paragraph_builder, "nonnull");
+  FIELD(OxySubstrateApi, paragraph_builder_push_style, "nonnull");
+  FIELD(OxySubstrateApi, paragraph_builder_pop_style, "nonnull");
+  FIELD(OxySubstrateApi, paragraph_builder_add_text, "nonnull");
+  FIELD(OxySubstrateApi, paragraph_builder_build, "nonnull");
+  FIELD(OxySubstrateApi, destroy_paragraph_builder, "nonnull");
+  FIELD(OxySubstrateApi, paragraph_layout, "nonnull");
+  FIELD(OxySubstrateApi, paragraph_get_caret_rect, "nonnull");
+  FIELD(OxySubstrateApi, paragraph_get_range_boxes, "nonnull");
+  FIELD(OxySubstrateApi, paragraph_hit_test, "nonnull");
+  FIELD(OxySubstrateApi, paragraph_convert_index, "nonnull");
+  FIELD(OxySubstrateApi, scene_builder_draw_paragraph, "nonnull");
+  FIELD(OxySubstrateApi, release_paragraph, "nonnull");
+  FIELD(OxySubstrateApi, submit_scene, "nonnull");
+  FIELD(OxySubstrateApi, render_headless, "nonnull");
+  FIELD(OxySubstrateApi, realize_texture, "nonnull");
+  FIELD(OxySubstrateApi, retain_texture, "nonnull");
+  FIELD(OxySubstrateApi, release_texture, "nonnull");
+  FIELD(OxySubstrateApi, update_semantics, "nonnull");
+  FIELD(OxySubstrateApi, respond_semantics_action, "nonnull");
+  FIELD(OxySubstrateApi, request_platform_service, "nonnull");
+  FIELD(OxySubstrateApi, cancel_platform_service, "nonnull");
+  FIELD(OxySubstrateApi, respond_ime_request, "nonnull");
+  FIELD(OxySubstrateApi, recover, "nonnull");
+  FIELD(OxySubstrateApi, pump_platform_tasks, "nonnull");
+  FIELD(OxySubstrateApi, begin_shutdown, "nonnull");
+  FIELD(OxySubstrateApi, drain, "nonnull");
+  end_struct();
+
+  puts("]}");
+  return 0;
+}

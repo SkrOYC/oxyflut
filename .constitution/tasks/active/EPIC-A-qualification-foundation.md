@@ -269,6 +269,13 @@ Assertions:
 Command: cargo +1.98.0 test -p xtask contracts::native
 ```
 
+##### OXY-A005 Deviations & Justifications
+
+- **Touched Files:** `xtask/src/commands/contracts.rs`.
+- **Justification:** The ticket explicitly requires `contracts validate` to execute the native family and report `native: ok`; the command module is outside the ticket's original file list.
+- **Touched Files:** `.constitution/tasks/active/EPIC-A-qualification-foundation.md`.
+- **Justification:** The execution rules require this scope deviation to be recorded in the ticket block.
+
 #### OXY-A006 Implement canonical evidence writing
 
 - **Type:** Feature

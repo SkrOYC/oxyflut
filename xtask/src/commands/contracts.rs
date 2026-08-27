@@ -5,7 +5,7 @@ use std::path::{Path, PathBuf};
 use super::super::{CommandError, CommandOutcome};
 use crate::contracts as validators;
 
-/// Runs the schema and instance validators, then reports deferred contract families.
+/// Runs every implemented contract-validation family in deterministic order.
 pub(crate) fn run(arguments: &[String]) -> CommandOutcome {
     if !arguments.is_empty() {
         return CommandOutcome::failed(CommandError::InvalidInput(
@@ -79,6 +79,18 @@ pub(crate) fn run(arguments: &[String]) -> CommandOutcome {
         }
     };
 
+    if validators::native::validate_workspace(&root).is_err() {
+        eprintln!("schema: ok");
+        eprintln!("instances: ok");
+        eprintln!("fixtures: ok");
+        eprintln!("traceability: ok");
+        eprintln!("registries: ok");
+        eprintln!("digests: ok");
+        eprintln!("readiness: ok");
+        eprintln!("native: failed");
+        return CommandOutcome::failed(CommandError::ValidationFailed("native".to_owned()));
+    }
+
     eprintln!("schema: ok");
     eprintln!("instances: ok");
     eprintln!("fixtures: ok");
@@ -96,8 +108,8 @@ pub(crate) fn run(arguments: &[String]) -> CommandOutcome {
             eprintln!("promotion: ok (not claimed)");
         }
     }
-    eprintln!("{}: not-implemented", validators::native::FAMILY);
-    CommandOutcome::not_implemented("native validation")
+    eprintln!("{}: ok", validators::native::FAMILY);
+    CommandOutcome::Success
 }
 
 fn report_schema_failure(error: &validators::schema::ContractSchemaError, root: &Path) {
@@ -150,11 +162,8 @@ mod tests {
     use crate::CommandOutcome;
 
     #[test]
-    fn contracts_schema_family_runs_before_deferred_families_fail_closed() {
-        assert_eq!(
-            run(&[]),
-            CommandOutcome::not_implemented("native validation")
-        );
+    fn contracts_validation_runs_the_native_family_after_prior_families() {
+        assert_eq!(run(&[]), CommandOutcome::Success);
     }
 
     #[test]

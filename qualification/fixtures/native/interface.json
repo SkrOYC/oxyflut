@@ -1,0 +1,50 @@
+{
+  "abiVersion": 10,
+  "acquisitionSymbol": "OxySubstrateGetApi",
+  "callingConvention": {
+    "exportMacro": "OXY_EXPORT",
+    "callMacro": "OXY_CALL"
+  },
+  "opaqueHandles": [
+    "OxySubstrate",
+    "OxyView",
+    "OxySceneBuilder",
+    "OxyScene",
+    "OxyTexture",
+    "OxyColorSource",
+    "OxyColorFilter",
+    "OxyImageFilter",
+    "OxyParagraphBuilder",
+    "OxyParagraph"
+  ],
+  "extensibleStructs": [
+    "OxyPathData",
+    "OxyPaint",
+    "OxyRasterDescriptor",
+    "OxyHeadlessMetrics",
+    "OxyTextStyle",
+    "OxySemanticsNode",
+    "OxySemanticsUpdate",
+    "OxyViewMetrics",
+    "OxyFrameOpportunity",
+    "OxyImeResponse",
+    "OxyPlatformEvent",
+    "OxyPlatformServiceRequest",
+    "OxySceneSubmission",
+    "OxyRecoveryRequest",
+    "OxySubstrateCallbacks",
+    "OxySubstrateConfig",
+    "OxySubstrateApi"
+  ],
+  "apiFunctionCount": 56,
+  "callbackSignatures": [
+    "void(OXY_CALL*on_wakeup)(void*user_data)",
+    "void(OXY_CALL*on_frame_opportunity)(void*user_data,constOxyFrameOpportunity*opportunity)",
+    "void(OXY_CALL*on_presentation)(void*user_data,uint64_tview_generation,uint64_tframe_generation,uint64_tpresentation_time_ns,OxyStatusstatus)",
+    "void(OXY_CALL*on_platform_event)(void*user_data,constOxyPlatformEvent*event)",
+    "void(OXY_CALL*on_platform_response)(void*user_data,uint64_trequest_generation,OxyStatusstatus,OxyBorrowedBytespayload)",
+    "void(OXY_CALL*on_semantics_action)(void*user_data,uint64_trequest_generation,uint64_tview_generation,uint64_tnode_generation,uint32_taction,OxyBorrowedBytespayload)",
+    "void(OXY_CALL*on_log)(void*user_data,uint32_tlevel,OxyBorrowedBytescontent_free_message)"
+  ],
+  "pointerRule": "Unless a field comment states otherwise, every pointer passed to or returned from this ABI is nonnull. An array pointer is null if and only if its count is zero. Every out pointer names writable storage and is cleared before a fallible call."
+}
