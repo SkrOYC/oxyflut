@@ -1,7 +1,46 @@
 {
+  "kind": "validation",
   "valid": false,
   "errorPaths": [
-    "/environments/macos/openQuestions"
-  ],
-  "kind": "validation"
+    {
+      "instancePath": "/environments/macos/accessibilityMaps/focused/status",
+      "keyword": "const"
+    },
+    {
+      "instancePath": "/environments/macos/accessibilityMaps/integrated/status",
+      "keyword": "const"
+    },
+    {
+      "instancePath": "/environments/macos/allocations/focused/status",
+      "keyword": "const"
+    },
+    {
+      "instancePath": "/environments/macos/allocations/integrated/status",
+      "keyword": "const"
+    },
+    {
+      "instancePath": "/environments/macos/ime/status",
+      "keyword": "const"
+    },
+    {
+      "instancePath": "/environments/macos/minimumVersion/status",
+      "keyword": "const"
+    },
+    {
+      "instancePath": "/environments/macos/openQuestions",
+      "keyword": "maxItems"
+    },
+    {
+      "instancePath": "/environments/macos/protocols/0/status",
+      "keyword": "const"
+    },
+    {
+      "instancePath": "/environments/macos/recoveryBaseline/status",
+      "keyword": "const"
+    },
+    {
+      "instancePath": "/environments/macos/timing/status",
+      "keyword": "const"
+    }
+  ]
 }

@@ -1,7 +1,166 @@
 {
+  "kind": "validation",
   "valid": false,
   "errorPaths": [
-    "/preImplementationKnownUnknowns"
-  ],
-  "kind": "validation"
+    {
+      "instancePath": "/measurementPolicy/assessors",
+      "keyword": "type"
+    },
+    {
+      "instancePath": "/measurementPolicy/capabilityBaseline",
+      "keyword": "type"
+    },
+    {
+      "instancePath": "/measurementPolicy/externalContractLock",
+      "keyword": "type"
+    },
+    {
+      "instancePath": "/measurementPolicy/fuzzCorpora",
+      "keyword": "type"
+    },
+    {
+      "instancePath": "/measurementPolicy/layoutVisitCap",
+      "keyword": "type"
+    },
+    {
+      "instancePath": "/measurementPolicy/platformContracts",
+      "keyword": "type"
+    },
+    {
+      "instancePath": "/measurementPolicy/rawMeasurementSchema",
+      "keyword": "type"
+    },
+    {
+      "instancePath": "/measurementPolicy/sampleValidityRules",
+      "keyword": "type"
+    },
+    {
+      "instancePath": "/measurementPolicy/scoringAnchors",
+      "keyword": "type"
+    },
+    {
+      "instancePath": "/measurementPolicy/securityPatchRehearsal",
+      "keyword": "type"
+    },
+    {
+      "instancePath": "/preImplementationKnownUnknowns",
+      "keyword": "maxItems"
+    },
+    {
+      "instancePath": "/referenceEnvironments/macos-arm64/driverVersion",
+      "keyword": "type"
+    },
+    {
+      "instancePath": "/referenceEnvironments/macos-arm64/gpuId",
+      "keyword": "type"
+    },
+    {
+      "instancePath": "/referenceEnvironments/macos-arm64/hardwareId",
+      "keyword": "type"
+    },
+    {
+      "instancePath": "/referenceEnvironments/macos-arm64/minimumVersion",
+      "keyword": "type"
+    },
+    {
+      "instancePath": "/referenceEnvironments/macos-arm64/systemPackageLockDigest",
+      "keyword": "type"
+    },
+    {
+      "instancePath": "/referenceEnvironments/wayland-linux-x86_64/driverVersion",
+      "keyword": "type"
+    },
+    {
+      "instancePath": "/referenceEnvironments/wayland-linux-x86_64/gpuId",
+      "keyword": "type"
+    },
+    {
+      "instancePath": "/referenceEnvironments/wayland-linux-x86_64/hardwareId",
+      "keyword": "type"
+    },
+    {
+      "instancePath": "/referenceEnvironments/wayland-linux-x86_64/minimumVersion",
+      "keyword": "type"
+    },
+    {
+      "instancePath": "/referenceEnvironments/wayland-linux-x86_64/systemPackageLockDigest",
+      "keyword": "type"
+    },
+    {
+      "instancePath": "/referenceEnvironments/windows-x86_64/driverVersion",
+      "keyword": "type"
+    },
+    {
+      "instancePath": "/referenceEnvironments/windows-x86_64/gpuId",
+      "keyword": "type"
+    },
+    {
+      "instancePath": "/referenceEnvironments/windows-x86_64/hardwareId",
+      "keyword": "type"
+    },
+    {
+      "instancePath": "/referenceEnvironments/windows-x86_64/minimumVersion",
+      "keyword": "type"
+    },
+    {
+      "instancePath": "/referenceEnvironments/windows-x86_64/systemPackageLockDigest",
+      "keyword": "type"
+    },
+    {
+      "instancePath": "/referenceEnvironments/x11-linux-x86_64/driverVersion",
+      "keyword": "type"
+    },
+    {
+      "instancePath": "/referenceEnvironments/x11-linux-x86_64/gpuId",
+      "keyword": "type"
+    },
+    {
+      "instancePath": "/referenceEnvironments/x11-linux-x86_64/hardwareId",
+      "keyword": "type"
+    },
+    {
+      "instancePath": "/referenceEnvironments/x11-linux-x86_64/minimumVersion",
+      "keyword": "type"
+    },
+    {
+      "instancePath": "/referenceEnvironments/x11-linux-x86_64/systemPackageLockDigest",
+      "keyword": "type"
+    },
+    {
+      "instancePath": "/resolvedTools",
+      "keyword": "minItems"
+    },
+    {
+      "instancePath": "/workload/assets",
+      "keyword": "type"
+    },
+    {
+      "instancePath": "/workload/cacheStates",
+      "keyword": "type"
+    },
+    {
+      "instancePath": "/workload/fonts",
+      "keyword": "type"
+    },
+    {
+      "instancePath": "/workload/interactionScripts",
+      "keyword": "type"
+    },
+    {
+      "instancePath": "/workload/referenceApplication",
+      "keyword": "type"
+    },
+    {
+      "instancePath": "/workload/releaseFlags",
+      "keyword": "type"
+    },
+    {
+      "instancePath": "/workload/scenes",
+      "keyword": "type"
+    },
+    {
+      "instancePath": "/workload/windowMatrix",
+      "keyword": "type"
+    }
+  ]
 }

@@ -1,7 +1,10 @@
 {
+  "kind": "validation",
   "valid": false,
   "errorPaths": [
-    "/productionReady"
-  ],
-  "kind": "validation"
+    {
+      "instancePath": "/productionReady",
+      "keyword": "const"
+    }
+  ]
 }

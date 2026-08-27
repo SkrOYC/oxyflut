@@ -1,7 +1,10 @@
 {
+  "kind": "validation",
   "valid": false,
   "errorPaths": [
-    "/schemaVersion"
-  ],
-  "kind": "validation"
+    {
+      "instancePath": "/schemaVersion",
+      "keyword": "const"
+    }
+  ]
 }

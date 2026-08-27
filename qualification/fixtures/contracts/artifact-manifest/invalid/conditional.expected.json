@@ -1,7 +1,10 @@
 {
+  "kind": "validation",
   "valid": false,
   "errorPaths": [
-    "/files/0/linkTarget"
-  ],
-  "kind": "validation"
+    {
+      "instancePath": "/files/0/linkTarget",
+      "keyword": "linkTarget"
+    }
+  ]
 }

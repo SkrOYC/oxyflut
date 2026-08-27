@@ -104,6 +104,8 @@ Command: cargo +1.98.0 test --workspace --all-features schema && cargo +1.98.0 t
 - **Justification:** Its existing lockfile guard must recognize the ticket-required local `oxyflut-qualification` workspace dependency; otherwise the required shared offline validator causes the full workspace suite to fail despite using only stack-pinned external dependencies.
 - **Touched Files:** `qualification/schemas/validation-keywords.schema.json`
 - **Justification:** This local snapshot fixture exercises the Draft 2020-12 `if`/`then`, `dependentRequired`, and `oneOf` behavior required by the ticket without changing any binding Stage 3 schema; no durable Stage 3 schema currently contains `dependentRequired`.
+- **Touched Files:** `.constitution/tasks/active/EPIC-A-qualification-foundation.md`
+- **Justification:** The execution skill requires deviations to be recorded in the ticket block.
 
 #### OXY-A003 Validate exact upstream sets and registries
 

@@ -1,7 +1,14 @@
 {
+  "kind": "validation",
   "valid": false,
   "errorPaths": [
-    "/eligibility/focused"
-  ],
-  "kind": "validation"
+    {
+      "instancePath": "/eligibility/focused",
+      "keyword": "const"
+    },
+    {
+      "instancePath": "/eligibility/focused",
+      "keyword": "const"
+    }
+  ]
 }

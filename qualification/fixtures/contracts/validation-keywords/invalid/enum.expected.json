@@ -1,7 +1,14 @@
 {
+  "kind": "validation",
   "valid": false,
   "errorPaths": [
-    "/kind"
-  ],
-  "kind": "validation"
+    {
+      "instancePath": "",
+      "keyword": "oneOf"
+    },
+    {
+      "instancePath": "/kind",
+      "keyword": "enum"
+    }
+  ]
 }

@@ -1,7 +1,10 @@
 {
+  "kind": "validation",
   "valid": false,
   "errorPaths": [
-    "/environment"
-  ],
-  "kind": "validation"
+    {
+      "instancePath": "/environment",
+      "keyword": "enum"
+    }
+  ]
 }

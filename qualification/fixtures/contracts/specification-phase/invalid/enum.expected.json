@@ -1,7 +1,10 @@
 {
+  "kind": "validation",
   "valid": false,
   "errorPaths": [
-    "/phase"
-  ],
-  "kind": "validation"
+    {
+      "instancePath": "/phase",
+      "keyword": "enum"
+    }
+  ]
 }

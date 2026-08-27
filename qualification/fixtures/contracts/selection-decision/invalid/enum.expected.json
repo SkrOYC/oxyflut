@@ -1,7 +1,10 @@
 {
+  "kind": "validation",
   "valid": false,
   "errorPaths": [
-    "/decisionBasis"
-  ],
-  "kind": "validation"
+    {
+      "instancePath": "/decisionBasis",
+      "keyword": "enum"
+    }
+  ]
 }

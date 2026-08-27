@@ -1,7 +1,138 @@
 {
+  "kind": "validation",
   "valid": false,
   "errorPaths": [
-    "/forward/roles/status"
-  ],
-  "kind": "validation"
+    {
+      "instancePath": "/forward/accessibilityFocus/status",
+      "keyword": "const"
+    },
+    {
+      "instancePath": "/forward/accessibleNames/status",
+      "keyword": "const"
+    },
+    {
+      "instancePath": "/forward/actions/status",
+      "keyword": "const"
+    },
+    {
+      "instancePath": "/forward/attributedText/status",
+      "keyword": "const"
+    },
+    {
+      "instancePath": "/forward/bounds/status",
+      "keyword": "const"
+    },
+    {
+      "instancePath": "/forward/describedByRelations/status",
+      "keyword": "const"
+    },
+    {
+      "instancePath": "/forward/descriptions/status",
+      "keyword": "const"
+    },
+    {
+      "instancePath": "/forward/direction/status",
+      "keyword": "const"
+    },
+    {
+      "instancePath": "/forward/disabled/status",
+      "keyword": "const"
+    },
+    {
+      "instancePath": "/forward/headingLevels/status",
+      "keyword": "const"
+    },
+    {
+      "instancePath": "/forward/helpOrFullDescriptions/status",
+      "keyword": "const"
+    },
+    {
+      "instancePath": "/forward/hidden/status",
+      "keyword": "const"
+    },
+    {
+      "instancePath": "/forward/hints/status",
+      "keyword": "const"
+    },
+    {
+      "instancePath": "/forward/hitTesting/status",
+      "keyword": "const"
+    },
+    {
+      "instancePath": "/forward/identifiers/status",
+      "keyword": "const"
+    },
+    {
+      "instancePath": "/forward/inputFocus/status",
+      "keyword": "const"
+    },
+    {
+      "instancePath": "/forward/labelledByRelations/status",
+      "keyword": "const"
+    },
+    {
+      "instancePath": "/forward/labels/status",
+      "keyword": "const"
+    },
+    {
+      "instancePath": "/forward/language/status",
+      "keyword": "const"
+    },
+    {
+      "instancePath": "/forward/liveRegions/status",
+      "keyword": "const"
+    },
+    {
+      "instancePath": "/forward/multiViewIsolation/status",
+      "keyword": "const"
+    },
+    {
+      "instancePath": "/forward/roleApplicableRelations/status",
+      "keyword": "const"
+    },
+    {
+      "instancePath": "/forward/roles/status",
+      "keyword": "const"
+    },
+    {
+      "instancePath": "/forward/scrollExtents/status",
+      "keyword": "const"
+    },
+    {
+      "instancePath": "/forward/secureFieldRedaction/status",
+      "keyword": "const"
+    },
+    {
+      "instancePath": "/forward/selection/status",
+      "keyword": "const"
+    },
+    {
+      "instancePath": "/forward/states/status",
+      "keyword": "const"
+    },
+    {
+      "instancePath": "/forward/textRanges/status",
+      "keyword": "const"
+    },
+    {
+      "instancePath": "/forward/tooltips/status",
+      "keyword": "const"
+    },
+    {
+      "instancePath": "/forward/transforms/status",
+      "keyword": "const"
+    },
+    {
+      "instancePath": "/forward/traversal/status",
+      "keyword": "const"
+    },
+    {
+      "instancePath": "/forward/values/status",
+      "keyword": "const"
+    },
+    {
+      "instancePath": "/reverseActions/0/status",
+      "keyword": "const"
+    }
+  ]
 }

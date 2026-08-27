@@ -1,7 +1,10 @@
 {
+  "kind": "validation",
   "valid": false,
   "errorPaths": [
-    "/environmentResults/macos/CAP-CMP-001/notApplicable"
-  ],
-  "kind": "validation"
+    {
+      "instancePath": "/environmentResults/macos/CAP-CMP-001/notApplicable",
+      "keyword": "type"
+    }
+  ]
 }
