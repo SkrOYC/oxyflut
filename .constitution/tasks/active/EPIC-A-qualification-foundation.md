@@ -351,3 +351,8 @@ Assertions:
 - The clean repository produces exit 0 locally and in CI.
 Command: cargo +1.98.0 run -p xtask -- contracts validate
 ```
+
+##### OXY-A007 Deviations & Justifications
+
+- **Touched Files:** `xtask/src/contracts/native.rs`.
+- **Justification:** The aggregate command needs separate C/C++ syntax, generated-binding, symbol, and layout calls. It reports every required native validation family without silently skipping failed prerequisites.

@@ -1,0 +1,33 @@
+name: Contract validation
+
+on:
+  pull_request:
+  push:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: cachix/install-nix-action@13d8dd58da0234aa297dedd986986ccb8e7f3e24 # v31.11.1
+        with:
+          github_access_token: ""
+      - name: Install locked devenv
+        run: nix profile install github:NixOS/nixpkgs/56c02bc00adcf003215cc4bd996d6efaf4cff188#devenv
+      - uses: dtolnay/rust-toolchain@6c977a6ca4077a0ceb28ffbe03f59d46e9ac8772 # pinned commit
+        with:
+          toolchain: 1.98.0
+          components: rustfmt,clippy
+      - name: Validate contracts
+        run: devenv shell -- cargo +1.98.0 run -p xtask -- contracts validate
+      - name: Check Rust formatting
+        run: devenv shell -- cargo +1.98.0 fmt --all --check
+      - name: Lint
+        run: devenv shell -- cargo +1.98.0 clippy --workspace --all-targets --all-features -- -D warnings
+      - name: Test
+        run: devenv shell -- cargo +1.98.0 test --workspace --all-features
