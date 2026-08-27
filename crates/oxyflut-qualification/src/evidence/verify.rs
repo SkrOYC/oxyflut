@@ -10,7 +10,10 @@ use crate::hash::{Sha256Digest, hash_reader};
 use crate::identifiers::RepositoryPath;
 
 use super::canonical_json_bytes;
-use super::{EvidenceError, EvidenceRef, MediaType, VerifiedEvidence, ensure_evidence_path};
+use super::{
+    EvidenceError, EvidenceRef, MediaType, REPOSITORY_EVIDENCE_ROOT, VerifiedEvidence,
+    ensure_evidence_path,
+};
 
 /// Records existing source bytes without modifying them.
 ///
@@ -189,7 +192,8 @@ fn resolve_regular_file(root: &Path, path: &RepositoryPath) -> Result<PathBuf, E
             }
         }
     })?;
-    if !resolved_path.starts_with(&canonical_root) {
+    let canonical_evidence_root = canonical_root.join(REPOSITORY_EVIDENCE_ROOT);
+    if !resolved_path.starts_with(&canonical_evidence_root) {
         return Err(EvidenceError::SymlinkEscape { path: path.clone() });
     }
     Ok(resolved_path)

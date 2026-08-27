@@ -16,7 +16,10 @@ use thiserror::Error;
 
 pub use canonical::canonical_json_bytes;
 pub use publish::write_derived_json;
-pub use references::{DeclaredEvidenceReference, DeclaredReferenceError, declared_references};
+pub use references::{
+    DeclaredEvidenceReference, DeclaredReferenceError, ReferenceDeclaration, declared_references,
+    reference_declaration,
+};
 pub use verify::{preserve_source, verify_file, verify_path_digest, verify_reference};
 
 /// The repository-relative root that contains all qualification evidence.
@@ -174,7 +177,7 @@ pub enum EvidenceError {
         source: io::Error,
     },
     /// A resolved symlink or filesystem indirection escaped the repository root.
-    #[error("evidence path escapes the repository root")]
+    #[error("evidence path escapes the repository evidence root")]
     SymlinkEscape {
         /// The canonical evidence path that escaped the root.
         path: RepositoryPath,
@@ -469,6 +472,29 @@ mod tests {
             verify_file(&root, &out_of_root, &media_type),
             Err(EvidenceError::OutsideEvidenceRoot { .. })
         ));
+        Ok(())
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn verification_rejects_a_symlink_that_leaves_the_evidence_root() -> Result<(), Box<dyn Error>>
+    {
+        use std::os::unix::fs::symlink;
+
+        let root = TestRepository::new("evidence-root-symlink")?;
+        let outside = root.path().join("outside");
+        fs::create_dir_all(root.path().join("qualification"))?;
+        fs::create_dir_all(&outside)?;
+        let outside_file = outside.join("proof.json");
+        fs::write(&outside_file, b"{}")?;
+        symlink(&outside_file, root.path().join("qualification/proof.json"))?;
+
+        let result = verify_file(
+            root.path(),
+            &RepositoryPath::parse("qualification/proof.json")?,
+            &MediaType::application_json(),
+        );
+        assert!(matches!(result, Err(EvidenceError::SymlinkEscape { .. })));
         Ok(())
     }
 

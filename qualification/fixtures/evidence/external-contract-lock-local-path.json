@@ -1,0 +1,38 @@
+{
+  "$schema": "urn:oxyflut:schema:external-contract-lock:1",
+  "schemaVersion": "1.0.0",
+  "contracts": {
+    "spdx-3.0.1": {
+      "version": "3.0.1",
+      "source": "https://example.invalid/spdx-3.0.1",
+      "epistemicStatus": "kk-locked",
+      "localPath": "qualification/fixtures/evidence/external-contract-local-snapshot.txt",
+      "sha256": "6b794849b0c12b953195f8a632af9626e264af5a5984061241f09efacff502df",
+      "verifier": "fixture"
+    },
+    "in-toto-statement-v1": {
+      "version": "1",
+      "source": "https://example.invalid/in-toto-statement-v1",
+      "epistemicStatus": "kk-locked",
+      "localPath": "qualification/fixtures/evidence/external-contract-local-snapshot.txt",
+      "sha256": "6b794849b0c12b953195f8a632af9626e264af5a5984061241f09efacff502df",
+      "verifier": "fixture"
+    },
+    "slsa-provenance-v1": {
+      "version": "1",
+      "source": "https://example.invalid/slsa-provenance-v1",
+      "epistemicStatus": "kk-locked",
+      "localPath": "qualification/fixtures/evidence/external-contract-local-snapshot.txt",
+      "sha256": "6b794849b0c12b953195f8a632af9626e264af5a5984061241f09efacff502df",
+      "verifier": "fixture"
+    },
+    "dsse-envelope-v1": {
+      "version": "1",
+      "source": "https://example.invalid/dsse-envelope-v1",
+      "epistemicStatus": "kk-locked",
+      "localPath": "qualification/fixtures/evidence/external-contract-local-snapshot.txt",
+      "sha256": "6b794849b0c12b953195f8a632af9626e264af5a5984061241f09efacff502df",
+      "verifier": "fixture"
+    }
+  }
+}
