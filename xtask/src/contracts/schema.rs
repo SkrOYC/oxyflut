@@ -261,7 +261,7 @@ fn run_fixture_corpus(
     let mut fixture_count = 0;
     for directory in directories {
         let schema_name = directory.file_name().to_string_lossy().into_owned();
-        if schema_name == "migration" {
+        if matches!(schema_name.as_str(), "migration" | "traceability") {
             continue;
         }
         let schema_identity = fixture_schema_identity(root, registry, &schema_name)?;

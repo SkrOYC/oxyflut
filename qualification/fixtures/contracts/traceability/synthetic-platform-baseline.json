@@ -1,0 +1,19 @@
+{
+  "specificationVersion": "0.15.0",
+  "absentEvents": [
+    {
+      "id": "ABS-CMP-001",
+      "gateId": "CAP-CMP-001",
+      "eventId": "runtime.lifecycle",
+      "status": "absent-kk",
+      "environments": ["macos"],
+      "candidates": ["focused"],
+      "evidence": [
+        {
+          "path": "qualification/fixtures/contracts/traceability/evidence.txt",
+          "sha256": "6ab11a71e6e2c7be933b6e2c3481a795e56ccd5bc7dfb51b72d6dcfd68458f4d"
+        }
+      ]
+    }
+  ]
+}

@@ -36,9 +36,37 @@ pub(crate) fn run(arguments: &[String]) -> CommandOutcome {
     };
 
     let _ = report;
+    let traceability = match validators::traceability::validate_workspace(&root) {
+        Ok(report) => report,
+        Err(_) => {
+            eprintln!("schema: ok");
+            eprintln!("instances: ok");
+            eprintln!("fixtures: ok");
+            eprintln!("traceability: failed");
+            return CommandOutcome::failed(CommandError::ValidationFailed(
+                "traceability".to_owned(),
+            ));
+        }
+    };
+    if validators::registries::validate_workspace(&root).is_err() {
+        eprintln!("schema: ok");
+        eprintln!("instances: ok");
+        eprintln!("fixtures: ok");
+        eprintln!("traceability: ok");
+        eprintln!("registries: failed");
+        return CommandOutcome::failed(CommandError::ValidationFailed("registries".to_owned()));
+    }
+
     eprintln!("schema: ok");
     eprintln!("instances: ok");
     eprintln!("fixtures: ok");
+    eprintln!("traceability: ok");
+    eprintln!(
+        "contract-tests: deferred ({} pending candidate implementation)",
+        traceability.deferred_contract_tests
+    );
+    eprintln!("accessibility-generation: deferred (schema lacks generation field)");
+    eprintln!("registries: ok");
     for family in validators::unimplemented_families() {
         eprintln!("{family}: not-implemented");
     }
@@ -142,5 +170,30 @@ mod tests {
             run(&["unexpected".to_owned()]),
             CommandOutcome::Failed(_)
         ));
+    }
+}
+
+#[cfg(test)]
+mod traceability {
+    use std::error::Error;
+    use std::path::{Path, PathBuf};
+
+    use super::validators::{registries, traceability};
+
+    #[test]
+    fn committed_inputs_and_registry_validate_through_ticket_module_path()
+    -> Result<(), Box<dyn Error>> {
+        let root = workspace_root()?;
+        let report = traceability::validate_workspace(&root)?;
+        assert_eq!(report.deferred_contract_tests, 52);
+        registries::validate_workspace(&root)?;
+        Ok(())
+    }
+
+    fn workspace_root() -> Result<PathBuf, Box<dyn Error>> {
+        Path::new(env!("CARGO_MANIFEST_DIR"))
+            .parent()
+            .map(Path::to_path_buf)
+            .ok_or_else(|| "xtask must remain directly below the workspace root".into())
     }
 }
