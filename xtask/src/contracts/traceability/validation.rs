@@ -207,8 +207,7 @@ pub(crate) fn validate_qualification_evidence(
                 result,
                 &GateId::parse(id).map_err(|_| error("evidence-gate"))?,
                 candidate,
-                environment,
-                false,
+                Some(environment),
                 eligible,
                 active,
                 registry,
@@ -226,8 +225,7 @@ pub(crate) fn validate_qualification_evidence(
             result,
             &GateId::parse(id).map_err(|_| error("evidence-gate"))?,
             candidate,
-            EnvironmentId::Macos,
-            true,
+            None,
             eligible,
             active,
             registry,
@@ -243,8 +241,7 @@ pub(crate) fn validate_gate(
     result: &Value,
     gate: &GateId,
     candidate: CandidateId,
-    environment: EnvironmentId,
-    aggregate_constraint: bool,
+    environment: Option<EnvironmentId>,
     eligible: bool,
     active: &SpecificationVersion,
     registry: &Value,
@@ -269,7 +266,6 @@ pub(crate) fn validate_gate(
             gate,
             candidate,
             environment,
-            aggregate_constraint,
             active,
             registry,
             active_platform_path,
@@ -285,8 +281,7 @@ pub(crate) fn validate_absence_binding(
     binding: &serde_json::Map<String, Value>,
     gate: &GateId,
     candidate: CandidateId,
-    environment: EnvironmentId,
-    aggregate_constraint: bool,
+    environment: Option<EnvironmentId>,
     active: &SpecificationVersion,
     registry: &Value,
     active_platform_path: &RepositoryPath,
@@ -329,15 +324,7 @@ pub(crate) fn validate_absence_binding(
         .iter()
         .find(|entry| entry.get("id").and_then(Value::as_str) == Some(absent_id.as_str()))
         .ok_or_else(|| error("absent-event-unknown"))?;
-    validate_absent_event(
-        root,
-        entry,
-        gate,
-        candidate,
-        environment,
-        aggregate_constraint,
-        registry,
-    )
+    validate_absent_event(root, entry, gate, candidate, environment, registry)
 }
 
 pub(crate) fn validate_absent_event(
@@ -345,8 +332,7 @@ pub(crate) fn validate_absent_event(
     entry: &Value,
     gate: &GateId,
     candidate: CandidateId,
-    environment: EnvironmentId,
-    aggregate_constraint: bool,
+    environment: Option<EnvironmentId>,
     registry: &Value,
 ) -> Result<(), TraceabilityError> {
     if GateId::parse(string_field(entry, "gateId")?).map_err(|_| error("absent-event-gate"))?
@@ -366,15 +352,17 @@ pub(crate) fn validate_absent_event(
         return fail("absent-event-candidate");
     }
     let environments = string_array(entry, "environments")?;
-    if aggregate_constraint {
-        if EnvironmentId::tier_one()
+    match environment {
+        None if EnvironmentId::tier_one()
             .iter()
-            .any(|item| !environments.contains(&item.as_str()))
+            .any(|item| !environments.contains(&item.as_str())) =>
         {
             return fail("absent-event-aggregate-environments");
         }
-    } else if !environments.contains(&environment.as_str()) {
-        return fail("absent-event-environment");
+        Some(environment) if !environments.contains(&environment.as_str()) => {
+            return fail("absent-event-environment");
+        }
+        None | Some(_) => {}
     }
     let evidence = array_field(entry, "evidence")?;
     if evidence.is_empty() {
@@ -512,7 +500,7 @@ fn validate_kk_claim(root: &Path, claim: &Value) -> Result<(), TraceabilityError
 fn validate_contract_reference(root: &Path, reference: &Value) -> Result<(), TraceabilityError> {
     match string_field(reference, "status")? {
         "ku-gating" => Ok(()),
-        "kk" => resolve_evidence_fields(root, reference),
+        "kk" => resolve_evidence(root, reference),
         _ => fail("platform-claim-status"),
     }
 }
@@ -524,8 +512,10 @@ fn validate_accessibility_reference(
     candidate: CandidateId,
     schema_registry: &SchemaRegistry,
 ) -> Result<(), TraceabilityError> {
-    if string_field(reference, "status")? != "kk" {
-        return Ok(());
+    match string_field(reference, "status")? {
+        "kk" => {}
+        "ku-gating" => return Ok(()),
+        _ => return fail("accessibility-reference-status"),
     }
     let path = RepositoryPath::parse(string_field(reference, "path")?)
         .map_err(|_| error("accessibility-path"))?;

@@ -37,6 +37,36 @@
     "OxySubstrateApi"
   ],
   "apiFunctionCount": 56,
+  "statusConstants": {
+    "OXY_STATUS_OK": 0,
+    "OXY_STATUS_INVALID_ARGUMENT": 1,
+    "OXY_STATUS_INCOMPATIBLE_ABI": 2,
+    "OXY_STATUS_STALE_OWNER": 3,
+    "OXY_STATUS_RESOURCE_LIMIT": 4,
+    "OXY_STATUS_UNSUPPORTED": 5,
+    "OXY_STATUS_SUBSTRATE_FAILURE": 6,
+    "OXY_STATUS_CANCELLED": 7,
+    "OXY_STATUS_DEADLINE_EXCEEDED": 8
+  },
+  "pixelFormatConstants": {
+    "OXY_PIXEL_FORMAT_RGBA8888": 1
+  },
+  "nativeTextIndexConstants": {
+    "OXY_NATIVE_TEXT_INDEX_UTF8_BYTES": 1,
+    "OXY_NATIVE_TEXT_INDEX_UTF16_UNITS": 2,
+    "OXY_NATIVE_TEXT_INDEX_UNICODE_SCALARS": 3
+  },
+  "presentationStatusMappings": {
+    "OXY_STATUS_OK": "Presented",
+    "OXY_STATUS_INVALID_ARGUMENT": "InvalidArgument",
+    "OXY_STATUS_INCOMPATIBLE_ABI": "IncompatibleAbi",
+    "OXY_STATUS_STALE_OWNER": "StaleOwner",
+    "OXY_STATUS_RESOURCE_LIMIT": "ResourceLimit",
+    "OXY_STATUS_UNSUPPORTED": "Unsupported",
+    "OXY_STATUS_SUBSTRATE_FAILURE": "SubstrateFailure",
+    "OXY_STATUS_CANCELLED": "Cancelled",
+    "OXY_STATUS_DEADLINE_EXCEEDED": "DeadlineExceeded"
+  },
   "callbackSignatures": [
     "void(OXY_CALL*on_wakeup)(void*user_data)",
     "void(OXY_CALL*on_frame_opportunity)(void*user_data,constOxyFrameOpportunity*opportunity)",

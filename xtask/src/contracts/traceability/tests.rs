@@ -245,8 +245,7 @@ fn absence_proof_platform_claims_and_accessibility_references_fail_closed()
         binding.as_object().ok_or("binding must be an object")?,
         &"CAP-CMP-001".parse()?,
         CandidateId::Focused,
-        EnvironmentId::Macos,
-        false,
+        Some(EnvironmentId::Macos),
         &active,
         &registry,
         &expected_path,
@@ -284,8 +283,7 @@ fn absence_proof_platform_claims_and_accessibility_references_fail_closed()
                 invalid.as_object().ok_or("binding must be an object")?,
                 &"CAP-CMP-001".parse()?,
                 CandidateId::Focused,
-                EnvironmentId::Macos,
-                false,
+                Some(EnvironmentId::Macos),
                 &active,
                 &registry,
                 &expected_path,
@@ -308,8 +306,7 @@ fn absence_proof_platform_claims_and_accessibility_references_fail_closed()
             &mismatched_gate,
             &"CAP-CMP-001".parse()?,
             CandidateId::Focused,
-            EnvironmentId::Macos,
-            false,
+            Some(EnvironmentId::Macos),
             &registry,
         ),
         "absent-event-gate",
@@ -324,8 +321,7 @@ fn absence_proof_platform_claims_and_accessibility_references_fail_closed()
             &unregistered,
             &"CAP-CMP-001".parse()?,
             CandidateId::Focused,
-            EnvironmentId::Macos,
-            false,
+            Some(EnvironmentId::Macos),
             &registry,
         ),
         "absent-event-event",
@@ -336,8 +332,7 @@ fn absence_proof_platform_claims_and_accessibility_references_fail_closed()
             entry,
             &"CAP-CMP-001".parse()?,
             CandidateId::Integrated,
-            EnvironmentId::Macos,
-            false,
+            Some(EnvironmentId::Macos),
             &registry,
         ),
         "absent-event-candidate",
@@ -348,8 +343,7 @@ fn absence_proof_platform_claims_and_accessibility_references_fail_closed()
             entry,
             &"CAP-CMP-001".parse()?,
             CandidateId::Focused,
-            EnvironmentId::Windows,
-            false,
+            Some(EnvironmentId::Windows),
             &registry,
         ),
         "absent-event-environment",
@@ -360,8 +354,7 @@ fn absence_proof_platform_claims_and_accessibility_references_fail_closed()
             entry,
             &"CAP-CMP-001".parse()?,
             CandidateId::Focused,
-            EnvironmentId::Macos,
-            true,
+            None,
             &registry,
         ),
         "absent-event-aggregate-environments",
@@ -383,6 +376,15 @@ fn absence_proof_platform_claims_and_accessibility_references_fail_closed()
     assert_code(
         super::validate_platform_baseline(&root, &missing_kk, &active, &registry),
         "kk-evidence-missing",
+    );
+
+    let mut unknown_accessibility_status = committed.clone();
+    *unknown_accessibility_status
+        .pointer_mut("/environments/macos/accessibilityMaps/focused/status")
+        .ok_or("accessibility status must exist")? = Value::String("unknown".to_owned());
+    assert_code(
+        super::validate_platform_baseline(&root, &unknown_accessibility_status, &active, &registry),
+        "accessibility-reference-status",
     );
 
     let stale_reference = json!({
@@ -430,6 +432,42 @@ fn absence_proof_platform_claims_and_accessibility_references_fail_closed()
         &root.join("qualification/fixtures/contracts/traceability/synthetic-accessibility-ku.json"),
         "/forward/roles/status",
     )?;
+    Ok(())
+}
+
+#[cfg(unix)]
+#[test]
+fn evidence_references_reject_symlinks_that_escape_the_repository() -> Result<(), Box<dyn Error>> {
+    use std::fs;
+    use std::os::unix::fs::symlink;
+
+    let root = std::env::temp_dir().join(format!(
+        "oxyflut-traceability-symlink-{}",
+        std::process::id()
+    ));
+    let outside = std::env::temp_dir().join(format!(
+        "oxyflut-traceability-outside-{}",
+        std::process::id()
+    ));
+    fs::create_dir_all(root.join("qualification"))?;
+    fs::create_dir_all(&outside)?;
+    let outside_proof = outside.join("proof.txt");
+    fs::write(&outside_proof, b"outside")?;
+    symlink(&outside_proof, root.join("qualification/proof.txt"))?;
+    let reference = json!({
+        "path": "qualification/proof.txt",
+        "sha256": oxyflut_qualification::hash::hash_file(&outside_proof)?.to_string()
+    });
+
+    let result = super::resolve_evidence(&root, &reference);
+    fs::remove_dir_all(&root)?;
+    fs::remove_dir_all(&outside)?;
+    assert!(matches!(
+        result,
+        Err(super::TraceabilityError::Digest(
+            super::DigestError::SymlinkEscape { .. }
+        ))
+    ));
     Ok(())
 }
 
