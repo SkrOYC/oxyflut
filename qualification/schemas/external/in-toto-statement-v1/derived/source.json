@@ -1,0 +1,10 @@
+{
+  "kind": "derived",
+  "derivedFrom": {
+    "localPath": "qualification/schemas/external/in-toto-statement-v1/spec/statement.source",
+    "sha256": "e8fce554c62cd1ea6d7a18cf8bd75f4eb0cc85c761ccde596133968ded093d9e"
+  },
+  "derivation": "Structural JSON Schema for the JSON form described by the authoritative Statement v1 specification and protobuf schema.",
+  "verifier": "jsonschema-0.51.0-draft-2020-12",
+  "sha256": "be6857f91bacbe274ca003b2e4a27b934d8850abf84a8d9359b9cae28e667c17"
+}

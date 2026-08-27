@@ -1,0 +1,12 @@
+{
+  "_type": "https://in-toto.io/Statement/v2",
+  "subject": [
+    {
+      "digest": {
+        "sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+      }
+    }
+  ],
+  "predicateType": "https://example.test/fixture",
+  "predicate": {}
+}

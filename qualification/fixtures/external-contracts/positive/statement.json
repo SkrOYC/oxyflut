@@ -1,0 +1,13 @@
+{
+  "_type": "https://in-toto.io/Statement/v1",
+  "subject": [
+    {
+      "name": "oxyflut",
+      "digest": {
+        "sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+      }
+    }
+  ],
+  "predicateType": "https://example.test/fixture",
+  "predicate": {}
+}

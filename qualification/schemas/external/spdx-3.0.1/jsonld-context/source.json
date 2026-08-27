@@ -1,0 +1,10 @@
+{
+  "kind": "authoritative",
+  "repository": "https://github.com/spdx/spdx-spec",
+  "commit": "61a649da8ca27924ac1ca8d2a061cb228839b24c",
+  "path": "rdf/spdx-context.jsonld",
+  "retrievalUrl": "https://raw.githubusercontent.com/spdx/spdx-spec/61a649da8ca27924ac1ca8d2a061cb228839b24c/rdf/spdx-context.jsonld",
+  "license": "CC-BY-4.0",
+  "version": "3.0.1",
+  "sha256": "c72b0928f094c83e5c127784edb1ebca2af74a104fcacc007c332b23cbc788bd"
+}

@@ -1,0 +1,10 @@
+{
+  "kind": "authoritative",
+  "repository": "https://github.com/in-toto/attestation",
+  "commit": "ee16c68a11dfcfbdc891600cacd767896fe6e724",
+  "path": "spec/v1.0/statement.proto",
+  "retrievalUrl": "https://raw.githubusercontent.com/in-toto/attestation/ee16c68a11dfcfbdc891600cacd767896fe6e724/spec/v1.0/statement.proto",
+  "license": "Apache-2.0",
+  "version": "1",
+  "sha256": "dc52793724dbb1806aa827f0fb54d0e0acfdfc734084dfa4ca75c32d13a38ee2"
+}

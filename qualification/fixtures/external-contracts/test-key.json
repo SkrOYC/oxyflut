@@ -1,0 +1,6 @@
+{
+  "keyid": "oxyflut-fixture-sha256-test-key-v1",
+  "algorithm": "OXYFLUT-TEST-SHA256-KEYED-V1",
+  "key": "oxyflut-fixture-sha256-test-key-v1",
+  "purpose": "non-production DSSE verifier fixture only"
+}
