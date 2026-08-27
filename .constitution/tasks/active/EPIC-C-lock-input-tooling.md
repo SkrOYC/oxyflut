@@ -78,6 +78,15 @@ Assertions:
 Command: cargo +1.98.0 run -p xtask -- baseline validate --input qualification/fixtures/baselines/complete.synthetic.json && cargo +1.98.0 test -p xtask baseline
 ```
 
+##### OXY-C002 Deviations & Justifications
+
+- **Touched Files:** `xtask/src/contracts/traceability/mod.rs`.
+- **Justification:** The baseline command uses the OXY-A003 exact PRD and architecture-flow validator through a focused authority helper instead of duplicating the 52-capability derivation.
+- **Touched Files:** `crates/oxyflut-qualification/src/evidence/{mod.rs,publish.rs}`.
+- **Justification:** The OXY-A006 evidence writer needs a repository-confined output-directory API so `baseline validate --output` can publish canonical content-addressed derived evidence without duplicating atomic publication.
+- **Touched Files:** `.constitution/tasks/active/EPIC-C-lock-input-tooling.md`.
+- **Justification:** The execution rules require this scope-deviation record.
+
 #### OXY-C003 Implement raw-measurement and sample-validity templates
 
 - **Type:** Feature
