@@ -14,6 +14,17 @@ pub struct DeclaredEvidenceReference<'value> {
     pub object: &'value serde_json::Map<String, Value>,
 }
 
+/// Classifies how one schema family declares immutable references.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ReferenceDeclaration {
+    /// The schema family contains immutable repository references.
+    References,
+    /// The schema family has `path` or `sha256` fields with another meaning.
+    ReferenceFree,
+    /// The schema family isn't part of this reference registry.
+    Unknown,
+}
+
 /// Reports an invalid schema-typed immutable reference shape.
 #[derive(Debug, Error, Eq, PartialEq)]
 pub enum DeclaredReferenceError {
@@ -37,7 +48,7 @@ pub fn declared_references<'value>(
     schema_identity: &str,
     value: &'value Value,
 ) -> Result<Vec<DeclaredEvidenceReference<'value>>, DeclaredReferenceError> {
-    if !schema_declares_references(schema_identity) {
+    if reference_declaration(schema_identity) != ReferenceDeclaration::References {
         return Ok(Vec::new());
     }
 
@@ -46,37 +57,42 @@ pub fn declared_references<'value>(
     Ok(references)
 }
 
-fn schema_declares_references(identity: &str) -> bool {
-    matches!(
-        identity,
-        "urn:oxyflut:schema:accessibility-map:5"
-            | "urn:oxyflut:schema:capability-baseline:4"
-            | "urn:oxyflut:schema:ci-invocation:1"
-            | "urn:oxyflut:schema:external-contract-lock:1"
-            | "urn:oxyflut:schema:ingress-inventory:2"
-            | "urn:oxyflut:schema:platform-contracts:5"
-            | "urn:oxyflut:schema:qualification-evidence:5"
-            | "urn:oxyflut:schema:qualification-lock:5"
-            | "urn:oxyflut:schema:raw-measurement:2"
-            | "urn:oxyflut:schema:release-evidence-bundle:1"
-            | "urn:oxyflut:schema:selection-decision:1"
-            | "urn:oxyflut:schema:specification-phase:1"
-    ) || [
-        "accessibility-map.schema.json",
-        "capability-baseline.schema.json",
-        "ci-invocation.schema.json",
-        "external-contract-lock.schema.json",
-        "ingress-inventory.schema.json",
-        "platform-contracts.schema.json",
-        "qualification-evidence.schema.json",
-        "qualification-lock.schema.json",
-        "raw-measurement.schema.json",
-        "release-evidence-bundle.schema.json",
-        "selection-decision.schema.json",
-        "specification-phase.schema.json",
-    ]
-    .iter()
-    .any(|name| identity.ends_with(name))
+/// Returns the immutable-reference policy for a durable schema family.
+#[must_use]
+pub fn reference_declaration(identity: &str) -> ReferenceDeclaration {
+    match schema_family(identity) {
+        Some(
+            "accessibility-map"
+            | "capability-baseline"
+            | "ci-invocation"
+            | "external-contract-lock"
+            | "ingress-inventory"
+            | "platform-contracts"
+            | "qualification-evidence"
+            | "qualification-lock"
+            | "raw-measurement"
+            | "release-evidence-bundle"
+            | "selection-decision"
+            | "specification-phase",
+        ) => ReferenceDeclaration::References,
+        Some(
+            "artifact-manifest"
+            | "capability-traceability"
+            | "diagnostic-event"
+            | "diagnostic-event-registry",
+        ) => ReferenceDeclaration::ReferenceFree,
+        Some(_) | None => ReferenceDeclaration::Unknown,
+    }
+}
+
+fn schema_family(identity: &str) -> Option<&str> {
+    if let Some(identity) = identity.strip_prefix("urn:oxyflut:schema:") {
+        return identity.rsplit_once(':').map(|(family, _version)| family);
+    }
+
+    identity
+        .strip_suffix(".schema.json")
+        .and_then(|path| path.rsplit('/').next())
 }
 
 fn collect_references<'value>(
@@ -117,4 +133,25 @@ fn collect_references<'value>(
         Value::Null | Value::Bool(_) | Value::Number(_) | Value::String(_) => {}
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{ReferenceDeclaration, reference_declaration};
+
+    #[test]
+    fn reference_policy_uses_schema_families_not_exact_versions() {
+        assert_eq!(
+            reference_declaration("urn:oxyflut:schema:external-contract-lock:2"),
+            ReferenceDeclaration::References
+        );
+        assert_eq!(
+            reference_declaration("../data-models/artifact-manifest.schema.json"),
+            ReferenceDeclaration::ReferenceFree
+        );
+        assert_eq!(
+            reference_declaration("urn:oxyflut:schema:unknown:1"),
+            ReferenceDeclaration::Unknown
+        );
+    }
 }

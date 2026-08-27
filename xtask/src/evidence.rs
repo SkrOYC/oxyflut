@@ -5,13 +5,13 @@ use std::io;
 use std::path::{Path, PathBuf};
 
 use oxyflut_qualification::evidence::{
-    EvidenceError as CoreEvidenceError, MediaType, declared_references, verify_file,
-    verify_path_digest,
+    DeclaredEvidenceReference, EvidenceError as CoreEvidenceError, MediaType, declared_references,
+    verify_file, verify_path_digest,
 };
 use oxyflut_qualification::hash::Sha256Digest;
 use oxyflut_qualification::identifiers::RepositoryPath;
 use oxyflut_qualification::schema::{SchemaError, SchemaRegistry};
-use serde_json::{Map, Value};
+use serde_json::Value;
 use thiserror::Error;
 
 const DATA_MODELS_DIRECTORY: &str = ".constitution/tech-spec/data-models";
@@ -165,40 +165,23 @@ fn verify_declared_digests(
     for reference in declared_references(schema_identity, value)
         .map_err(|_| EvidenceAdapterError::SchemaDeclaration)?
     {
-        verify_evidence_reference(root, reference.object)?;
+        verify_evidence_reference(root, reference)?;
     }
     Ok(())
 }
 
 fn verify_evidence_reference(
     root: &Path,
-    object: &Map<String, Value>,
+    reference: DeclaredEvidenceReference<'_>,
 ) -> Result<(), EvidenceAdapterError> {
-    let path = object
-        .get("path")
-        .ok_or(EvidenceAdapterError::SchemaDeclaration)?;
-    let digest = object
-        .get("sha256")
-        .ok_or(EvidenceAdapterError::SchemaDeclaration)?;
-    if path.is_null() && digest.is_null() {
-        return Ok(());
-    }
-    let path = path
-        .as_str()
-        .ok_or(EvidenceAdapterError::SchemaDeclaration)
-        .and_then(|path| {
-            RepositoryPath::parse(path).map_err(|_| EvidenceAdapterError::InputPath)
-        })?;
-    let digest = digest
-        .as_str()
-        .ok_or(EvidenceAdapterError::SchemaDeclaration)
-        .and_then(|digest| {
-            digest
-                .parse::<Sha256Digest>()
-                .map_err(|_| EvidenceAdapterError::SchemaDeclaration)
-        })?;
+    let path =
+        RepositoryPath::parse(reference.path).map_err(|_| EvidenceAdapterError::InputPath)?;
+    let digest = reference
+        .sha256
+        .parse::<Sha256Digest>()
+        .map_err(|_| EvidenceAdapterError::SchemaDeclaration)?;
 
-    let verified = match object.get("mediaType") {
+    let verified = match reference.object.get("mediaType") {
         None => verify_path_digest(root, &path, &digest).map_err(EvidenceAdapterError::Evidence)?,
         Some(Value::String(media_type)) => {
             let media_type =
@@ -214,7 +197,7 @@ fn verify_evidence_reference(
         }
         Some(_) => return Err(EvidenceAdapterError::SchemaDeclaration),
     };
-    if let Some(size_bytes) = object.get("sizeBytes") {
+    if let Some(size_bytes) = reference.object.get("sizeBytes") {
         let size_bytes = size_bytes
             .as_u64()
             .ok_or(EvidenceAdapterError::SchemaDeclaration)?;
@@ -249,6 +232,16 @@ mod tests {
             out_of_root,
             Err(EvidenceAdapterError::Evidence(_))
         ));
+        Ok(())
+    }
+
+    #[test]
+    fn verifies_external_contract_local_paths_with_digest_bindings() -> Result<(), Box<dyn Error>> {
+        let root = repository_root()?;
+        verify(
+            &root,
+            "qualification/fixtures/evidence/external-contract-lock-local-path.json",
+        )?;
         Ok(())
     }
 

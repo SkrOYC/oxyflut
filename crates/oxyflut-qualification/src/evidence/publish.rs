@@ -465,6 +465,7 @@ fn remove_temporary_after_failure(
     })
 }
 
+#[cfg(unix)]
 fn sync_directory(directory: &Path) -> Result<(), EvidenceError> {
     File::open(directory)
         .and_then(|directory| directory.sync_all())
@@ -472,4 +473,9 @@ fn sync_directory(directory: &Path) -> Result<(), EvidenceError> {
             path: directory.to_path_buf(),
             source,
         })
+}
+
+#[cfg(not(unix))]
+fn sync_directory(_directory: &Path) -> Result<(), EvidenceError> {
+    Ok(())
 }
