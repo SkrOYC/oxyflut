@@ -21,6 +21,9 @@ const BINDINGS_DIGEST_PATH: &str =
 const INTERFACE_FIXTURE_PATH: &str = "qualification/fixtures/native/interface.json";
 const LAYOUT_PROBE_PATH: &str = "qualification/fixtures/native/layout-probe.c.in";
 const MACROS_FIXTURE_DIRECTORY: &str = "qualification/fixtures/native";
+const TOOL_FAILURE_CODE: &str = "native-tool-failed";
+const TOOL_FAILURE_HINT: &str =
+    "rerun: devenv shell -- cargo +1.98.0 run -p xtask -- contracts validate";
 static TEMP_SEQUENCE: AtomicU64 = AtomicU64::new(0);
 
 #[allow(
@@ -218,8 +221,16 @@ fn validate_interface(
 ) -> Result<(), NativeContractError> {
     let fixture = read_json(&root.join(INTERFACE_FIXTURE_PATH), "native interface")?;
     let source = fs::read_to_string(header)?;
+    let ast = parse_header_ast(header, tools)?;
     validate_macro_expansions(root, header, tools)?;
-    let compact = source
+    for (fixture_key, prefix) in [
+        ("statusConstants", "OXY_STATUS_"),
+        ("pixelFormatConstants", "OXY_PIXEL_FORMAT_"),
+        ("nativeTextIndexConstants", "OXY_NATIVE_TEXT_INDEX_"),
+    ] {
+        validate_enum_constants(&fixture, &ast, fixture_key, prefix)?;
+    }
+    let compact = strip_c_comments(&source)
         .chars()
         .filter(|character| !character.is_whitespace())
         .collect::<String>();
@@ -299,6 +310,56 @@ fn validate_interface(
         });
     }
     Ok(())
+}
+
+fn strip_c_comments(source: &str) -> String {
+    let bytes = source.as_bytes();
+    let mut output = String::with_capacity(source.len());
+    let mut index = 0;
+    while index < bytes.len() {
+        match (bytes[index], bytes.get(index + 1)) {
+            (b'/', Some(b'/')) => {
+                index += 2;
+                while index < bytes.len() && bytes[index] != b'\n' {
+                    index += 1;
+                }
+            }
+            (b'/', Some(b'*')) => {
+                index += 2;
+                while index < bytes.len() {
+                    if bytes[index] == b'\n' {
+                        output.push('\n');
+                    }
+                    if bytes[index] == b'*' && bytes.get(index + 1) == Some(&b'/') {
+                        index += 2;
+                        break;
+                    }
+                    index += 1;
+                }
+            }
+            (b'"' | b'\'', _) => {
+                let quote = bytes[index];
+                output.push(char::from(quote));
+                index += 1;
+                while index < bytes.len() {
+                    let byte = bytes[index];
+                    output.push(char::from(byte));
+                    index += 1;
+                    if byte == b'\\' && index < bytes.len() {
+                        output.push(char::from(bytes[index]));
+                        index += 1;
+                    } else if byte == quote {
+                        break;
+                    }
+                }
+            }
+            (byte, _) => {
+                output.push(char::from(byte));
+                index += 1;
+            }
+        }
+    }
+    output
 }
 
 fn validate_macro_expansions(
@@ -525,10 +586,17 @@ fn parse_header_records(
     header: &Path,
     tools: &NativeTools,
 ) -> Result<std::collections::BTreeMap<String, Vec<HeaderField>>, NativeContractError> {
+    let ast = parse_header_ast(header, tools)?;
+    let mut records = std::collections::BTreeMap::new();
+    collect_header_records(&ast, &mut records);
+    Ok(records)
+}
+
+fn parse_header_ast(header: &Path, tools: &NativeTools) -> Result<Value, NativeContractError> {
     let output = run_tool_output(
         &tools.c_header_checker,
         "c-header-checker",
-        "nullability AST inspection",
+        "header AST inspection",
         [
             OsStr::new("-Qunused-arguments"),
             OsStr::new("-Xclang"),
@@ -541,10 +609,75 @@ fn parse_header_records(
             header.as_os_str(),
         ],
     )?;
-    let ast: Value = serde_json::from_slice(&output.stdout)?;
-    let mut records = std::collections::BTreeMap::new();
-    collect_header_records(&ast, &mut records);
-    Ok(records)
+    serde_json::from_slice(&output.stdout).map_err(NativeContractError::Json)
+}
+
+fn validate_enum_constants(
+    fixture: &Value,
+    ast: &Value,
+    fixture_key: &str,
+    prefix: &str,
+) -> Result<(), NativeContractError> {
+    let expected = required_u64_object(fixture, fixture_key, "native interface")?;
+    let mut actual = std::collections::BTreeMap::new();
+    collect_enum_constants(ast, prefix, &mut actual);
+    if actual != expected {
+        return Err(NativeContractError::InterfaceMismatch {
+            item: fixture_key.to_owned(),
+        });
+    }
+    Ok(())
+}
+
+fn required_u64_object(
+    value: &Value,
+    key: &str,
+    fixture: &'static str,
+) -> Result<std::collections::BTreeMap<String, u64>, NativeContractError> {
+    value
+        .get(key)
+        .and_then(Value::as_object)
+        .map(|entries| {
+            entries
+                .iter()
+                .map(|(name, value)| {
+                    value
+                        .as_u64()
+                        .map(|value| (name.clone(), value))
+                        .ok_or(NativeContractError::InvalidFixture { fixture })
+                })
+                .collect::<Result<std::collections::BTreeMap<_, _>, _>>()
+        })
+        .ok_or(NativeContractError::InvalidFixture { fixture })?
+}
+
+fn collect_enum_constants(
+    value: &Value,
+    prefix: &str,
+    constants: &mut std::collections::BTreeMap<String, u64>,
+) {
+    if value.get("kind").and_then(Value::as_str) == Some("EnumConstantDecl")
+        && let Some(name) = value.get("name").and_then(Value::as_str)
+        && name.starts_with(prefix)
+        && let Some(raw_value) = ast_constant_value(value)
+        && let Ok(parsed_value) = raw_value.parse()
+    {
+        constants.insert(name.to_owned(), parsed_value);
+    }
+    if let Some(children) = value.get("inner").and_then(Value::as_array) {
+        for child in children {
+            collect_enum_constants(child, prefix, constants);
+        }
+    }
+}
+
+fn ast_constant_value(value: &Value) -> Option<&str> {
+    value.get("value").and_then(Value::as_str).or_else(|| {
+        value
+            .get("inner")
+            .and_then(Value::as_array)
+            .and_then(|children| children.iter().find_map(ast_constant_value))
+    })
 }
 
 fn collect_header_records(
@@ -654,8 +787,8 @@ fn validate_layout(
     })?;
     if !output.status.success() {
         return Err(NativeContractError::ToolFailed {
-            tool: "layout-probe",
-            operation: "layout probe execution",
+            code: TOOL_FAILURE_CODE,
+            hint: TOOL_FAILURE_HINT,
         });
     }
     let mut actual: Value = serde_json::from_slice(&output.stdout)?;
@@ -694,8 +827,8 @@ where
         Ok(output)
     } else {
         Err(NativeContractError::ToolFailed {
-            tool: name,
-            operation,
+            code: TOOL_FAILURE_CODE,
+            hint: TOOL_FAILURE_HINT,
         })
     }
 }
@@ -721,8 +854,8 @@ where
         Ok(())
     } else {
         Err(NativeContractError::ToolFailed {
-            tool: name,
-            operation,
+            code: TOOL_FAILURE_CODE,
+            hint: TOOL_FAILURE_HINT,
         })
     }
 }
@@ -748,57 +881,25 @@ impl NativeTools {
         let manifest =
             ToolchainManifest::from_json(&bytes).map_err(NativeContractError::Toolchain)?;
         toolchain::verify(&manifest).map_err(NativeContractError::Toolchain)?;
-        let value: Value = serde_json::from_slice(&bytes)?;
-        let (c_header_checker, host_triple) = manifest_tool(&value, "c-header-checker")?;
         Ok(Self {
-            c_header_checker,
-            cxx_compiler: manifest_tool(&value, "cxx-compiler")?.0,
-            bindgen: manifest_tool(&value, "bindgen")?.0,
-            linker: manifest_tool(&value, "linker")?.0,
-            host_triple,
+            c_header_checker: manifest
+                .executable_path("c-header-checker")
+                .map_err(NativeContractError::Toolchain)?,
+            cxx_compiler: manifest
+                .executable_path("cxx-compiler")
+                .map_err(NativeContractError::Toolchain)?,
+            bindgen: manifest
+                .executable_path("bindgen")
+                .map_err(NativeContractError::Toolchain)?,
+            linker: manifest
+                .executable_path("linker")
+                .map_err(NativeContractError::Toolchain)?,
+            host_triple: manifest
+                .host_triple("c-header-checker")
+                .map_err(NativeContractError::Toolchain)?
+                .to_owned(),
         })
     }
-}
-
-fn manifest_tool(value: &Value, name: &str) -> Result<(PathBuf, String), NativeContractError> {
-    let tools = value.get("resolvedTools").and_then(Value::as_array).ok_or(
-        NativeContractError::InvalidFixture {
-            fixture: "staged native toolchain",
-        },
-    )?;
-    let tool = tools
-        .iter()
-        .find(|tool| tool.get("name").and_then(Value::as_str) == Some(name))
-        .ok_or_else(|| NativeContractError::MissingManifestTool {
-            name: name.to_owned(),
-        })?;
-    if tool.get("pathRoot").is_some() {
-        return Err(NativeContractError::ManifestToolPath {
-            name: name.to_owned(),
-        });
-    }
-    let executable = tool
-        .get("executablePath")
-        .and_then(Value::as_str)
-        .filter(|path| !path.is_empty())
-        .ok_or_else(|| NativeContractError::ManifestToolPath {
-            name: name.to_owned(),
-        })?;
-    let path = PathBuf::from(executable);
-    if !path.is_absolute() || !path.is_file() {
-        return Err(NativeContractError::ManifestToolPath {
-            name: name.to_owned(),
-        });
-    }
-    let host_triple = tool
-        .get("hostTriple")
-        .and_then(Value::as_str)
-        .filter(|triple| !triple.is_empty())
-        .map(str::to_owned)
-        .ok_or(NativeContractError::InvalidFixture {
-            fixture: "staged native toolchain host triple",
-        })?;
-    Ok((path, host_triple))
 }
 
 fn read_json(path: &Path, fixture: &'static str) -> Result<Value, NativeContractError> {
@@ -921,10 +1022,6 @@ pub(crate) enum NativeContractError {
     MissingToolchainManifest,
     #[error("the staged native toolchain manifest failed verification")]
     Toolchain(#[source] toolchain::ToolchainError),
-    #[error("the staged native toolchain is missing {name}")]
-    MissingManifestTool { name: String },
-    #[error("the staged native toolchain has an invalid executable path for {name}")]
-    ManifestToolPath { name: String },
     #[error("native contract I/O failed")]
     Io(#[from] io::Error),
     #[error("native contract JSON failed")]
@@ -940,10 +1037,12 @@ pub(crate) enum NativeContractError {
         #[source]
         source: io::Error,
     },
-    #[error("native contract tool failed: {tool} during {operation}")]
+    #[error("native contract tool failed: {code}; {hint}")]
     ToolFailed {
-        tool: &'static str,
-        operation: &'static str,
+        /// Stable content-free native tool failure code.
+        code: &'static str,
+        /// Stable command reproduction hint.
+        hint: &'static str,
     },
     #[error("native contract tool emitted non-UTF-8 output: {tool} during {operation}")]
     ToolOutputEncoding {

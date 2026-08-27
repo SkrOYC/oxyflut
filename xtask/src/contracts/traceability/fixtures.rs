@@ -278,8 +278,7 @@ pub(super) fn run_negative_fixture(
                 &json!({"status":"pass","evidence":[],"notApplicable":{}}),
                 &"CAP-CMP-001".parse()?,
                 CandidateId::Focused,
-                EnvironmentId::Macos,
-                false,
+                Some(EnvironmentId::Macos),
                 false,
                 &active,
                 &registry,
@@ -293,8 +292,7 @@ pub(super) fn run_negative_fixture(
                 &json!({"status":"not-applicable-kk","evidence":[]}),
                 &"CAP-CMP-001".parse()?,
                 CandidateId::Focused,
-                EnvironmentId::Macos,
-                false,
+                Some(EnvironmentId::Macos),
                 false,
                 &active,
                 &registry,
@@ -335,8 +333,7 @@ pub(super) fn run_negative_fixture(
                         binding.as_object().ok_or("absence binding must be an object")?,
                         &"CAP-CMP-001".parse()?,
                         CandidateId::Focused,
-                        EnvironmentId::Macos,
-                        false,
+                        Some(EnvironmentId::Macos),
                         &active,
                         &registry,
                         &"qualification/fixtures/contracts/traceability/synthetic-platform-baseline.json"
@@ -358,15 +355,14 @@ pub(super) fn run_negative_fixture(
                 .pointer("/absentEvents/0")
                 .ok_or("synthetic absent event must exist")?
                 .clone();
-            let (gate, candidate, environment, aggregate, path) = match case {
+            let (gate, candidate, environment, path) = match case {
                 "mismatched-absent-event-gate" => {
                     *entry.pointer_mut("/gateId").ok_or("gate ID must exist")? =
                         Value::String("CAP-CMP-002".to_owned());
                     (
                         "CAP-CMP-001".parse()?,
                         CandidateId::Focused,
-                        EnvironmentId::Macos,
-                        false,
+                        Some(EnvironmentId::Macos),
                         "/absentEvents/0/gateId",
                     )
                 }
@@ -376,8 +372,7 @@ pub(super) fn run_negative_fixture(
                     (
                         "CAP-CMP-001".parse()?,
                         CandidateId::Focused,
-                        EnvironmentId::Macos,
-                        false,
+                        Some(EnvironmentId::Macos),
                         "/absentEvents/0/eventId",
                     )
                 }
@@ -387,30 +382,26 @@ pub(super) fn run_negative_fixture(
                     (
                         "CAP-CMP-001".parse()?,
                         CandidateId::Focused,
-                        EnvironmentId::Macos,
-                        false,
+                        Some(EnvironmentId::Macos),
                         "/absentEvents/0/eventId",
                     )
                 }
                 "mismatched-absent-event-candidate" => (
                     "CAP-CMP-001".parse()?,
                     CandidateId::Integrated,
-                    EnvironmentId::Macos,
-                    false,
+                    Some(EnvironmentId::Macos),
                     "/absentEvents/0/candidates",
                 ),
                 "mismatched-parent-environment" => (
                     "CAP-CMP-001".parse()?,
                     CandidateId::Focused,
-                    EnvironmentId::Windows,
-                    false,
+                    Some(EnvironmentId::Windows),
                     "/absentEvents/0/environments",
                 ),
                 "aggregate-constraint-without-four-environments" => (
                     "CAP-CMP-001".parse()?,
                     CandidateId::Focused,
-                    EnvironmentId::Macos,
-                    true,
+                    None,
                     "/absentEvents/0/environments",
                 ),
                 _ => return Err("fixture case must be declared".into()),
@@ -422,7 +413,6 @@ pub(super) fn run_negative_fixture(
                     &gate,
                     candidate,
                     environment,
-                    aggregate,
                     &registry,
                 ),
                 path,

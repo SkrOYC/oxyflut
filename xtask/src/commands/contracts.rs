@@ -29,14 +29,19 @@ static TEMP_SEQUENCE: AtomicU64 = AtomicU64::new(0);
 /// Runs every contract-validation family in deterministic order.
 pub(crate) fn run(arguments: &[String]) -> CommandOutcome {
     if !arguments.is_empty() {
-        return CommandOutcome::failed(CommandError::InvalidInput(
-            "contracts validate accepts no arguments".to_owned(),
-        ));
+        return CommandOutcome::failed(CommandError::InvalidInput {
+            code: "contracts-validate-arguments",
+        });
     }
 
     let root = match workspace_root() {
         Ok(root) => root,
-        Err(()) => return CommandOutcome::failed(CommandError::Execution("root".to_owned())),
+        Err(()) => {
+            return CommandOutcome::failed(CommandError::Execution {
+                code: "workspace-root",
+                hint: "rerun: contracts validate",
+            });
+        }
     };
     let report = validate_workspace(&root);
     report.emit();
@@ -164,8 +169,6 @@ fn native_failure_path(error: &validators::native::NativeContractError) -> &'sta
         ) => UNSUPPORTED_HOST,
         validators::native::NativeContractError::MissingToolchainManifest
         | validators::native::NativeContractError::Toolchain(_)
-        | validators::native::NativeContractError::MissingManifestTool { .. }
-        | validators::native::NativeContractError::ManifestToolPath { .. }
         | validators::native::NativeContractError::Io(_)
         | validators::native::NativeContractError::Json(_)
         | validators::native::NativeContractError::InvalidFixture { .. }
@@ -327,7 +330,10 @@ impl ContractValidationReport {
         {
             CommandOutcome::Success
         } else {
-            CommandOutcome::failed(CommandError::ValidationFailed("contracts".to_owned()))
+            CommandOutcome::failed(CommandError::ValidationFailed {
+                code: "contracts-invalid",
+                hint: "rerun: contracts validate",
+            })
         }
     }
 

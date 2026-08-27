@@ -36,6 +36,22 @@ pub(crate) enum EvidenceAdapterError {
     SchemaIo(#[source] io::Error),
 }
 
+impl EvidenceAdapterError {
+    /// Returns the stable content-free code for this command-adapter failure.
+    #[must_use]
+    pub(crate) const fn code(&self) -> &'static str {
+        match self {
+            Self::InputPath => "invalid-evidence-path",
+            Self::UnsupportedMediaType => "unsupported-media-type",
+            Self::Evidence(error) => error.code(),
+            Self::SchemaRegistry(_) => "schema-registry",
+            Self::SchemaDeclaration => "schema-declaration",
+            Self::SchemaValidation(_) => "schema-validation",
+            Self::SchemaIo(_) => "schema-io",
+        }
+    }
+}
+
 /// Resolves the workspace root from the compiled xtask location.
 ///
 /// # Errors

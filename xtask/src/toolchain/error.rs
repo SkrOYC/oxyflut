@@ -8,10 +8,12 @@ use thiserror::Error;
 #[derive(Debug, Error)]
 pub(crate) enum ToolchainError {
     /// The host doesn't match the Linux staged manifest target.
-    #[error("the staged native toolchain supports only {host_triple}")]
+    #[error("the staged native toolchain supports only {supported_host}; detected {detected_host}")]
     UnsupportedHost {
+        /// The staged native toolchain's supported Rust host triple.
+        supported_host: &'static str,
         /// The detected Rust host triple.
-        host_triple: String,
+        detected_host: String,
     },
     /// A required tool wasn't found in the locked developer environment.
     #[error("required native tool is missing: {name}")]

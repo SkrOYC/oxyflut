@@ -1,5 +1,6 @@
 //! Local schema compilation, committed-instance discovery, and fixture-corpus validation.
 
+use std::collections::BTreeSet;
 use std::fs;
 use std::io;
 use std::path::{Path, PathBuf};
@@ -258,13 +259,25 @@ fn run_fixture_corpus(
         .collect::<Vec<_>>();
     directories.sort_by_key(|entry| entry.file_name());
 
+    let schema_directories = directories
+        .iter()
+        .filter_map(|directory| {
+            let name = directory.file_name().to_string_lossy().into_owned();
+            (!is_non_schema_fixture_directory(&name)).then_some(name)
+        })
+        .collect::<BTreeSet<_>>();
+    let expected_directories = fixture_schema_directories(root)?;
+    if schema_directories != expected_directories {
+        return Err(ContractSchemaError::FixtureSchema {
+            path: fixture_root,
+            source: SchemaError::Compilation,
+        });
+    }
+
     let mut fixture_count = 0;
     for directory in directories {
         let schema_name = directory.file_name().to_string_lossy().into_owned();
-        if matches!(
-            schema_name.as_str(),
-            "migration" | "readiness" | "traceability"
-        ) {
+        if is_non_schema_fixture_directory(&schema_name) {
             continue;
         }
         let schema_identity = fixture_schema_identity(root, registry, &schema_name)?;
@@ -273,6 +286,24 @@ fn run_fixture_corpus(
 
     validate_supersession_fixture(&fixture_root, registry)?;
     Ok(fixture_count)
+}
+
+fn is_non_schema_fixture_directory(name: &str) -> bool {
+    matches!(name, "migration" | "readiness" | "traceability")
+}
+
+fn fixture_schema_directories(root: &Path) -> Result<BTreeSet<String>, ContractSchemaError> {
+    let mut directories = sorted_files(&root.join(DATA_MODELS_DIRECTORY), SCHEMA_FILE_SUFFIX)?
+        .into_iter()
+        .filter_map(|path| {
+            path.file_name()
+                .and_then(|name| name.to_str())
+                .and_then(|name| name.strip_suffix(SCHEMA_FILE_SUFFIX))
+                .map(str::to_owned)
+        })
+        .collect::<BTreeSet<_>>();
+    directories.insert("validation-keywords".to_owned());
+    Ok(directories)
 }
 
 fn fixture_schema_identity(

@@ -1,4 +1,6 @@
 //! Declaration tokenization for physical contract symbol resolution.
+//!
+//! Symbol resolution is a lexical approximation. It confirms declaration-shaped tokens without parsing each source language's complete grammar.
 
 use super::*;
 

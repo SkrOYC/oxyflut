@@ -11,26 +11,36 @@ pub(crate) fn run(arguments: &[String]) -> CommandOutcome {
     let gate = match arguments {
         [flag, gate] if flag == "--gate" => gate.as_str(),
         _ => {
-            return CommandOutcome::failed(CommandError::InvalidInput(
-                "lock status requires --gate candidate-implementation|measurement".to_owned(),
-            ));
+            return CommandOutcome::failed(CommandError::InvalidInput {
+                code: "lock-status-arguments",
+            });
         }
     };
     let root = match workspace_root() {
         Ok(root) => root,
-        Err(()) => return CommandOutcome::failed(CommandError::Execution("root".to_owned())),
+        Err(()) => {
+            return CommandOutcome::failed(CommandError::Execution {
+                code: "workspace-root",
+                hint: "rerun: lock status --gate GATE",
+            });
+        }
     };
     let report = match validators::readiness::validate_workspace(&root) {
         Ok(report) => report,
-        Err(_) => return CommandOutcome::failed(CommandError::ValidationFailed("lock".to_owned())),
+        Err(_) => {
+            return CommandOutcome::failed(CommandError::ValidationFailed {
+                code: "lock-invalid",
+                hint: "rerun: lock status --gate GATE",
+            });
+        }
     };
 
     match gate {
         "candidate-implementation" => report_gate(gate, &report.candidate_implementation),
         "measurement" => report_gate(gate, &report.measurement),
-        _ => CommandOutcome::failed(CommandError::InvalidInput(
-            "lock status requires --gate candidate-implementation|measurement".to_owned(),
-        )),
+        _ => CommandOutcome::failed(CommandError::InvalidInput {
+            code: "lock-status-gate",
+        }),
     }
 }
 

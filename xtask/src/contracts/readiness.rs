@@ -358,12 +358,13 @@ fn candidate_input_issues(
         ] {
             require_nonempty_string_or_issue(tool, field, "resolved-tool", &mut issues)?;
         }
-        require_digest_or_issue(tool, "sha256", "resolved-tool", &mut issues)?;
-        let _ = digests::verify_reference(
-            root,
-            string_from(tool, "executablePath")?,
-            string_from(tool, "sha256")?,
-        )?;
+        require_digest_or_issue(tool, "sha256", "resolved-tool-digests", &mut issues)?;
+        if let (Some(executable_path), Some(digest)) = (
+            nonempty_string(tool, "executablePath")?,
+            nonempty_string(tool, "sha256")?,
+        ) {
+            let _ = digests::verify_reference(root, executable_path, digest)?;
+        }
     }
 
     sort_and_deduplicate(&mut issues);
@@ -646,17 +647,27 @@ fn require_nonempty_string_or_issue(
     issue: &str,
     issues: &mut Vec<String>,
 ) -> Result<(), ReadinessError> {
+    if nonempty_string(value, field)?.is_none() {
+        issues.push(issue.to_owned());
+    }
+    Ok(())
+}
+
+fn nonempty_string<'value>(
+    value: &'value Map<String, Value>,
+    field: &str,
+) -> Result<Option<&'value str>, ReadinessError> {
     let Some(value) = value.get(field) else {
         return fail("required-string");
     };
     if value.is_null() {
-        issues.push(issue.to_owned());
-        return Ok(());
+        return Ok(None);
     }
-    if value.as_str().is_none_or(str::is_empty) {
-        return fail("required-string");
-    }
-    Ok(())
+    value
+        .as_str()
+        .filter(|value| !value.is_empty())
+        .map(Some)
+        .ok_or_else(|| invariant("required-string"))
 }
 
 fn require_positive_integer_or_issue(

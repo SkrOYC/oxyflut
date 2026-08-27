@@ -217,26 +217,27 @@ pub(crate) enum CommandError {
         command: &'static str,
     },
     /// Command arguments or their referenced input were invalid.
-    #[error("invalid input")]
-    #[allow(
-        dead_code,
-        reason = "Later command modules use this category for invalid command-specific inputs."
-    )]
-    InvalidInput(String),
+    #[error("invalid input: {code}")]
+    InvalidInput {
+        /// Stable content-free input failure code.
+        code: &'static str,
+    },
     /// Command validation completed but its inputs didn't meet the required contract.
-    #[error("validation failed")]
-    #[allow(
-        dead_code,
-        reason = "Later command modules use this category for validation failures."
-    )]
-    ValidationFailed(String),
+    #[error("validation failed: {code}; {hint}")]
+    ValidationFailed {
+        /// Stable content-free validation failure code.
+        code: &'static str,
+        /// Stable command reproduction hint.
+        hint: &'static str,
+    },
     /// The command couldn't complete its local execution.
-    #[error("execution failed")]
-    #[allow(
-        dead_code,
-        reason = "Later command modules use this category for local execution failures."
-    )]
-    Execution(String),
+    #[error("execution failed: {code}; {hint}")]
+    Execution {
+        /// Stable content-free execution failure code.
+        code: &'static str,
+        /// Stable command reproduction hint.
+        hint: &'static str,
+    },
 }
 
 impl CommandError {
@@ -520,16 +521,22 @@ mod tests {
     fn runtime_errors_have_content_free_diagnostics_and_failure_exit_codes() {
         let cases = [
             (
-                CommandError::InvalidInput("input context".to_owned()),
-                "invalid input",
+                CommandError::InvalidInput { code: "input-code" },
+                "invalid input: input-code",
             ),
             (
-                CommandError::ValidationFailed("validation context".to_owned()),
-                "validation failed",
+                CommandError::ValidationFailed {
+                    code: "validation-code",
+                    hint: "rerun: command",
+                },
+                "validation failed: validation-code; rerun: command",
             ),
             (
-                CommandError::Execution("execution context".to_owned()),
-                "execution failed",
+                CommandError::Execution {
+                    code: "execution-code",
+                    hint: "rerun: command",
+                },
+                "execution failed: execution-code; rerun: command",
             ),
         ];
 

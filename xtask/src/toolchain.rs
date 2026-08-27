@@ -23,7 +23,7 @@ mod tests;
 
 pub(crate) use error::ToolchainError;
 use specs::{TOOL_SPECS, ToolLocator, ToolSpec};
-const STAGED_HOST: &str = "x86_64-unknown-linux-gnu";
+pub(crate) const STAGED_HOST: &str = "x86_64-unknown-linux-gnu";
 const RUST_TOOLCHAIN_COMMIT: &str = "88d9e12ae178fab0fb5cc050a94da85685d449ea";
 const RUST_TOOLCHAIN_NAME: &str = "1.98.0-x86_64-unknown-linux-gnu";
 const RUSTFMT_RELATIVE_PATH: &str = "toolchains/1.98.0-x86_64-unknown-linux-gnu/bin/rustfmt";
@@ -38,7 +38,10 @@ const STAGED_NOTE: &str = "Stage 3 reconciliation owns active qualification-lock
 pub(crate) fn resolve() -> Result<ToolchainManifest, ToolchainError> {
     let host_triple = host_triple()?;
     if host_triple != STAGED_HOST {
-        return Err(ToolchainError::UnsupportedHost { host_triple });
+        return Err(ToolchainError::UnsupportedHost {
+            supported_host: STAGED_HOST,
+            detected_host: host_triple,
+        });
     }
 
     let mut resolved_tools = Vec::with_capacity(TOOL_SPECS.len());
@@ -79,6 +82,12 @@ pub(crate) fn verify(manifest: &ToolchainManifest) -> Result<(), ToolchainError>
     }
 
     let host_triple = host_triple()?;
+    if host_triple != STAGED_HOST {
+        return Err(ToolchainError::UnsupportedHost {
+            supported_host: STAGED_HOST,
+            detected_host: host_triple,
+        });
+    }
     let mut names = BTreeSet::new();
     for tool in &manifest.resolved_tools {
         if !names.insert(tool.name.as_str()) {
@@ -161,6 +170,33 @@ impl ToolchainManifest {
     /// Returns an error only when JSON serialization cannot encode the manifest.
     pub(crate) fn canonical_bytes(&self) -> Result<Vec<u8>, ToolchainError> {
         Ok(serde_json::to_vec(&self.to_value())?)
+    }
+
+    /// Returns one strict parsed manifest tool's resolved executable path.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when the named tool is absent or its parsed path root is invalid.
+    pub(crate) fn executable_path(&self, name: &str) -> Result<PathBuf, ToolchainError> {
+        resolve_manifest_executable_path(self.tool(name)?)
+    }
+
+    /// Returns one strict parsed manifest tool's declared host triple.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when the named tool is absent.
+    pub(crate) fn host_triple(&self, name: &str) -> Result<&str, ToolchainError> {
+        Ok(&self.tool(name)?.host_triple)
+    }
+
+    fn tool(&self, name: &str) -> Result<&ResolvedTool, ToolchainError> {
+        self.resolved_tools
+            .iter()
+            .find(|tool| tool.name == name)
+            .ok_or_else(|| ToolchainError::MissingTool {
+                name: name.to_owned(),
+            })
     }
 
     fn to_value(&self) -> Value {
@@ -835,6 +871,15 @@ fn append_directory_records(
         }
     }
     Ok(())
+}
+
+/// Returns whether the executing Rust host matches the staged native toolchain host.
+///
+/// # Errors
+///
+/// Returns an error when the pinned Rust compiler cannot report its host triple.
+pub(crate) fn is_staged_host() -> Result<bool, ToolchainError> {
+    Ok(host_triple()? == STAGED_HOST)
 }
 
 fn host_triple() -> Result<String, ToolchainError> {

@@ -34,6 +34,9 @@ use super::{
 #[test]
 fn authoritative_header_passes_strict_c11_cpp17_interface_and_layout_checks()
 -> Result<(), Box<dyn Error>> {
+    if skip_on_unsupported_host()? {
+        return Ok(());
+    }
     let root = workspace_root()?;
     validate_workspace(&root)?;
     Ok(())
@@ -41,6 +44,9 @@ fn authoritative_header_passes_strict_c11_cpp17_interface_and_layout_checks()
 
 #[test]
 fn generated_bindings_are_byte_stable_under_the_locked_toolchain() -> Result<(), Box<dyn Error>> {
+    if skip_on_unsupported_host()? {
+        return Ok(());
+    }
     let root = workspace_root()?;
     let tools = NativeTools::load(&root)?;
     let temporary = TemporaryDirectory::new("native-bindings")?;
@@ -67,6 +73,9 @@ fn native_toolchain_failure_stops_before_header_validation() -> Result<(), Box<d
 
 #[test]
 fn deliberate_layout_type_and_symbol_mutations_fail() -> Result<(), Box<dyn Error>> {
+    if skip_on_unsupported_host()? {
+        return Ok(());
+    }
     let root = workspace_root()?;
     let tools = NativeTools::load(&root)?;
     let source = fs::read_to_string(root.join(super::HEADER_PATH))?;
@@ -102,7 +111,59 @@ fn deliberate_layout_type_and_symbol_mutations_fail() -> Result<(), Box<dyn Erro
 }
 
 #[test]
+fn comments_cannot_mask_a_removed_api_table_entry() -> Result<(), Box<dyn Error>> {
+    if skip_on_unsupported_host()? {
+        return Ok(());
+    }
+    let root = workspace_root()?;
+    let tools = NativeTools::load(&root)?;
+    let source = fs::read_to_string(root.join(super::HEADER_PATH))?;
+    let original = "  uint32_t (OXY_CALL *get_abi_version)(void);";
+    let replacement = "  /* OXY_CALL *get_abi_version is deliberately absent. */";
+    let mutated = source.replacen(original, replacement, 1);
+    assert_ne!(
+        mutated, source,
+        "the API entry mutation must alter the header"
+    );
+    let temporary = TemporaryDirectory::new("native-comment-mutation")?;
+    let header = temporary.path().join("oxyflut-substrate.h");
+    fs::write(&header, mutated)?;
+    assert!(matches!(
+        super::validate_interface(&root, &header, &tools),
+        Err(NativeContractError::InterfaceMismatch { .. })
+    ));
+    Ok(())
+}
+
+#[test]
+fn native_tool_failures_have_a_stable_code_and_reproduction_hint() -> Result<(), Box<dyn Error>> {
+    use std::ffi::OsStr;
+
+    if skip_on_unsupported_host()? {
+        return Ok(());
+    }
+    let root = workspace_root()?;
+    let tools = NativeTools::load(&root)?;
+    let error = super::run_tool(
+        &tools.c_header_checker,
+        "c-header-checker",
+        "intentional failure",
+        [OsStr::new("--oxyflut-invalid-option")],
+    )
+    .err()
+    .ok_or("invalid Clang invocation must fail")?;
+    assert_eq!(
+        error.to_string(),
+        "native contract tool failed: native-tool-failed; rerun: devenv shell -- cargo +1.98.0 run -p xtask -- contracts validate"
+    );
+    Ok(())
+}
+
+#[test]
 fn macro_and_nullability_mutations_fail() -> Result<(), Box<dyn Error>> {
+    if skip_on_unsupported_host()? {
+        return Ok(());
+    }
     let root = workspace_root()?;
     let tools = NativeTools::load(&root)?;
     let source = fs::read_to_string(root.join(super::HEADER_PATH))?;
@@ -169,52 +230,38 @@ fn native_index_units_match_rust_and_platform_contracts_before_range_conversion(
 }
 
 #[test]
-fn presentation_statuses_map_and_reject_invalid_timestamps_before_delivery()
+fn every_declared_presentation_status_maps_and_rejects_invalid_timestamps()
 -> Result<(), Box<dyn Error>> {
-    let expected = [
-        (
-            authoritative::sys::OXY_STATUS_OK,
-            authoritative::substrate::PresentationStatus::Presented,
-        ),
-        (
-            authoritative::sys::OXY_STATUS_INVALID_ARGUMENT,
-            authoritative::substrate::PresentationStatus::InvalidArgument,
-        ),
-        (
-            authoritative::sys::OXY_STATUS_INCOMPATIBLE_ABI,
-            authoritative::substrate::PresentationStatus::IncompatibleAbi,
-        ),
-        (
-            authoritative::sys::OXY_STATUS_STALE_OWNER,
-            authoritative::substrate::PresentationStatus::StaleOwner,
-        ),
-        (
-            authoritative::sys::OXY_STATUS_RESOURCE_LIMIT,
-            authoritative::substrate::PresentationStatus::ResourceLimit,
-        ),
-        (
-            authoritative::sys::OXY_STATUS_UNSUPPORTED,
-            authoritative::substrate::PresentationStatus::Unsupported,
-        ),
-        (
-            authoritative::sys::OXY_STATUS_SUBSTRATE_FAILURE,
-            authoritative::substrate::PresentationStatus::SubstrateFailure,
-        ),
-        (
-            authoritative::sys::OXY_STATUS_CANCELLED,
-            authoritative::substrate::PresentationStatus::Cancelled,
-        ),
-        (
-            authoritative::sys::OXY_STATUS_DEADLINE_EXCEEDED,
-            authoritative::substrate::PresentationStatus::DeadlineExceeded,
-        ),
-    ];
-    for (raw, expected_status) in expected {
-        let timestamp = if raw == 0 { Some(42) } else { None };
+    let fixture = read_interface_fixture()?;
+    let constants = fixture
+        .get("statusConstants")
+        .and_then(Value::as_object)
+        .ok_or("interface fixture must enumerate status constants")?;
+    let mappings = fixture
+        .get("presentationStatusMappings")
+        .and_then(Value::as_object)
+        .ok_or("interface fixture must map status constants")?;
+    assert_eq!(constants.len(), mappings.len());
+    for (name, raw) in constants {
+        let raw = raw
+            .as_u64()
+            .and_then(|raw| u32::try_from(raw).ok())
+            .ok_or("status constants must fit OxyStatus")?;
+        let expected = mappings
+            .get(name)
+            .and_then(Value::as_str)
+            .ok_or("every status constant must have a Rust mapping")?;
+        let status = presentation_status_from_c(raw)?;
+        assert_eq!(presentation_status_name(status), expected);
+        let timestamp = matches!(
+            status,
+            authoritative::substrate::PresentationStatus::Presented
+        )
+        .then_some(42);
         let mut recorder = PresentationRecorder::default();
         deliver_presentation(raw, timestamp, &mut recorder)?;
-        assert_eq!(recorder.deliveries, vec![expected_status]);
-        let invalid_timestamp = if raw == 0 { None } else { Some(42) };
+        assert_eq!(recorder.deliveries, vec![status]);
+        let invalid_timestamp = if timestamp.is_some() { None } else { Some(42) };
         assert!(matches!(
             deliver_presentation(raw, invalid_timestamp, &mut recorder),
             Err(ContractConversionError::InvalidPresentationTimestamp)
@@ -222,8 +269,8 @@ fn presentation_statuses_map_and_reject_invalid_timestamps_before_delivery()
     }
     let mut recorder = PresentationRecorder::default();
     assert!(matches!(
-        deliver_presentation(99, Some(42), &mut recorder),
-        Err(ContractConversionError::UnknownPresentationStatus(99))
+        deliver_presentation(u32::MAX, Some(42), &mut recorder),
+        Err(ContractConversionError::UnknownPresentationStatus(u32::MAX))
     ));
     assert!(recorder.deliveries.is_empty());
     Ok(())
@@ -350,11 +397,41 @@ fn abi_seven_through_nine_fail_before_callbacks_install() -> Result<(), Box<dyn 
     Ok(())
 }
 
+fn skip_on_unsupported_host() -> Result<bool, Box<dyn Error>> {
+    if crate::toolchain::is_staged_host()? {
+        Ok(false)
+    } else {
+        eprintln!("skipped: staged toolchain host is x86_64-unknown-linux-gnu");
+        Ok(true)
+    }
+}
+
 fn workspace_root() -> Result<PathBuf, Box<dyn Error>> {
     Path::new(env!("CARGO_MANIFEST_DIR"))
         .parent()
         .map(Path::to_path_buf)
         .ok_or_else(|| "xtask must remain directly below the workspace root".into())
+}
+
+fn read_interface_fixture() -> Result<Value, Box<dyn Error>> {
+    let root = workspace_root()?;
+    Ok(serde_json::from_slice(&fs::read(
+        root.join(super::INTERFACE_FIXTURE_PATH),
+    )?)?)
+}
+
+fn presentation_status_name(status: authoritative::substrate::PresentationStatus) -> &'static str {
+    match status {
+        authoritative::substrate::PresentationStatus::Presented => "Presented",
+        authoritative::substrate::PresentationStatus::InvalidArgument => "InvalidArgument",
+        authoritative::substrate::PresentationStatus::IncompatibleAbi => "IncompatibleAbi",
+        authoritative::substrate::PresentationStatus::StaleOwner => "StaleOwner",
+        authoritative::substrate::PresentationStatus::ResourceLimit => "ResourceLimit",
+        authoritative::substrate::PresentationStatus::Unsupported => "Unsupported",
+        authoritative::substrate::PresentationStatus::SubstrateFailure => "SubstrateFailure",
+        authoritative::substrate::PresentationStatus::Cancelled => "Cancelled",
+        authoritative::substrate::PresentationStatus::DeadlineExceeded => "DeadlineExceeded",
+    }
 }
 
 fn platform_contract_defines(contract: &Value, expected: &str) -> bool {

@@ -116,6 +116,18 @@ fn candidate_artifact_source_revisions_and_resolved_tools_fail_closed() -> Resul
     let registry = schema::compile_workspace(&workspace_root()?)?;
     let phase = read_json(&root.join(super::PHASE_PATH))?;
 
+    let unresolved_tool_fields = validate_documents(
+        &root,
+        &read_json(&root.join("negative/unresolved-tool-fields-lock.json"))?,
+        &phase,
+        &registry,
+    )?;
+    let GateStatus::Open(issues) = unresolved_tool_fields.candidate_implementation else {
+        return Err("unresolved tool fields must keep the candidate gate open".into());
+    };
+    assert!(issues.contains(&"resolved-tool".to_owned()));
+    assert!(issues.contains(&"resolved-tool-digests".to_owned()));
+
     let wrong_engine = validate_documents(
         &root,
         &read_json(&root.join("negative/mismatched-engine-revision-lock.json"))?,

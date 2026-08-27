@@ -16,6 +16,7 @@ use oxyflut_qualification::schema::{SchemaError, SchemaRegistry};
 use serde_json::Value;
 use thiserror::Error;
 
+use super::digests::{self, DigestError};
 use super::schema::ContractSchemaError;
 
 use super::registries::{self, RegistryError};
@@ -99,6 +100,9 @@ pub(crate) enum TraceabilityError {
         #[source]
         source: io::Error,
     },
+    /// A repository-confined immutable evidence reference failed verification.
+    #[error("traceability evidence reference failed")]
+    Digest(#[from] DigestError),
     /// The diagnostic registry violated its own semantic contract.
     #[error("diagnostic registry validation failed")]
     Registry(#[source] RegistryError),
@@ -129,6 +133,7 @@ impl TraceabilityError {
     fn code(&self) -> Option<&'static str> {
         match self {
             Self::Invariant { code } | Self::Schema { code, .. } => Some(code),
+            Self::Digest(_) => Some("evidence-digest"),
             Self::Io { .. }
             | Self::Json { .. }
             | Self::Hash { .. }
@@ -431,42 +436,19 @@ fn architecture_flows(root: &Path) -> Result<BTreeSet<CapabilityId>, Traceabilit
 }
 
 fn resolve_evidence(root: &Path, value: &Value) -> Result<(), TraceabilityError> {
-    resolve_evidence_parts(
+    let _ = digests::verify_reference(
         root,
         string_field(value, "path")?,
         string_field(value, "sha256")?,
-    )
-}
-
-fn resolve_evidence_fields(root: &Path, value: &Value) -> Result<(), TraceabilityError> {
-    resolve_evidence_parts(
-        root,
-        string_field(value, "path")?,
-        string_field(value, "sha256")?,
-    )
+    )?;
+    Ok(())
 }
 
 fn resolve_evidence_object(
     root: &Path,
     value: &serde_json::Map<String, Value>,
 ) -> Result<(), TraceabilityError> {
-    resolve_evidence_parts(
-        root,
-        string_from(value, "path")?,
-        string_from(value, "sha256")?,
-    )
-}
-
-fn resolve_evidence_parts(root: &Path, path: &str, digest: &str) -> Result<(), TraceabilityError> {
-    let path = RepositoryPath::parse(path).map_err(|_| error("evidence-path"))?;
-    let evidence_path = root.join(path.as_str());
-    if hash_file(&evidence_path).map_err(|source| TraceabilityError::Hash {
-        path: evidence_path,
-        source,
-    })? != digest_from(digest, "evidence-digest")?
-    {
-        return fail("evidence-digest");
-    }
+    let _ = digests::verify_object_reference(root, value)?;
     Ok(())
 }
 
