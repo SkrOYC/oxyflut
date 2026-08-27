@@ -1,5 +1,6 @@
 //! Command dispatcher for qualification-only repository tooling.
 
+use std::ffi::OsString;
 use std::process::ExitCode;
 
 mod commands;
@@ -9,9 +10,11 @@ mod toolchain;
 
 /// Runs one qualification command.
 fn main() -> ExitCode {
-    let arguments = std::env::args().skip(1).collect::<Vec<_>>();
-    let outcome = match dispatch(&arguments) {
-        Ok(invocation) => execute(invocation),
+    let outcome = match command_arguments() {
+        Ok(arguments) => match dispatch(&arguments) {
+            Ok(invocation) => execute(invocation),
+            Err(error) => CommandOutcome::failed(error),
+        },
         Err(error) => CommandOutcome::failed(error),
     };
 
@@ -20,6 +23,23 @@ fn main() -> ExitCode {
     }
 
     outcome.exit_code()
+}
+
+fn command_arguments() -> Result<Vec<String>, CommandError> {
+    command_arguments_from(std::env::args_os().skip(1))
+}
+
+fn command_arguments_from(
+    arguments: impl IntoIterator<Item = OsString>,
+) -> Result<Vec<String>, CommandError> {
+    arguments
+        .into_iter()
+        .map(|argument| {
+            argument
+                .into_string()
+                .map_err(|_| CommandError::InvalidCommand)
+        })
+        .collect()
 }
 
 /// Selects a registered qualification command placeholder.
@@ -229,11 +249,12 @@ impl CommandError {
 #[cfg(test)]
 mod tests {
     use std::error::Error;
+    use std::ffi::OsString;
     use std::fs;
     use std::path::{Path, PathBuf};
     use std::process::{Command, ExitCode};
 
-    use super::{CommandError, CommandOutcome, CommandRoute, dispatch};
+    use super::{CommandError, CommandOutcome, CommandRoute, command_arguments_from, dispatch};
 
     const WORKSPACE_MEMBERS: &[&str] = &[
         "crates/oxyflut",
@@ -481,6 +502,17 @@ mod tests {
         assert_eq!(
             CommandOutcome::not_implemented("placeholder").exit_code(),
             ExitCode::FAILURE
+        );
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn non_utf8_arguments_are_invalid_commands_instead_of_panicking() {
+        use std::os::unix::ffi::OsStringExt;
+
+        assert_eq!(
+            command_arguments_from([OsString::from_vec(vec![0xFF])]),
+            Err(CommandError::InvalidCommand)
         );
     }
 

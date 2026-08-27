@@ -7,7 +7,7 @@ use std::sync::atomic::{AtomicU64, Ordering};
 
 use super::super::{CommandError, CommandOutcome};
 use crate::contracts as validators;
-use crate::toolchain::{self, ToolchainManifest};
+use crate::toolchain;
 
 const DATA_MODELS_PATH: &str = ".constitution/tech-spec/data-models";
 const CONTRACTS_PATH: &str = ".constitution/tech-spec/contracts";
@@ -91,30 +91,20 @@ fn validate_workspace(root: &Path) -> ContractValidationReport {
         validators::readiness::validate_workspace(root),
     ));
 
-    summaries.push(match validate_rust_contracts(root) {
-        Ok(()) => FamilySummary::ok("rust-contract", RUST_CONTRACTS_PATH),
-        Err(path) => FamilySummary::failed_path("rust-contract", path),
-    });
-    summaries.push(summary_from_native_result(
-        "c-cpp-header",
-        HEADER_PATH,
-        validators::native::validate_header_syntax(root),
-    ));
-    summaries.push(summary_from_native_result(
-        "binding",
-        BINDINGS_PATH,
-        validators::native::validate_generated_bindings(root),
-    ));
-    summaries.push(summary_from_native_result(
-        "symbol",
-        HEADER_PATH,
-        validators::native::validate_header_symbols(root),
-    ));
-    summaries.push(summary_from_native_result(
-        "layout",
-        HEADER_PATH,
-        validators::native::validate_host_layout(root),
-    ));
+    match validators::native::NativeTools::load(root) {
+        Ok(tools) => {
+            summaries.push(match validate_rust_contracts(root) {
+                Ok(()) => FamilySummary::ok("rust-contract", RUST_CONTRACTS_PATH),
+                Err(path) => FamilySummary::failed_path("rust-contract", path),
+            });
+            summaries.extend(native_summaries(root, &tools));
+        }
+        Err(error) => {
+            let failure_path = native_failure_path(&error);
+            summaries.push(FamilySummary::failed("rust-contract", failure_path));
+            summaries.extend(native_load_failure(failure_path));
+        }
+    }
 
     ContractValidationReport { summaries }
 }
@@ -140,6 +130,68 @@ fn summary_from_result<T, Error>(
         Ok(_) => FamilySummary::ok(family, contract_path),
         Err(_) => FamilySummary::failed(family, contract_path),
     }
+}
+
+fn native_summaries(root: &Path, tools: &validators::native::NativeTools) -> [FamilySummary; 4] {
+    [
+        summary_from_native_result(
+            "c-cpp-header",
+            HEADER_PATH,
+            validators::native::validate_header_syntax(root, tools),
+        ),
+        summary_from_native_result(
+            "binding",
+            BINDINGS_PATH,
+            validators::native::validate_generated_bindings(root, tools),
+        ),
+        summary_from_native_result(
+            "symbol",
+            HEADER_PATH,
+            validators::native::validate_header_symbols(root, tools),
+        ),
+        summary_from_native_result(
+            "layout",
+            HEADER_PATH,
+            validators::native::validate_host_layout(root, tools),
+        ),
+    ]
+}
+
+fn native_failure_path(error: &validators::native::NativeContractError) -> &'static str {
+    match error {
+        validators::native::NativeContractError::Toolchain(
+            toolchain::ToolchainError::UnsupportedHost { .. },
+        ) => UNSUPPORTED_HOST,
+        validators::native::NativeContractError::MissingToolchainManifest
+        | validators::native::NativeContractError::Toolchain(_)
+        | validators::native::NativeContractError::MissingManifestTool { .. }
+        | validators::native::NativeContractError::ManifestToolPath { .. }
+        | validators::native::NativeContractError::Io(_)
+        | validators::native::NativeContractError::Json(_)
+        | validators::native::NativeContractError::InvalidFixture { .. }
+        | validators::native::NativeContractError::InvalidHeaderPath
+        | validators::native::NativeContractError::ToolExecution { .. }
+        | validators::native::NativeContractError::ToolFailed { .. }
+        | validators::native::NativeContractError::ToolOutputEncoding { .. }
+        | validators::native::NativeContractError::MacroFixtureTargetMismatch { .. }
+        | validators::native::NativeContractError::MacroExpansionMismatch { .. }
+        | validators::native::NativeContractError::MissingNullabilityAnnotation { .. }
+        | validators::native::NativeContractError::HeaderAstCoverageMismatch { .. }
+        | validators::native::NativeContractError::GoldenDigestMismatch
+        | validators::native::NativeContractError::GeneratedBindingsMismatch
+        | validators::native::NativeContractError::InterfaceMismatch { .. }
+        | validators::native::NativeContractError::LayoutMismatch
+        | validators::native::NativeContractError::TemporaryDirectory => TOOLCHAIN_MANIFEST_PATH,
+    }
+}
+
+fn native_load_failure(contract_path: &'static str) -> [FamilySummary; 4] {
+    [
+        FamilySummary::failed("c-cpp-header", contract_path),
+        FamilySummary::failed("binding", contract_path),
+        FamilySummary::failed("symbol", contract_path),
+        FamilySummary::failed("layout", contract_path),
+    ]
 }
 
 fn summary_from_native_result(
@@ -180,11 +232,11 @@ fn readiness_summaries(
 
 /// Parses all authoritative Rust contracts with the verified pinned Rust toolchain.
 ///
-/// The staged manifest verifies the pinned Rust toolchain through its rustfmt identity before
-/// `rustc` compiles each contract as an independent metadata-only library. This avoids adding
-/// `syn`; exact declared-symbol resolution remains the responsibility of the traceability family.
+/// The shared [`validators::native::NativeTools`] instance already verifies the staged manifest
+/// before this function invokes `rustc` for each independent metadata-only library. This avoids
+/// adding `syn`; exact declared-symbol resolution remains the responsibility of the traceability
+/// family.
 fn validate_rust_contracts(root: &Path) -> Result<(), String> {
-    verify_staged_toolchain(root)?;
     let temporary =
         ContractTemporaryDirectory::new().map_err(|_| RUST_CONTRACTS_PATH.to_owned())?;
     for (crate_name, contract_path) in [
@@ -216,19 +268,6 @@ fn validate_rust_contracts(root: &Path) -> Result<(), String> {
         }
     }
     Ok(())
-}
-
-fn verify_staged_toolchain(root: &Path) -> Result<(), String> {
-    let path = root.join(TOOLCHAIN_MANIFEST_PATH);
-    let bytes = fs::read(&path).map_err(|_| summary_path(root, &path))?;
-    let manifest = ToolchainManifest::from_json(&bytes).map_err(|_| summary_path(root, &path))?;
-    toolchain::verify(&manifest).map_err(|error| {
-        if matches!(error, toolchain::ToolchainError::UnsupportedHost { .. }) {
-            UNSUPPORTED_HOST.to_owned()
-        } else {
-            summary_path(root, &path)
-        }
-    })
 }
 
 struct ContractTemporaryDirectory {
@@ -276,7 +315,7 @@ struct ContractValidationReport {
 impl ContractValidationReport {
     fn emit(&self) {
         for summary in &self.summaries {
-            eprintln!("{}", summary.line());
+            println!("{}", summary.line());
         }
     }
 

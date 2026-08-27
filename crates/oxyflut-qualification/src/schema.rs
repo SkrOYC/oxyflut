@@ -411,6 +411,9 @@ fn last_json_pointer_segment(path: &str) -> String {
     }
 }
 
+// `jsonschema` 0.51.0 doesn't expose the unresolved registry identity as structured data.
+// This deliberately parses its current quoted `Display` message; update this coupling when the
+// pinned validator version changes.
 fn local_identity_from_registry_error(error: &str) -> Option<String> {
     error
         .split('`')

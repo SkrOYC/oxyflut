@@ -80,7 +80,7 @@ pub(super) fn resolve(
 
     let selection = promotion_reference(&references, "selectionDecision")?;
     let selection_value = read_json(&selection.2.resolved_path)?;
-    digests::verify_references_in_value(root, &selection_value)?;
+    digests::verify_references_for_schema(root, SELECTION_SCHEMA, &selection_value)?;
     validate_schema(
         registry,
         SELECTION_SCHEMA,
@@ -121,7 +121,7 @@ pub(super) fn resolve(
 
     let release = promotion_reference(&references, "releaseQualification")?;
     let release_value = read_json(&release.2.resolved_path)?;
-    digests::verify_references_in_value(root, &release_value)?;
+    digests::verify_references_for_schema(root, RELEASE_SCHEMA, &release_value)?;
     validate_schema(
         registry,
         RELEASE_SCHEMA,
@@ -259,7 +259,7 @@ fn validate_selection_evidence(
         let reference = object_value(evidence, candidate)?;
         let verified = digests::verify_value_reference(binding.root, reference)?;
         let value = read_json(&verified.resolved_path)?;
-        digests::verify_references_in_value(binding.root, &value)?;
+        digests::verify_references_for_schema(binding.root, EVIDENCE_SCHEMA, &value)?;
         validate_schema(
             binding.registry,
             EVIDENCE_SCHEMA,
@@ -300,7 +300,7 @@ fn validate_qualification_evidence(
     family: &'static str,
 ) -> Result<(), ReadinessError> {
     let evidence = read_json(&reference.resolved_path)?;
-    digests::verify_references_in_value(binding.root, &evidence)?;
+    digests::verify_references_for_schema(binding.root, EVIDENCE_SCHEMA, &evidence)?;
     validate_schema(binding.registry, EVIDENCE_SCHEMA, &evidence, family)?;
     traceability::validate_promotion_qualification_evidence(
         binding.root,

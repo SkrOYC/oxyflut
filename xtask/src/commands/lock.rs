@@ -37,13 +37,13 @@ pub(crate) fn run(arguments: &[String]) -> CommandOutcome {
 fn report_gate(gate: &str, status: &GateStatus) -> CommandOutcome {
     match status {
         GateStatus::Ready => {
-            eprintln!("lock status: ready ({gate})");
+            println!("lock status: ready ({gate})");
             CommandOutcome::Success
         }
         GateStatus::Open(_) => {
-            eprintln!("lock status: open ({gate})");
+            println!("lock status: open ({gate})");
             for known_unknown in status.remaining_known_unknowns() {
-                eprintln!("remaining-ku: {known_unknown}");
+                println!("remaining-ku: {known_unknown}");
             }
             CommandOutcome::ValidButOpen
         }

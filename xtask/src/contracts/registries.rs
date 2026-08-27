@@ -105,12 +105,6 @@ impl RegistryError {
 ///
 /// Returns an error when the local registry cannot be read or violates its closed semantic contract.
 pub(crate) fn validate_workspace(root: &Path) -> Result<(), RegistryError> {
-    // Event records and sink admissions are validated as their durable inputs arrive in later families.
-    let _ = (
-        validate_event,
-        admit_local_sink,
-        validate_candidate_environment,
-    );
     let registry = read_json(&root.join(REGISTRY_PATH))?;
     validate_registry(&registry)
 }
@@ -158,6 +152,10 @@ pub(crate) fn validate_registry(registry: &Value) -> Result<(), RegistryError> {
     Ok(())
 }
 
+#[allow(
+    dead_code,
+    reason = "Later contract-validation families validate durable diagnostic event records."
+)]
 /// Validates one durable diagnostic event against the authoritative registry.
 ///
 /// # Errors
@@ -203,6 +201,10 @@ pub(crate) fn validate_event(registry: &Value, event: &Value) -> Result<(), Regi
     Ok(())
 }
 
+#[allow(
+    dead_code,
+    reason = "Later contract-validation families admit diagnostic sinks before record delivery."
+)]
 /// Admits one closed machine-local sink before any record delivery.
 ///
 /// # Errors
@@ -227,6 +229,10 @@ pub(crate) fn admit_local_sink(
     })
 }
 
+#[allow(
+    dead_code,
+    reason = "Later contract-validation families validate candidate and environment identifiers."
+)]
 /// Confirms the cross-family closed candidate and Tier 1 environment sets.
 ///
 /// This function keeps registry fixtures from accepting arbitrary candidate or environment strings.
@@ -300,7 +306,8 @@ fn validate_event_field_value(
     let value = object.get("value").ok_or(RegistryError::Invariant {
         code: "diagnostic-field-value",
     })?;
-    match string_field(definition, "kind")? {
+    let kind = string_field(definition, "kind")?;
+    match kind {
         "boolean" if value.is_boolean() => {}
         "integer" if value.as_i64().is_some() || value.as_u64().is_some() => {}
         "number" if value.is_number() => {}
@@ -335,15 +342,17 @@ fn validate_event_field_value(
         }
     }
 
-    let number = value.as_f64().ok_or(RegistryError::Invariant {
-        code: "diagnostic-field-value",
-    })?;
-    if number_field_optional(definition, "minimum")?.is_some_and(|minimum| number < minimum)
-        || number_field_optional(definition, "maximum")?.is_some_and(|maximum| number > maximum)
-    {
-        return Err(RegistryError::Invariant {
-            code: "diagnostic-field-range",
-        });
+    if matches!(kind, "integer" | "number") {
+        let number = value.as_f64().ok_or(RegistryError::Invariant {
+            code: "diagnostic-field-value",
+        })?;
+        if number_field_optional(definition, "minimum")?.is_some_and(|minimum| number < minimum)
+            || number_field_optional(definition, "maximum")?.is_some_and(|maximum| number > maximum)
+        {
+            return Err(RegistryError::Invariant {
+                code: "diagnostic-field-range",
+            });
+        }
     }
     Ok(())
 }
@@ -442,6 +451,14 @@ mod tests {
             "fields": { "state": { "value": 1 } }
         });
         validate_event(&registry, &valid)?;
+        for stale_target in [true, false] {
+            let valid_boolean = json!({
+                "registryVersion": "2.0.0",
+                "name": "semantics.action",
+                "fields": { "staleTarget": { "value": stale_target } }
+            });
+            validate_event(&registry, &valid_boolean)?;
+        }
 
         let invalid_closed = json!({
             "registryVersion": "2.0.0",
@@ -532,7 +549,15 @@ mod tests {
                 "input.rejected": { "privacyClass": "private-redacted", "fields": {} },
                 "text.transaction": { "privacyClass": "private-redacted", "fields": {} },
                 "semantics.update": { "privacyClass": "private-redacted", "fields": {} },
-                "semantics.action": { "privacyClass": "private-redacted", "fields": {} },
+                "semantics.action": {
+                    "privacyClass": "private-redacted",
+                    "fields": {
+                        "staleTarget": {
+                            "privacyClass": "private-redacted",
+                            "kind": "boolean"
+                        }
+                    }
+                },
                 "asset.lifecycle": { "privacyClass": "private-redacted", "fields": {} },
                 "recovery.transition": { "privacyClass": "operational", "fields": {} },
                 "boundary.failure": { "privacyClass": "operational", "fields": {} },
