@@ -10,8 +10,12 @@ The Stage 4 qualification plan must create the following target structure throug
 
 ```text
 .
+├── .envrc
 ├── Cargo.toml
 ├── Cargo.lock
+├── devenv.lock
+├── devenv.nix
+├── devenv.yaml
 ├── rust-toolchain.toml
 ├── crates
 │   ├── oxyflut
@@ -44,6 +48,8 @@ The Stage 4 qualification plan must create the following target structure throug
 ├── xtask
 └── .constitution
 ```
+
+Every verification command must run inside `devenv shell`. You can use `direnv` to enter the same environment.
 
 The `oxyflut` crate reexports only the reviewed public surface. Internal crates follow the logical boundaries in `architecture/containers.md`. The candidate adapter crates implement one internal substrate contract and cannot expose raw native handles to application crates.
 

@@ -360,3 +360,28 @@ Command: cargo +1.98.0 run -p xtask -- contracts validate
 - **Justification:** The execution rules require deviations to be recorded in the ticket block.
 - **Touched Files:** `xtask/src/contracts/readiness.rs`.
 - **Justification:** The aggregate command needs a typed distinction between readiness-gate and Phase 3B promotion-only errors to report their statuses independently.
+
+## Completion
+
+Epic A completed its 34 story points without implementing candidate, platform, or product-capability behavior. The ticket records below preserve the implementation and review commits, verification outcomes, and links to the documented scope deviations.
+
+### Ticket completion
+
+| Ticket | Commits | Verification result | Deviations and assumptions |
+| :-- | :-- | :-- | :-- |
+| OXY-A001 | `9d9cece243a76949694fb1a6af15ce564a416b6f`, `000448dfd1fca5b45b63ea6deae6d9992fc0b0f3` | `cargo +1.98.0 fmt --all --check` passed with exit 0. | Added the reproducible toolchain and documented empty target-structure directories; see [deviations](#oxy-a001-deviations--justifications). |
+| OXY-A002 | `ce3019bac4622d34960911dcc0275786fb16ea4f`, `971f12e706dbdd3860aba8fcf1efcfcc558ac4c1` | `cargo +1.98.0 test --workspace --all-features schema && cargo +1.98.0 test --workspace --all-features hash` passed with exit 0. | Added shared pinned dependencies, dispatcher support, and a local keyword fixture; see [deviations](#oxy-a002-deviations--justifications). |
+| OXY-A003 | `ddbc70c976f8a06b21f19f8c76ff460703bce61d`, `f2c9087db747b6211766f04b3902463f7ecfe94a`, `7ceea79679cbf7a15e83b44dbf2af4c25408ad7e` | `cargo +1.98.0 test -p xtask contracts::traceability` passed with exit 0. | Added command wiring and schema-fixture exclusion; the contract-test location and accessibility generation gaps are routed below; see [deviations](#oxy-a003-deviations--justifications). |
+| OXY-A004 | `6a8447ee51c485c114effc072ec28fd903ee9883`, `a245e4b48066ea8258491a8bb64b097fbc279dec` | `cargo +1.98.0 test -p xtask contracts::readiness` passed with exit 0. | Added validator wiring and reused traceability validation; the five promotion-artifact schema gaps are routed below; see [deviations](#oxy-a004-deviations--justifications). |
+| OXY-A008 | `538fde1dbc15fefd1db80b93d022143b16a5b5cb`, `908c265d8733583fa1b52e2141e6cff4bb8b6c0b` | `cargo +1.98.0 test --workspace --all-features` passed with exit 0. | Added the immutable Prettier tool declaration and corrected formatter checker references; see [deviations](#oxy-a008-deviations--justifications). |
+| OXY-A005 | `1a0545f0ca81584e09b140331c2166414d212317`, `93999fe7dfa135ea504e00e0543408657bca241c` | `cargo +1.98.0 test -p xtask contracts::native` passed with exit 0. | Added aggregate-command support and test-only authoritative-contract compilation modules; see [deviations](#oxy-a005-deviations--justifications). |
+| OXY-A006 | `8b231502dc61e141d45a44df1770a13ad0e20ac5`, `5e387389a17b82be7928d3e3fc6d9279d4980329` | `cargo +1.98.0 test --workspace --all-features` passed with exit 0. | Split the evidence module into cohesive canonical, publication, and verification modules; see [deviations](#oxy-a006-deviations--justifications). |
+| OXY-A007 | `8162b47b9ff972ad76bdee0c6640607ff728a4ac`, `39dd00c1da08481bcdde06ea5366c6395b67beb3` | `cargo +1.98.0 run -p xtask -- contracts validate` passed with exit 0. | Added aggregate native and readiness support needed for distinct family outcomes; see [deviations](#oxy-a007-deviations--justifications). |
+
+### Stage 3 revisions required — routed to OXY-D001
+
+The [OXY-D001 inputs from Epic A](../active/EPIC-D-readiness-reconciliation.md#oxy-d001-inputs-from-epic-a) must name these unresolved Stage 3 revisions:
+
+- `.constitution/tech-spec/data-models/capability-traceability.schema.json` `mappings[].contractTests[]` identifies a contract test but has no physical file location.
+- `.constitution/tech-spec/data-models/accessibility-map.schema.json` `reverseActions[].textLayoutBinding` has no text-layout generation value.
+- `.constitution/tech-spec/data-models/specification-phase.schema.json` `promotionEvidence.layoutQualification`, `finalContractSet`, `targetMatrix`, `losingCandidateRemoval`, and `billOfMaterials` use generic evidence references instead of typed schemas.
