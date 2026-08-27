@@ -1,13 +1,15 @@
 //! Candidate-neutral capability-baseline validation and canonical authoring.
 
 use std::fs;
-use std::io;
+use std::io::{self, Cursor};
 use std::path::{Path, PathBuf};
 
 use oxyflut_qualification::baseline::{BaselineAuthority, BaselineError, CapabilityBaseline};
 use oxyflut_qualification::evidence::{
-    EvidenceError, MediaType, preserve_source, write_derived_json_to_directory,
+    EvidenceError, MediaType, preserve_source, write_canonical_json_to_directory,
+    write_canonical_json_to_path,
 };
+use oxyflut_qualification::hash::hash_reader;
 use oxyflut_qualification::identifiers::RepositoryPath;
 use oxyflut_qualification::schema::SchemaError;
 use serde_json::Value;
@@ -80,6 +82,18 @@ fn validate_at(
     input: &RepositoryPath,
     output: Option<&RepositoryPath>,
 ) -> Result<Option<oxyflut_qualification::evidence::EvidenceRef>, BaselineCommandError> {
+    validate_at_with_before_publication(root, input, output, || Ok(()))
+}
+
+fn validate_at_with_before_publication<F>(
+    root: &Path,
+    input: &RepositoryPath,
+    output: Option<&RepositoryPath>,
+    before_publication: F,
+) -> Result<Option<oxyflut_qualification::evidence::EvidenceRef>, BaselineCommandError>
+where
+    F: FnOnce() -> Result<(), BaselineCommandError>,
+{
     let bytes = read_confined_file(root, input)?;
     let baseline = CapabilityBaseline::parse_json(&bytes)?;
     let raw: Value = serde_json::from_slice(&bytes).map_err(BaselineCommandError::Json)?;
@@ -95,11 +109,35 @@ fn validate_at(
 
     let output = match output {
         Some(output) => {
+            let validated_digest =
+                hash_reader(Cursor::new(&bytes)).map_err(|source| BaselineCommandError::Hash {
+                    path: root.join(input.as_str()),
+                    source,
+                })?;
+            before_publication()?;
             let source = preserve_source(root, input.clone(), MediaType::application_json())?;
+            if source.sha256 != validated_digest {
+                return Err(BaselineCommandError::SourceSnapshotMismatch);
+            }
+
             let canonical = baseline.canonical_value()?;
-            Some(write_derived_json_to_directory(
-                root, output, &canonical, &source,
-            )?)
+            let draft = write_canonical_json_to_directory(root, output, &canonical)?;
+            let sidecar_path_text = format!("{}/{}.provenance.json", output.as_str(), draft.sha256);
+            let sidecar_path = RepositoryPath::parse(&sidecar_path_text).map_err(|source| {
+                EvidenceError::InvalidPath {
+                    path: sidecar_path_text,
+                    source,
+                }
+            })?;
+            let sidecar = serde_json::json!({
+                "path": draft.path.as_str(),
+                "sha256": draft.sha256.to_string(),
+                "mediaType": draft.media_type.as_str(),
+                "sourcePath": source.path.as_str(),
+                "sourceSha256": source.sha256.to_string(),
+            });
+            let _ = write_canonical_json_to_path(root, &sidecar_path, &sidecar)?;
+            Some(draft)
         }
         None => None,
     };
@@ -149,6 +187,14 @@ enum BaselineCommandError {
         #[source]
         source: io::Error,
     },
+    #[error("baseline input could not be hashed")]
+    Hash {
+        path: PathBuf,
+        #[source]
+        source: io::Error,
+    },
+    #[error("baseline input changed between validation and publication")]
+    SourceSnapshotMismatch,
     #[error("baseline input is not JSON")]
     Json(#[source] serde_json::Error),
     #[error("baseline schema validation failed")]
@@ -169,15 +215,18 @@ mod tests {
     use std::fs;
     use std::path::{Path, PathBuf};
 
-    use oxyflut_qualification::evidence::{MediaType, verify_file};
+    use oxyflut_qualification::evidence::{
+        MediaType, canonical_json_bytes, verify_file, verify_path_digest,
+    };
     use oxyflut_qualification::hash::hash_file;
     use oxyflut_qualification::identifiers::RepositoryPath;
     use serde_json::Value;
 
-    use super::{run, run_at_root};
+    use super::{BaselineCommandError, run, run_at_root, validate_at_with_before_publication};
     use crate::CommandOutcome;
-    use crate::contracts::readiness::{
-        ReadinessError, ReadinessValidationError, validate_workspace,
+    use crate::contracts::{
+        readiness::{ReadinessError, ReadinessValidationError, validate_workspace},
+        schema,
     };
 
     const COMPLETE_FIXTURE: &str = "qualification/fixtures/baselines/complete.synthetic.json";
@@ -268,7 +317,8 @@ mod tests {
     }
 
     #[test]
-    fn writes_deterministic_content_addressed_canonical_output() -> Result<(), Box<dyn Error>> {
+    fn writes_deterministic_schema_valid_canonical_output_with_sidecar_provenance()
+    -> Result<(), Box<dyn Error>> {
         let root = workspace_root()?;
         let output = "qualification/fixtures/baselines/output-test";
         let output_path = root.join(output);
@@ -284,26 +334,141 @@ mod tests {
         ];
         assert_eq!(run_at_root(&root, &arguments), CommandOutcome::Success);
         let first = output_files(&output_path)?;
-        assert_eq!(first.len(), 1);
-        let first_bytes = fs::read(&first[0])?;
+        assert_eq!(first.len(), 2);
+        let first_draft = first
+            .iter()
+            .find(|path| {
+                !path
+                    .file_name()
+                    .and_then(|name| name.to_str())
+                    .is_some_and(|name| name.ends_with(".provenance.json"))
+            })
+            .ok_or("output must contain the baseline draft")?;
+        let first_sidecar = first
+            .iter()
+            .find(|path| {
+                path.file_name()
+                    .and_then(|name| name.to_str())
+                    .is_some_and(|name| name.ends_with(".provenance.json"))
+            })
+            .ok_or("output must contain the provenance sidecar")?;
+        let first_bytes = fs::read(first_draft)?;
 
         assert_eq!(run_at_root(&root, &arguments), CommandOutcome::Success);
         let second = output_files(&output_path)?;
         assert_eq!(second, first);
-        assert_eq!(fs::read(&second[0])?, first_bytes);
-        let output_reference = second[0]
+        assert_eq!(fs::read(first_draft)?, first_bytes);
+        let output_reference = first_draft
             .strip_prefix(&root)?
             .to_str()
             .ok_or("output reference must be UTF-8")?
             .parse::<RepositoryPath>()?;
         let _ = verify_file(&root, &output_reference, &MediaType::application_json())?;
         assert!(
-            second[0]
+            first_draft
                 .file_stem()
                 .and_then(|stem| stem.to_str())
                 .is_some_and(|stem| stem.len() == 64)
         );
+
+        assert_eq!(
+            run_at_root(
+                &root,
+                &["--input".to_owned(), output_reference.as_str().to_owned()],
+            ),
+            CommandOutcome::Success
+        );
+        let draft: Value = serde_json::from_slice(&first_bytes)?;
+        let original: Value = serde_json::from_slice(&fs::read(root.join(COMPLETE_FIXTURE))?)?;
+        let registry = schema::compile_workspace(&root)?;
+        registry.validate(super::BASELINE_SCHEMA, &draft)?;
+        assert_eq!(draft, original);
+        assert_eq!(first_bytes, canonical_json_bytes(&original)?);
+        assert!(draft.get("sourcePath").is_none());
+        assert!(draft.get("sourceSha256").is_none());
+
+        let sidecar_reference = first_sidecar
+            .strip_prefix(&root)?
+            .to_str()
+            .ok_or("sidecar reference must be UTF-8")?
+            .parse::<RepositoryPath>()?;
+        let sidecar_verified =
+            verify_file(&root, &sidecar_reference, &MediaType::application_json())?;
+        let sidecar = sidecar_verified
+            .json()
+            .cloned()
+            .ok_or("sidecar must be JSON")?;
+        let sidecar_path = sidecar
+            .get("path")
+            .and_then(Value::as_str)
+            .ok_or("sidecar must name the draft path")?
+            .parse::<RepositoryPath>()?;
+        let sidecar_digest = sidecar
+            .get("sha256")
+            .and_then(Value::as_str)
+            .ok_or("sidecar must name the draft digest")?
+            .parse()?;
+        let resolved_draft = verify_path_digest(&root, &sidecar_path, &sidecar_digest)?;
+        assert_eq!(
+            first_sidecar.file_name().and_then(|name| name.to_str()),
+            Some(format!("{}.provenance.json", resolved_draft.sha256()).as_str())
+        );
+        let source_digest = hash_file(&root.join(COMPLETE_FIXTURE))?.to_string();
+        assert_eq!(resolved_draft.sha256(), hash_file(first_draft)?);
+        assert_eq!(
+            sidecar,
+            serde_json::json!({
+                "path": output_reference.as_str(),
+                "sha256": resolved_draft.sha256().to_string(),
+                "mediaType": "application/json",
+                "sourcePath": COMPLETE_FIXTURE,
+                "sourceSha256": source_digest,
+            })
+        );
+
         fs::remove_dir_all(output_path)?;
+        Ok(())
+    }
+
+    #[test]
+    fn rejects_publication_when_the_source_changes_after_validation() -> Result<(), Box<dyn Error>>
+    {
+        let root = workspace_root()?;
+        let input_text = format!(
+            "qualification/fixtures/baselines/snapshot-source-test-{}.json",
+            std::process::id()
+        );
+        let input = input_text.parse::<RepositoryPath>()?;
+        let input_path = root.join(&input_text);
+        let output_text = format!(
+            "qualification/fixtures/baselines/snapshot-output-test-{}",
+            std::process::id()
+        );
+        let output = output_text.parse::<RepositoryPath>()?;
+        let output_path = root.join(&output_text);
+        if output_path.exists() {
+            fs::remove_dir_all(&output_path)?;
+        }
+        fs::copy(root.join(COMPLETE_FIXTURE), &input_path)?;
+
+        let changed_input = input_path.clone();
+        let result = validate_at_with_before_publication(&root, &input, Some(&output), || {
+            fs::write(&changed_input, b"{}").map_err(|source| BaselineCommandError::Io {
+                path: changed_input.clone(),
+                source,
+            })
+        });
+        let output_exists = output_path.exists();
+        fs::remove_file(input_path)?;
+        if output_exists {
+            fs::remove_dir_all(&output_path)?;
+        }
+
+        assert!(matches!(
+            result,
+            Err(BaselineCommandError::SourceSnapshotMismatch)
+        ));
+        assert!(!output_exists);
         Ok(())
     }
 
