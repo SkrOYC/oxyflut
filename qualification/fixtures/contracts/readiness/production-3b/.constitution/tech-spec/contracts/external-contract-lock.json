@@ -1,0 +1,38 @@
+{
+  "$schema": "../data-models/external-contract-lock.schema.json",
+  "schemaVersion": "1.0.0",
+  "contracts": {
+    "spdx-3.0.1": {
+      "version": "3.0.1",
+      "source": "https://spdx.github.io/spdx-spec/v3.0.1/",
+      "epistemicStatus": "ku-gating",
+      "localPath": null,
+      "sha256": null,
+      "verifier": null
+    },
+    "in-toto-statement-v1": {
+      "version": "1",
+      "source": "https://github.com/in-toto/attestation/tree/main/spec/v1",
+      "epistemicStatus": "ku-gating",
+      "localPath": null,
+      "sha256": null,
+      "verifier": null
+    },
+    "slsa-provenance-v1": {
+      "version": "1.0",
+      "source": "https://slsa.dev/provenance/v1",
+      "epistemicStatus": "ku-gating",
+      "localPath": null,
+      "sha256": null,
+      "verifier": null
+    },
+    "dsse-envelope-v1": {
+      "version": "1",
+      "source": "https://github.com/secure-systems-lab/dsse/blob/master/envelope.md",
+      "epistemicStatus": "ku-gating",
+      "localPath": null,
+      "sha256": null,
+      "verifier": null
+    }
+  }
+}

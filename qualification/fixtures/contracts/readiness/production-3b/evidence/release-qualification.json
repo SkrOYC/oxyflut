@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "1.0.0",
+  "candidate": "focused",
+  "environment": "macos",
+  "artifactManifest": {
+    "path": "evidence/nested-evidence.json",
+    "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+    "mediaType": "application/json"
+  },
+  "spdxSbom": {
+    "path": "evidence/nested-evidence.json",
+    "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+    "mediaType": "application/json"
+  },
+  "notices": {
+    "path": "evidence/nested-evidence.json",
+    "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+    "mediaType": "application/json"
+  },
+  "slsaProvenance": {
+    "path": "evidence/nested-evidence.json",
+    "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+    "mediaType": "application/json"
+  },
+  "dsseEnvelope": {
+    "path": "evidence/nested-evidence.json",
+    "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+    "mediaType": "application/json"
+  },
+  "ciInvocation": {
+    "path": "evidence/nested-evidence.json",
+    "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+    "mediaType": "application/json"
+  },
+  "externalContractLockDigest": "3a04c48d2bc3665d3bae92a8c3625ed45a48fcc6d41dbd87d51551d718fa5d3e"
+}

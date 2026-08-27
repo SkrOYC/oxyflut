@@ -1,11 +1,9 @@
 //! The fail-closed contract-validation command.
 
-#[path = "../contracts/mod.rs"]
-mod validators;
-
 use std::path::{Path, PathBuf};
 
 use super::super::{CommandError, CommandOutcome};
+use crate::contracts as validators;
 
 /// Runs the schema and instance validators, then reports deferred contract families.
 pub(crate) fn run(arguments: &[String]) -> CommandOutcome {
@@ -57,6 +55,30 @@ pub(crate) fn run(arguments: &[String]) -> CommandOutcome {
         return CommandOutcome::failed(CommandError::ValidationFailed("registries".to_owned()));
     }
 
+    if validators::digests::validate_workspace(&root).is_err() {
+        eprintln!("schema: ok");
+        eprintln!("instances: ok");
+        eprintln!("fixtures: ok");
+        eprintln!("traceability: ok");
+        eprintln!("registries: ok");
+        eprintln!("digests: failed");
+        return CommandOutcome::failed(CommandError::ValidationFailed("digests".to_owned()));
+    }
+    let readiness = match validators::readiness::validate_workspace(&root) {
+        Ok(report) => report,
+        Err(error) => {
+            eprintln!("schema: ok");
+            eprintln!("instances: ok");
+            eprintln!("fixtures: ok");
+            eprintln!("traceability: ok");
+            eprintln!("registries: ok");
+            eprintln!("digests: ok");
+            eprintln!("readiness: failed");
+            eprintln!("{}", error.promotion_summary());
+            return CommandOutcome::failed(CommandError::ValidationFailed("readiness".to_owned()));
+        }
+    };
+
     eprintln!("schema: ok");
     eprintln!("instances: ok");
     eprintln!("fixtures: ok");
@@ -67,10 +89,15 @@ pub(crate) fn run(arguments: &[String]) -> CommandOutcome {
     );
     eprintln!("accessibility-generation: deferred (schema lacks generation field)");
     eprintln!("registries: ok");
-    for family in validators::unimplemented_families() {
-        eprintln!("{family}: not-implemented");
+    eprintln!("digests: ok");
+    eprintln!("readiness: ok");
+    match readiness.promotion {
+        validators::readiness::PromotionStatus::NotClaimed => {
+            eprintln!("promotion: ok (not claimed)");
+        }
     }
-    CommandOutcome::not_implemented("contracts validation families")
+    eprintln!("{}: not-implemented", validators::native::FAMILY);
+    CommandOutcome::not_implemented("native validation")
 }
 
 fn report_schema_failure(error: &validators::schema::ContractSchemaError, root: &Path) {
@@ -126,7 +153,7 @@ mod tests {
     fn contracts_schema_family_runs_before_deferred_families_fail_closed() {
         assert_eq!(
             run(&[]),
-            CommandOutcome::not_implemented("contracts validation families")
+            CommandOutcome::not_implemented("native validation")
         );
     }
 
