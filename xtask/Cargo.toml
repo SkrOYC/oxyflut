@@ -3,11 +3,12 @@ name = "xtask"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
+publish = false
 
 [lints]
 workspace = true
 
 [dependencies]
-oxyflut-qualification = { path = "../crates/oxyflut-qualification" }
+oxyflut-qualification = { version = "=0.1.0", path = "../crates/oxyflut-qualification" }
 serde_json.workspace = true
 thiserror.workspace = true

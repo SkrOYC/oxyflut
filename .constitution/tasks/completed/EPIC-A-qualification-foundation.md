@@ -146,6 +146,8 @@ Corpus: positive committed constitution plus fixtures for missing, duplicate, un
 - **Justification:** The OXY-A003 semantic traceability corpus is intentionally not JSON Schema fixture input. The schema fixture discovery excludes its dedicated `traceability/` directory so the existing schema family continues to validate only directories named for local schemas.
 - **Assumption for OXY-D001 Stage 3 revision:** `no file location defined for contractTests identifiers`. Contract-test identifier syntax and the exact 52↔52 capability derivation are validated, but physical item resolution is deferred until candidate implementation.
 - **Assumption for OXY-D001 Stage 3 revision:** `accessibility-map.schema.json` `reverseActions[].textLayoutBinding` carries no generation value. The immutable generation symbol binding is validated, while live-node generation comparison is deferred.
+- **Touched Files:** `xtask/src/contracts/traceability/{mod,validation,edges,tokens,tests,fixtures}.rs`.
+- **Justification:** PR review required splitting the oversized validator, its edge table, tokenizer, and fixture tests below the hard file-size ceiling while retaining the `contracts::traceability` module path.
 
 #### OXY-A004 Enforce readiness, promotion, and immutable evidence bindings
 
@@ -228,6 +230,8 @@ Command: cargo +1.98.0 test --workspace --all-features
 
 - **Touched Files:** `devenv.nix`.
 - **Justification:** An immutable Prettier identity is required for OXY-A008.
+- **Touched Files:** `xtask/src/toolchain/{error,specs}.rs`, `xtask/src/toolchain_tests.rs`.
+- **Justification:** PR review required moving staged-toolchain definitions, errors, and tests below the hard file-size ceiling.
 - **Touched Files:** `.constitution/tech-spec/{guidelines,stack}.md`, `.constitution/tasks/active/{EPIC-B-readiness-research,EPIC-D-readiness-reconciliation}.md`, and `.constitution/tasks/active/EPIC-A-qualification-foundation.md`.
 - **Justification:** The documented formatter commands must use the declared immutable Prettier executable.
 
@@ -314,7 +318,7 @@ Checker: cargo +1.98.0 test --workspace --all-features
 
 ##### OXY-A006 Deviations & Justifications
 
-- **Touched Files:** `crates/oxyflut-qualification/src/evidence/{mod.rs,canonical.rs,publish.rs,verify.rs}` replace the ticket's single `evidence.rs` module.
+- **Touched Files:** `crates/oxyflut-qualification/src/evidence/{mod.rs,canonical.rs,publish.rs,references.rs,verify.rs}` replace the ticket's single `evidence.rs` module.
 - **Justification:** The required review fix splits canonical encoding, publication, and verification into cohesive modules while preserving the `evidence` module path registered by `lib.rs`.
 - **Touched Files:** `.constitution/tasks/active/EPIC-A-qualification-foundation.md`.
 - **Justification:** The execution rules require this scope deviation to be recorded in the ticket block.
@@ -360,6 +364,10 @@ Command: cargo +1.98.0 run -p xtask -- contracts validate
 - **Justification:** The execution rules require deviations to be recorded in the ticket block.
 - **Touched Files:** `xtask/src/contracts/readiness.rs`.
 - **Justification:** The aggregate command needs a typed distinction between readiness-gate and Phase 3B promotion-only errors to report their statuses independently.
+- **Touched Files:** `deny.toml`, `devenv.nix`, `.constitution/prd/glossary.md`, and `.constitution/tasks/active/EPIC-D-readiness-reconciliation.md`.
+- **Justification:** PR review required an offline dependency-policy gate, the corresponding CI scripts, canonical KU and KK glossary entries, and a recorded advisory-database deferral. The glossary and OXY-D001 input additions are explicitly authorized by the review request.
+- **Touched Files:** `xtask/tests/cli_output.rs`.
+- **Justification:** PR review required process-level assertions that reports use standard output and diagnostics use standard error.
 
 ## Completion
 

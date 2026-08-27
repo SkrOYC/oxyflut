@@ -10,6 +10,8 @@ Use the following terms throughout the constitution:
 | Component | A stable unit of user-interface composition with identity, state, lifecycle, layout, and rendering behavior. | Widget, element |
 | Display epoch | A measured interval during which a view has one display association and display timing source. | Vsync period, screen session |
 | Input method editor | Operating-system text-entry behavior for composition, conversion, candidate selection, and commit. | IME bridge, text service |
+| Known unknown (KU) | A named unanswered question that blocks the relevant gate until evidence resolves it. | Assumption, resolved item |
+| Known known (KK) | A claim backed by cited, immutable, verified evidence. | Belief, implementation intention |
 | Local diagnostics | Bounded diagnostic records written only to machine-local, user-controlled sinks within the application trust boundary. | Telemetry, analytics |
 | Exported telemetry | Diagnostic records that cross the machine boundary or another declared trust boundary. | Local diagnostics, local logging |
 | Presentation opportunity | An independently observed display event at which a completed frame can be presented. | Tick, frame callback |

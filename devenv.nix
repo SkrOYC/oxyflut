@@ -73,9 +73,11 @@ in
   };
 
   scripts = {
+    contracts-validate.exec = "cargo +1.98.0 run -p xtask -- contracts validate";
     fmt-check.exec = "cargo +1.98.0 fmt --all --check";
     clippy-check.exec = "cargo +1.98.0 clippy --workspace --all-targets --all-features -- -D warnings";
     test-all.exec = "cargo +1.98.0 test --workspace --all-features";
     docs-check.exec = "prettier --prose-wrap never --check '.constitution/**/*.md'";
+    deny-check.exec = "cargo deny check licenses bans sources";
   };
 }
