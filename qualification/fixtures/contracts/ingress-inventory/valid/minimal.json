@@ -1,0 +1,247 @@
+{
+  "schemaVersion": "2.0.0",
+  "candidate": "focused",
+  "environment": "macos",
+  "entries": {
+    "application-assets": {
+      "source": "local",
+      "trustBoundary": "application-process",
+      "owner": "owner",
+      "epistemicStatus": "ku-gating",
+      "privacyClass": "public",
+      "threats": [
+        "tampering"
+      ],
+      "limits": {
+        "payloadBytes": null,
+        "eventsPerSecond": null,
+        "queueItems": null,
+        "decodedBytes": null,
+        "resourceBytes": null
+      },
+      "validation": [
+        "checked"
+      ],
+      "mitigations": [
+        "bounded"
+      ],
+      "failureContainment": "reject",
+      "evidence": [
+        {
+          "path": "evidence/example.json",
+          "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      ]
+    },
+    "operating-environment-events": {
+      "source": "local",
+      "trustBoundary": "application-process",
+      "owner": "owner",
+      "epistemicStatus": "ku-gating",
+      "privacyClass": "public",
+      "threats": [
+        "tampering"
+      ],
+      "limits": {
+        "payloadBytes": null,
+        "eventsPerSecond": null,
+        "queueItems": null,
+        "decodedBytes": null,
+        "resourceBytes": null
+      },
+      "validation": [
+        "checked"
+      ],
+      "mitigations": [
+        "bounded"
+      ],
+      "failureContainment": "reject",
+      "evidence": [
+        {
+          "path": "evidence/example.json",
+          "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      ]
+    },
+    "private-platform-content": {
+      "source": "local",
+      "trustBoundary": "application-process",
+      "owner": "owner",
+      "epistemicStatus": "ku-gating",
+      "privacyClass": "public",
+      "threats": [
+        "tampering"
+      ],
+      "limits": {
+        "payloadBytes": null,
+        "eventsPerSecond": null,
+        "queueItems": null,
+        "decodedBytes": null,
+        "resourceBytes": null
+      },
+      "validation": [
+        "checked"
+      ],
+      "mitigations": [
+        "bounded"
+      ],
+      "failureContainment": "reject",
+      "evidence": [
+        {
+          "path": "evidence/example.json",
+          "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      ]
+    },
+    "accessibility": {
+      "source": "local",
+      "trustBoundary": "application-process",
+      "owner": "owner",
+      "epistemicStatus": "ku-gating",
+      "privacyClass": "public",
+      "threats": [
+        "tampering"
+      ],
+      "limits": {
+        "payloadBytes": null,
+        "eventsPerSecond": null,
+        "queueItems": null,
+        "decodedBytes": null,
+        "resourceBytes": null
+      },
+      "validation": [
+        "checked"
+      ],
+      "mitigations": [
+        "bounded"
+      ],
+      "failureContainment": "reject",
+      "evidence": [
+        {
+          "path": "evidence/example.json",
+          "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      ]
+    },
+    "candidate-boundary": {
+      "source": "local",
+      "trustBoundary": "application-process",
+      "owner": "owner",
+      "epistemicStatus": "ku-gating",
+      "privacyClass": "public",
+      "threats": [
+        "tampering"
+      ],
+      "limits": {
+        "payloadBytes": null,
+        "eventsPerSecond": null,
+        "queueItems": null,
+        "decodedBytes": null,
+        "resourceBytes": null
+      },
+      "validation": [
+        "checked"
+      ],
+      "mitigations": [
+        "bounded"
+      ],
+      "failureContainment": "reject",
+      "evidence": [
+        {
+          "path": "evidence/example.json",
+          "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      ]
+    },
+    "local-sink": {
+      "source": "local",
+      "trustBoundary": "application-process",
+      "owner": "owner",
+      "epistemicStatus": "ku-gating",
+      "privacyClass": "public",
+      "threats": [
+        "tampering"
+      ],
+      "limits": {
+        "payloadBytes": null,
+        "eventsPerSecond": null,
+        "queueItems": null,
+        "decodedBytes": null,
+        "resourceBytes": null
+      },
+      "validation": [
+        "checked"
+      ],
+      "mitigations": [
+        "bounded"
+      ],
+      "failureContainment": "reject",
+      "evidence": [
+        {
+          "path": "evidence/example.json",
+          "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      ]
+    },
+    "candidate-artifacts": {
+      "source": "local",
+      "trustBoundary": "application-process",
+      "owner": "owner",
+      "epistemicStatus": "ku-gating",
+      "privacyClass": "public",
+      "threats": [
+        "tampering"
+      ],
+      "limits": {
+        "payloadBytes": null,
+        "eventsPerSecond": null,
+        "queueItems": null,
+        "decodedBytes": null,
+        "resourceBytes": null
+      },
+      "validation": [
+        "checked"
+      ],
+      "mitigations": [
+        "bounded"
+      ],
+      "failureContainment": "reject",
+      "evidence": [
+        {
+          "path": "evidence/example.json",
+          "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      ]
+    },
+    "independent-verification": {
+      "source": "local",
+      "trustBoundary": "application-process",
+      "owner": "owner",
+      "epistemicStatus": "ku-gating",
+      "privacyClass": "public",
+      "threats": [
+        "tampering"
+      ],
+      "limits": {
+        "payloadBytes": null,
+        "eventsPerSecond": null,
+        "queueItems": null,
+        "decodedBytes": null,
+        "resourceBytes": null
+      },
+      "validation": [
+        "checked"
+      ],
+      "mitigations": [
+        "bounded"
+      ],
+      "failureContainment": "reject",
+      "evidence": [
+        {
+          "path": "evidence/example.json",
+          "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      ]
+    }
+  }
+}

@@ -271,6 +271,7 @@ mod tests {
     ];
 
     const STACK_ALLOWED_DEPENDENCIES: &[(&str, &str)] = &[
+        ("oxyflut-qualification", "0.1.0"),
         ("thiserror", "2.0.20"),
         ("slotmap", "1.1.1"),
         ("smallvec", "1.15.1"),

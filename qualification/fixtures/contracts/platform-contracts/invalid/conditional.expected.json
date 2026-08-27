@@ -1,0 +1,7 @@
+{
+  "valid": false,
+  "errorPaths": [
+    "/environments/macos/openQuestions"
+  ],
+  "kind": "validation"
+}

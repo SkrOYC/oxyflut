@@ -96,6 +96,15 @@ Assertions:
 Command: cargo +1.98.0 test --workspace --all-features schema && cargo +1.98.0 test --workspace --all-features hash
 ```
 
+##### OXY-A002 Deviations & Justifications
+
+- **Touched Files:** `crates/oxyflut-qualification/Cargo.toml`, `xtask/Cargo.toml`, `Cargo.lock`
+- **Justification:** The ticket-owned schema, hash, and contracts modules need the pre-pinned workspace dependencies and the shared qualification crate; resolving those existing pins updates the workspace lockfile.
+- **Touched Files:** `xtask/src/main.rs`
+- **Justification:** Its existing lockfile guard must recognize the ticket-required local `oxyflut-qualification` workspace dependency; otherwise the required shared offline validator causes the full workspace suite to fail despite using only stack-pinned external dependencies.
+- **Touched Files:** `qualification/schemas/validation-keywords.schema.json`
+- **Justification:** This local snapshot fixture exercises the Draft 2020-12 `if`/`then`, `dependentRequired`, and `oneOf` behavior required by the ticket without changing any binding Stage 3 schema; no durable Stage 3 schema currently contains `dependentRequired`.
+
 #### OXY-A003 Validate exact upstream sets and registries
 
 - **Type:** Feature

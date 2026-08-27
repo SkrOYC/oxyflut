@@ -1,0 +1,56 @@
+{
+  "events": {
+    "runtime.lifecycle": {
+      "privacyClass": "operational",
+      "fields": {}
+    },
+    "view.lifecycle": {
+      "privacyClass": "operational",
+      "fields": {}
+    },
+    "frame.scheduled": {
+      "privacyClass": "operational",
+      "fields": {}
+    },
+    "frame.presented": {
+      "privacyClass": "operational",
+      "fields": {}
+    },
+    "frame.missed": {
+      "privacyClass": "operational",
+      "fields": {}
+    },
+    "input.rejected": {
+      "privacyClass": "operational",
+      "fields": {}
+    },
+    "text.transaction": {
+      "privacyClass": "operational",
+      "fields": {}
+    },
+    "semantics.update": {
+      "privacyClass": "operational",
+      "fields": {}
+    },
+    "semantics.action": {
+      "privacyClass": "operational",
+      "fields": {}
+    },
+    "asset.lifecycle": {
+      "privacyClass": "operational",
+      "fields": {}
+    },
+    "recovery.transition": {
+      "privacyClass": "operational",
+      "fields": {}
+    },
+    "boundary.failure": {
+      "privacyClass": "operational",
+      "fields": {}
+    },
+    "diagnostics.dropped": {
+      "privacyClass": "operational",
+      "fields": {}
+    }
+  }
+}
