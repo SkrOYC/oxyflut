@@ -299,6 +299,41 @@ pub enum EvidenceError {
     },
 }
 
+impl EvidenceError {
+    /// Returns the stable content-free code for this evidence failure.
+    #[must_use]
+    pub const fn code(&self) -> &'static str {
+        match self {
+            Self::InvalidMediaType { .. } => "invalid-media-type",
+            Self::InvalidPath { .. } => "invalid-path",
+            Self::OutsideEvidenceRoot { .. } => "outside-evidence-root",
+            Self::Root { .. } => "repository-root",
+            Self::MissingFile { .. } => "missing-file",
+            Self::Io { .. } => "local-io",
+            Self::SymlinkEscape { .. } => "symlink-escape",
+            Self::NotRegularFile { .. } => "not-regular-file",
+            Self::UnsafeDestinationParent { .. } => "unsafe-destination",
+            Self::InvalidDigest { .. } => "invalid-digest",
+            Self::DigestMismatch { .. } => "digest-mismatch",
+            Self::SizeMismatch { .. } => "size-mismatch",
+            Self::ChangedDuringRead { .. } => "changed-during-read",
+            Self::Json { .. } => "invalid-json",
+            Self::JsonEncoding { .. } => "json-encoding",
+            Self::DerivedRecordNotObject => "derived-record-not-object",
+            Self::ReservedProvenanceField => "reserved-provenance-field",
+            Self::IncompleteProvenance => "incomplete-provenance",
+            Self::InvalidProvenance => "invalid-provenance",
+            Self::NonCanonicalJson { .. } => "noncanonical-json",
+            Self::ContentAddressCollision { .. } => "content-address-collision",
+            Self::WriteInProgress { .. } => "write-in-progress",
+            Self::TemporaryFile { .. } => "temporary-file",
+            Self::TemporaryCleanup { .. } => "temporary-cleanup",
+            Self::Publish { .. } => "publish-failed",
+            Self::LockCleanup { .. } => "lock-cleanup",
+        }
+    }
+}
+
 pub(super) fn ensure_evidence_path(path: &RepositoryPath) -> Result<(), EvidenceError> {
     if path
         .as_str()
@@ -396,6 +431,26 @@ mod tests {
             provenance.get("sourceSha256").and_then(Value::as_str),
             Some(source_digest.as_str())
         );
+        Ok(())
+    }
+
+    #[test]
+    fn path_digest_verification_streams_without_decoding_json() -> Result<(), Box<dyn Error>> {
+        let root = TestRepository::new("streaming-path-digest")?;
+        let path = RepositoryPath::parse("qualification/proof.bin")?;
+        let resolved_path = root.path().join(path.as_str());
+        let parent = resolved_path
+            .parent()
+            .ok_or("streaming fixture must have a parent")?;
+        fs::create_dir_all(parent)?;
+        let bytes = vec![b'x'; 2 * 64 * 1024 + 1];
+        let expected_size = u64::try_from(bytes.len())?;
+        fs::write(&resolved_path, bytes)?;
+        let digest = crate::hash::hash_file(&resolved_path)?;
+
+        let verified = super::verify_path_digest(root.path(), &path, &digest)?;
+        assert_eq!(verified.size_bytes(), expected_size);
+        assert!(verified.json().is_none());
         Ok(())
     }
 
@@ -503,22 +558,21 @@ mod tests {
         Ok(())
     }
 
-    #[cfg(target_os = "linux")]
     #[test]
-    fn publication_recovers_an_abandoned_writer_lock() -> Result<(), Box<dyn Error>> {
-        let root = TestRepository::new("abandoned-lock")?;
+    fn publication_recovers_an_expired_writer_lock_on_every_host() -> Result<(), Box<dyn Error>> {
+        let root = TestRepository::new("expired-lock")?;
         copy_fixture(root.path(), "preserved-source.json")?;
         let source = preserved_source(root.path())?;
         let record = fixture_json("partial-write.json")?;
         let destination = expected_derived_destination(root.path(), &record, &source)?;
         let _ = prepare_destination(root.path(), &destination)?;
         let lock = lock_path(&destination)?;
-        let abandoned = WriterLock {
-            pid: u32::MAX,
+        let expired = WriterLock {
+            pid: std::process::id(),
             created_at_unix_seconds: 0,
-            process_start_ticks: Some(0),
+            process_start_ticks: super::publish::current_process_start_ticks(),
         };
-        fs::write(lock, serde_json::to_vec(&abandoned)?)?;
+        fs::write(lock, serde_json::to_vec(&expired)?)?;
 
         let reference = write_derived_json(root.path(), &record, &source)?;
         assert!(root.path().join(reference.path.as_str()).is_file());

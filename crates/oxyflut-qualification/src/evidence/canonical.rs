@@ -1,4 +1,6 @@
 //! Deterministic JSON encoding for derived evidence.
+//!
+//! This encoder is deterministic but isn't RFC 8785 JSON Canonicalization Scheme (JCS): number formatting and key ordering differ. Release-signing canonicalization is a separate later concern.
 
 use std::io;
 

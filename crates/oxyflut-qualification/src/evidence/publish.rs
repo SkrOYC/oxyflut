@@ -4,7 +4,7 @@ use std::fs::{self, File, OpenOptions};
 use std::io::{self, Cursor, Write};
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering};
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -18,6 +18,7 @@ use super::{DERIVED_EVIDENCE_DIRECTORY, EvidenceError, EvidenceRef, MediaType};
 
 const TEMPORARY_ATTEMPTS: u8 = 16;
 const LOCK_RECOVERY_ATTEMPTS: u8 = 2;
+const STALE_LOCK_AGE: Duration = Duration::from_secs(5 * 60);
 static TEMPORARY_SEQUENCE: AtomicU64 = AtomicU64::new(0);
 
 /// Writes a content-addressed derived JSON record with verified `sourcePath` and `sourceSha256` provenance without opening its source for writing.
@@ -321,7 +322,7 @@ fn reclaim_abandoned_lock(path: &Path) -> Result<bool, EvidenceError> {
         true
     } else {
         match serde_json::from_slice::<WriterLock>(&bytes) {
-            Ok(lock) => !writer_is_alive(&lock),
+            Ok(lock) => !writer_is_alive(&lock) || writer_lock_is_expired(&lock),
             Err(_) => false,
         }
     };
@@ -339,12 +340,12 @@ fn reclaim_abandoned_lock(path: &Path) -> Result<bool, EvidenceError> {
 }
 
 #[cfg(target_os = "linux")]
-fn current_process_start_ticks() -> Option<u64> {
+pub(super) fn current_process_start_ticks() -> Option<u64> {
     process_start_ticks(std::process::id()).ok().flatten()
 }
 
 #[cfg(not(target_os = "linux"))]
-const fn current_process_start_ticks() -> Option<u64> {
+pub(super) const fn current_process_start_ticks() -> Option<u64> {
     None
 }
 
@@ -363,6 +364,14 @@ fn writer_is_alive(lock: &WriterLock) -> bool {
 #[cfg(not(target_os = "linux"))]
 const fn writer_is_alive(_: &WriterLock) -> bool {
     true
+}
+
+fn writer_lock_is_expired(lock: &WriterLock) -> bool {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .ok()
+        .and_then(|now| now.checked_sub(Duration::from_secs(lock.created_at_unix_seconds)))
+        .is_some_and(|age| age >= STALE_LOCK_AGE)
 }
 
 #[cfg(target_os = "linux")]

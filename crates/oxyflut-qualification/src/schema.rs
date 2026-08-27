@@ -182,7 +182,7 @@ impl SchemaRegistry {
         &self,
         identity: &'identity str,
     ) -> Result<&'identity str, SchemaError> {
-        if let Some(superseded_by) = superseding_identity(identity) {
+        if let Some(superseded_by) = superseding_identity(&self.validators, identity) {
             return Err(SchemaError::SupersededIdentity {
                 identity: identity.to_owned(),
                 superseded_by: superseded_by.to_owned(),
@@ -422,28 +422,28 @@ fn local_identity_from_registry_error(error: &str) -> Option<String> {
         .map(str::to_owned)
 }
 
-fn superseding_identity(identity: &str) -> Option<&'static str> {
-    match identity {
-        "urn:oxyflut:schema:accessibility-map:4" => Some("urn:oxyflut:schema:accessibility-map:5"),
-        "urn:oxyflut:schema:artifact-manifest:3" => Some("urn:oxyflut:schema:artifact-manifest:4"),
-        "urn:oxyflut:schema:capability-baseline:3" => {
-            Some("urn:oxyflut:schema:capability-baseline:4")
-        }
-        "urn:oxyflut:schema:capability-traceability:2" => {
-            Some("urn:oxyflut:schema:capability-traceability:3")
-        }
-        "urn:oxyflut:schema:qualification-evidence:4" => {
-            Some("urn:oxyflut:schema:qualification-evidence:5")
-        }
-        "urn:oxyflut:schema:raw-measurement:1" => Some("urn:oxyflut:schema:raw-measurement:2"),
-        "urn:oxyflut:schema:platform-contracts:4" => {
-            Some("urn:oxyflut:schema:platform-contracts:5")
-        }
-        "urn:oxyflut:schema:qualification-lock:4" => {
-            Some("urn:oxyflut:schema:qualification-lock:5")
-        }
-        _ => None,
-    }
+fn superseding_identity<'registry>(
+    registry: &'registry BTreeMap<String, Validator>,
+    identity: &str,
+) -> Option<&'registry str> {
+    let (name, version) = schema_identity_parts(identity)?;
+    registry
+        .keys()
+        .filter_map(|candidate| {
+            let (candidate_name, candidate_version) = schema_identity_parts(candidate)?;
+            (candidate_name == name && candidate_version > version)
+                .then_some((candidate.as_str(), candidate_version))
+        })
+        .max_by_key(|(_, candidate_version)| *candidate_version)
+        .map(|(candidate, _)| candidate)
+}
+
+fn schema_identity_parts(identity: &str) -> Option<(&str, u64)> {
+    let name_and_version = identity.strip_prefix("urn:oxyflut:schema:")?;
+    let (name, version) = name_and_version.rsplit_once(':')?;
+    (!name.is_empty())
+        .then(|| version.parse::<u64>().ok().map(|version| (name, version)))
+        .flatten()
 }
 
 #[cfg(test)]
@@ -528,6 +528,26 @@ mod tests {
             result,
             Err(SchemaError::SupersededIdentity { .. })
         ));
+        Ok(())
+    }
+
+    #[test]
+    fn schema_registry_rejects_every_lower_registered_schema_version() -> Result<(), Box<dyn Error>>
+    {
+        let registry = workspace_registry()?;
+        for identity in registry.identities() {
+            let Some((name, version)) = super::schema_identity_parts(identity) else {
+                continue;
+            };
+            let Some(lower_version) = version.checked_sub(1) else {
+                continue;
+            };
+            let lower_identity = format!("urn:oxyflut:schema:{name}:{lower_version}");
+            assert!(matches!(
+                registry.require_current_identity(&lower_identity),
+                Err(SchemaError::SupersededIdentity { superseded_by, .. }) if superseded_by == identity
+            ));
+        }
         Ok(())
     }
 

@@ -4,15 +4,15 @@
 pub mod baseline;
 /// Placeholder for reference-environment primitives.
 pub mod environment;
-/// Placeholder for immutable evidence primitives.
+/// Canonical local immutable-evidence primitives.
 pub mod evidence;
-/// Placeholder for hashing primitives.
+/// Streaming SHA-256 primitives for immutable qualification inputs.
 pub mod hash;
-/// Placeholder for qualification identifiers.
+/// Strongly typed qualification identifiers and canonical repository paths.
 pub mod identifiers;
 /// Placeholder for raw-measurement primitives.
 pub mod measurement;
 /// Placeholder for readiness validation primitives.
 pub mod readiness;
-/// Placeholder for schema validation primitives.
+/// Offline local JSON Schema registry and validation primitives.
 pub mod schema;
