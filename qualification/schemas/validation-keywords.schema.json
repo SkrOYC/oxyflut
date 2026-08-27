@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:oxyflut:schema:fixture:validation-keywords:1",
+  "title": "Offline validator keyword fixture",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["kind", "value"],
+  "properties": {
+    "kind": { "enum": ["integer", "text"] },
+    "value": true,
+    "trigger": { "type": "boolean" },
+    "dependency": { "type": "string" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "kind": { "const": "integer" } }, "required": ["kind"] },
+      "then": { "properties": { "value": { "type": "integer" } } },
+      "else": { "properties": { "value": { "type": "string" } } }
+    }
+  ],
+  "dependentRequired": { "trigger": ["dependency"] },
+  "oneOf": [
+    {
+      "properties": { "kind": { "const": "integer" }, "value": { "type": "integer" } },
+      "required": ["kind", "value"]
+    },
+    {
+      "properties": { "kind": { "const": "text" }, "value": { "type": "string" } },
+      "required": ["kind", "value"]
+    }
+  ]
+}

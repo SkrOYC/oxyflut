@@ -1,0 +1,479 @@
+{
+  "schemaVersion": 1,
+  "specificationVersion": "0.15.0",
+  "environments": {
+    "macos": {
+      "status": "ku-gating",
+      "reference": "reference",
+      "minimumVersion": {
+        "status": "ku-gating",
+        "value": null,
+        "evidence": []
+      },
+      "protocols": [
+        {
+          "name": "protocol",
+          "version": null,
+          "status": "ku-gating",
+          "evidence": []
+        }
+      ],
+      "ime": {
+        "status": "ku-gating",
+        "nativeIndexUnit": "utf16-code-units",
+        "engineIndexUnit": "checked-logical-with-explicit-conversion",
+        "metadata": [
+          "metadata"
+        ],
+        "actions": [
+          "action"
+        ],
+        "sensitiveFieldPolicy": "redacted",
+        "numericNegotiation": "checked",
+        "testVectors": [
+          "basic"
+        ],
+        "evidence": []
+      },
+      "accessibilityMaps": {
+        "focused": {
+          "status": "ku-gating",
+          "path": null,
+          "sha256": null
+        },
+        "integrated": {
+          "status": "ku-gating",
+          "path": null,
+          "sha256": null
+        }
+      },
+      "timing": {
+        "status": "ku-gating",
+        "interactiveOpportunitySource": "source",
+        "independentMeterSource": "meter",
+        "presentationFeedback": "feedback",
+        "perDisplayAssociation": "display",
+        "evidence": []
+      },
+      "recoveryBaseline": {
+        "status": "ku-gating",
+        "path": null,
+        "sha256": null
+      },
+      "allocations": {
+        "focused": {
+          "status": "ku-gating",
+          "windowAndInput": [
+            "window"
+          ],
+          "imeInterfaces": [
+            "ime"
+          ],
+          "accessibilityInterfaces": [
+            "accessibility"
+          ],
+          "clipboardInterfaces": [
+            "clipboard"
+          ],
+          "timingInterfaces": [
+            "timing"
+          ],
+          "recoveryInterfaces": [
+            "recovery"
+          ],
+          "serviceRouting": "routed",
+          "normalization": "normalized",
+          "requiredEvidence": [
+            "evidence"
+          ],
+          "evidence": []
+        },
+        "integrated": {
+          "status": "ku-gating",
+          "windowAndInput": [
+            "window"
+          ],
+          "imeInterfaces": [
+            "ime"
+          ],
+          "accessibilityInterfaces": [
+            "accessibility"
+          ],
+          "clipboardInterfaces": [
+            "clipboard"
+          ],
+          "timingInterfaces": [
+            "timing"
+          ],
+          "recoveryInterfaces": [
+            "recovery"
+          ],
+          "serviceRouting": "routed",
+          "normalization": "normalized",
+          "requiredEvidence": [
+            "evidence"
+          ],
+          "evidence": []
+        }
+      },
+      "openQuestions": [
+        "open"
+      ]
+    },
+    "windows": {
+      "status": "ku-gating",
+      "reference": "reference",
+      "minimumVersion": {
+        "status": "ku-gating",
+        "value": null,
+        "evidence": []
+      },
+      "protocols": [
+        {
+          "name": "protocol",
+          "version": null,
+          "status": "ku-gating",
+          "evidence": []
+        }
+      ],
+      "ime": {
+        "status": "ku-gating",
+        "nativeIndexUnit": "utf16-code-units",
+        "engineIndexUnit": "checked-logical-with-explicit-conversion",
+        "metadata": [
+          "metadata"
+        ],
+        "actions": [
+          "action"
+        ],
+        "sensitiveFieldPolicy": "redacted",
+        "numericNegotiation": "checked",
+        "testVectors": [
+          "basic"
+        ],
+        "evidence": []
+      },
+      "accessibilityMaps": {
+        "focused": {
+          "status": "ku-gating",
+          "path": null,
+          "sha256": null
+        },
+        "integrated": {
+          "status": "ku-gating",
+          "path": null,
+          "sha256": null
+        }
+      },
+      "timing": {
+        "status": "ku-gating",
+        "interactiveOpportunitySource": "source",
+        "independentMeterSource": "meter",
+        "presentationFeedback": "feedback",
+        "perDisplayAssociation": "display",
+        "evidence": []
+      },
+      "recoveryBaseline": {
+        "status": "ku-gating",
+        "path": null,
+        "sha256": null
+      },
+      "allocations": {
+        "focused": {
+          "status": "ku-gating",
+          "windowAndInput": [
+            "window"
+          ],
+          "imeInterfaces": [
+            "ime"
+          ],
+          "accessibilityInterfaces": [
+            "accessibility"
+          ],
+          "clipboardInterfaces": [
+            "clipboard"
+          ],
+          "timingInterfaces": [
+            "timing"
+          ],
+          "recoveryInterfaces": [
+            "recovery"
+          ],
+          "serviceRouting": "routed",
+          "normalization": "normalized",
+          "requiredEvidence": [
+            "evidence"
+          ],
+          "evidence": []
+        },
+        "integrated": {
+          "status": "ku-gating",
+          "windowAndInput": [
+            "window"
+          ],
+          "imeInterfaces": [
+            "ime"
+          ],
+          "accessibilityInterfaces": [
+            "accessibility"
+          ],
+          "clipboardInterfaces": [
+            "clipboard"
+          ],
+          "timingInterfaces": [
+            "timing"
+          ],
+          "recoveryInterfaces": [
+            "recovery"
+          ],
+          "serviceRouting": "routed",
+          "normalization": "normalized",
+          "requiredEvidence": [
+            "evidence"
+          ],
+          "evidence": []
+        }
+      },
+      "openQuestions": [
+        "open"
+      ]
+    },
+    "wayland": {
+      "status": "ku-gating",
+      "reference": "reference",
+      "minimumVersion": {
+        "status": "ku-gating",
+        "value": null,
+        "evidence": []
+      },
+      "protocols": [
+        {
+          "name": "protocol",
+          "version": null,
+          "status": "ku-gating",
+          "evidence": []
+        }
+      ],
+      "ime": {
+        "status": "ku-gating",
+        "nativeIndexUnit": "utf16-code-units",
+        "engineIndexUnit": "checked-logical-with-explicit-conversion",
+        "metadata": [
+          "metadata"
+        ],
+        "actions": [
+          "action"
+        ],
+        "sensitiveFieldPolicy": "redacted",
+        "numericNegotiation": "checked",
+        "testVectors": [
+          "basic"
+        ],
+        "evidence": []
+      },
+      "accessibilityMaps": {
+        "focused": {
+          "status": "ku-gating",
+          "path": null,
+          "sha256": null
+        },
+        "integrated": {
+          "status": "ku-gating",
+          "path": null,
+          "sha256": null
+        }
+      },
+      "timing": {
+        "status": "ku-gating",
+        "interactiveOpportunitySource": "source",
+        "independentMeterSource": "meter",
+        "presentationFeedback": "feedback",
+        "perDisplayAssociation": "display",
+        "evidence": []
+      },
+      "recoveryBaseline": {
+        "status": "ku-gating",
+        "path": null,
+        "sha256": null
+      },
+      "allocations": {
+        "focused": {
+          "status": "ku-gating",
+          "windowAndInput": [
+            "window"
+          ],
+          "imeInterfaces": [
+            "ime"
+          ],
+          "accessibilityInterfaces": [
+            "accessibility"
+          ],
+          "clipboardInterfaces": [
+            "clipboard"
+          ],
+          "timingInterfaces": [
+            "timing"
+          ],
+          "recoveryInterfaces": [
+            "recovery"
+          ],
+          "serviceRouting": "routed",
+          "normalization": "normalized",
+          "requiredEvidence": [
+            "evidence"
+          ],
+          "evidence": []
+        },
+        "integrated": {
+          "status": "ku-gating",
+          "windowAndInput": [
+            "window"
+          ],
+          "imeInterfaces": [
+            "ime"
+          ],
+          "accessibilityInterfaces": [
+            "accessibility"
+          ],
+          "clipboardInterfaces": [
+            "clipboard"
+          ],
+          "timingInterfaces": [
+            "timing"
+          ],
+          "recoveryInterfaces": [
+            "recovery"
+          ],
+          "serviceRouting": "routed",
+          "normalization": "normalized",
+          "requiredEvidence": [
+            "evidence"
+          ],
+          "evidence": []
+        }
+      },
+      "openQuestions": [
+        "open"
+      ]
+    },
+    "x11": {
+      "status": "ku-gating",
+      "reference": "reference",
+      "minimumVersion": {
+        "status": "ku-gating",
+        "value": null,
+        "evidence": []
+      },
+      "protocols": [
+        {
+          "name": "protocol",
+          "version": null,
+          "status": "ku-gating",
+          "evidence": []
+        }
+      ],
+      "ime": {
+        "status": "ku-gating",
+        "nativeIndexUnit": "utf16-code-units",
+        "engineIndexUnit": "checked-logical-with-explicit-conversion",
+        "metadata": [
+          "metadata"
+        ],
+        "actions": [
+          "action"
+        ],
+        "sensitiveFieldPolicy": "redacted",
+        "numericNegotiation": "checked",
+        "testVectors": [
+          "basic"
+        ],
+        "evidence": []
+      },
+      "accessibilityMaps": {
+        "focused": {
+          "status": "ku-gating",
+          "path": null,
+          "sha256": null
+        },
+        "integrated": {
+          "status": "ku-gating",
+          "path": null,
+          "sha256": null
+        }
+      },
+      "timing": {
+        "status": "ku-gating",
+        "interactiveOpportunitySource": "source",
+        "independentMeterSource": "meter",
+        "presentationFeedback": "feedback",
+        "perDisplayAssociation": "display",
+        "evidence": []
+      },
+      "recoveryBaseline": {
+        "status": "ku-gating",
+        "path": null,
+        "sha256": null
+      },
+      "allocations": {
+        "focused": {
+          "status": "ku-gating",
+          "windowAndInput": [
+            "window"
+          ],
+          "imeInterfaces": [
+            "ime"
+          ],
+          "accessibilityInterfaces": [
+            "accessibility"
+          ],
+          "clipboardInterfaces": [
+            "clipboard"
+          ],
+          "timingInterfaces": [
+            "timing"
+          ],
+          "recoveryInterfaces": [
+            "recovery"
+          ],
+          "serviceRouting": "routed",
+          "normalization": "normalized",
+          "requiredEvidence": [
+            "evidence"
+          ],
+          "evidence": []
+        },
+        "integrated": {
+          "status": "ku-gating",
+          "windowAndInput": [
+            "window"
+          ],
+          "imeInterfaces": [
+            "ime"
+          ],
+          "accessibilityInterfaces": [
+            "accessibility"
+          ],
+          "clipboardInterfaces": [
+            "clipboard"
+          ],
+          "timingInterfaces": [
+            "timing"
+          ],
+          "recoveryInterfaces": [
+            "recovery"
+          ],
+          "serviceRouting": "routed",
+          "normalization": "normalized",
+          "requiredEvidence": [
+            "evidence"
+          ],
+          "evidence": []
+        }
+      },
+      "openQuestions": [
+        "open"
+      ]
+    }
+  },
+  "absentEvents": []
+}

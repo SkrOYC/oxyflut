@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "1.0.0",
+  "candidate": "focused",
+  "environment": "macos",
+  "artifactManifest": {
+    "path": "evidence/example.json",
+    "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "mediaType": "application/json"
+  },
+  "spdxSbom": {
+    "path": "evidence/example.json",
+    "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "mediaType": "application/json"
+  },
+  "notices": {
+    "path": "evidence/example.json",
+    "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "mediaType": "application/json"
+  },
+  "slsaProvenance": {
+    "path": "evidence/example.json",
+    "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "mediaType": "application/json"
+  },
+  "dsseEnvelope": {
+    "path": "evidence/example.json",
+    "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "mediaType": "application/json"
+  },
+  "ciInvocation": {
+    "path": "evidence/example.json",
+    "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "mediaType": "application/json"
+  },
+  "externalContractLockDigest": "0000000000000000000000000000000000000000000000000000000000000000",
+  "unexpected": true
+}

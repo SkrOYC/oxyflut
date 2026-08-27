@@ -1,0 +1,8 @@
+{
+  "valid": false,
+  "errorPaths": [
+    "/value",
+    ""
+  ],
+  "kind": "validation"
+}

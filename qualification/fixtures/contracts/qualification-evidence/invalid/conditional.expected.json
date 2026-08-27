@@ -1,0 +1,7 @@
+{
+  "valid": false,
+  "errorPaths": [
+    "/environmentResults/macos/CAP-CMP-001/notApplicable"
+  ],
+  "kind": "validation"
+}

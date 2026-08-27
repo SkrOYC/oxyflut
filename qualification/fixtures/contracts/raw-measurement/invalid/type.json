@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "candidate": "focused",
+  "environment": "macos",
+  "lockDigest": "0000000000000000000000000000000000000000000000000000000000000000",
+  "meterVersion": "1",
+  "samples": [
+    {
+      "constraintId": "CON-PERF-001",
+      "launch": 1,
+      "ordinal": 1,
+      "monotonicNs": 0,
+      "value": 1,
+      "unit": "ms",
+      "valid": false,
+      "exclusionReason": "measurement-tool-failure",
+      "harnessLog": {
+        "path": "evidence/example.json",
+        "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+      }
+    }
+  ]
+}

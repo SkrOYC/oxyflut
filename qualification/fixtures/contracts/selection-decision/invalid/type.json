@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "specificationVersion": "0.15.0",
+  "qualificationLockDigest": "0000000000000000000000000000000000000000000000000000000000000000",
+  "candidateEvidence": {
+    "focused": {
+      "path": "evidence/example.json",
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "integrated": {
+      "path": "evidence/example.json",
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    }
+  },
+  "eligibility": {
+    "focused": "ineligible",
+    "integrated": "ineligible"
+  },
+  "decisionBasis": "no-eligible-candidate",
+  "outcome": "reopen-research",
+  "selectedCandidate": "none",
+  "calculation": {
+    "algorithmVersion": "prd-v1.0.0",
+    "focusedScore": null,
+    "integratedScore": null,
+    "absoluteDifference": null,
+    "tieBreakApplied": false
+  },
+  "rationale": "No candidate is eligible."
+}

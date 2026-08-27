@@ -1,0 +1,8 @@
+{
+  "derivedFrom": {
+    "path": "qualification/fixtures/contracts/migration/source.json",
+    "sha256": "9070abd460bf97f7d36a497dc712a99c6f4ed07c1fdae7d66991bb4120331ad6"
+  },
+  "schemaVersion": "5.0.0",
+  "preservedSource": true
+}

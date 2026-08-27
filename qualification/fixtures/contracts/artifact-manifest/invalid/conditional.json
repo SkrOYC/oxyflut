@@ -1,0 +1,27 @@
+{
+  "schemaVersion": "4.0.0",
+  "candidate": "focused",
+  "environment": "macos-arm64",
+  "source": {
+    "oxyflutCommit": "0000000000000000000000000000000000000000",
+    "flutterFrameworkCommit": "0000000000000000000000000000000000000000",
+    "flutterEngineCommit": "0000000000000000000000000000000000000000",
+    "candidateCommit": "0000000000000000000000000000000000000000",
+    "adapterCommit": "0000000000000000000000000000000000000000"
+  },
+  "qualificationLockDigest": "0000000000000000000000000000000000000000000000000000000000000000",
+  "externalContractLockDigest": "0000000000000000000000000000000000000000000000000000000000000000",
+  "files": [
+    {
+      "path": "bin/oxyflut",
+      "kind": "file",
+      "mode": 493,
+      "size": 1,
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "licenseIds": [
+        "MIT"
+      ],
+      "linkTarget": "bin/target"
+    }
+  ]
+}

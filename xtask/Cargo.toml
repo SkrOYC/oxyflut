@@ -8,4 +8,6 @@ rust-version.workspace = true
 workspace = true
 
 [dependencies]
+oxyflut-qualification = { path = "../crates/oxyflut-qualification" }
+serde_json.workspace = true
 thiserror.workspace = true

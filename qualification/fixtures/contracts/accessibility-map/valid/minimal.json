@@ -1,0 +1,188 @@
+{
+  "schemaVersion": "5.0.0",
+  "environment": "macos",
+  "candidate": "focused",
+  "epistemicStatus": "ku-gating",
+  "forward": {
+    "roles": {
+      "oxyflut": "Oxy",
+      "native": "Native",
+      "status": "ku-gating"
+    },
+    "states": {
+      "oxyflut": "Oxy",
+      "native": "Native",
+      "status": "ku-gating"
+    },
+    "actions": {
+      "oxyflut": "Oxy",
+      "native": "Native",
+      "status": "ku-gating"
+    },
+    "values": {
+      "oxyflut": "Oxy",
+      "native": "Native",
+      "status": "ku-gating"
+    },
+    "labels": {
+      "oxyflut": "Oxy",
+      "native": "Native",
+      "status": "ku-gating"
+    },
+    "accessibleNames": {
+      "oxyflut": "Oxy",
+      "native": "Native",
+      "status": "ku-gating"
+    },
+    "descriptions": {
+      "oxyflut": "Oxy",
+      "native": "Native",
+      "status": "ku-gating"
+    },
+    "hints": {
+      "oxyflut": "Oxy",
+      "native": "Native",
+      "status": "ku-gating"
+    },
+    "helpOrFullDescriptions": {
+      "oxyflut": "Oxy",
+      "native": "Native",
+      "status": "ku-gating"
+    },
+    "tooltips": {
+      "oxyflut": "Oxy",
+      "native": "Native",
+      "status": "ku-gating"
+    },
+    "attributedText": {
+      "oxyflut": "Oxy",
+      "native": "Native",
+      "status": "ku-gating"
+    },
+    "identifiers": {
+      "oxyflut": "Oxy",
+      "native": "Native",
+      "status": "ku-gating"
+    },
+    "bounds": {
+      "oxyflut": "Oxy",
+      "native": "Native",
+      "status": "ku-gating"
+    },
+    "transforms": {
+      "oxyflut": "Oxy",
+      "native": "Native",
+      "status": "ku-gating"
+    },
+    "traversal": {
+      "oxyflut": "Oxy",
+      "native": "Native",
+      "status": "ku-gating"
+    },
+    "labelledByRelations": {
+      "oxyflut": "Oxy",
+      "native": "Native",
+      "status": "ku-gating"
+    },
+    "describedByRelations": {
+      "oxyflut": "Oxy",
+      "native": "Native",
+      "status": "ku-gating"
+    },
+    "roleApplicableRelations": {
+      "oxyflut": "Oxy",
+      "native": "Native",
+      "status": "ku-gating"
+    },
+    "accessibilityFocus": {
+      "oxyflut": "Oxy",
+      "native": "Native",
+      "status": "ku-gating"
+    },
+    "inputFocus": {
+      "oxyflut": "Oxy",
+      "native": "Native",
+      "status": "ku-gating"
+    },
+    "hitTesting": {
+      "oxyflut": "Oxy",
+      "native": "Native",
+      "status": "ku-gating"
+    },
+    "textRanges": {
+      "oxyflut": "Oxy",
+      "native": "Native",
+      "status": "ku-gating"
+    },
+    "selection": {
+      "oxyflut": "Oxy",
+      "native": "Native",
+      "status": "ku-gating"
+    },
+    "scrollExtents": {
+      "oxyflut": "Oxy",
+      "native": "Native",
+      "status": "ku-gating"
+    },
+    "language": {
+      "oxyflut": "Oxy",
+      "native": "Native",
+      "status": "ku-gating"
+    },
+    "direction": {
+      "oxyflut": "Oxy",
+      "native": "Native",
+      "status": "ku-gating"
+    },
+    "headingLevels": {
+      "oxyflut": "Oxy",
+      "native": "Native",
+      "status": "ku-gating"
+    },
+    "liveRegions": {
+      "oxyflut": "Oxy",
+      "native": "Native",
+      "status": "ku-gating"
+    },
+    "hidden": {
+      "oxyflut": "Oxy",
+      "native": "Native",
+      "status": "ku-gating"
+    },
+    "disabled": {
+      "oxyflut": "Oxy",
+      "native": "Native",
+      "status": "ku-gating"
+    },
+    "secureFieldRedaction": {
+      "oxyflut": "Oxy",
+      "native": "Native",
+      "status": "ku-gating"
+    },
+    "multiViewIsolation": {
+      "oxyflut": "Oxy",
+      "native": "Native",
+      "status": "ku-gating"
+    }
+  },
+  "reverseActions": [
+    {
+      "oxyflutAction": "activate",
+      "nativeIdentifier": "activate",
+      "payloadEncoding": "none",
+      "textIndexUnit": "none",
+      "textLayoutBinding": "none",
+      "targetRouting": "view",
+      "acknowledgement": "accepted",
+      "errorResult": "rejected",
+      "staleTarget": "stale",
+      "status": "ku-gating"
+    }
+  ],
+  "evidence": [
+    {
+      "path": "evidence/example.json",
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    }
+  ]
+}

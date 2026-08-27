@@ -1,0 +1,7 @@
+{
+  "valid": false,
+  "errorPaths": [
+    "/samples/0/exclusionReason"
+  ],
+  "kind": "validation"
+}

@@ -1,0 +1,839 @@
+{
+  "schemaVersion": "3.0.0",
+  "specificationVersion": "0.15.0",
+  "mappings": [
+    {
+      "capabilityId": "CAP-CMP-001",
+      "crate": "oxyflut-qualification",
+      "architectureFlow": ".constitution/architecture/flows/cap-tst-001.md",
+      "bindings": [
+        {
+          "contract": "contracts/example",
+          "symbols": [
+            "Symbol"
+          ]
+        }
+      ],
+      "contractTests": [
+        "contract::cap_example"
+      ]
+    },
+    {
+      "capabilityId": "CAP-CMP-002",
+      "crate": "oxyflut-qualification",
+      "architectureFlow": ".constitution/architecture/flows/cap-tst-001.md",
+      "bindings": [
+        {
+          "contract": "contracts/example",
+          "symbols": [
+            "Symbol"
+          ]
+        }
+      ],
+      "contractTests": [
+        "contract::cap_example"
+      ]
+    },
+    {
+      "capabilityId": "CAP-CMP-003",
+      "crate": "oxyflut-qualification",
+      "architectureFlow": ".constitution/architecture/flows/cap-tst-001.md",
+      "bindings": [
+        {
+          "contract": "contracts/example",
+          "symbols": [
+            "Symbol"
+          ]
+        }
+      ],
+      "contractTests": [
+        "contract::cap_example"
+      ]
+    },
+    {
+      "capabilityId": "CAP-CMP-004",
+      "crate": "oxyflut-qualification",
+      "architectureFlow": ".constitution/architecture/flows/cap-tst-001.md",
+      "bindings": [
+        {
+          "contract": "contracts/example",
+          "symbols": [
+            "Symbol"
+          ]
+        }
+      ],
+      "contractTests": [
+        "contract::cap_example"
+      ]
+    },
+    {
+      "capabilityId": "CAP-CMP-005",
+      "crate": "oxyflut-qualification",
+      "architectureFlow": ".constitution/architecture/flows/cap-tst-001.md",
+      "bindings": [
+        {
+          "contract": "contracts/example",
+          "symbols": [
+            "Symbol"
+          ]
+        }
+      ],
+      "contractTests": [
+        "contract::cap_example"
+      ]
+    },
+    {
+      "capabilityId": "CAP-CMP-006",
+      "crate": "oxyflut-qualification",
+      "architectureFlow": ".constitution/architecture/flows/cap-tst-001.md",
+      "bindings": [
+        {
+          "contract": "contracts/example",
+          "symbols": [
+            "Symbol"
+          ]
+        }
+      ],
+      "contractTests": [
+        "contract::cap_example"
+      ]
+    },
+    {
+      "capabilityId": "CAP-CMP-007",
+      "crate": "oxyflut-qualification",
+      "architectureFlow": ".constitution/architecture/flows/cap-tst-001.md",
+      "bindings": [
+        {
+          "contract": "contracts/example",
+          "symbols": [
+            "Symbol"
+          ]
+        }
+      ],
+      "contractTests": [
+        "contract::cap_example"
+      ]
+    },
+    {
+      "capabilityId": "CAP-LAY-001",
+      "crate": "oxyflut-qualification",
+      "architectureFlow": ".constitution/architecture/flows/cap-tst-001.md",
+      "bindings": [
+        {
+          "contract": "contracts/example",
+          "symbols": [
+            "Symbol"
+          ]
+        }
+      ],
+      "contractTests": [
+        "contract::cap_example"
+      ]
+    },
+    {
+      "capabilityId": "CAP-LAY-002",
+      "crate": "oxyflut-qualification",
+      "architectureFlow": ".constitution/architecture/flows/cap-tst-001.md",
+      "bindings": [
+        {
+          "contract": "contracts/example",
+          "symbols": [
+            "Symbol"
+          ]
+        }
+      ],
+      "contractTests": [
+        "contract::cap_example"
+      ]
+    },
+    {
+      "capabilityId": "CAP-SCR-001",
+      "crate": "oxyflut-qualification",
+      "architectureFlow": ".constitution/architecture/flows/cap-tst-001.md",
+      "bindings": [
+        {
+          "contract": "contracts/example",
+          "symbols": [
+            "Symbol"
+          ]
+        }
+      ],
+      "contractTests": [
+        "contract::cap_example"
+      ]
+    },
+    {
+      "capabilityId": "CAP-SCR-002",
+      "crate": "oxyflut-qualification",
+      "architectureFlow": ".constitution/architecture/flows/cap-tst-001.md",
+      "bindings": [
+        {
+          "contract": "contracts/example",
+          "symbols": [
+            "Symbol"
+          ]
+        }
+      ],
+      "contractTests": [
+        "contract::cap_example"
+      ]
+    },
+    {
+      "capabilityId": "CAP-REN-001",
+      "crate": "oxyflut-qualification",
+      "architectureFlow": ".constitution/architecture/flows/cap-tst-001.md",
+      "bindings": [
+        {
+          "contract": "contracts/example",
+          "symbols": [
+            "Symbol"
+          ]
+        }
+      ],
+      "contractTests": [
+        "contract::cap_example"
+      ]
+    },
+    {
+      "capabilityId": "CAP-REN-002",
+      "crate": "oxyflut-qualification",
+      "architectureFlow": ".constitution/architecture/flows/cap-tst-001.md",
+      "bindings": [
+        {
+          "contract": "contracts/example",
+          "symbols": [
+            "Symbol"
+          ]
+        }
+      ],
+      "contractTests": [
+        "contract::cap_example"
+      ]
+    },
+    {
+      "capabilityId": "CAP-REN-003",
+      "crate": "oxyflut-qualification",
+      "architectureFlow": ".constitution/architecture/flows/cap-tst-001.md",
+      "bindings": [
+        {
+          "contract": "contracts/example",
+          "symbols": [
+            "Symbol"
+          ]
+        }
+      ],
+      "contractTests": [
+        "contract::cap_example"
+      ]
+    },
+    {
+      "capabilityId": "CAP-AST-001",
+      "crate": "oxyflut-qualification",
+      "architectureFlow": ".constitution/architecture/flows/cap-tst-001.md",
+      "bindings": [
+        {
+          "contract": "contracts/example",
+          "symbols": [
+            "Symbol"
+          ]
+        }
+      ],
+      "contractTests": [
+        "contract::cap_example"
+      ]
+    },
+    {
+      "capabilityId": "CAP-AST-002",
+      "crate": "oxyflut-qualification",
+      "architectureFlow": ".constitution/architecture/flows/cap-tst-001.md",
+      "bindings": [
+        {
+          "contract": "contracts/example",
+          "symbols": [
+            "Symbol"
+          ]
+        }
+      ],
+      "contractTests": [
+        "contract::cap_example"
+      ]
+    },
+    {
+      "capabilityId": "CAP-AST-003",
+      "crate": "oxyflut-qualification",
+      "architectureFlow": ".constitution/architecture/flows/cap-tst-001.md",
+      "bindings": [
+        {
+          "contract": "contracts/example",
+          "symbols": [
+            "Symbol"
+          ]
+        }
+      ],
+      "contractTests": [
+        "contract::cap_example"
+      ]
+    },
+    {
+      "capabilityId": "CAP-AST-004",
+      "crate": "oxyflut-qualification",
+      "architectureFlow": ".constitution/architecture/flows/cap-tst-001.md",
+      "bindings": [
+        {
+          "contract": "contracts/example",
+          "symbols": [
+            "Symbol"
+          ]
+        }
+      ],
+      "contractTests": [
+        "contract::cap_example"
+      ]
+    },
+    {
+      "capabilityId": "CAP-VIEW-001",
+      "crate": "oxyflut-qualification",
+      "architectureFlow": ".constitution/architecture/flows/cap-tst-001.md",
+      "bindings": [
+        {
+          "contract": "contracts/example",
+          "symbols": [
+            "Symbol"
+          ]
+        }
+      ],
+      "contractTests": [
+        "contract::cap_example"
+      ]
+    },
+    {
+      "capabilityId": "CAP-VIEW-002",
+      "crate": "oxyflut-qualification",
+      "architectureFlow": ".constitution/architecture/flows/cap-tst-001.md",
+      "bindings": [
+        {
+          "contract": "contracts/example",
+          "symbols": [
+            "Symbol"
+          ]
+        }
+      ],
+      "contractTests": [
+        "contract::cap_example"
+      ]
+    },
+    {
+      "capabilityId": "CAP-VIEW-003",
+      "crate": "oxyflut-qualification",
+      "architectureFlow": ".constitution/architecture/flows/cap-tst-001.md",
+      "bindings": [
+        {
+          "contract": "contracts/example",
+          "symbols": [
+            "Symbol"
+          ]
+        }
+      ],
+      "contractTests": [
+        "contract::cap_example"
+      ]
+    },
+    {
+      "capabilityId": "CAP-VIEW-004",
+      "crate": "oxyflut-qualification",
+      "architectureFlow": ".constitution/architecture/flows/cap-tst-001.md",
+      "bindings": [
+        {
+          "contract": "contracts/example",
+          "symbols": [
+            "Symbol"
+          ]
+        }
+      ],
+      "contractTests": [
+        "contract::cap_example"
+      ]
+    },
+    {
+      "capabilityId": "CAP-VIEW-005",
+      "crate": "oxyflut-qualification",
+      "architectureFlow": ".constitution/architecture/flows/cap-tst-001.md",
+      "bindings": [
+        {
+          "contract": "contracts/example",
+          "symbols": [
+            "Symbol"
+          ]
+        }
+      ],
+      "contractTests": [
+        "contract::cap_example"
+      ]
+    },
+    {
+      "capabilityId": "CAP-REC-001",
+      "crate": "oxyflut-qualification",
+      "architectureFlow": ".constitution/architecture/flows/cap-tst-001.md",
+      "bindings": [
+        {
+          "contract": "contracts/example",
+          "symbols": [
+            "Symbol"
+          ]
+        }
+      ],
+      "contractTests": [
+        "contract::cap_example"
+      ]
+    },
+    {
+      "capabilityId": "CAP-INP-001",
+      "crate": "oxyflut-qualification",
+      "architectureFlow": ".constitution/architecture/flows/cap-tst-001.md",
+      "bindings": [
+        {
+          "contract": "contracts/example",
+          "symbols": [
+            "Symbol"
+          ]
+        }
+      ],
+      "contractTests": [
+        "contract::cap_example"
+      ]
+    },
+    {
+      "capabilityId": "CAP-INP-002",
+      "crate": "oxyflut-qualification",
+      "architectureFlow": ".constitution/architecture/flows/cap-tst-001.md",
+      "bindings": [
+        {
+          "contract": "contracts/example",
+          "symbols": [
+            "Symbol"
+          ]
+        }
+      ],
+      "contractTests": [
+        "contract::cap_example"
+      ]
+    },
+    {
+      "capabilityId": "CAP-FOC-001",
+      "crate": "oxyflut-qualification",
+      "architectureFlow": ".constitution/architecture/flows/cap-tst-001.md",
+      "bindings": [
+        {
+          "contract": "contracts/example",
+          "symbols": [
+            "Symbol"
+          ]
+        }
+      ],
+      "contractTests": [
+        "contract::cap_example"
+      ]
+    },
+    {
+      "capabilityId": "CAP-TXT-001",
+      "crate": "oxyflut-qualification",
+      "architectureFlow": ".constitution/architecture/flows/cap-tst-001.md",
+      "bindings": [
+        {
+          "contract": "contracts/example",
+          "symbols": [
+            "Symbol"
+          ]
+        }
+      ],
+      "contractTests": [
+        "contract::cap_example"
+      ]
+    },
+    {
+      "capabilityId": "CAP-TXT-002",
+      "crate": "oxyflut-qualification",
+      "architectureFlow": ".constitution/architecture/flows/cap-tst-001.md",
+      "bindings": [
+        {
+          "contract": "contracts/example",
+          "symbols": [
+            "Symbol"
+          ]
+        }
+      ],
+      "contractTests": [
+        "contract::cap_example"
+      ]
+    },
+    {
+      "capabilityId": "CAP-TXT-003",
+      "crate": "oxyflut-qualification",
+      "architectureFlow": ".constitution/architecture/flows/cap-tst-001.md",
+      "bindings": [
+        {
+          "contract": "contracts/example",
+          "symbols": [
+            "Symbol"
+          ]
+        }
+      ],
+      "contractTests": [
+        "contract::cap_example"
+      ]
+    },
+    {
+      "capabilityId": "CAP-IME-001",
+      "crate": "oxyflut-qualification",
+      "architectureFlow": ".constitution/architecture/flows/cap-tst-001.md",
+      "bindings": [
+        {
+          "contract": "contracts/example",
+          "symbols": [
+            "Symbol"
+          ]
+        }
+      ],
+      "contractTests": [
+        "contract::cap_example"
+      ]
+    },
+    {
+      "capabilityId": "CAP-CLP-001",
+      "crate": "oxyflut-qualification",
+      "architectureFlow": ".constitution/architecture/flows/cap-tst-001.md",
+      "bindings": [
+        {
+          "contract": "contracts/example",
+          "symbols": [
+            "Symbol"
+          ]
+        }
+      ],
+      "contractTests": [
+        "contract::cap_example"
+      ]
+    },
+    {
+      "capabilityId": "CAP-I18N-001",
+      "crate": "oxyflut-qualification",
+      "architectureFlow": ".constitution/architecture/flows/cap-tst-001.md",
+      "bindings": [
+        {
+          "contract": "contracts/example",
+          "symbols": [
+            "Symbol"
+          ]
+        }
+      ],
+      "contractTests": [
+        "contract::cap_example"
+      ]
+    },
+    {
+      "capabilityId": "CAP-SEM-001",
+      "crate": "oxyflut-qualification",
+      "architectureFlow": ".constitution/architecture/flows/cap-tst-001.md",
+      "bindings": [
+        {
+          "contract": "contracts/example",
+          "symbols": [
+            "Symbol"
+          ]
+        }
+      ],
+      "contractTests": [
+        "contract::cap_example"
+      ]
+    },
+    {
+      "capabilityId": "CAP-SEM-002",
+      "crate": "oxyflut-qualification",
+      "architectureFlow": ".constitution/architecture/flows/cap-tst-001.md",
+      "bindings": [
+        {
+          "contract": "contracts/example",
+          "symbols": [
+            "Symbol"
+          ]
+        }
+      ],
+      "contractTests": [
+        "contract::cap_example"
+      ]
+    },
+    {
+      "capabilityId": "CAP-PLT-001",
+      "crate": "oxyflut-qualification",
+      "architectureFlow": ".constitution/architecture/flows/cap-tst-001.md",
+      "bindings": [
+        {
+          "contract": "contracts/example",
+          "symbols": [
+            "Symbol"
+          ]
+        }
+      ],
+      "contractTests": [
+        "contract::cap_example"
+      ]
+    },
+    {
+      "capabilityId": "CAP-OS-001",
+      "crate": "oxyflut-qualification",
+      "architectureFlow": ".constitution/architecture/flows/cap-tst-001.md",
+      "bindings": [
+        {
+          "contract": "contracts/example",
+          "symbols": [
+            "Symbol"
+          ]
+        }
+      ],
+      "contractTests": [
+        "contract::cap_example"
+      ]
+    },
+    {
+      "capabilityId": "CAP-OS-002",
+      "crate": "oxyflut-qualification",
+      "architectureFlow": ".constitution/architecture/flows/cap-tst-001.md",
+      "bindings": [
+        {
+          "contract": "contracts/example",
+          "symbols": [
+            "Symbol"
+          ]
+        }
+      ],
+      "contractTests": [
+        "contract::cap_example"
+      ]
+    },
+    {
+      "capabilityId": "CAP-TST-001",
+      "crate": "oxyflut-qualification",
+      "architectureFlow": ".constitution/architecture/flows/cap-tst-001.md",
+      "bindings": [
+        {
+          "contract": "contracts/example",
+          "symbols": [
+            "Symbol"
+          ]
+        }
+      ],
+      "contractTests": [
+        "contract::cap_example"
+      ]
+    },
+    {
+      "capabilityId": "CAP-TST-002",
+      "crate": "oxyflut-qualification",
+      "architectureFlow": ".constitution/architecture/flows/cap-tst-001.md",
+      "bindings": [
+        {
+          "contract": "contracts/example",
+          "symbols": [
+            "Symbol"
+          ]
+        }
+      ],
+      "contractTests": [
+        "contract::cap_example"
+      ]
+    },
+    {
+      "capabilityId": "CAP-TST-003",
+      "crate": "oxyflut-qualification",
+      "architectureFlow": ".constitution/architecture/flows/cap-tst-001.md",
+      "bindings": [
+        {
+          "contract": "contracts/example",
+          "symbols": [
+            "Symbol"
+          ]
+        }
+      ],
+      "contractTests": [
+        "contract::cap_example"
+      ]
+    },
+    {
+      "capabilityId": "CAP-TST-004",
+      "crate": "oxyflut-qualification",
+      "architectureFlow": ".constitution/architecture/flows/cap-tst-001.md",
+      "bindings": [
+        {
+          "contract": "contracts/example",
+          "symbols": [
+            "Symbol"
+          ]
+        }
+      ],
+      "contractTests": [
+        "contract::cap_example"
+      ]
+    },
+    {
+      "capabilityId": "CAP-DST-001",
+      "crate": "oxyflut-qualification",
+      "architectureFlow": ".constitution/architecture/flows/cap-tst-001.md",
+      "bindings": [
+        {
+          "contract": "contracts/example",
+          "symbols": [
+            "Symbol"
+          ]
+        }
+      ],
+      "contractTests": [
+        "contract::cap_example"
+      ]
+    },
+    {
+      "capabilityId": "CAP-SEC-001",
+      "crate": "oxyflut-qualification",
+      "architectureFlow": ".constitution/architecture/flows/cap-tst-001.md",
+      "bindings": [
+        {
+          "contract": "contracts/example",
+          "symbols": [
+            "Symbol"
+          ]
+        }
+      ],
+      "contractTests": [
+        "contract::cap_example"
+      ]
+    },
+    {
+      "capabilityId": "CAP-DIA-001",
+      "crate": "oxyflut-qualification",
+      "architectureFlow": ".constitution/architecture/flows/cap-tst-001.md",
+      "bindings": [
+        {
+          "contract": "contracts/example",
+          "symbols": [
+            "Symbol"
+          ]
+        }
+      ],
+      "contractTests": [
+        "contract::cap_example"
+      ]
+    },
+    {
+      "capabilityId": "CAP-DIA-002",
+      "crate": "oxyflut-qualification",
+      "architectureFlow": ".constitution/architecture/flows/cap-tst-001.md",
+      "bindings": [
+        {
+          "contract": "contracts/example",
+          "symbols": [
+            "Symbol"
+          ]
+        }
+      ],
+      "contractTests": [
+        "contract::cap_example"
+      ]
+    },
+    {
+      "capabilityId": "CAP-DIA-003",
+      "crate": "oxyflut-qualification",
+      "architectureFlow": ".constitution/architecture/flows/cap-tst-001.md",
+      "bindings": [
+        {
+          "contract": "contracts/example",
+          "symbols": [
+            "Symbol"
+          ]
+        }
+      ],
+      "contractTests": [
+        "contract::cap_example"
+      ]
+    },
+    {
+      "capabilityId": "CAP-DIA-004",
+      "crate": "oxyflut-qualification",
+      "architectureFlow": ".constitution/architecture/flows/cap-tst-001.md",
+      "bindings": [
+        {
+          "contract": "contracts/example",
+          "symbols": [
+            "Symbol"
+          ]
+        }
+      ],
+      "contractTests": [
+        "contract::cap_example"
+      ]
+    },
+    {
+      "capabilityId": "CAP-SUB-001",
+      "crate": "oxyflut-qualification",
+      "architectureFlow": ".constitution/architecture/flows/cap-tst-001.md",
+      "bindings": [
+        {
+          "contract": "contracts/example",
+          "symbols": [
+            "Symbol"
+          ]
+        }
+      ],
+      "contractTests": [
+        "contract::cap_example"
+      ]
+    },
+    {
+      "capabilityId": "CAP-SUB-002",
+      "crate": "oxyflut-qualification",
+      "architectureFlow": ".constitution/architecture/flows/cap-tst-001.md",
+      "bindings": [
+        {
+          "contract": "contracts/example",
+          "symbols": [
+            "Symbol"
+          ]
+        }
+      ],
+      "contractTests": [
+        "contract::cap_example"
+      ]
+    },
+    {
+      "capabilityId": "CAP-SUB-003",
+      "crate": "oxyflut-qualification",
+      "architectureFlow": ".constitution/architecture/flows/cap-tst-001.md",
+      "bindings": [
+        {
+          "contract": "contracts/example",
+          "symbols": [
+            "Symbol"
+          ]
+        }
+      ],
+      "contractTests": [
+        "contract::cap_example"
+      ]
+    },
+    {
+      "capabilityId": "CAP-SUB-004",
+      "crate": "oxyflut-qualification",
+      "architectureFlow": ".constitution/architecture/flows/cap-tst-001.md",
+      "bindings": [
+        {
+          "contract": "contracts/example",
+          "symbols": [
+            "Symbol"
+          ]
+        }
+      ],
+      "contractTests": [
+        "contract::cap_example"
+      ]
+    }
+  ],
+  "unexpected": true
+}

@@ -1,0 +1,6 @@
+{
+  "valid": false,
+  "errorPaths": [],
+  "kind": "superseded-identity",
+  "supersededBy": "urn:oxyflut:schema:accessibility-map:5"
+}

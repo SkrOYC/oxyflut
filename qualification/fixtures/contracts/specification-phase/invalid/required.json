@@ -1,0 +1,22 @@
+{
+  "$schema": "../data-models/specification-phase.schema.json",
+  "specificationVersion": "0.15.0",
+  "phase": "qualification-3a",
+  "productionReady": false,
+  "permittedStage4Scopes": [
+    "qualification"
+  ],
+  "requiredSuccessor": "production-3b",
+  "blockers": [
+    "substrate-selection",
+    "common-layout-visit-cap",
+    "complete-tier-1-qualification",
+    "qualification-lock-not-candidate-implementation-ready",
+    "qualification-lock-not-measurement-ready"
+  ],
+  "candidateStates": {
+    "focused": "trial",
+    "integrated": "trial"
+  },
+  "requiredProductionVersion": ">=1.0.0"
+}

@@ -1,0 +1,44 @@
+{
+  "schemas": [
+    {
+      "name": "accessibility-map",
+      "superseded": "urn:oxyflut:schema:accessibility-map:4",
+      "current": "urn:oxyflut:schema:accessibility-map:5"
+    },
+    {
+      "name": "artifact-manifest",
+      "superseded": "urn:oxyflut:schema:artifact-manifest:3",
+      "current": "urn:oxyflut:schema:artifact-manifest:4"
+    },
+    {
+      "name": "capability-baseline",
+      "superseded": "urn:oxyflut:schema:capability-baseline:3",
+      "current": "urn:oxyflut:schema:capability-baseline:4"
+    },
+    {
+      "name": "capability-traceability",
+      "superseded": "urn:oxyflut:schema:capability-traceability:2",
+      "current": "urn:oxyflut:schema:capability-traceability:3"
+    },
+    {
+      "name": "platform-contracts",
+      "superseded": "urn:oxyflut:schema:platform-contracts:4",
+      "current": "urn:oxyflut:schema:platform-contracts:5"
+    },
+    {
+      "name": "qualification-evidence",
+      "superseded": "urn:oxyflut:schema:qualification-evidence:4",
+      "current": "urn:oxyflut:schema:qualification-evidence:5"
+    },
+    {
+      "name": "qualification-lock",
+      "superseded": "urn:oxyflut:schema:qualification-lock:4",
+      "current": "urn:oxyflut:schema:qualification-lock:5"
+    },
+    {
+      "name": "raw-measurement",
+      "superseded": "urn:oxyflut:schema:raw-measurement:1",
+      "current": "urn:oxyflut:schema:raw-measurement:2"
+    }
+  ]
+}

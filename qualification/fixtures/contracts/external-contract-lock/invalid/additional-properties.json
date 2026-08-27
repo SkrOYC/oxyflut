@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "1.0.0",
+  "contracts": {
+    "spdx-3.0.1": {
+      "version": "1",
+      "source": "https://example.invalid/schema",
+      "epistemicStatus": "ku-gating",
+      "localPath": null,
+      "sha256": null,
+      "verifier": null
+    },
+    "in-toto-statement-v1": {
+      "version": "1",
+      "source": "https://example.invalid/schema",
+      "epistemicStatus": "ku-gating",
+      "localPath": null,
+      "sha256": null,
+      "verifier": null
+    },
+    "slsa-provenance-v1": {
+      "version": "1",
+      "source": "https://example.invalid/schema",
+      "epistemicStatus": "ku-gating",
+      "localPath": null,
+      "sha256": null,
+      "verifier": null
+    },
+    "dsse-envelope-v1": {
+      "version": "1",
+      "source": "https://example.invalid/schema",
+      "epistemicStatus": "ku-gating",
+      "localPath": null,
+      "sha256": null,
+      "verifier": null
+    }
+  },
+  "unexpected": true
+}
