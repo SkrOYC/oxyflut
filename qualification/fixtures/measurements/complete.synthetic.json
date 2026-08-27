@@ -1,0 +1,101 @@
+{
+  "schemaVersion": "2.0.0",
+  "candidate": "focused",
+  "environment": "macos",
+  "lockDigest": "c536f10a949349531c62dbd3b508fde8a920f31f625169396b36efd4c2f4d2fc",
+  "meterVersion": "synthetic-meter-v1",
+  "samples": [
+    {
+      "constraintId": "CON-PERF-001",
+      "launch": 1,
+      "ordinal": 1,
+      "monotonicNs": 100,
+      "value": 1.0,
+      "unit": "ms",
+      "valid": true,
+      "harnessLog": {
+        "path": "qualification/fixtures/measurements/harness/perf-001-launch-1.log",
+        "sha256": "28ce149a8aa1e8b9fc82d3b955208995d6108a8e324977a177728aa9ec061f39"
+      }
+    },
+    {
+      "constraintId": "CON-PERF-001",
+      "launch": 1,
+      "ordinal": 2,
+      "monotonicNs": 200,
+      "value": 2.0,
+      "unit": "ms",
+      "valid": true,
+      "harnessLog": {
+        "path": "qualification/fixtures/measurements/harness/perf-001-launch-1.log",
+        "sha256": "28ce149a8aa1e8b9fc82d3b955208995d6108a8e324977a177728aa9ec061f39"
+      }
+    },
+    {
+      "constraintId": "CON-PERF-001",
+      "launch": 1,
+      "ordinal": 3,
+      "monotonicNs": 300,
+      "value": 100.0,
+      "unit": "ms",
+      "valid": true,
+      "harnessLog": {
+        "path": "qualification/fixtures/measurements/harness/perf-001-launch-1.log",
+        "sha256": "28ce149a8aa1e8b9fc82d3b955208995d6108a8e324977a177728aa9ec061f39"
+      }
+    },
+    {
+      "constraintId": "CON-PERF-001",
+      "launch": 2,
+      "ordinal": 1,
+      "monotonicNs": 400,
+      "value": 3.0,
+      "unit": "ms",
+      "valid": true,
+      "harnessLog": {
+        "path": "qualification/fixtures/measurements/harness/perf-001-launch-2.log",
+        "sha256": "38068f737ecc7ec682e72448be50435717e2475f49237a64fa143fe22293592c"
+      }
+    },
+    {
+      "constraintId": "CON-PERF-001",
+      "launch": 2,
+      "ordinal": 2,
+      "monotonicNs": 500,
+      "value": 4.0,
+      "unit": "ms",
+      "valid": true,
+      "harnessLog": {
+        "path": "qualification/fixtures/measurements/harness/perf-001-launch-2.log",
+        "sha256": "38068f737ecc7ec682e72448be50435717e2475f49237a64fa143fe22293592c"
+      }
+    },
+    {
+      "constraintId": "CON-PERF-001",
+      "launch": 2,
+      "ordinal": 3,
+      "monotonicNs": 600,
+      "value": 200.0,
+      "unit": "ms",
+      "valid": true,
+      "harnessLog": {
+        "path": "qualification/fixtures/measurements/harness/perf-001-launch-2.log",
+        "sha256": "38068f737ecc7ec682e72448be50435717e2475f49237a64fa143fe22293592c"
+      }
+    },
+    {
+      "constraintId": "CON-PERF-001",
+      "launch": 2,
+      "ordinal": 4,
+      "monotonicNs": 700,
+      "value": 0.0,
+      "unit": "ms",
+      "valid": false,
+      "exclusionReason": "unrelated-os-interruption",
+      "harnessLog": {
+        "path": "qualification/fixtures/measurements/harness/perf-001-launch-2.log",
+        "sha256": "38068f737ecc7ec682e72448be50435717e2475f49237a64fa143fe22293592c"
+      }
+    }
+  ]
+}

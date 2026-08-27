@@ -181,6 +181,17 @@ pub(crate) fn validate_workspace(root: &Path) -> Result<TraceabilityRunReport, T
     })
 }
 
+/// Returns the exact authoritative product constraint set.
+///
+/// # Errors
+///
+/// Returns an error when the PRD constraint table cannot be read or its identifiers are invalid.
+pub(crate) fn constraint_authority(
+    root: &Path,
+) -> Result<BTreeSet<ConstraintId>, TraceabilityError> {
+    prd_constraints(root)
+}
+
 /// Resolves the exact active specification and 52-capability authority for baseline validation.
 ///
 /// # Errors

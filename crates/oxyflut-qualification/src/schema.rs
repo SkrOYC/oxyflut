@@ -460,7 +460,7 @@ mod tests {
     #[test]
     fn schema_compiles_every_durable_schema_offline() -> Result<(), Box<dyn Error>> {
         let registry = workspace_registry()?;
-        assert_eq!(registry.identities().len(), 17);
+        assert_eq!(registry.identities().len(), 18);
         Ok(())
     }
 
