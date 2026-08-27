@@ -3,6 +3,7 @@
 use std::process::ExitCode;
 
 mod commands;
+mod contracts;
 mod evidence;
 mod toolchain;
 

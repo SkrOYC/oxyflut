@@ -1,0 +1,586 @@
+{
+  "schemaVersion": "5.0.0",
+  "specificationVersion": "0.15.0",
+  "environments": {
+    "macos": {
+      "status": "kk",
+      "reference": "reference",
+      "minimumVersion": {
+        "status": "kk",
+        "value": "resolved",
+        "evidence": []
+      },
+      "protocols": [
+        {
+          "name": "protocol",
+          "version": "1.0.0",
+          "status": "kk",
+          "evidence": [
+            {
+              "path": "evidence/platform.txt",
+              "sha256": "37b80593f75ca28567d6e0e5b15d228ea68e6e119d6d65dacdb9cf8036a988a2"
+            }
+          ]
+        }
+      ],
+      "ime": {
+        "status": "kk",
+        "nativeIndexUnit": "utf16-code-units",
+        "engineIndexUnit": "checked-logical-with-explicit-conversion",
+        "metadata": [
+          "metadata"
+        ],
+        "actions": [
+          "action"
+        ],
+        "sensitiveFieldPolicy": "redacted",
+        "numericNegotiation": "checked",
+        "testVectors": [
+          "basic"
+        ],
+        "evidence": [
+          {
+            "path": "evidence/platform.txt",
+            "sha256": "37b80593f75ca28567d6e0e5b15d228ea68e6e119d6d65dacdb9cf8036a988a2"
+          }
+        ]
+      },
+      "accessibilityMaps": {
+        "focused": {
+          "status": "kk",
+          "path": "evidence/platform-reference.json",
+          "sha256": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356"
+        },
+        "integrated": {
+          "status": "kk",
+          "path": "evidence/platform-reference.json",
+          "sha256": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356"
+        }
+      },
+      "timing": {
+        "status": "kk",
+        "interactiveOpportunitySource": "source",
+        "independentMeterSource": "meter",
+        "presentationFeedback": "feedback",
+        "perDisplayAssociation": "display",
+        "evidence": [
+          {
+            "path": "evidence/platform.txt",
+            "sha256": "37b80593f75ca28567d6e0e5b15d228ea68e6e119d6d65dacdb9cf8036a988a2"
+          }
+        ]
+      },
+      "recoveryBaseline": {
+        "status": "kk",
+        "path": "evidence/platform-reference.json",
+        "sha256": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356"
+      },
+      "allocations": {
+        "focused": {
+          "status": "kk",
+          "windowAndInput": [
+            "window"
+          ],
+          "imeInterfaces": [
+            "ime"
+          ],
+          "accessibilityInterfaces": [
+            "accessibility"
+          ],
+          "clipboardInterfaces": [
+            "clipboard"
+          ],
+          "timingInterfaces": [
+            "timing"
+          ],
+          "recoveryInterfaces": [
+            "recovery"
+          ],
+          "serviceRouting": "routed",
+          "normalization": "normalized",
+          "requiredEvidence": [
+            "evidence"
+          ],
+          "evidence": [
+            {
+              "path": "evidence/platform.txt",
+              "sha256": "37b80593f75ca28567d6e0e5b15d228ea68e6e119d6d65dacdb9cf8036a988a2"
+            }
+          ]
+        },
+        "integrated": {
+          "status": "kk",
+          "windowAndInput": [
+            "window"
+          ],
+          "imeInterfaces": [
+            "ime"
+          ],
+          "accessibilityInterfaces": [
+            "accessibility"
+          ],
+          "clipboardInterfaces": [
+            "clipboard"
+          ],
+          "timingInterfaces": [
+            "timing"
+          ],
+          "recoveryInterfaces": [
+            "recovery"
+          ],
+          "serviceRouting": "routed",
+          "normalization": "normalized",
+          "requiredEvidence": [
+            "evidence"
+          ],
+          "evidence": [
+            {
+              "path": "evidence/platform.txt",
+              "sha256": "37b80593f75ca28567d6e0e5b15d228ea68e6e119d6d65dacdb9cf8036a988a2"
+            }
+          ]
+        }
+      },
+      "openQuestions": []
+    },
+    "windows": {
+      "status": "kk",
+      "reference": "reference",
+      "minimumVersion": {
+        "status": "kk",
+        "value": "resolved",
+        "evidence": [
+          {
+            "path": "evidence/platform.txt",
+            "sha256": "37b80593f75ca28567d6e0e5b15d228ea68e6e119d6d65dacdb9cf8036a988a2"
+          }
+        ]
+      },
+      "protocols": [
+        {
+          "name": "protocol",
+          "version": "1.0.0",
+          "status": "kk",
+          "evidence": [
+            {
+              "path": "evidence/platform.txt",
+              "sha256": "37b80593f75ca28567d6e0e5b15d228ea68e6e119d6d65dacdb9cf8036a988a2"
+            }
+          ]
+        }
+      ],
+      "ime": {
+        "status": "kk",
+        "nativeIndexUnit": "utf16-code-units",
+        "engineIndexUnit": "checked-logical-with-explicit-conversion",
+        "metadata": [
+          "metadata"
+        ],
+        "actions": [
+          "action"
+        ],
+        "sensitiveFieldPolicy": "redacted",
+        "numericNegotiation": "checked",
+        "testVectors": [
+          "basic"
+        ],
+        "evidence": [
+          {
+            "path": "evidence/platform.txt",
+            "sha256": "37b80593f75ca28567d6e0e5b15d228ea68e6e119d6d65dacdb9cf8036a988a2"
+          }
+        ]
+      },
+      "accessibilityMaps": {
+        "focused": {
+          "status": "kk",
+          "path": "evidence/platform-reference.json",
+          "sha256": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356"
+        },
+        "integrated": {
+          "status": "kk",
+          "path": "evidence/platform-reference.json",
+          "sha256": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356"
+        }
+      },
+      "timing": {
+        "status": "kk",
+        "interactiveOpportunitySource": "source",
+        "independentMeterSource": "meter",
+        "presentationFeedback": "feedback",
+        "perDisplayAssociation": "display",
+        "evidence": [
+          {
+            "path": "evidence/platform.txt",
+            "sha256": "37b80593f75ca28567d6e0e5b15d228ea68e6e119d6d65dacdb9cf8036a988a2"
+          }
+        ]
+      },
+      "recoveryBaseline": {
+        "status": "kk",
+        "path": "evidence/platform-reference.json",
+        "sha256": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356"
+      },
+      "allocations": {
+        "focused": {
+          "status": "kk",
+          "windowAndInput": [
+            "window"
+          ],
+          "imeInterfaces": [
+            "ime"
+          ],
+          "accessibilityInterfaces": [
+            "accessibility"
+          ],
+          "clipboardInterfaces": [
+            "clipboard"
+          ],
+          "timingInterfaces": [
+            "timing"
+          ],
+          "recoveryInterfaces": [
+            "recovery"
+          ],
+          "serviceRouting": "routed",
+          "normalization": "normalized",
+          "requiredEvidence": [
+            "evidence"
+          ],
+          "evidence": [
+            {
+              "path": "evidence/platform.txt",
+              "sha256": "37b80593f75ca28567d6e0e5b15d228ea68e6e119d6d65dacdb9cf8036a988a2"
+            }
+          ]
+        },
+        "integrated": {
+          "status": "kk",
+          "windowAndInput": [
+            "window"
+          ],
+          "imeInterfaces": [
+            "ime"
+          ],
+          "accessibilityInterfaces": [
+            "accessibility"
+          ],
+          "clipboardInterfaces": [
+            "clipboard"
+          ],
+          "timingInterfaces": [
+            "timing"
+          ],
+          "recoveryInterfaces": [
+            "recovery"
+          ],
+          "serviceRouting": "routed",
+          "normalization": "normalized",
+          "requiredEvidence": [
+            "evidence"
+          ],
+          "evidence": [
+            {
+              "path": "evidence/platform.txt",
+              "sha256": "37b80593f75ca28567d6e0e5b15d228ea68e6e119d6d65dacdb9cf8036a988a2"
+            }
+          ]
+        }
+      },
+      "openQuestions": []
+    },
+    "wayland": {
+      "status": "kk",
+      "reference": "reference",
+      "minimumVersion": {
+        "status": "kk",
+        "value": "resolved",
+        "evidence": [
+          {
+            "path": "evidence/platform.txt",
+            "sha256": "37b80593f75ca28567d6e0e5b15d228ea68e6e119d6d65dacdb9cf8036a988a2"
+          }
+        ]
+      },
+      "protocols": [
+        {
+          "name": "protocol",
+          "version": "1.0.0",
+          "status": "kk",
+          "evidence": [
+            {
+              "path": "evidence/platform.txt",
+              "sha256": "37b80593f75ca28567d6e0e5b15d228ea68e6e119d6d65dacdb9cf8036a988a2"
+            }
+          ]
+        }
+      ],
+      "ime": {
+        "status": "kk",
+        "nativeIndexUnit": "utf16-code-units",
+        "engineIndexUnit": "checked-logical-with-explicit-conversion",
+        "metadata": [
+          "metadata"
+        ],
+        "actions": [
+          "action"
+        ],
+        "sensitiveFieldPolicy": "redacted",
+        "numericNegotiation": "checked",
+        "testVectors": [
+          "basic"
+        ],
+        "evidence": [
+          {
+            "path": "evidence/platform.txt",
+            "sha256": "37b80593f75ca28567d6e0e5b15d228ea68e6e119d6d65dacdb9cf8036a988a2"
+          }
+        ]
+      },
+      "accessibilityMaps": {
+        "focused": {
+          "status": "kk",
+          "path": "evidence/platform-reference.json",
+          "sha256": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356"
+        },
+        "integrated": {
+          "status": "kk",
+          "path": "evidence/platform-reference.json",
+          "sha256": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356"
+        }
+      },
+      "timing": {
+        "status": "kk",
+        "interactiveOpportunitySource": "source",
+        "independentMeterSource": "meter",
+        "presentationFeedback": "feedback",
+        "perDisplayAssociation": "display",
+        "evidence": [
+          {
+            "path": "evidence/platform.txt",
+            "sha256": "37b80593f75ca28567d6e0e5b15d228ea68e6e119d6d65dacdb9cf8036a988a2"
+          }
+        ]
+      },
+      "recoveryBaseline": {
+        "status": "kk",
+        "path": "evidence/platform-reference.json",
+        "sha256": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356"
+      },
+      "allocations": {
+        "focused": {
+          "status": "kk",
+          "windowAndInput": [
+            "window"
+          ],
+          "imeInterfaces": [
+            "ime"
+          ],
+          "accessibilityInterfaces": [
+            "accessibility"
+          ],
+          "clipboardInterfaces": [
+            "clipboard"
+          ],
+          "timingInterfaces": [
+            "timing"
+          ],
+          "recoveryInterfaces": [
+            "recovery"
+          ],
+          "serviceRouting": "routed",
+          "normalization": "normalized",
+          "requiredEvidence": [
+            "evidence"
+          ],
+          "evidence": [
+            {
+              "path": "evidence/platform.txt",
+              "sha256": "37b80593f75ca28567d6e0e5b15d228ea68e6e119d6d65dacdb9cf8036a988a2"
+            }
+          ]
+        },
+        "integrated": {
+          "status": "kk",
+          "windowAndInput": [
+            "window"
+          ],
+          "imeInterfaces": [
+            "ime"
+          ],
+          "accessibilityInterfaces": [
+            "accessibility"
+          ],
+          "clipboardInterfaces": [
+            "clipboard"
+          ],
+          "timingInterfaces": [
+            "timing"
+          ],
+          "recoveryInterfaces": [
+            "recovery"
+          ],
+          "serviceRouting": "routed",
+          "normalization": "normalized",
+          "requiredEvidence": [
+            "evidence"
+          ],
+          "evidence": [
+            {
+              "path": "evidence/platform.txt",
+              "sha256": "37b80593f75ca28567d6e0e5b15d228ea68e6e119d6d65dacdb9cf8036a988a2"
+            }
+          ]
+        }
+      },
+      "openQuestions": []
+    },
+    "x11": {
+      "status": "kk",
+      "reference": "reference",
+      "minimumVersion": {
+        "status": "kk",
+        "value": "resolved",
+        "evidence": [
+          {
+            "path": "evidence/platform.txt",
+            "sha256": "37b80593f75ca28567d6e0e5b15d228ea68e6e119d6d65dacdb9cf8036a988a2"
+          }
+        ]
+      },
+      "protocols": [
+        {
+          "name": "protocol",
+          "version": "1.0.0",
+          "status": "kk",
+          "evidence": [
+            {
+              "path": "evidence/platform.txt",
+              "sha256": "37b80593f75ca28567d6e0e5b15d228ea68e6e119d6d65dacdb9cf8036a988a2"
+            }
+          ]
+        }
+      ],
+      "ime": {
+        "status": "kk",
+        "nativeIndexUnit": "utf16-code-units",
+        "engineIndexUnit": "checked-logical-with-explicit-conversion",
+        "metadata": [
+          "metadata"
+        ],
+        "actions": [
+          "action"
+        ],
+        "sensitiveFieldPolicy": "redacted",
+        "numericNegotiation": "checked",
+        "testVectors": [
+          "basic"
+        ],
+        "evidence": [
+          {
+            "path": "evidence/platform.txt",
+            "sha256": "37b80593f75ca28567d6e0e5b15d228ea68e6e119d6d65dacdb9cf8036a988a2"
+          }
+        ]
+      },
+      "accessibilityMaps": {
+        "focused": {
+          "status": "kk",
+          "path": "evidence/platform-reference.json",
+          "sha256": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356"
+        },
+        "integrated": {
+          "status": "kk",
+          "path": "evidence/platform-reference.json",
+          "sha256": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356"
+        }
+      },
+      "timing": {
+        "status": "kk",
+        "interactiveOpportunitySource": "source",
+        "independentMeterSource": "meter",
+        "presentationFeedback": "feedback",
+        "perDisplayAssociation": "display",
+        "evidence": [
+          {
+            "path": "evidence/platform.txt",
+            "sha256": "37b80593f75ca28567d6e0e5b15d228ea68e6e119d6d65dacdb9cf8036a988a2"
+          }
+        ]
+      },
+      "recoveryBaseline": {
+        "status": "kk",
+        "path": "evidence/platform-reference.json",
+        "sha256": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356"
+      },
+      "allocations": {
+        "focused": {
+          "status": "kk",
+          "windowAndInput": [
+            "window"
+          ],
+          "imeInterfaces": [
+            "ime"
+          ],
+          "accessibilityInterfaces": [
+            "accessibility"
+          ],
+          "clipboardInterfaces": [
+            "clipboard"
+          ],
+          "timingInterfaces": [
+            "timing"
+          ],
+          "recoveryInterfaces": [
+            "recovery"
+          ],
+          "serviceRouting": "routed",
+          "normalization": "normalized",
+          "requiredEvidence": [
+            "evidence"
+          ],
+          "evidence": [
+            {
+              "path": "evidence/platform.txt",
+              "sha256": "37b80593f75ca28567d6e0e5b15d228ea68e6e119d6d65dacdb9cf8036a988a2"
+            }
+          ]
+        },
+        "integrated": {
+          "status": "kk",
+          "windowAndInput": [
+            "window"
+          ],
+          "imeInterfaces": [
+            "ime"
+          ],
+          "accessibilityInterfaces": [
+            "accessibility"
+          ],
+          "clipboardInterfaces": [
+            "clipboard"
+          ],
+          "timingInterfaces": [
+            "timing"
+          ],
+          "recoveryInterfaces": [
+            "recovery"
+          ],
+          "serviceRouting": "routed",
+          "normalization": "normalized",
+          "requiredEvidence": [
+            "evidence"
+          ],
+          "evidence": [
+            {
+              "path": "evidence/platform.txt",
+              "sha256": "37b80593f75ca28567d6e0e5b15d228ea68e6e119d6d65dacdb9cf8036a988a2"
+            }
+          ]
+        }
+      },
+      "openQuestions": []
+    }
+  },
+  "absentEvents": []
+}

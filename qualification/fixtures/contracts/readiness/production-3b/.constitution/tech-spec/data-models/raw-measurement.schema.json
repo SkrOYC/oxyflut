@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:oxyflut:schema:raw-measurement:2",
+  "title": "Oxyflut raw qualification measurements",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "candidate",
+    "environment",
+    "lockDigest",
+    "meterVersion",
+    "samples"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "2.0.0" },
+    "candidate": { "enum": ["focused", "integrated"] },
+    "environment": { "enum": ["macos", "windows", "wayland", "x11"] },
+    "lockDigest": { "$ref": "#/$defs/sha256" },
+    "meterVersion": { "type": "string", "minLength": 1 },
+    "samples": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/sample" },
+      "minItems": 1
+    }
+  },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "sample": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "constraintId",
+        "launch",
+        "ordinal",
+        "monotonicNs",
+        "value",
+        "unit",
+        "valid",
+        "harnessLog"
+      ],
+      "properties": {
+        "constraintId": {
+          "type": "string",
+          "pattern": "^CON-[A-Z0-9]+-[0-9]{3}$"
+        },
+        "launch": { "type": "integer", "minimum": 1 },
+        "ordinal": { "type": "integer", "minimum": 1 },
+        "monotonicNs": { "type": "integer", "minimum": 0 },
+        "value": { "type": "number" },
+        "unit": { "type": "string", "minLength": 1 },
+        "valid": { "type": "boolean" },
+        "exclusionReason": {
+          "enum": [
+            "measurement-tool-failure",
+            "unrelated-os-interruption",
+            "physical-disconnect"
+          ]
+        },
+        "harnessLog": { "$ref": "#/$defs/evidence" }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "valid": { "const": false } },
+            "required": ["valid"]
+          },
+          "then": { "required": ["exclusionReason"] }
+        },
+        {
+          "if": {
+            "properties": { "valid": { "const": true } },
+            "required": ["valid"]
+          },
+          "then": { "properties": { "exclusionReason": false } }
+        }
+      ]
+    }
+  }
+}

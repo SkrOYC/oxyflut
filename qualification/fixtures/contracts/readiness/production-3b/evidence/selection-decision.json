@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "1.0.0",
+  "specificationVersion": "1.0.0",
+  "qualificationLockDigest": "f0d4adc0a0bf98eb8c40c7f38f25758172c59f009802531f890e9057cc44adcf",
+  "candidateEvidence": {
+    "focused": {
+      "path": "evidence/selected-qualification.json",
+      "sha256": "71cca4b4e644c07c4e45869401d4483c031f2003f0328451aa616dbf8624c68e"
+    },
+    "integrated": {
+      "path": "evidence/integrated-qualification.json",
+      "sha256": "652691b7028600380a0acf5a1cbd462a7f28e55c54d083afb957086cda9ad782"
+    }
+  },
+  "eligibility": {
+    "focused": "eligible",
+    "integrated": "ineligible"
+  },
+  "decisionBasis": "sole-focused-eligible",
+  "outcome": "select-focused",
+  "selectedCandidate": "focused",
+  "calculation": {
+    "algorithmVersion": "prd-v1.0.0",
+    "focusedScore": null,
+    "integratedScore": null,
+    "absoluteDifference": null,
+    "tieBreakApplied": false
+  },
+  "rationale": "Focused is the sole eligible candidate."
+}

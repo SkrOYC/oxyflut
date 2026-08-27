@@ -181,6 +181,14 @@ Invariants:
 Checker: cargo +1.98.0 test -p xtask contracts::readiness
 ```
 
+##### OXY-A004 Deviations & Justifications
+
+- **Touched Files:** `xtask/src/{main.rs,commands/{contracts,lock}.rs,contracts/{mod,schema,readiness_{promotion,tests}}.rs}`.
+- **Justification:** The readiness command contract requires `lock status`; command registration, validation-family wiring, readiness-fixture exclusion from schema-only discovery, and isolated promotion and test modules support the in-scope validator without duplicating compiled modules.
+- **Assumption for OXY-D001 Stage 3 revision:** `specification-phase.schema.json` promotion artifacts `layoutQualification`, `finalContractSet`, `targetMatrix`, `losingCandidateRemoval`, and `billOfMaterials` have no typed Stage 3 schema; Phase 3B must type them before promotion can validate.
+- **Touched Files:** `.constitution/tasks/active/EPIC-A-qualification-foundation.md`.
+- **Justification:** The execution rules require scope deviations and the Phase 3B schema gap to be recorded in the ticket block.
+
 #### OXY-A008 Resolve the native contract toolchain
 
 - **Type:** Chore

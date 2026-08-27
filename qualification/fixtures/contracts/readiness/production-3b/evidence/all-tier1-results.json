@@ -1,0 +1,2719 @@
+{
+  "schemaVersion": "5.0.0",
+  "candidate": "focused",
+  "source": {
+    "oxyflutCommit": "0000000000000000000000000000000000000000",
+    "flutterFrameworkCommit": "4cf24164269a5ebf0c16a028a00727d0e77bbb05",
+    "flutterEngineCommit": "5f77625673248ee5846fbcaf5d3e1a3878386fd7",
+    "candidateCommit": "5f77625673248ee5846fbcaf5d3e1a3878386fd7",
+    "adapterCommit": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+  },
+  "lockDigest": "f0d4adc0a0bf98eb8c40c7f38f25758172c59f009802531f890e9057cc44adcf",
+  "environmentResults": {
+    "macos": {
+      "CAP-CMP-001": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-CMP-002": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-CMP-003": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-CMP-004": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-CMP-005": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-CMP-006": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-CMP-007": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-LAY-001": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-LAY-002": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-SCR-001": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-SCR-002": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-REN-001": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-REN-002": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-REN-003": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-AST-001": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-AST-002": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-AST-003": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-AST-004": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-VIEW-001": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-VIEW-002": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-VIEW-003": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-VIEW-004": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-VIEW-005": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-REC-001": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-INP-001": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-INP-002": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-FOC-001": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-TXT-001": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-TXT-002": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-TXT-003": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-IME-001": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-CLP-001": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-I18N-001": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-SEM-001": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-SEM-002": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-PLT-001": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-OS-001": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-OS-002": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-TST-001": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-TST-002": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-TST-003": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-TST-004": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-DST-001": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-SEC-001": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-DIA-001": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-DIA-002": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-DIA-003": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-DIA-004": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-SUB-001": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-SUB-002": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-SUB-003": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-SUB-004": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      }
+    },
+    "windows": {
+      "CAP-CMP-001": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-CMP-002": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-CMP-003": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-CMP-004": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-CMP-005": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-CMP-006": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-CMP-007": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-LAY-001": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-LAY-002": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-SCR-001": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-SCR-002": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-REN-001": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-REN-002": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-REN-003": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-AST-001": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-AST-002": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-AST-003": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-AST-004": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-VIEW-001": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-VIEW-002": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-VIEW-003": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-VIEW-004": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-VIEW-005": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-REC-001": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-INP-001": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-INP-002": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-FOC-001": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-TXT-001": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-TXT-002": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-TXT-003": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-IME-001": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-CLP-001": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-I18N-001": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-SEM-001": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-SEM-002": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-PLT-001": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-OS-001": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-OS-002": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-TST-001": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-TST-002": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-TST-003": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-TST-004": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-DST-001": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-SEC-001": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-DIA-001": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-DIA-002": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-DIA-003": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-DIA-004": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-SUB-001": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-SUB-002": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-SUB-003": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-SUB-004": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      }
+    },
+    "wayland": {
+      "CAP-CMP-001": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-CMP-002": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-CMP-003": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-CMP-004": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-CMP-005": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-CMP-006": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-CMP-007": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-LAY-001": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-LAY-002": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-SCR-001": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-SCR-002": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-REN-001": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-REN-002": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-REN-003": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-AST-001": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-AST-002": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-AST-003": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-AST-004": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-VIEW-001": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-VIEW-002": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-VIEW-003": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-VIEW-004": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-VIEW-005": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-REC-001": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-INP-001": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-INP-002": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-FOC-001": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-TXT-001": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-TXT-002": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-TXT-003": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-IME-001": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-CLP-001": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-I18N-001": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-SEM-001": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-SEM-002": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-PLT-001": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-OS-001": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-OS-002": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-TST-001": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-TST-002": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-TST-003": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-TST-004": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-DST-001": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-SEC-001": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-DIA-001": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-DIA-002": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-DIA-003": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-DIA-004": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-SUB-001": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-SUB-002": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-SUB-003": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-SUB-004": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      }
+    },
+    "x11": {
+      "CAP-CMP-001": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-CMP-002": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-CMP-003": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-CMP-004": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-CMP-005": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-CMP-006": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-CMP-007": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-LAY-001": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-LAY-002": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-SCR-001": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-SCR-002": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-REN-001": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-REN-002": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-REN-003": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-AST-001": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-AST-002": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-AST-003": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-AST-004": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-VIEW-001": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-VIEW-002": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-VIEW-003": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-VIEW-004": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-VIEW-005": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-REC-001": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-INP-001": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-INP-002": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-FOC-001": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-TXT-001": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-TXT-002": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-TXT-003": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-IME-001": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-CLP-001": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-I18N-001": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-SEM-001": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-SEM-002": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-PLT-001": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-OS-001": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-OS-002": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-TST-001": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-TST-002": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-TST-003": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-TST-004": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-DST-001": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-SEC-001": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-DIA-001": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-DIA-002": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-DIA-003": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-DIA-004": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-SUB-001": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-SUB-002": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-SUB-003": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      },
+      "CAP-SUB-004": {
+        "status": "pass",
+        "evidence": [
+          {
+            "path": "evidence/nested-evidence.json",
+            "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+            "mediaType": "application/json"
+          }
+        ],
+        "notApplicable": null
+      }
+    }
+  },
+  "constraintResults": {
+    "CON-PERF-001": {
+      "status": "pass",
+      "evidence": [
+        {
+          "path": "evidence/nested-evidence.json",
+          "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+          "mediaType": "application/json"
+        }
+      ],
+      "notApplicable": null
+    },
+    "CON-PERF-002": {
+      "status": "pass",
+      "evidence": [
+        {
+          "path": "evidence/nested-evidence.json",
+          "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+          "mediaType": "application/json"
+        }
+      ],
+      "notApplicable": null
+    },
+    "CON-PERF-003": {
+      "status": "pass",
+      "evidence": [
+        {
+          "path": "evidence/nested-evidence.json",
+          "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+          "mediaType": "application/json"
+        }
+      ],
+      "notApplicable": null
+    },
+    "CON-MEM-001": {
+      "status": "pass",
+      "evidence": [
+        {
+          "path": "evidence/nested-evidence.json",
+          "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+          "mediaType": "application/json"
+        }
+      ],
+      "notApplicable": null
+    },
+    "CON-SIZE-001": {
+      "status": "pass",
+      "evidence": [
+        {
+          "path": "evidence/nested-evidence.json",
+          "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+          "mediaType": "application/json"
+        }
+      ],
+      "notApplicable": null
+    },
+    "CON-SIZE-002": {
+      "status": "pass",
+      "evidence": [
+        {
+          "path": "evidence/nested-evidence.json",
+          "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+          "mediaType": "application/json"
+        }
+      ],
+      "notApplicable": null
+    },
+    "CON-FRM-001": {
+      "status": "pass",
+      "evidence": [
+        {
+          "path": "evidence/nested-evidence.json",
+          "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+          "mediaType": "application/json"
+        }
+      ],
+      "notApplicable": null
+    },
+    "CON-FRM-002": {
+      "status": "pass",
+      "evidence": [
+        {
+          "path": "evidence/nested-evidence.json",
+          "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+          "mediaType": "application/json"
+        }
+      ],
+      "notApplicable": null
+    },
+    "CON-REC-001": {
+      "status": "pass",
+      "evidence": [
+        {
+          "path": "evidence/nested-evidence.json",
+          "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+          "mediaType": "application/json"
+        }
+      ],
+      "notApplicable": null
+    },
+    "CON-REC-002": {
+      "status": "pass",
+      "evidence": [
+        {
+          "path": "evidence/nested-evidence.json",
+          "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+          "mediaType": "application/json"
+        }
+      ],
+      "notApplicable": null
+    },
+    "CON-REC-003": {
+      "status": "pass",
+      "evidence": [
+        {
+          "path": "evidence/nested-evidence.json",
+          "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+          "mediaType": "application/json"
+        }
+      ],
+      "notApplicable": null
+    },
+    "CON-REC-004": {
+      "status": "pass",
+      "evidence": [
+        {
+          "path": "evidence/nested-evidence.json",
+          "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+          "mediaType": "application/json"
+        }
+      ],
+      "notApplicable": null
+    },
+    "CON-REC-005": {
+      "status": "pass",
+      "evidence": [
+        {
+          "path": "evidence/nested-evidence.json",
+          "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+          "mediaType": "application/json"
+        }
+      ],
+      "notApplicable": null
+    },
+    "CON-REC-006": {
+      "status": "pass",
+      "evidence": [
+        {
+          "path": "evidence/nested-evidence.json",
+          "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+          "mediaType": "application/json"
+        }
+      ],
+      "notApplicable": null
+    },
+    "CON-REC-007": {
+      "status": "pass",
+      "evidence": [
+        {
+          "path": "evidence/nested-evidence.json",
+          "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+          "mediaType": "application/json"
+        }
+      ],
+      "notApplicable": null
+    },
+    "CON-DET-001": {
+      "status": "pass",
+      "evidence": [
+        {
+          "path": "evidence/nested-evidence.json",
+          "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+          "mediaType": "application/json"
+        }
+      ],
+      "notApplicable": null
+    },
+    "CON-DET-002": {
+      "status": "pass",
+      "evidence": [
+        {
+          "path": "evidence/nested-evidence.json",
+          "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+          "mediaType": "application/json"
+        }
+      ],
+      "notApplicable": null
+    },
+    "CON-UPG-001": {
+      "status": "pass",
+      "evidence": [
+        {
+          "path": "evidence/nested-evidence.json",
+          "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+          "mediaType": "application/json"
+        }
+      ],
+      "notApplicable": null
+    },
+    "CON-COMP-001": {
+      "status": "pass",
+      "evidence": [
+        {
+          "path": "evidence/nested-evidence.json",
+          "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+          "mediaType": "application/json"
+        }
+      ],
+      "notApplicable": null
+    },
+    "CON-SAFE-001": {
+      "status": "pass",
+      "evidence": [
+        {
+          "path": "evidence/nested-evidence.json",
+          "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+          "mediaType": "application/json"
+        }
+      ],
+      "notApplicable": null
+    },
+    "CON-SEC-001": {
+      "status": "pass",
+      "evidence": [
+        {
+          "path": "evidence/nested-evidence.json",
+          "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+          "mediaType": "application/json"
+        }
+      ],
+      "notApplicable": null
+    },
+    "CON-SEC-002": {
+      "status": "pass",
+      "evidence": [
+        {
+          "path": "evidence/nested-evidence.json",
+          "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+          "mediaType": "application/json"
+        }
+      ],
+      "notApplicable": null
+    },
+    "CON-SEC-003": {
+      "status": "pass",
+      "evidence": [
+        {
+          "path": "evidence/nested-evidence.json",
+          "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+          "mediaType": "application/json"
+        }
+      ],
+      "notApplicable": null
+    },
+    "CON-PRV-001": {
+      "status": "pass",
+      "evidence": [
+        {
+          "path": "evidence/nested-evidence.json",
+          "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+          "mediaType": "application/json"
+        }
+      ],
+      "notApplicable": null
+    },
+    "CON-DIA-001": {
+      "status": "pass",
+      "evidence": [
+        {
+          "path": "evidence/nested-evidence.json",
+          "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+          "mediaType": "application/json"
+        }
+      ],
+      "notApplicable": null
+    },
+    "CON-DST-001": {
+      "status": "pass",
+      "evidence": [
+        {
+          "path": "evidence/nested-evidence.json",
+          "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+          "mediaType": "application/json"
+        }
+      ],
+      "notApplicable": null
+    },
+    "CON-LIC-001": {
+      "status": "pass",
+      "evidence": [
+        {
+          "path": "evidence/nested-evidence.json",
+          "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+          "mediaType": "application/json"
+        }
+      ],
+      "notApplicable": null
+    }
+  },
+  "eligibility": "eligible",
+  "assessors": [
+    {
+      "id": "assessor-one",
+      "frozenBeforeImplementation": true
+    },
+    {
+      "id": "assessor-two",
+      "frozenBeforeImplementation": true
+    }
+  ],
+  "scores": {
+    "platformCoverage": {
+      "weight": 30,
+      "assessorScores": [
+        5,
+        5
+      ],
+      "consensusScore": 5,
+      "consensusRationale": "Both assessors accepted the fixture evidence.",
+      "evidence": [
+        {
+          "path": "evidence/nested-evidence.json",
+          "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+          "mediaType": "application/json"
+        }
+      ]
+    },
+    "upgradeMaintenance": {
+      "weight": 20,
+      "assessorScores": [
+        5,
+        5
+      ],
+      "consensusScore": 5,
+      "consensusRationale": "Both assessors accepted the fixture evidence.",
+      "evidence": [
+        {
+          "path": "evidence/nested-evidence.json",
+          "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+          "mediaType": "application/json"
+        }
+      ]
+    },
+    "performance": {
+      "weight": 15,
+      "assessorScores": [
+        5,
+        5
+      ],
+      "consensusScore": 5,
+      "consensusRationale": "Both assessors accepted the fixture evidence.",
+      "evidence": [
+        {
+          "path": "evidence/nested-evidence.json",
+          "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+          "mediaType": "application/json"
+        }
+      ]
+    },
+    "safetySecurityPrivacy": {
+      "weight": 15,
+      "assessorScores": [
+        5,
+        5
+      ],
+      "consensusScore": 5,
+      "consensusRationale": "Both assessors accepted the fixture evidence.",
+      "evidence": [
+        {
+          "path": "evidence/nested-evidence.json",
+          "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+          "mediaType": "application/json"
+        }
+      ]
+    },
+    "distribution": {
+      "weight": 10,
+      "assessorScores": [
+        5,
+        5
+      ],
+      "consensusScore": 5,
+      "consensusRationale": "Both assessors accepted the fixture evidence.",
+      "evidence": [
+        {
+          "path": "evidence/nested-evidence.json",
+          "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+          "mediaType": "application/json"
+        }
+      ]
+    },
+    "operationalClarity": {
+      "weight": 10,
+      "assessorScores": [
+        5,
+        5
+      ],
+      "consensusScore": 5,
+      "consensusRationale": "Both assessors accepted the fixture evidence.",
+      "evidence": [
+        {
+          "path": "evidence/nested-evidence.json",
+          "sha256": "555a6509198dff91aae388d9b843155ea7a7cf46d7db3748ee568728f3c76e4c",
+          "mediaType": "application/json"
+        }
+      ]
+    }
+  },
+  "weightedTotal": 100
+}

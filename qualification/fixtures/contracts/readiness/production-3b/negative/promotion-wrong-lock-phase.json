@@ -1,0 +1,61 @@
+{
+  "schemaVersion": "1.0.0",
+  "specificationVersion": "1.0.0",
+  "phase": "production-3b",
+  "productionReady": true,
+  "permittedStage4Scopes": [
+    "qualification",
+    "production"
+  ],
+  "requiredSuccessor": "none",
+  "blockers": [],
+  "candidateStates": {
+    "focused": "selected",
+    "integrated": "removed"
+  },
+  "requiredProductionVersion": ">=1.0.0",
+  "promotionEvidence": {
+    "qualificationLockDigest": "0000000000000000000000000000000000000000000000000000000000000000",
+    "selectedCandidate": "focused",
+    "selectionDecision": {
+      "path": "evidence/selection-decision.json",
+      "sha256": "7e38224310f8a071370ccc01dea79e62c1264415a6174e39307b24eaf92a76b6"
+    },
+    "selectedCandidateQualification": {
+      "path": "evidence/selected-qualification.json",
+      "sha256": "71cca4b4e644c07c4e45869401d4483c031f2003f0328451aa616dbf8624c68e"
+    },
+    "layoutQualification": {
+      "path": "evidence/layoutQualification.txt",
+      "sha256": "14fd383035a3791b1d0c0b65cf32157bc2ce2e07ee88398f4fc1eb2fac0d4f8f"
+    },
+    "acceptedAdr0010": {
+      "path": ".constitution/tech-spec/adrs/ADR-0010-production-substrate.md",
+      "sha256": "a3209ed7a0f22792ea24b1ad71316400d613e1e0381006677d3476498b670aa1"
+    },
+    "finalContractSet": {
+      "path": "evidence/finalContractSet.txt",
+      "sha256": "80438aa1cd1f9bd86aa58ad95db6ec4dd140afd4ba7c3bfa37c9495a33bfaffd"
+    },
+    "targetMatrix": {
+      "path": "evidence/targetMatrix.txt",
+      "sha256": "19acde8d87d03436fb5c0e5caaa70e3e31a812ce1e35d456dd929e678f52f1de"
+    },
+    "allTier1Results": {
+      "path": "evidence/all-tier1-results.json",
+      "sha256": "71cca4b4e644c07c4e45869401d4483c031f2003f0328451aa616dbf8624c68e"
+    },
+    "losingCandidateRemoval": {
+      "path": "evidence/losingCandidateRemoval.txt",
+      "sha256": "eda84e96dfa02bc73aa1e974b8bef8c2c82950ccb70979233e4a7bb24b5d328b"
+    },
+    "billOfMaterials": {
+      "path": "evidence/billOfMaterials.txt",
+      "sha256": "89957b758c2e9dca76a0d667256733af8f26fec1f2561499f4ff602cfe1d926d"
+    },
+    "releaseQualification": {
+      "path": "evidence/release-qualification.json",
+      "sha256": "5c804526a35ba530846175449d0143c8816fbe378f0fb40dcb3e02aebe429e58"
+    }
+  }
+}
