@@ -1,0 +1,111 @@
+//! Immutable staged native tool definitions.
+
+#[derive(Clone, Copy)]
+pub(super) struct ToolSpec {
+    pub(super) name: &'static str,
+    pub(super) locator: ToolLocator,
+    pub(super) version_arguments: &'static [&'static str],
+    pub(super) required_version_fragment: &'static str,
+    pub(super) source_version: &'static str,
+    pub(super) source_derivation_fragment: &'static str,
+    pub(super) license_id: &'static str,
+}
+
+#[derive(Clone, Copy)]
+pub(super) enum ToolLocator {
+    Path(&'static str),
+    Rustfmt,
+}
+
+pub(super) const TOOL_SPECS: &[ToolSpec] = &[
+    ToolSpec {
+        name: "c-compiler",
+        locator: ToolLocator::Path("cc"),
+        version_arguments: &["--version"],
+        required_version_fragment: "clang version 21.1.8",
+        source_version: "21.1.8",
+        source_derivation_fragment: "oxyflut-clang-with-cc",
+        license_id: "Apache-2.0 WITH LLVM-exception",
+    },
+    ToolSpec {
+        name: "cxx-compiler",
+        locator: ToolLocator::Path("c++"),
+        version_arguments: &["--version"],
+        required_version_fragment: "clang version 21.1.8",
+        source_version: "21.1.8",
+        source_derivation_fragment: "oxyflut-clang-with-cc",
+        license_id: "Apache-2.0 WITH LLVM-exception",
+    },
+    ToolSpec {
+        name: "c-header-checker",
+        locator: ToolLocator::Path("clang"),
+        version_arguments: &["--version"],
+        required_version_fragment: "clang version 21.1.8",
+        source_version: "21.1.8",
+        source_derivation_fragment: "oxyflut-clang-with-cc",
+        license_id: "Apache-2.0 WITH LLVM-exception",
+    },
+    ToolSpec {
+        name: "linker",
+        locator: ToolLocator::Path("ld.lld"),
+        version_arguments: &["--version"],
+        required_version_fragment: "LLD 21.1.8",
+        source_version: "21.1.8",
+        source_derivation_fragment: "lld-21.1.8",
+        license_id: "Apache-2.0 WITH LLVM-exception",
+    },
+    ToolSpec {
+        name: "archiver",
+        locator: ToolLocator::Path("ar"),
+        version_arguments: &["--version"],
+        required_version_fragment: "GNU ar (GNU Binutils) 2.46",
+        source_version: "2.46",
+        source_derivation_fragment: "binutils-wrapper-2.46",
+        license_id: "GPL-3.0-or-later",
+    },
+    ToolSpec {
+        name: "symbol-inspector",
+        locator: ToolLocator::Path("nm"),
+        version_arguments: &["--version"],
+        required_version_fragment: "GNU nm (GNU Binutils) 2.46",
+        source_version: "2.46",
+        source_derivation_fragment: "binutils-wrapper-2.46",
+        license_id: "GPL-3.0-or-later",
+    },
+    ToolSpec {
+        name: "bindgen",
+        locator: ToolLocator::Path("bindgen"),
+        version_arguments: &["--version"],
+        required_version_fragment: "bindgen 0.72.1",
+        source_version: "0.72.1",
+        source_derivation_fragment: "rust-bindgen-0.72.1",
+        license_id: "BSD-3-Clause",
+    },
+    ToolSpec {
+        name: "cbindgen",
+        locator: ToolLocator::Path("cbindgen"),
+        version_arguments: &["--version"],
+        required_version_fragment: "cbindgen 0.29.4",
+        source_version: "0.29.4",
+        source_derivation_fragment: "rust-cbindgen-0.29.4",
+        license_id: "MPL-2.0",
+    },
+    ToolSpec {
+        name: "prettier",
+        locator: ToolLocator::Path("prettier"),
+        version_arguments: &["--version"],
+        required_version_fragment: "3.9.6",
+        source_version: "3.9.6",
+        source_derivation_fragment: "prettier-3.9.6",
+        license_id: "MIT",
+    },
+    ToolSpec {
+        name: "rustfmt",
+        locator: ToolLocator::Rustfmt,
+        version_arguments: &["--version"],
+        required_version_fragment: "88d9e12ae",
+        source_version: "1.98.0",
+        source_derivation_fragment: "",
+        license_id: "MIT OR Apache-2.0",
+    },
+];
