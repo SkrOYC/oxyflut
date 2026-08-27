@@ -5,8 +5,7 @@ use std::io;
 use std::path::{Path, PathBuf};
 
 use oxyflut_qualification::evidence::{
-    EvidenceError as CoreEvidenceError, EvidenceRef, MediaType, verify_file, verify_path_digest,
-    verify_reference,
+    EvidenceError as CoreEvidenceError, MediaType, verify_file, verify_path_digest,
 };
 use oxyflut_qualification::hash::Sha256Digest;
 use oxyflut_qualification::identifiers::RepositoryPath;
@@ -147,7 +146,7 @@ fn verify_declared_digests(root: &Path, value: &Value) -> Result<(), EvidenceAda
             }
         }
         Value::Object(object) => {
-            if is_evidence_reference_shape(object) {
+            if object.contains_key("path") && object.contains_key("sha256") {
                 verify_evidence_reference(root, object)?;
             }
             for item in object.values() {
@@ -157,14 +156,6 @@ fn verify_declared_digests(root: &Path, value: &Value) -> Result<(), EvidenceAda
         Value::Null | Value::Bool(_) | Value::Number(_) | Value::String(_) => {}
     }
     Ok(())
-}
-
-fn is_evidence_reference_shape(object: &Map<String, Value>) -> bool {
-    object.contains_key("path")
-        && object.contains_key("sha256")
-        && object
-            .keys()
-            .all(|key| matches!(key.as_str(), "path" | "sha256" | "mediaType" | "sizeBytes"))
 }
 
 fn verify_evidence_reference(
@@ -195,26 +186,31 @@ fn verify_evidence_reference(
                 .map_err(|_| EvidenceAdapterError::SchemaDeclaration)
         })?;
 
-    match (object.get("mediaType"), object.get("sizeBytes")) {
-        (None, None) => {
-            let _ =
-                verify_path_digest(root, &path, &digest).map_err(EvidenceAdapterError::Evidence)?;
-        }
-        (Some(Value::String(media_type)), Some(Value::Number(size_bytes))) => {
+    let verified = match object.get("mediaType") {
+        None => verify_path_digest(root, &path, &digest).map_err(EvidenceAdapterError::Evidence)?,
+        Some(Value::String(media_type)) => {
             let media_type =
                 MediaType::parse(media_type).map_err(EvidenceAdapterError::Evidence)?;
-            let size_bytes = size_bytes
-                .as_u64()
-                .ok_or(EvidenceAdapterError::SchemaDeclaration)?;
-            let reference = EvidenceRef {
-                path,
-                sha256: digest,
-                media_type,
-                size_bytes,
-            };
-            let _ = verify_reference(root, &reference).map_err(EvidenceAdapterError::Evidence)?;
+            let verified =
+                verify_file(root, &path, &media_type).map_err(EvidenceAdapterError::Evidence)?;
+            if verified.sha256() != digest {
+                return Err(EvidenceAdapterError::Evidence(
+                    CoreEvidenceError::DigestMismatch { path },
+                ));
+            }
+            verified
         }
-        _ => return Err(EvidenceAdapterError::SchemaDeclaration),
+        Some(_) => return Err(EvidenceAdapterError::SchemaDeclaration),
+    };
+    if let Some(size_bytes) = object.get("sizeBytes") {
+        let size_bytes = size_bytes
+            .as_u64()
+            .ok_or(EvidenceAdapterError::SchemaDeclaration)?;
+        if verified.size_bytes() != size_bytes {
+            return Err(EvidenceAdapterError::Evidence(
+                CoreEvidenceError::SizeMismatch { path },
+            ));
+        }
     }
     Ok(())
 }
@@ -239,6 +235,45 @@ mod tests {
         let out_of_root = verify(&root, "qualification/fixtures/evidence/out-of-root.json");
         assert!(matches!(
             out_of_root,
+            Err(EvidenceAdapterError::Evidence(_))
+        ));
+        Ok(())
+    }
+
+    #[test]
+    fn verifies_canonical_reference_shapes_without_a_size_field() -> Result<(), Box<dyn Error>> {
+        let root = repository_root()?;
+        verify(
+            &root,
+            "qualification/fixtures/evidence/canonical-reference-path-sha256.json",
+        )?;
+        verify(
+            &root,
+            "qualification/fixtures/evidence/canonical-reference-media-type.json",
+        )?;
+        verify(
+            &root,
+            "qualification/fixtures/evidence/canonical-reference-with-size.json",
+        )?;
+        Ok(())
+    }
+
+    #[test]
+    fn verifies_typed_digest_references_and_rejects_bad_optional_size() -> Result<(), Box<dyn Error>>
+    {
+        let root = repository_root()?;
+        assert!(matches!(
+            verify(
+                &root,
+                "qualification/fixtures/evidence/bad-platform-baseline-reference.json",
+            ),
+            Err(EvidenceAdapterError::Evidence(_))
+        ));
+        assert!(matches!(
+            verify(
+                &root,
+                "qualification/fixtures/evidence/canonical-reference-wrong-size.json",
+            ),
             Err(EvidenceAdapterError::Evidence(_))
         ));
         Ok(())
