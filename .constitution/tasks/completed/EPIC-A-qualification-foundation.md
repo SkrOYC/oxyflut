@@ -52,7 +52,7 @@ Command: cargo +1.98.0 test --workspace --all-features
 - **Touched Files:** `devenv.*`, `.envrc`, `.gitignore`
 - **Justification:** The host lacks a C toolchain; devenv provides the reproducible, hashable tool set that OXY-A008 will record.
 - **Touched Files:** `devenv.nix`
-- **Justification:** Review required checking every repository Markdown file with the pinned formatter while excluding generated build directories.
+- **Justification:** Review required checking every repository Markdown file with the pinned formatter while excluding generated build directories and digest-pinned qualification fixtures.
 - **Touched Files:** `native/engine-bridge/README.md`, `platform/{macos,windows,linux}/README.md`
 - **Justification:** The required target structure specifies documented empty placeholder directories; they contain no candidate or operating-environment implementation.
 - **Touched Files:** `.constitution/tasks/active/EPIC-A-qualification-foundation.md`
@@ -374,6 +374,8 @@ Command: cargo +1.98.0 run -p xtask -- contracts validate
 - **Justification:** PR review required process-level assertions that reports use standard output and diagnostics use standard error.
 - **Touched Files:** `xtask/src/main.rs`.
 - **Justification:** PR review required stable content-free command failure codes and reproduction hints at the shared command-error boundary.
+- **Touched Files:** `devenv.nix`, `deny.toml`, `.constitution/tech-spec/guidelines.md`, `xtask/src/{toolchain.rs,toolchain/specs.rs}`, `crates/oxyflut-qualification/src/evidence/references.rs`, and `.constitution/tasks/{completed/EPIC-A-qualification-foundation.md,changelog.md}`.
+- **Justification:** Final PR review round 4 aligned the documentation formatter, dependency policy, staged-toolchain pin location, host-gated validation reporting, and completion records without changing qualification behavior.
 
 ## Completion
 
@@ -383,7 +385,7 @@ Epic A completed its 34 story points without implementing candidate, platform, o
 
 | Ticket | Commits | Verification result | Deviations and assumptions |
 | :-- | :-- | :-- | :-- |
-| OXY-A001 | `9d9cece243a76949694fb1a6af15ce564a416b6f`, `000448dfd1fca5b45b63ea6deae6d9992fc0b0f3` | `cargo +1.98.0 fmt --all --check` passed with exit 0. | Added the reproducible toolchain and documented empty target-structure directories; see [deviations](#oxy-a001-deviations--justifications). |
+| OXY-A001 | `94966fc`, `9d9cece243a76949694fb1a6af15ce564a416b6f`, `000448dfd1fca5b45b63ea6deae6d9992fc0b0f3` | `cargo +1.98.0 fmt --all --check` passed with exit 0. | Added the reproducible toolchain and documented empty target-structure directories; see [deviations](#oxy-a001-deviations--justifications). |
 | OXY-A002 | `ce3019bac4622d34960911dcc0275786fb16ea4f`, `971f12e706dbdd3860aba8fcf1efcfcc558ac4c1` | `cargo +1.98.0 test --workspace --all-features schema && cargo +1.98.0 test --workspace --all-features hash` passed with exit 0. | Added shared pinned dependencies, dispatcher support, and a local keyword fixture; see [deviations](#oxy-a002-deviations--justifications). |
 | OXY-A003 | `ddbc70c976f8a06b21f19f8c76ff460703bce61d`, `f2c9087db747b6211766f04b3902463f7ecfe94a`, `7ceea79679cbf7a15e83b44dbf2af4c25408ad7e` | `cargo +1.98.0 test -p xtask contracts::traceability` passed with exit 0. | Added command wiring and schema-fixture exclusion; the contract-test location and accessibility generation gaps are routed below; see [deviations](#oxy-a003-deviations--justifications). |
 | OXY-A004 | `6a8447ee51c485c114effc072ec28fd903ee9883`, `a245e4b48066ea8258491a8bb64b097fbc279dec` | `cargo +1.98.0 test -p xtask contracts::readiness` passed with exit 0. | Added validator wiring and reused traceability validation; the five promotion-artifact schema gaps are routed below; see [deviations](#oxy-a004-deviations--justifications). |
@@ -391,6 +393,8 @@ Epic A completed its 34 story points without implementing candidate, platform, o
 | OXY-A005 | `1a0545f0ca81584e09b140331c2166414d212317`, `93999fe7dfa135ea504e00e0543408657bca241c` | `cargo +1.98.0 test -p xtask contracts::native` passed with exit 0. | Added aggregate-command support and test-only authoritative-contract compilation modules; see [deviations](#oxy-a005-deviations--justifications). |
 | OXY-A006 | `8b231502dc61e141d45a44df1770a13ad0e20ac5`, `5e387389a17b82be7928d3e3fc6d9279d4980329` | `cargo +1.98.0 test --workspace --all-features` passed with exit 0. | Split the evidence module into cohesive canonical, publication, and verification modules; see [deviations](#oxy-a006-deviations--justifications). |
 | OXY-A007 | `8162b47b9ff972ad76bdee0c6640607ff728a4ac`, `39dd00c1da08481bcdde06ea5366c6395b67beb3` | `cargo +1.98.0 run -p xtask -- contracts validate` passed with exit 0. | Added aggregate native and readiness support needed for distinct family outcomes; see [deviations](#oxy-a007-deviations--justifications). |
+| Epic A reconciliation | `ced1cd7` | Archived Epic A and reconciled its completion records. | Preserved the active-plan handoff and routed Stage 3 gaps to OXY-D001. |
+| PR review rounds 1–4 | `e2d362e`, `923ad31`, `0f9aa53`, `f80e27a`, `13536a9`, `62019ad`, `09041ab`, `03ab783`, `fe3e533`, `4339a01`, `73b58e6`, and `chore: final review polish for the qualification foundation (PR review round 4)` | Full final quality gate passed. | Applied review-only polish without changing qualification behavior. |
 
 ### Stage 3 revisions required — routed to OXY-D001
 

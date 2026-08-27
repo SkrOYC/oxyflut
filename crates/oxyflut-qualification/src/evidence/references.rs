@@ -35,15 +35,15 @@ pub enum DeclaredReferenceError {
 
 /// Collects immutable repository references for one declared durable schema identity.
 ///
-/// Documents outside the known reference-bearing schema identities produce no references. A
-/// `path` or `localPath` without a `sha256` key isn't a reference and is skipped. Once a
-/// `sha256` key is present, both values must be strings, except that a paired null path and
-/// digest represents an absent optional reference.
+/// Documents outside the known reference-bearing schema identities produce no references. An
+/// object without a `path` or `localPath` is skipped, even when it has a `sha256` key. A `path`
+/// or `localPath` without a `sha256` key is also skipped. When both fields are present, they must
+/// be strings, except that paired null values represent an absent optional reference.
 ///
 /// # Errors
 ///
-/// Returns [`DeclaredReferenceError::IncompleteReference`] when a declared digest is null or
-/// otherwise mismatched with a path value.
+/// Returns [`DeclaredReferenceError::IncompleteReference`] when paired path and digest values are
+/// mismatched or aren't strings, except for paired null values.
 pub fn declared_references<'value>(
     schema_identity: &str,
     value: &'value Value,

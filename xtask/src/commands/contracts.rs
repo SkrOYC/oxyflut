@@ -52,10 +52,7 @@ fn validate_workspace(root: &Path) -> ContractValidationReport {
     summaries.extend(readiness_summaries(
         validators::readiness::validate_workspace(root),
     ));
-    summaries.push(match validate_rust_contracts(root) {
-        Ok(()) => FamilySummary::ok("rust-contract", RUST_CONTRACTS_PATH),
-        Err(path) => FamilySummary::failed_path("rust-contract", path),
-    });
+    summaries.push(rust_contract_summary(validate_rust_contracts(root)));
 
     match validators::native::NativeTools::load(root) {
         Ok(tools) => summaries.extend(native_summaries(root, &tools)),
@@ -293,17 +290,47 @@ fn readiness_summaries(
     }
 }
 
+fn rust_contract_summary(result: Result<(), RustContractError>) -> FamilySummary {
+    match result {
+        Ok(()) => FamilySummary::ok("rust-contract", RUST_CONTRACTS_PATH),
+        Err(RustContractError::UnsupportedHost) => {
+            FamilySummary::failed("rust-contract", UNSUPPORTED_HOST)
+        }
+        Err(RustContractError::ValidationFailed(path)) => {
+            FamilySummary::failed_path("rust-contract", path)
+        }
+    }
+}
+
+/// Reports why authoritative Rust-contract validation could not complete.
+enum RustContractError {
+    /// The staged native toolchain does not support the current host.
+    UnsupportedHost,
+    /// Rust contract parsing or its setup failed at the reported repository path.
+    ValidationFailed(String),
+}
+
 /// Parses all authoritative Rust contracts with the manifest-verified pinned compiler.
 ///
 /// This validation loads the staged manifest independently from native-tool validation. It uses
 /// the manifest's verified `rustc` path for each metadata-only library and doesn't require a C
 /// toolchain. Exact declared-symbol resolution remains the responsibility of the traceability
 /// family.
-fn validate_rust_contracts(root: &Path) -> Result<(), String> {
-    let rustc = validators::native::load_rust_contract_compiler(root)
-        .map_err(|_| RUST_CONTRACTS_PATH.to_owned())?;
-    let temporary =
-        ContractTemporaryDirectory::new().map_err(|_| RUST_CONTRACTS_PATH.to_owned())?;
+fn validate_rust_contracts(root: &Path) -> Result<(), RustContractError> {
+    let rustc = validators::native::load_rust_contract_compiler(root).map_err(|error| {
+        if matches!(
+            error,
+            validators::native::NativeContractError::Toolchain(
+                toolchain::ToolchainError::UnsupportedHost { .. }
+            )
+        ) {
+            RustContractError::UnsupportedHost
+        } else {
+            RustContractError::ValidationFailed(RUST_CONTRACTS_PATH.to_owned())
+        }
+    })?;
+    let temporary = ContractTemporaryDirectory::new()
+        .map_err(|_| RustContractError::ValidationFailed(RUST_CONTRACTS_PATH.to_owned()))?;
     for (crate_name, contract_path) in [
         ("oxyflut_public_contract", "oxyflut-public.rs"),
         ("oxyflut_substrate_contract", "oxyflut-substrate.rs"),
@@ -326,7 +353,9 @@ fn validate_rust_contracts(root: &Path) -> Result<(), String> {
             .arg(&path)
             .output();
         if !status.is_ok_and(|output| output.status.success()) {
-            return Err(summary_path(root, &path));
+            return Err(RustContractError::ValidationFailed(summary_path(
+                root, &path,
+            )));
         }
     }
     Ok(())
@@ -495,14 +524,18 @@ mod tests {
     use std::path::Path;
 
     use super::{
-        ContractTemporaryDirectory, FAMILY_COUNT, accessibility_generation_summary,
-        contract_test_summary, readiness_summaries, validate_workspace, validators, workspace_root,
+        ContractTemporaryDirectory, FAMILY_COUNT, RustContractError,
+        accessibility_generation_summary, contract_test_summary, readiness_summaries,
+        rust_contract_summary, validate_workspace, validators, workspace_root,
     };
     use crate::CommandOutcome;
 
     #[test]
     fn contracts_validation_runs_all_families_with_stable_content_free_summaries()
     -> Result<(), Box<dyn Error>> {
+        if skip_on_unsupported_host()? {
+            return Ok(());
+        }
         let root = workspace_root()
             .map_err(|_| std::io::Error::other("xtask must remain below the workspace root"))?;
         let report = validate_workspace(&root);
@@ -528,6 +561,14 @@ mod tests {
         );
         assert_eq!(report.outcome(), CommandOutcome::Success);
         Ok(())
+    }
+
+    #[test]
+    fn rust_contract_unsupported_host_uses_native_failure_marker() {
+        assert_eq!(
+            rust_contract_summary(Err(RustContractError::UnsupportedHost)).line(),
+            "rust-contract: failed (unsupported host)"
+        );
     }
 
     #[test]
@@ -632,6 +673,15 @@ mod tests {
             super::run(&["unexpected".to_owned()]),
             CommandOutcome::Failed(_)
         ));
+    }
+
+    fn skip_on_unsupported_host() -> Result<bool, Box<dyn Error>> {
+        if crate::toolchain::is_staged_host()? {
+            Ok(false)
+        } else {
+            eprintln!("skipped: staged toolchain host is x86_64-unknown-linux-gnu");
+            Ok(true)
+        }
     }
 
     fn copy_directory(source: &Path, destination: &Path) -> Result<(), std::io::Error> {

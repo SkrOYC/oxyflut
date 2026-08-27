@@ -18,6 +18,8 @@ pub(super) enum ToolLocator {
     Rustc,
 }
 
+pub(super) const LINUX_LIBC_HEADERS_VERSION: &str = "glibc-2.42-67";
+
 pub(super) const TOOL_SPECS: &[ToolSpec] = &[
     ToolSpec {
         name: "c-compiler",

@@ -23,7 +23,10 @@ allow = [
 ignore = true
 
 [bans]
-multiple-versions = "warn"
+multiple-versions = "deny"
+skip = [
+  { crate = "syn@3.0.4", reason = "Required transitively by jsonschema 0.51.0." },
+]
 wildcards = "deny"
 
 [sources]
