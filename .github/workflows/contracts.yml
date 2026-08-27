@@ -3,6 +3,11 @@ name: Contract validation
 on:
   pull_request:
   push:
+    branches: [master]
+
+concurrency:
+  group: contracts-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -16,7 +21,7 @@ jobs:
           persist-credentials: false
       - uses: cachix/install-nix-action@13d8dd58da0234aa297dedd986986ccb8e7f3e24 # v31.11.1
         with:
-          github_access_token: ""
+          github_access_token: ${{ github.token }}
       - name: Install locked devenv
         run: nix profile install github:NixOS/nixpkgs/56c02bc00adcf003215cc4bd996d6efaf4cff188#devenv
       - uses: dtolnay/rust-toolchain@6c977a6ca4077a0ceb28ffbe03f59d46e9ac8772 # pinned commit
@@ -24,10 +29,14 @@ jobs:
           toolchain: 1.98.0
           components: rustfmt,clippy
       - name: Validate contracts
-        run: devenv shell -- cargo +1.98.0 run -p xtask -- contracts validate
+        run: devenv shell -- contracts-validate
       - name: Check Rust formatting
-        run: devenv shell -- cargo +1.98.0 fmt --all --check
+        run: devenv shell -- fmt-check
       - name: Lint
-        run: devenv shell -- cargo +1.98.0 clippy --workspace --all-targets --all-features -- -D warnings
+        run: devenv shell -- clippy-check
       - name: Test
-        run: devenv shell -- cargo +1.98.0 test --workspace --all-features
+        run: devenv shell -- test-all
+      - name: Check documentation formatting
+        run: devenv shell -- docs-check
+      - name: Check dependency policy
+        run: devenv shell -- deny-check
