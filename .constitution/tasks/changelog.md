@@ -2,6 +2,27 @@
 
 All notable changes to the Stage 4 execution plan appear in this file.
 
+## [v0.3.0] - 2026-08-28
+
+### Added
+
+- Added six completed spike reports for the Tier 1 platform baselines, the common-case layout visit cap, and the shared security-patch and fuzz-corpus policy: `.constitution/spikes/SPK-B001.md` through `.constitution/spikes/SPK-B006.md`.
+- Added the reference-hardware access register in `.constitution/reports/reference-hardware-access.md` with owner attestations, host-discovery and X11-access probes, and per-environment conformance and second-configuration findings.
+- Added the assessor coordination record in `.constitution/reports/qualification-assessors.md` with the frozen scoring criteria, independence rules, evidence-access procedure, written-consensus procedure, and second-assessor confirmation procedure.
+
+### Changed
+
+- Recomputed the critical path: `OXY-D001` is the single remaining active ticket at 2 story points, and every Epic B dependency is satisfied.
+- Archived Epic B with a completion record and its deviations; the lead moves `.constitution/tasks/active/EPIC-B-readiness-research.md` to `.constitution/tasks/completed/` outside this entry.
+- Routed every Epic B Stage 3 revision, retained gating KU, and blocked external input into the `OXY-D001 Inputs from Epic B` section of `.constitution/tasks/active/EPIC-D-readiness-reconciliation.md`.
+
+### Known limitations
+
+- macOS arm64 and Windows x86-64 reference-hardware access is blocked. Neither environment has a named accountable owner or a usable access procedure, so neither can be compared with its Stage 3 reference.
+- The second assessor is missing. Only one confirmation is preserved, so OXY-B008 stays open and `measurementPolicy.assessors` stays `null`.
+- The authorship-independence rule is unresolved. Stage 1 must approve and apply the PRD amendment before Stage 3 can update the conforming qualification contracts, and until then a disclosed candidate-code or qualification-evidence authorship remains a gating conflict.
+- The numeric layout visit cap, the Tier 1 platform and protocol floors, and the independent presentation-opportunity meters remain gating known unknowns. This Stage 4 iteration cannot set `candidateImplementationReady`.
+
 ## [v0.2.22] - 2026-08-28
 
 ### Fixed

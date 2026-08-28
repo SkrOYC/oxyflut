@@ -1,23 +1,18 @@
 # Qualification planning critical path
 
-- **Version:** v0.2.22
-- **Active story points:** 22
-- **Active phase:** Pre-implementation readiness research and Stage 3 reconciliation
+- **Version:** v0.3.0
+- **Active story points:** 2
+- **Active phase:** Readiness reconciliation
 
 ## Critical path
 
-The six co-critical paths are 5 story points each:
+One path remains, and it is 2 story points:
 
-1. `OXY-B001` → `OXY-D001`
-2. `OXY-B002` → `OXY-D001`
-3. `OXY-B003` → `OXY-D001`
-4. `OXY-B004` → `OXY-D001`
-5. `OXY-B005` → `OXY-D001`
-6. `OXY-B006` → `OXY-D001`
+1. `OXY-D001`
 
-`OXY-B007` and `OXY-B008` also complete before `OXY-D001`, but their 3-story-point paths don't lengthen the critical path.
+Every Epic B dependency of `OXY-D001` is satisfied. `OXY-B001` through `OXY-B006` delivered their spike reports, `OXY-B007` delivered the reference-hardware access register, and `OXY-B008` delivered the assessor coordination record as an explicitly blocked external input. Epics A and C were already archived, so `OXY-D001` has no unsatisfied prerequisite.
 
-The critical path now runs from Epic B inputs to `OXY-D001`. The next critical epic is Epic B, Readiness research and coordination inputs.
+The critical path now runs through `OXY-D001` alone. The next critical epic is Epic D, Readiness reconciliation.
 
 ## Build order
 
@@ -25,19 +20,12 @@ An arrow points from a prerequisite to a ticket that depends on it. Dependencies
 
 ```mermaid
 flowchart LR
-    B001[OXY-B001] --> D001[OXY-D001]
-    B002[OXY-B002] --> D001
-    B003[OXY-B003] --> D001
-    B004[OXY-B004] --> D001
-    B005[OXY-B005] --> D001
-    B006[OXY-B006] --> D001
-    B007[OXY-B007] --> D001
-    B008[OXY-B008] --> D001
+    D001[OXY-D001]
 ```
 
 ## Phasing strategy
 
-This active plan completes the remaining pre-implementation research and coordination inputs: Tier 1 platform-baseline recommendations, the common-case layout visit-cap recommendation, shared security-patch and fuzz-corpus policy, reference-hardware access, and assessor confirmations.
+The pre-implementation research and coordination inputs now exist: Tier 1 platform-baseline recommendations for macOS, Windows, Wayland, and X11; the common-case layout visit-cap corpus, counting model, and derived probe threshold; the shared synthetic security-patch and frozen fuzz-corpus policy; the reference-hardware access register; and the assessor coordination record. Two inputs remain blocked on people outside this plan: macOS arm64 and Windows x86-64 reference-hardware access, which has no named owner or access procedure; and the second assessor plus the Stage 1 authorship-independence decision, without which the two-assessor and scoring-anchor gates cannot close.
 
 `OXY-D001` consolidates those inputs with the completed Epic C tooling, names every missing approved or captured lock input, and routes required Stage 3 revisions without claiming readiness. The work runs inside the reproducible devenv shell.
 
