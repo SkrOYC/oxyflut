@@ -884,8 +884,12 @@ The frozen prequalification-probe lock breaks the evidence-order problem without
 - **ADRs to write or update:** None. This report doesn't change an architecture decision.
 - **Tickets unblocked in `tasks/active/`:** None. `OXY-D001` remains blocked by `layout-visit-cap`.
 - **Tickets to add or split:** Add one bounded prequalification layout-cost prototype ticket only after Stage 3 authorizes the probe in "Next bounded probe".
-- **Spec edits required:** Stage 3 must apply all of the following edits without setting a numeric cap.
-  - Create `.constitution/tech-spec/data-models/layout-qualification-record.schema.json` with the exact bytes in the following code block. Its SHA-256 is `09d96af49384e47ee6154f386af2ef771985516a61c843d561835654283bd7b1`.
+
+### Spec edits required
+
+Stage 3 must apply all of the following edits without setting a numeric cap.
+
+- Create `.constitution/tech-spec/data-models/layout-qualification-record.schema.json` with the exact bytes in the following code block. Its SHA-256 is `09d96af49384e47ee6154f386af2ef771985516a61c843d561835654283bd7b1`.
 
 <!-- canonical-block: layout-qualification-record-schema -->
 
@@ -1826,6 +1830,9 @@ These new v6 artifacts must land atomically with the migration above. `N` means 
 | File or directory | Required Stage 3 change |
 | :-- | :-- |
 | `qualification/staged/layout-visit-corpus.json` | N+D: create from the exact bytes in "Durable corpus bytes" and verify SHA-256 `4972e43333984047b5a1d84200d5b89a29c5b59e47c5aca8773379320f2c6c84` before the v6 lock binds it. |
+| `qualification/staged/layout-visit-counting-rules.json` | N+D: create from the exact fenced bytes and verify SHA-256 `6cd0d7c7b06587525d9127f15cceecdd6f9c21b8a62be93c70c9b3756ca459c2` before the v6 lock binds it. |
+| `.constitution/tech-spec/data-models/layout-qualification-record.schema.json` | N+D: create the raw layout-transaction record schema from the exact fenced bytes and verify SHA-256 `09d96af49384e47ee6154f386af2ef771985516a61c843d561835654283bd7b1` before the v6 lock binds it. |
+| `.constitution/tech-spec/data-models/layout-prequalification-run.schema.json` | N+D: create the per-candidate, environment, and passing-fixture run schema from the exact fenced bytes and verify SHA-256 `76dfee7dfcdfdd49e2d67afdf83ab43c29dbb6513652a8023b0869a7d59293e2` before the v6 lock binds it. |
 | `.constitution/tech-spec/data-models/layout-prequalification-suite.schema.json` | N+D: create from the exact fenced bytes and verify SHA-256 `27e3a876f3b8d5e88ad43089a9eff0c7ce225a6d9cece5fcd789f7759c05c924` before the v6 lock binds it. |
 | `.constitution/tech-spec/data-models/qualification-lock.schema.json` and `.constitution/tech-spec/contracts/qualification-lock.json` | R+D: add and bind `layoutPrequalificationSuiteSchema` with the other five new layout fields; preserve the v6 migration requirements already listed. |
 | `xtask/src/commands/layout_prequalification.rs` and its command registration | N+V: implement `--corpus CORPUS_PATH` and `--suite-schema SUITE_SCHEMA_PATH` raw-byte digest binding, corpus-derived fixture expectations, variable-cardinality transaction-frame validation, and complete 48-tuple suite validation. |
@@ -1883,6 +1890,26 @@ canonical_fenced_blocks=7
 canonical_fence_assertions=passed
 6cd0d7c7b06587525d9127f15cceecdd6f9c21b8a62be93c70c9b3756ca459c2  /tmp/wf-epic-b/OXY-B005-pr-fix/layout-visit-counting-rules.after-prettier.json
 counting_rules_reserialization=passed
+```
+
+The PR round-2 inventory correction reran the seven-digest check after the inventory update. The verifier wrote only `/tmp/wf-epic-b/OXY-B005/canonical-blocks-round-2/` files.
+
+```sh
+set -euo pipefail
+rm -rf /tmp/wf-epic-b/OXY-B005/canonical-blocks-round-2
+perl /tmp/wf-epic-b/OXY-B005/verify-canonical-blocks-round-2.pl .constitution/spikes/SPK-B005.md /tmp/wf-epic-b/OXY-B005/canonical-blocks-round-2
+```
+
+```text
+layout-visit-corpus|4972e43333984047b5a1d84200d5b89a29c5b59e47c5aca8773379320f2c6c84|6152|ok
+layout-visit-topology-model-source|a0774355500de806c118316982dc6b781518f9b1134f6c9239d6f3fcc149ddff|18850|ok
+layout-qualification-record-schema|09d96af49384e47ee6154f386af2ef771985516a61c843d561835654283bd7b1|13109|ok
+layout-prequalification-run-schema|76dfee7dfcdfdd49e2d67afdf83ab43c29dbb6513652a8023b0869a7d59293e2|5479|ok
+layout-prequalification-suite-schema|27e3a876f3b8d5e88ad43089a9eff0c7ce225a6d9cece5fcd789f7759c05c924|2467|ok
+layout-visit-counting-rules|6cd0d7c7b06587525d9127f15cceecdd6f9c21b8a62be93c70c9b3756ca459c2|976|ok
+qualification-lock-v6-changelog-entry|7c271171a6cdda4515e7c96e26ac5db79cd05f1d5acc1d62e03ceb37853f2bb9|651|ok
+canonical_fenced_blocks=7
+canonical_fence_assertions=passed
 ```
 
 ## Sources
