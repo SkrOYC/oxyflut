@@ -1758,11 +1758,23 @@ def nearest_rank_p99_ns(frame_totals):
 - `xtask/src/contracts/schema.rs` automatically requires fixture directories for every schema. Add `qualification/fixtures/contracts/layout-qualification-record/valid/minimal.json`, plus `invalid/additional-properties.json`, `invalid/conditional.json`, `invalid/enum.json`, `invalid/required.json`, `invalid/type.json`, and `invalid/sample-exclusion.json` with a matching `.expected.json` sidecar for every invalid file. The valid fixture must bind all required record identities with `valid: true`; the invalid fixtures must separately reject a missing `countingRulesDigest`, a nonmatching fixture `capOutcome`, an invalid candidate or environment, an extra property, an invalid counter type, `valid: false`, an `exclusionReason`, and nonzero `paintSubmissionNs` after `transactionOrdinal: 1`. Add the same valid and schema-invalid fixture matrix for `qualification/fixtures/contracts/layout-prequalification-run/`; its valid fixture has 20 launches, 300 warmup frames, and 500 measured frames per launch. Add the same valid and schema-invalid fixture matrix for `qualification/fixtures/contracts/layout-prequalification-suite/`; its valid fixture contains exactly 48 syntactically valid tuple entries and a `suiteSchemaDigest`, while custom-validator fixtures prove cross-product completeness, uniqueness, digest binding, pass state, and shared identities.
 - Update these existing qualification-lock schema fixtures and their necessary sidecars to v6 and the six new required `measurementPolicy` fields: `qualification/fixtures/contracts/qualification-lock/valid/minimal.json`; `qualification/fixtures/contracts/qualification-lock/invalid/additional-properties.json`; `qualification/fixtures/contracts/qualification-lock/invalid/additional-properties.expected.json`; `qualification/fixtures/contracts/qualification-lock/invalid/conditional.json`; `qualification/fixtures/contracts/qualification-lock/invalid/conditional.expected.json`; `qualification/fixtures/contracts/qualification-lock/invalid/enum.json`; `qualification/fixtures/contracts/qualification-lock/invalid/enum.expected.json`; `qualification/fixtures/contracts/qualification-lock/invalid/required.json`; `qualification/fixtures/contracts/qualification-lock/invalid/required.expected.json`; `qualification/fixtures/contracts/qualification-lock/invalid/type.json`; and `qualification/fixtures/contracts/qualification-lock/invalid/type.expected.json`. Keep `qualification/fixtures/contracts/qualification-lock/invalid/superseded-identity.json` at the v4 identity, but change `qualification/fixtures/contracts/qualification-lock/invalid/superseded-identity.expected.json` to `"supersededBy": "urn:oxyflut:schema:qualification-lock:6"` and change the qualification-lock entry in `qualification/fixtures/contracts/supersession.json` to `"superseded": "urn:oxyflut:schema:qualification-lock:5"` and `"current": "urn:oxyflut:schema:qualification-lock:6"`.
 - Migrate the lock-bearing readiness fixtures so `xtask contracts validate` reaches their intended assertions with the six new `measurementPolicy` fields: `qualification/fixtures/contracts/readiness/ready/.constitution/tech-spec/contracts/qualification-lock.json`; `qualification/fixtures/contracts/readiness/production-3b/.constitution/tech-spec/contracts/qualification-lock.json`; `qualification/fixtures/contracts/readiness/ready/negative/missing-candidate-identities-lock.json`; `qualification/fixtures/contracts/readiness/ready/negative/unresolved-readiness-lock.json`; `qualification/fixtures/contracts/readiness/ready/negative/mismatched-typed-reference-lock.json`; `qualification/fixtures/contracts/readiness/ready/negative/synthetic-baseline-lock.json`; `qualification/fixtures/contracts/readiness/ready/negative/mismatched-engine-revision-lock.json`; `qualification/fixtures/contracts/readiness/ready/negative/unresolved-tool-fields-lock.json`; `qualification/fixtures/contracts/readiness/ready/negative/mismatched-tool-lock.json`; and `qualification/fixtures/contracts/readiness/ready/negative/missing-tool-lock.json`. Update their copied active `specificationVersion` values to `"0.16.0"` and regenerate only the digest-bound fixture artifacts that change because of this migration.
+- Correction: The preceding readiness-fixture bullet names 10 contract-readiness locks. Add the following three top-level lock fixtures so the v5-to-v6 readiness-fixture landing inventory contains 13 instances, not 10.
+- `qualification/fixtures/readiness/complete.synthetic.json`: change `schemaVersion` to `"6.0.0"`; add the five layout digest fields with the exact five non-null digests specified for the active v6 lock; and add a non-null `layoutPrequalificationIdentities` 2-candidate by 4-environment matrix. Each matrix entry must use the fixture's resolved source revision and immutable candidate-artifact digest. The fixture deliberately claims candidate readiness, so none of these six fields can be `null`. Extend `xtask/src/commands/lock_tests.rs` `complete_fixture_root` to rehash all five path-bound inputs after it copies the workspace, and retain the matrix in the fixture so the completed workspace remains ready.
+- `qualification/fixtures/readiness/invalid.json`: change `schemaVersion` to `"6.0.0"`; add `layoutVisitCorpus`, `layoutVisitCountingRules`, `layoutQualificationRecordSchema`, `layoutPrequalificationRunSchema`, and `layoutPrequalificationSuiteSchema` as `null`; add `layoutPrequalificationIdentities: null`; and add the named `layout-prequalification-identities` KU to both known-unknown arrays. Keep its existing invalid platform-contract binding so `lock_tests` reaches its intended failing assertion.
+- `qualification/fixtures/readiness/cleared-without-evidence.json`: change `schemaVersion` to `"6.0.0"`; add the same five digest fields as `null`; add `layoutPrequalificationIdentities: null`; and add the named `layout-prequalification-identities` KU to both known-unknown arrays. This preserves the fixture's assertion that clearing unrelated KUs doesn't make the candidate gate ready.
+- `crates/oxyflut-qualification/src/readiness.rs`: extend `POLICY_FIELDS` with `PolicyField` rows for `layoutVisitCorpus` at `qualification/staged/layout-visit-corpus.json`, `layoutVisitCountingRules` at `qualification/staged/layout-visit-counting-rules.json`, `layoutQualificationRecordSchema` at `.constitution/tech-spec/data-models/layout-qualification-record.schema.json`, `layoutPrequalificationRunSchema` at `.constitution/tech-spec/data-models/layout-prequalification-run.schema.json`, and `layoutPrequalificationSuiteSchema` at `.constitution/tech-spec/data-models/layout-prequalification-suite.schema.json`; each uses upstream owner `OXY-D001`. Add `layoutPrequalificationIdentities` as a path-less `PolicyField` with upstream owner `OXY-D001`. Extend the `measurement_policy_path` and `candidate_status_input_bindings` tests to assert the five exact paths and the identity field's `None` path. Without the five path-bound rows, the digests would be lock-bound but never verified by `lock status` and never reported as blocking.
+- `crates/oxyflut-qualification/src/readiness.rs`: add `layout-prequalification-identities` to `KNOWN_UNKNOWN_BINDINGS` with `required_field: "measurementPolicy.layoutPrequalificationIdentities"`, `evidence_path: None`, and upstream owner `OXY-D001`. The active lock and both top-level fixture locks retain the field as `null` and include this KU in both known-unknown arrays. `collect_measurement_policy` then reports the null field, while `collect_known_unknowns` reports the named KU; neither path can silently clear this gate. Update the embedded `complete.synthetic.json` and `cleared-without-evidence.json` tests and exact KU assertions accordingly.
+- `xtask/src/commands/lock.rs`: no separate field list exists; it consumes `StagedInputRegistry::candidate_status_input_bindings`. After the registry rows above and `complete_fixture_root` rehashing land, retain its generic missing-file loop so each of the five new path-bound inputs is independently removed and rejected. Add the `layoutPrequalificationIdentities: null` blocking line and named KU to the open-report assertions.
+- `xtask/src/commands/lock_tests.rs`: it copies `qualification/fixtures/readiness/complete.synthetic.json` into the temporary workspace as `LOCK_PATH`. Update the five-field hash array in `complete_fixture_root`, the full-ready assertion, and the two open-fixture KU assertions so the migration is tested through the command path rather than only through JSON Schema.
+- `xtask/src/contracts/readiness.rs`: replace `LOCK_SCHEMA` with `urn:oxyflut:schema:qualification-lock:6`, then extend the claimed-ready policy checks to require all five new digest fields and a non-null, complete `layoutPrequalificationIdentities` matrix. This validator loads the copied readiness locks through `LOCK_SCHEMA`; its fixtures must therefore be v6 before `xtask contracts validate` can reach their intended semantic assertions.
+- `xtask/src/commands/environment/mod.rs`: retain the existing v6 `LOCK_SCHEMA` update already listed. It validates the same copied qualification-lock fixtures, so no separate layout-field traversal is needed after the v6 schema resolves their required shape.
+- The broad inventory also reaches `xtask/src/contracts/traceability/{mod.rs,fixtures.rs,tests.rs}`, `xtask/src/commands/{baseline.rs,measurement.rs}`, `xtask/src/contracts/readiness_tests.rs`, and `crates/oxyflut-qualification/src/identifiers.rs`. Their matches concern `capabilityBaseline`, raw-measurement records, platform-schema v5 values, active specification versions, or generic schema-version parsing; none hard-codes the qualification-lock v5 identity or enumerates the new layout fields. Keep their existing version or digest work in the 56-path inventory, but don't add an unrelated layout migration.
+- `.constitution/tech-spec/contracts/qualification-lock.json`: in addition to the six fields already specified, add `layout-prequalification-identities` to both `preImplementationKnownUnknowns` and `gatingKnownUnknowns` while `measurementPolicy.layoutPrequalificationIdentities` is `null`. `.constitution/tech-spec/migrations/qualification-lock-v5-to-v6.md` must state this preservation rule alongside `layout-visit-cap`. This is a distinct KU: `layout-visit-cap` remains the unresolved numeric threshold, while `layout-prequalification-identities` is the unresolved source-and-artifact binding required to run the prequalification matrix.
 - `.constitution/tech-spec/stack.md` in the Scope guard paragraph beginning `The current qualification lock`: append exactly `Before candidateImplementationReady becomes true, Stage 4 may run unscored nonproduction candidate probes only to resolve a pre-implementation gating KU; each probe must use the frozen evidence contract and can't produce comparative scores or select a candidate.`
 
 ### Version migration inventory
 
-The preserved `grep` found 56 active-version-dependent paths under `xtask/` and `qualification/`. For every `R` entry, replace the active literal `"0.15.0"` with exactly `"0.16.0"`. For every `R+D` entry, also regenerate every valid digest-bound parent, reference, fixture sidecar, and test assertion affected by the changed bytes. For every `R+N` entry, preserve the intentionally invalid digest or value after updating the active-version literal and revalidate its intended failure.
+The preserved `grep` found 56 active-version-dependent paths under `xtask/` and `qualification/`. The separate v5-to-v6 lock landing inventory contains 13 readiness-lock instances: the 10 contract-readiness fixtures listed above plus the three top-level readiness fixtures added in the round-3 correction. For every `R` entry, replace the active literal `"0.15.0"` with exactly `"0.16.0"`. For every `R+D` entry, also regenerate every valid digest-bound parent, reference, fixture sidecar, and test assertion affected by the changed bytes. For every `R+N` entry, preserve the intentionally invalid digest or value after updating the active-version literal and revalidate its intended failure.
 
 | File | Required Stage 3 change |
 | :-- | :-- |
@@ -1841,6 +1853,35 @@ These new v6 artifacts must land atomically with the migration above. `N` means 
 
 After the migration and digest regeneration, `cargo +1.98.0 run -p xtask -- contracts validate` and `cargo +1.98.0 test --workspace --all-features` must both pass.
 
+### PR round-3 lock landing inventory probe
+
+The following host probe rechecked every `measurementPolicy`, literal `"5.0.0"`, and `schemaVersion` match under `xtask`, `crates`, and `qualification`. It emitted 303 lines; the preserved output is trimmed to the three omitted lock fixtures and the code paths that consume them.
+
+```sh
+grep -rn 'measurementPolicy\|"5.0.0"\|schemaVersion' xtask crates qualification
+```
+
+```text
+qualification/fixtures/readiness/complete.synthetic.json:3:  "schemaVersion": "5.0.0",
+qualification/fixtures/readiness/complete.synthetic.json:110:  "measurementPolicy": {
+qualification/fixtures/readiness/invalid.json:3:  "schemaVersion": "5.0.0",
+qualification/fixtures/readiness/invalid.json:110:  "measurementPolicy": {
+qualification/fixtures/readiness/cleared-without-evidence.json:3:  "schemaVersion": "5.0.0",
+qualification/fixtures/readiness/cleared-without-evidence.json:110:  "measurementPolicy": {
+xtask/src/commands/lock_tests.rs:19:const COMPLETE_SYNTHETIC: &str = "qualification/fixtures/readiness/complete.synthetic.json";
+xtask/src/commands/lock_tests.rs:551:    let mut lock = read_readiness_fixture(&source, &source.join(COMPLETE_SYNTHETIC))?;
+xtask/src/contracts/readiness.rs:28:const LOCK_SCHEMA: &str = "urn:oxyflut:schema:qualification-lock:5";
+xtask/src/contracts/readiness.rs:169:    validate_schema(&registry, LOCK_SCHEMA, &lock, "qualification-lock")?;
+xtask/src/contracts/readiness.rs:202:    validate_schema(&registry, LOCK_SCHEMA, &lock, "qualification-lock")?;
+crates/oxyflut-qualification/src/readiness.rs:45:const POLICY_FIELDS: &[PolicyField] = &[
+crates/oxyflut-qualification/src/readiness.rs:107:    pub fn measurement_policy_path(field: &str) -> Option<&'static str> {
+crates/oxyflut-qualification/src/readiness.rs:669:    for field in POLICY_FIELDS {
+crates/oxyflut-qualification/src/readiness.rs:855:        include_bytes!("../../../qualification/fixtures/readiness/complete.synthetic.json");
+crates/oxyflut-qualification/src/readiness.rs:857:        include_bytes!("../../../qualification/fixtures/readiness/cleared-without-evidence.json");
+```
+
+A second filtered probe identified 13 lock-bearing v5 readiness instances: the three top-level fixture locks above and the 10 contract-readiness locks already listed. It also identified `xtask/src/commands/lock.rs` as the runtime consumer of `StagedInputRegistry`; the inventory entries above cover that indirect traversal. No other matched source enumerates the proposed layout fields or the qualification-lock v5 schema identity.
+
 ### Canonical fenced-block integrity proposal
 
 Stage 3 must add an `xtask` or CI check that extracts the exact body after each stable `canonical-block` anchor, including its terminal LF and excluding the fences, then SHA-256-checks the raw bytes before accepting a report change. Run the check after Prettier. The seven protected streams use `text` fences so Markdown formatting can't rewrite their bytes.
@@ -1898,6 +1939,26 @@ The PR round-2 inventory correction reran the seven-digest check after the inven
 set -euo pipefail
 rm -rf /tmp/wf-epic-b/OXY-B005/canonical-blocks-round-2
 perl /tmp/wf-epic-b/OXY-B005/verify-canonical-blocks-round-2.pl .constitution/spikes/SPK-B005.md /tmp/wf-epic-b/OXY-B005/canonical-blocks-round-2
+```
+
+```text
+layout-visit-corpus|4972e43333984047b5a1d84200d5b89a29c5b59e47c5aca8773379320f2c6c84|6152|ok
+layout-visit-topology-model-source|a0774355500de806c118316982dc6b781518f9b1134f6c9239d6f3fcc149ddff|18850|ok
+layout-qualification-record-schema|09d96af49384e47ee6154f386af2ef771985516a61c843d561835654283bd7b1|13109|ok
+layout-prequalification-run-schema|76dfee7dfcdfdd49e2d67afdf83ab43c29dbb6513652a8023b0869a7d59293e2|5479|ok
+layout-prequalification-suite-schema|27e3a876f3b8d5e88ad43089a9eff0c7ce225a6d9cece5fcd789f7759c05c924|2467|ok
+layout-visit-counting-rules|6cd0d7c7b06587525d9127f15cceecdd6f9c21b8a62be93c70c9b3756ca459c2|976|ok
+qualification-lock-v6-changelog-entry|7c271171a6cdda4515e7c96e26ac5db79cd05f1d5acc1d62e03ceb37853f2bb9|651|ok
+canonical_fenced_blocks=7
+canonical_fence_assertions=passed
+```
+
+The PR round-3 correction reran the seven-digest check after the final Prettier check. The verifier wrote only `/tmp/wf-epic-b/OXY-B005/canonical-blocks-round-3/` files.
+
+```sh
+set -euo pipefail
+rm -rf /tmp/wf-epic-b/OXY-B005/canonical-blocks-round-3
+perl /tmp/wf-epic-b/OXY-B005/verify-canonical-blocks-round-2.pl .constitution/spikes/SPK-B005.md /tmp/wf-epic-b/OXY-B005/canonical-blocks-round-3
 ```
 
 ```text
