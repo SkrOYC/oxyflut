@@ -185,14 +185,13 @@ fn absolute_executable_paths_must_match_the_staged_manifest() -> Result<(), Box<
         return Ok(());
     }
     let root = workspace_root()?;
-    let lock = read_json(&root.join("qualification/fixtures/readiness/complete.synthetic.json"))?;
-    let tools = lock
-        .get("resolvedTools")
-        .and_then(Value::as_array)
-        .ok_or("complete fixture must contain resolved tools")?;
-    super::verify_absolute_resolved_tools(&root, tools)?;
+    let manifest = crate::toolchain::ToolchainManifest::from_json(&fs::read(
+        root.join("qualification/tools/native-contract-toolchain.json"),
+    )?)?;
+    let tools = crate::toolchain::lock::lock_resolved_tools(&manifest)?;
+    super::verify_absolute_resolved_tools(&root, &tools)?;
 
-    let mut altered = tools.to_vec();
+    let mut altered = tools;
     let tool = altered
         .first_mut()
         .and_then(Value::as_object_mut)
