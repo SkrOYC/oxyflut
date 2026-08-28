@@ -177,6 +177,8 @@ The probe must observe a causally associated `WM_DISPLAYCHANGE` or `WM_DPICHANGE
 
 ### B002-WIN-15-MODE separate mode-only procedure
 
+B002-WIN-15-MODE inherits the B002-WIN-15-TOPOLOGY Question-table row and its `KU (gating)` status; it has a separate lock string only because it is injected and evidenced independently.
+
 B002-WIN-15-MODE is a separate `KU (gating)` only if Stage 3 requires recovery evidence for a display-mode change that leaves both `activePathSet` and `outputAssociation` unchanged. Freeze a non-topology `ChangeDisplaySettingsExW` mode change, record the pre-event and post-event target-mode signatures and all operating-system notifications, and require those two topology comparators to remain equal. Keep any resulting trace outside B002-WIN-15-TOPOLOGY and do not use it for CON-REC-003 until Stage 3 defines a separate mode-change constraint and acceptance rule. [S23] [S53] [S56]
 
 ### B002-WIN-15-SURFACE source-selection and injection procedure
