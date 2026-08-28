@@ -245,10 +245,7 @@ fn live_responses() -> MacosResponses {
         sw_vers: command_stdout("sw_vers", &["-productVersion"]),
         uname: command_stdout("uname", &["-m"]),
         sysctl_model: command_stdout("sysctl", &["-n", "hw.model"]),
-        system_profiler: command_stdout(
-            "system_profiler",
-            &["SPDisplaysDataType", "SPSoftwareDataType", "-json"],
-        ),
+        system_profiler: command_stdout("system_profiler", &["SPDisplaysDataType", "-json"]),
         compiler: command_stdout("xcrun", &["--sdk", "macosx", "clang", "--version"]),
         sdk: command_stdout("xcrun", &["--sdk", "macosx", "--show-sdk-version"]),
         rust_toolchain: command_stdout("rustc", &["+1.98.0", "--version"]),

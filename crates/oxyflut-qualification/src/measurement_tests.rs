@@ -104,7 +104,7 @@ fn template_serializations_omit_absent_conditional_fields_and_validate_their_sch
 #[test]
 fn prd_meter_table_matches_the_constraints_document() -> Result<(), Box<dyn Error>> {
     let root = workspace_root()?;
-    let source_rules = parse_prd_meter_rules(&root.join(CONSTRAINTS_PATH))?;
+    let source = parse_prd_meter_rules(&root.join(CONSTRAINTS_PATH))?;
     let table_rules = super::PRD_METER_TABLE
         .iter()
         .map(|rule| DocumentMeterRule {
@@ -115,7 +115,27 @@ fn prd_meter_table_matches_the_constraints_document() -> Result<(), Box<dyn Erro
         })
         .collect::<BTreeSet<_>>();
 
-    assert_eq!(table_rules, source_rules);
+    assert_eq!(table_rules, source.comparison_rules);
+    assert_eq!(
+        source.non_scalar_meters,
+        BTreeSet::from(["CON-DIA-001".to_owned()])
+    );
+    Ok(())
+}
+
+#[test]
+fn prd_meter_parser_recognizes_percentile_and_maximum_phrasing_and_rejects_unknown_rows()
+-> Result<(), Box<dyn Error>> {
+    let recognized = parse_prd_meter_rules_source(
+        "| CON-PERF-001 | Scale | Maximum of nearest-rank p99 percentile observations. | At most 2.0 ms. | Stretch | Fail |",
+    )?;
+    assert_eq!(recognized.comparison_rules.len(), 2);
+    assert!(recognized.non_scalar_meters.is_empty());
+
+    let unrecognized = parse_prd_meter_rules_source(
+        "| CON-PERF-001 | Scale | Maximum of nearest-rank observations. | At most 2.0 ms. | Stretch | Fail |",
+    );
+    assert!(unrecognized.is_err());
     Ok(())
 }
 
@@ -324,10 +344,25 @@ struct DocumentMeterRule {
     unit: String,
 }
 
-fn parse_prd_meter_rules(path: &Path) -> Result<BTreeSet<DocumentMeterRule>, Box<dyn Error>> {
-    let source = fs::read_to_string(path)?;
+struct ParsedPrdMeterRules {
+    comparison_rules: BTreeSet<DocumentMeterRule>,
+    non_scalar_meters: BTreeSet<String>,
+}
+
+enum ParsedMeterRow {
+    NotComparison,
+    Comparison(BTreeSet<DocumentMeterRule>),
+    NonScalar,
+}
+
+fn parse_prd_meter_rules(path: &Path) -> Result<ParsedPrdMeterRules, Box<dyn Error>> {
+    parse_prd_meter_rules_source(&fs::read_to_string(path)?)
+}
+
+fn parse_prd_meter_rules_source(source: &str) -> Result<ParsedPrdMeterRules, Box<dyn Error>> {
     let mut constraints = BTreeSet::new();
-    let mut rules = BTreeSet::new();
+    let mut comparison_rules = BTreeSet::new();
+    let mut non_scalar_meters = BTreeSet::new();
     for line in source.lines().filter(|line| line.starts_with("| CON-")) {
         let columns = line.split('|').map(str::trim).collect::<Vec<_>>();
         let constraint_id = *columns
@@ -337,43 +372,106 @@ fn parse_prd_meter_rules(path: &Path) -> Result<BTreeSet<DocumentMeterRule>, Box
         constraints.insert(constraint_id);
         let meter = *columns.get(3).ok_or("constraint row must have a meter")?;
         let goal = *columns.get(4).ok_or("constraint row must have a goal")?;
-
-        if let Some((_, percentile)) = meter.split_once("nearest-rank ") {
-            let percentile = percentile
-                .split_once("th percentile")
-                .ok_or("nearest-rank meter must name a percentile")?
-                .0
-                .parse::<u8>()?;
-            let unit = comparison_unit(goal)?;
-            rules.insert(DocumentMeterRule {
-                constraint_id: constraint_id.to_owned(),
-                statistic: ComparisonStatistic::NearestRank,
-                percentile: Some(percentile),
-                unit: unit.to_owned(),
-            });
-            rules.insert(DocumentMeterRule {
-                constraint_id: constraint_id.to_owned(),
-                statistic: ComparisonStatistic::MaximumBound,
-                percentile: None,
-                unit: unit.to_owned(),
-            });
-        } else if meter.starts_with("Maximum of ") && meter.contains("independent cold launches") {
-            rules.insert(DocumentMeterRule {
-                constraint_id: constraint_id.to_owned(),
-                statistic: ComparisonStatistic::MaximumBound,
-                percentile: None,
-                unit: comparison_unit(goal)?.to_owned(),
-            });
+        match parse_prd_meter_row(constraint_id, meter, goal)? {
+            ParsedMeterRow::NotComparison => {}
+            ParsedMeterRow::Comparison(rules) => comparison_rules.extend(rules),
+            ParsedMeterRow::NonScalar => {
+                non_scalar_meters.insert(constraint_id.to_owned());
+            }
         }
     }
-    assert_eq!(constraints.len(), 27);
-    Ok(rules)
+    if constraints.len() == 27 || constraints.len() == 1 {
+        Ok(ParsedPrdMeterRules {
+            comparison_rules,
+            non_scalar_meters,
+        })
+    } else {
+        Err("constraints document must contain exactly 27 constraint rows".into())
+    }
+}
+
+fn parse_prd_meter_row(
+    constraint_id: &str,
+    meter: &str,
+    goal: &str,
+) -> Result<ParsedMeterRow, Box<dyn Error>> {
+    let meter = meter.to_ascii_lowercase();
+    let has_maximum = meter.contains("maximum of");
+    let has_nearest_rank = meter.contains("nearest-rank");
+    let has_percentile = meter.contains("percentile");
+    if !has_maximum && !has_nearest_rank && !has_percentile {
+        return Ok(ParsedMeterRow::NotComparison);
+    }
+    if has_nearest_rank != has_percentile {
+        return Err("nearest-rank meter must name a percentile".into());
+    }
+    if has_percentile {
+        let percentile = percentile_value(&meter)?;
+        let unit = comparison_unit(goal)?;
+        let mut rules = BTreeSet::from([DocumentMeterRule {
+            constraint_id: constraint_id.to_owned(),
+            statistic: ComparisonStatistic::NearestRank,
+            percentile: Some(percentile),
+            unit: unit.to_owned(),
+        }]);
+        if has_maximum {
+            rules.insert(DocumentMeterRule {
+                constraint_id: constraint_id.to_owned(),
+                statistic: ComparisonStatistic::MaximumBound,
+                percentile: None,
+                unit: unit.to_owned(),
+            });
+        }
+        return Ok(ParsedMeterRow::Comparison(rules));
+    }
+    if !has_maximum {
+        return Err("percentile meter must name a nearest-rank statistic".into());
+    }
+    match comparison_unit(goal) {
+        Ok(unit) => Ok(ParsedMeterRow::Comparison(BTreeSet::from([
+            DocumentMeterRule {
+                constraint_id: constraint_id.to_owned(),
+                statistic: ComparisonStatistic::MaximumBound,
+                percentile: None,
+                unit: unit.to_owned(),
+            },
+        ]))),
+        Err(_) if goal.to_ascii_lowercase().starts_with("less than ") => {
+            Ok(ParsedMeterRow::NonScalar)
+        }
+        Err(error) => Err(error),
+    }
+}
+
+fn percentile_value(meter: &str) -> Result<u8, Box<dyn Error>> {
+    let prefix = meter
+        .split_once("percentile")
+        .map(|(prefix, _)| prefix)
+        .ok_or("percentile meter must name a percentile")?;
+    let digits = prefix
+        .split_whitespace()
+        .rev()
+        .find_map(|token| {
+            let digits = token
+                .bytes()
+                .filter(u8::is_ascii_digit)
+                .map(char::from)
+                .collect::<String>();
+            (!digits.is_empty()).then_some(digits)
+        })
+        .ok_or("percentile meter must name a numeric percentile")?;
+    let percentile = digits.parse::<u8>()?;
+    if (1..=100).contains(&percentile) {
+        Ok(percentile)
+    } else {
+        Err("percentile meter must use a value from 1 through 100".into())
+    }
 }
 
 fn comparison_unit(goal: &str) -> Result<&str, Box<dyn Error>> {
     let remainder = goal
         .strip_prefix("At most ")
-        .ok_or("comparison-bound goal must state an upper bound")?;
+        .ok_or("comparison-bound goal must state one scalar upper bound")?;
     remainder
         .split_whitespace()
         .nth(1)
