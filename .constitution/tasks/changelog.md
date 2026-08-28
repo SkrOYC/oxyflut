@@ -2,6 +2,16 @@
 
 All notable changes to the Stage 4 execution plan appear in this file.
 
+## [v0.2.17] - 2026-08-28
+
+### Fixed
+
+- Applied PR review round 6 corrections in `e5036d8` for Linux session collection, resolved-tool validation, complete-fixture verification, raw-clock ordering, and evidence writer visibility.
+
+### Noted
+
+- OXY-D001 must define the raw-measurement monotonic-clock scope and Wayland required interface-set completeness.
+
 ## [v0.2.16] - 2026-08-28
 
 ### Fixed

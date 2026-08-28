@@ -46,6 +46,8 @@ Checker: cargo +1.98.0 test -p xtask external_contracts
 - **Justification:** The authoritative SPDX schema preserves upstream CRLF bytes, so its path disables Git trailing-whitespace diagnostics without rewriting the snapshot.
 - **Touched Files:** `.constitution/tasks/active/EPIC-C-lock-input-tooling.md`
 - **Justification:** The execution rules require this scope-deviation record.
+- **Touched Files:** `qualification/schemas/README.md`.
+- **Justification:** The fixture-only DSSE verifier identity requires an explicit OXY-D001 replacement with a production signature scheme before adoption.
 
 #### OXY-C002 Implement capability-baseline authoring and validation
 
@@ -85,7 +87,7 @@ Command: cargo +1.98.0 run -p xtask -- baseline validate --input qualification/f
 - **Touched Files:** `xtask/src/contracts/traceability/mod.rs`.
 - **Justification:** The baseline command uses the OXY-A003 exact PRD and architecture-flow validator through a focused authority helper instead of duplicating the 52-capability derivation.
 - **Touched Files:** `crates/oxyflut-qualification/src/evidence/{mod.rs,publish.rs}`.
-- **Justification:** The OXY-A006 evidence writer needs a repository-confined output-directory API so `baseline validate --output` can publish canonical content-addressed derived evidence without duplicating atomic publication.
+- **Justification:** The OXY-A006 evidence writer provides the repository-confined `write_canonical_json_to_path` API that `baseline validate --output` uses to publish canonical content-addressed derived evidence without duplicating atomic publication.
 - **Touched Files:** `.constitution/tasks/active/EPIC-C-lock-input-tooling.md`.
 - **Justification:** The execution rules require this scope-deviation record.
 
@@ -132,6 +134,7 @@ Command: cargo +1.98.0 run -p xtask -- measurement validate --input qualificatio
 - **Assumption for OXY-D001 Stage 3 revision:** `raw-measurement.schema.json` omits the `$schema` property that sibling schemas declare, so raw-measurement instances cannot self-declare their schema.
 - **Assumption for OXY-D001 Stage 3 revision:** no Stage 3 schema exists for `measurementPolicy.sampleValidityRules`; the staged schema's digest is the proposed binding value.
 - **Lead ruling for OXY-D001 Stage 3 revision:** the PRD launch and per-launch observation budgets belong to the measurement-harness contract. The staged sample-validity record deliberately doesn't bind them.
+- **Lead ruling for OXY-D001 Stage 3 revision:** `monotonicNs` is non-decreasing per `(constraintId, launch)` because each launch uses its own monotonic clock. The raw-measurement schema must state this scope.
 - **Touched Files:** `crates/oxyflut-qualification/src/measurement_tests.rs`.
 - **Justification:** The measurement unit tests are split from the implementation module to keep the Rust library path below the repository's hard file-size limit.
 - **Touched Files:** `crates/oxyflut-qualification/src/schema.rs` and `xtask/src/contracts/schema.rs`.
@@ -185,6 +188,8 @@ Commands:
 - **Justification:** The execution rules require this scope-deviation record.
 - **OXY-D001 input:** macOS `compositor`, `protocolVersion`, and `driverVersion`, plus Windows `compositor`, `session`, and `protocolVersion`, require a bounded manual capture because no authoritative content-free CLI provides them. Linux `protocolVersion` requires the same capture only when `wayland-info` or `xdpyinfo` is unavailable or unparseable. Output that exceeds the collector bound emits `missing { reason: inventory-exceeds-bound }` without parsing a partial response; otherwise the collectors emit `missing { reason: manual-capture }` rather than inferring a value.
 - **Exact-version rule:** The macOS operating-system pin matches `sw_vers -productVersion` exactly. A `26.5.1` host fails closed rather than matching the `macos-26.5` pin by prefix.
+- **Session fail-closed rule:** Wayland and X11 collection rejects every missing session value before publishing either artifact.
+- **OXY-D001 input:** A partial Wayland interface observation remains in the companion inventory because lock v5 has no `protocolVersion` field. Stage 3 must define the required interface-set completeness rule before the lock can adopt this evidence.
 
 #### OXY-C005 Implement the pre-implementation readiness report
 
@@ -222,7 +227,7 @@ Checker: cargo +1.98.0 run -p xtask -- lock status --gate candidate-implementati
 ##### OXY-C005 Deviations & Justifications
 
 - **Touched Files:** `xtask/src/contracts/{readiness,readiness_tests}.rs`, `xtask/src/toolchain/{lock,error}.rs`, `xtask/src/toolchain.rs`, `xtask/src/commands/lock_tests.rs`, and `.constitution/tasks/active/EPIC-C-lock-input-tooling.md`.
-- **Justification:** The command reuses the Foundation readiness validator and staged-toolchain verifier. The focused tests resolve Rustup-rooted executable paths from the staged manifest at runtime, so fixtures don't contain developer-home paths. This ticket records the required scope deviation and OXY-D001 input.
+- **Justification:** The command reuses the Foundation readiness validator and staged-toolchain verifier. The complete synthetic fixture commits the staged manifest's absolute Rustup paths, and its direct test compares those committed values before fixture setup stages policy digests. This ticket records the required scope deviation and OXY-D001 input.
 - **Touched Files:** `.constitution/tech-spec/guidelines.md`, `.constitution/tasks/completed/EPIC-C-lock-input-tooling.md`.
 - **Justification:** PR review required factual command descriptions and a durable record of the manual-capture lock input after Epic C moved to completed tasks.
 - **OXY-D001 input:** `qualification-lock.schema.json` binds `measurementPolicy.{scoringAnchors,assessors,fuzzCorpora,securityPatchRehearsal}` as path-less digests; the repository convention `qualification/staged/<field>.json` is proposed as their referent and should be typed by Stage 3.
@@ -251,14 +256,17 @@ Epic C completed its 21 story points without claiming that any staged input is c
 | PR review round 3 | `ec115a2`, `1595b03`, `e1fc92d` | Targeted validation and the final review quality gate passed. | Corrected SLSA derivation, reference-environment validation, immutable artifacts, readiness reporting, and meter parsing without changing qualification readiness. |
 | PR review round 4 | `1a5fbb2`, `119eacd`, `5ee7b8c` | Targeted validation and the final review quality gate passed. | Corrected Windows release normalization, bounded Linux protocol collection, immutable artifacts, readiness diagnostics, and meter parsing without changing qualification readiness. |
 | PR review round 5 | `8d163ae` | Targeted validation and the final review quality gate passed. | Conservatively rejected truncated protocol responses and preserved pre-existing immutable artifacts after companion publication failures without changing qualification readiness. |
+| PR review round 6 | `e5036d8` | Targeted validation and the final review quality gate passed. | Rejected unobservable Linux sessions and relative resolved tools, verified the committed complete tool fixture, scoped raw clocks per launch, and narrowed the evidence writer surface without changing qualification readiness. |
 
 ### Stage 3 revisions required — routed to OXY-D001
 
 The [OXY-D001 inputs from Epic C](../active/EPIC-D-readiness-reconciliation.md#oxy-d001-inputs-from-epics-a-and-c) must name these unresolved Stage 3 revisions:
 
 - `.constitution/tech-spec/data-models/raw-measurement.schema.json` omits the `$schema` property, so raw-measurement instances cannot self-declare their schema.
+- `.constitution/tech-spec/data-models/raw-measurement.schema.json` doesn't state that `samples[].monotonicNs` is non-decreasing per `(constraintId, launch)`.
 - No Stage 3 schema defines `qualification-lock.schema.json#measurementPolicy.sampleValidityRules`; `qualification/schemas/sample-validity.schema.json` is the proposed staged schema and its digest is the proposed binding value.
 - The proposed external-contract lock values in `qualification/schemas/external/proposed-external-contract-lock.json` await Stage 3 adoption.
 - `xtask environment inspect` writes the `PATH.inventory.json` companion artifact, but no Stage 3 schema defines it and `qualification-lock.schema.json#referenceEnvironments` has no typed reference to it.
+- Wayland interface-set completeness has no Stage 3 rule. The companion inventory retains a partial observed `protocolVersion`, which lock v5 cannot represent.
 - `qualification-lock.schema.json#measurementPolicy.{scoringAnchors,assessors,fuzzCorpora,securityPatchRehearsal}` binds path-less digests; the repository convention `qualification/staged/<field>.json` is the proposed referent and needs Stage 3 typing.
 - `qualification-lock.schema.json#resolvedTools` lacks the `pathRoot` field used by `qualification/tools/native-contract-toolchain.json` for rustup-home-relative tools.
