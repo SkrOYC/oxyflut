@@ -2,10 +2,12 @@ use std::error::Error;
 use std::fs;
 use std::path::Path;
 
+use oxyflut_qualification::hash::hash_file;
+
 use super::{
     ExternalContractsError, PROPOSAL_PATH, ProposalCode, SNAPSHOTS, SPDX_SCHEMA_PATH,
     TemporaryDirectory, decode_base64, dsse_pae, outcome_at, read_json, run, verify_at,
-    workspace_root,
+    verify_publication_source_bytes, workspace_root,
 };
 use crate::CommandOutcome;
 
@@ -191,6 +193,31 @@ fn base64_decoder_requires_the_dsse_standard_padded_alphabet() {
     assert_eq!(decode_base64("AA"), None);
     assert_eq!(decode_base64("A"), None);
     assert_eq!(decode_base64("A=AA"), None);
+}
+
+#[test]
+fn published_snapshot_requires_a_digest_verified_source_url_reference() -> Result<(), Box<dyn Error>>
+{
+    let temporary = TemporaryDirectory::new()?;
+    let source_path = temporary.path().join("publication.source");
+    let metadata_path = temporary.path().join("source.json");
+    let retrieval_url = "https://spdx.org/schema/3.0.1/spdx-json-schema.json";
+
+    fs::write(&source_path, format!("published at {retrieval_url}\n"))?;
+    let digest = hash_file(&source_path)?.to_string();
+    verify_publication_source_bytes(&source_path, &digest, retrieval_url, &metadata_path)?;
+
+    fs::write(&source_path, "published source without the schema URL\n")?;
+    let digest = hash_file(&source_path)?.to_string();
+    let error =
+        verify_publication_source_bytes(&source_path, &digest, retrieval_url, &metadata_path)
+            .err()
+            .ok_or("a source without the published retrieval URL must fail")?;
+    assert!(matches!(
+        error,
+        ExternalContractsError::SourceIdentity { .. }
+    ));
+    Ok(())
 }
 
 #[test]

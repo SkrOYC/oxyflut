@@ -22,6 +22,15 @@ use super::{EnvironmentCommandError, PlatformSource};
 #[cfg(target_os = "macos")]
 const OUTPUT_LIMIT: usize = 16 * 1024;
 
+// These receipts directly bind the Xcode 26.6 build, Command Line Tools executables, and macOS
+// SDK 26.5 pinned by stack.md. Each receipt is queried individually, avoiding an unbounded
+// `pkgutil --pkgs` inventory before content limits apply.
+const MACOS_PACKAGE_REQUIREMENTS: &[&str] = &[
+    "com.apple.pkg.CLTools_Executables",
+    "com.apple.pkg.CLTools_SDK_macOS",
+    "com.apple.pkg.Xcode",
+];
+
 /// Collects the macOS Tier 1 environment only when executing on macOS.
 pub(crate) struct MacosSource;
 
@@ -64,7 +73,6 @@ struct MacosResponses {
     sdk: Option<String>,
     rust_toolchain: Option<String>,
     session: Option<String>,
-    pkgutil_pkgs: Option<String>,
     pkgutil_pkg_info: Option<BTreeMap<String, Option<String>>>,
 }
 
@@ -84,10 +92,7 @@ fn collect_macos_responses(
         compositor: InventoryValue::missing(MissingReason::ManualCapture),
         session: raw_identity(responses.session.as_deref()),
         protocol_version: InventoryValue::missing(MissingReason::ManualCapture),
-        system_package_lock: package_lock(
-            responses.pkgutil_pkgs.as_deref(),
-            responses.pkgutil_pkg_info.as_ref(),
-        ),
+        system_package_lock: package_lock(responses.pkgutil_pkg_info.as_ref()),
     };
     EnvironmentInventory::new(EnvironmentId::Macos, fields)
         .map_err(EnvironmentCommandError::Inventory)
@@ -159,48 +164,40 @@ fn raw_identity(raw: Option<&str>) -> InventoryValue {
     )
 }
 
-fn package_lock(
-    package_ids: Option<&str>,
-    package_info: Option<&BTreeMap<String, Option<String>>>,
-) -> SystemPackageLock {
-    let Some(package_ids) = package_ids else {
-        return SystemPackageLock::missing(MissingReason::SourceUnavailable);
-    };
+fn package_lock(package_info: Option<&BTreeMap<String, Option<String>>>) -> SystemPackageLock {
     let Some(package_info) = package_info else {
-        return SystemPackageLock::missing(MissingReason::SourceUnavailable);
+        return missing_package_records(MissingReason::SourceUnavailable);
     };
-    let mut package_ids = package_ids
-        .lines()
-        .map(str::trim)
-        .filter(|package| !package.is_empty())
-        .map(str::to_owned)
-        .collect::<Vec<_>>();
-    package_ids.sort_unstable();
-    package_ids.dedup();
-    package_ids.truncate(oxyflut_qualification::environment::MAXIMUM_SYSTEM_PACKAGES);
-    if package_ids.is_empty() {
-        return SystemPackageLock::missing(MissingReason::SourceUnavailable);
-    }
-    let records = package_ids
+    let records = MACOS_PACKAGE_REQUIREMENTS
         .iter()
-        .map(|package| {
-            package_info
-                .get(package)
-                .and_then(Option::as_deref)
-                .and_then(package_version)
-                .map(|version| (package.clone(), version))
-                .ok_or(MissingReason::UnsupportedBySource)
-                .and_then(|(name, version)| {
-                    SystemPackage::new(name, version)
-                        .map_err(|_| MissingReason::UnsupportedBySource)
-                })
-        })
+        .map(
+            |package| match package_info.get(*package).and_then(Option::as_deref) {
+                Some(raw) => match package_version(raw) {
+                    Some(version) => SystemPackage::new((*package).to_owned(), version)
+                        .map_err(|_| MissingReason::UnsupportedBySource),
+                    None => Err(MissingReason::UnsupportedBySource),
+                },
+                None => SystemPackage::missing((*package).to_owned(), MissingReason::NotInstalled)
+                    .map_err(|_| MissingReason::UnsupportedBySource),
+            },
+        )
         .collect::<Result<Vec<_>, _>>();
     match records.and_then(|records| {
         SystemPackageLock::from_records(records).map_err(|_| MissingReason::UnsupportedBySource)
     }) {
         Ok(lock) => lock,
-        Err(reason) => SystemPackageLock::missing(reason),
+        Err(reason) => missing_package_records(reason),
+    }
+}
+
+fn missing_package_records(reason: MissingReason) -> SystemPackageLock {
+    let records = MACOS_PACKAGE_REQUIREMENTS
+        .iter()
+        .map(|package| SystemPackage::missing((*package).to_owned(), reason))
+        .collect::<Result<Vec<_>, _>>();
+    match records.and_then(SystemPackageLock::from_records) {
+        Ok(lock) => lock,
+        Err(_) => SystemPackageLock::missing(MissingReason::UnsupportedBySource),
     }
 }
 
@@ -244,8 +241,6 @@ fn observed_or_missing(value: String) -> InventoryValue {
 
 #[cfg(target_os = "macos")]
 fn live_responses() -> MacosResponses {
-    let pkgutil_pkgs = command_stdout("pkgutil", &["--pkgs"]);
-    let pkgutil_pkg_info = pkgutil_pkgs.as_deref().map(live_pkgutil_package_info);
     MacosResponses {
         sw_vers: command_stdout("sw_vers", &["-productVersion"]),
         uname: command_stdout("uname", &["-m"]),
@@ -258,27 +253,17 @@ fn live_responses() -> MacosResponses {
         sdk: command_stdout("xcrun", &["--sdk", "macosx", "--show-sdk-version"]),
         rust_toolchain: command_stdout("rustc", &["+1.98.0", "--version"]),
         session: command_stdout("launchctl", &["managername"]),
-        pkgutil_pkgs,
-        pkgutil_pkg_info,
+        pkgutil_pkg_info: Some(live_pkgutil_package_info()),
     }
 }
 
 #[cfg(target_os = "macos")]
-fn live_pkgutil_package_info(package_ids: &str) -> BTreeMap<String, Option<String>> {
-    let mut package_ids = package_ids
-        .lines()
-        .map(str::trim)
-        .filter(|package| !package.is_empty())
-        .map(str::to_owned)
-        .collect::<Vec<_>>();
-    package_ids.sort_unstable();
-    package_ids.dedup();
-    package_ids.truncate(oxyflut_qualification::environment::MAXIMUM_SYSTEM_PACKAGES);
-    package_ids
-        .into_iter()
+fn live_pkgutil_package_info() -> BTreeMap<String, Option<String>> {
+    MACOS_PACKAGE_REQUIREMENTS
+        .iter()
         .map(|package| {
-            let info = command_stdout("pkgutil", &["--pkg-info", &package]);
-            (package, info)
+            let info = command_stdout("pkgutil", &["--pkg-info", package]);
+            ((*package).to_owned(), info)
         })
         .collect()
 }

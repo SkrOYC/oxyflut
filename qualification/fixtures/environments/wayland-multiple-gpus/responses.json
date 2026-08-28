@@ -1,6 +1,6 @@
 {
   "osRelease": "ID=ubuntu\nVERSION_ID=\"26.04\"\n",
-  "uname": "aarch64\n",
+  "uname": "x86_64\n",
   "sysfsHardware": ["Standard Q35\n"],
   "gpuCards": [
     {
@@ -8,6 +8,12 @@
       "vendor": "0x1002",
       "device": "0x73bf",
       "driver": "amdgpu"
+    },
+    {
+      "card": "card1",
+      "vendor": "0x10de",
+      "device": "0x2684",
+      "driver": "nvidia"
     }
   ],
   "rustToolchain": "rustc 1.98.0 (88d9e12ae 2026-08-20)\n",
@@ -25,7 +31,7 @@
     "libwayland-client0": "libwayland-client0\t1.23.1-1ubuntu1\n",
     "libwayland-server0": "libwayland-server0\t1.23.1-1ubuntu1\n",
     "libx11-6": "libx11-6\t2:1.8.12-1ubuntu1\n",
-    "libxcb1": "libxcb1\t1.17.0-1ubuntu1\n",
+    "libxcb1": "libxcb1\t1.17.0-2ubuntu1\n",
     "lld": "lld\t21.1.0-1ubuntu1\n",
     "rustc": "rustc\t1.98.0+dfsg1-1ubuntu1\n",
     "xserver-xorg-core": "xserver-xorg-core\t2:21.1.16-1ubuntu1\n"

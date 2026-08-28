@@ -159,18 +159,10 @@ fn execute(invocation: CommandInvocation<'_>) -> CommandOutcome {
 #[derive(Debug, Eq, PartialEq)]
 pub(crate) enum CommandOutcome {
     /// The command completed successfully.
-    #[allow(
-        dead_code,
-        reason = "Later ticket-owned command modules return successful outcomes."
-    )]
     Success,
     /// The command failed validation or execution.
     Failed(CommandError),
     /// The lock was valid but the requested readiness gate remains open.
-    #[allow(
-        dead_code,
-        reason = "The OXY-A004 lock command owns this open-gate outcome."
-    )]
     ValidButOpen,
 }
 

@@ -537,6 +537,10 @@ mod tests {
         let source = FixturePlatformSource::new(&root, EnvironmentId::Wayland);
         let inventory = source.collect()?;
         assert_eq!(
+            inventory.fields().gpu_id.observed_value(),
+            Some("pci:1002:73bf")
+        );
+        assert_eq!(
             inventory.driver_version().observed_value(),
             Some("amdgpu/libgl1-mesa-dri=25.0.0-1ubuntu1")
         );
@@ -570,6 +574,104 @@ mod tests {
     }
 
     #[test]
+    fn multiple_qualifying_linux_gpu_cards_leave_both_gpu_fields_explicitly_missing()
+    -> Result<(), Box<dyn Error>> {
+        let root = test_workspace_root()?;
+        let source = FixturePlatformSource::with_fixture(
+            &root,
+            EnvironmentId::Wayland,
+            "wayland-multiple-gpus",
+        );
+        let inventory = source.collect()?;
+
+        assert!(matches!(
+            inventory.fields().gpu_id,
+            InventoryValue::Missing {
+                reason: MissingReason::UnsupportedBySource
+            }
+        ));
+        assert!(matches!(
+            inventory.fields().driver_version,
+            InventoryValue::Missing {
+                reason: MissingReason::UnsupportedBySource
+            }
+        ));
+        Ok(())
+    }
+
+    #[test]
+    fn platform_package_locks_hash_only_the_required_pinned_entries() -> Result<(), Box<dyn Error>>
+    {
+        let root = test_workspace_root()?;
+        for (environment, expected) in [
+            (
+                EnvironmentId::Macos,
+                BTreeSet::from([
+                    "com.apple.pkg.CLTools_Executables",
+                    "com.apple.pkg.CLTools_SDK_macOS",
+                    "com.apple.pkg.Xcode",
+                ]),
+            ),
+            (
+                EnvironmentId::Windows,
+                BTreeSet::from(["Microsoft.VisualStudio.BuildTools", "Microsoft.WindowsSDK"]),
+            ),
+        ] {
+            let inventory = FixturePlatformSource::new(&root, environment).collect()?;
+            let names = inventory
+                .system_package_lock()
+                .packages()
+                .iter()
+                .map(|package| package.name())
+                .collect::<BTreeSet<_>>();
+            assert_eq!(names, expected);
+            assert!(
+                inventory
+                    .system_package_lock()
+                    .digest()
+                    .observed_value()
+                    .is_some()
+            );
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn missing_required_macos_and_windows_packages_keep_their_locks_null()
+    -> Result<(), Box<dyn Error>> {
+        let root = test_workspace_root()?;
+        for (environment, fixture, missing_name) in [
+            (
+                EnvironmentId::Macos,
+                "macos-missing-receipt",
+                "com.apple.pkg.CLTools_SDK_macOS",
+            ),
+            (
+                EnvironmentId::Windows,
+                "windows-missing-package",
+                "Microsoft.WindowsSDK",
+            ),
+        ] {
+            let inventory =
+                FixturePlatformSource::with_fixture(&root, environment, fixture).collect()?;
+            assert!(inventory.system_package_lock().digest().is_missing());
+            let missing = inventory
+                .system_package_lock()
+                .packages()
+                .iter()
+                .find(|package| package.name() == missing_name)
+                .ok_or("required package must remain in the inventory")?;
+            assert!(matches!(
+                missing.version(),
+                InventoryValue::Missing {
+                    reason: MissingReason::NotInstalled
+                }
+            ));
+        }
+        Ok(())
+    }
+
+    #[test]
     fn windows_pci_pnp_identifier_strips_the_bus_prefix_before_parsing()
     -> Result<(), Box<dyn Error>> {
         let root = test_workspace_root()?;
@@ -579,6 +681,45 @@ mod tests {
             inventory.fields().gpu_id.observed_value(),
             Some("pci:10de:2684")
         );
+        Ok(())
+    }
+
+    #[test]
+    fn windows_driver_requires_the_matching_display_device_raw_fixture()
+    -> Result<(), Box<dyn Error>> {
+        let root = test_workspace_root()?;
+        let source = FixturePlatformSource::with_fixture(
+            &root,
+            EnvironmentId::Windows,
+            "windows-mismatched-pnp-driver",
+        );
+        let inventory = source.collect()?;
+        assert!(matches!(
+            inventory.driver_version(),
+            InventoryValue::Missing {
+                reason: MissingReason::UnsupportedBySource
+            }
+        ));
+        Ok(())
+    }
+
+    #[test]
+    fn windows_compiler_raw_fixtures_accept_the_banner_and_fall_back_to_pinned_sources()
+    -> Result<(), Box<dyn Error>> {
+        let root = test_workspace_root()?;
+        for (fixture, expected) in [
+            ("windows", "msvc-19.44.35207"),
+            ("windows-compiler-env", "msvc-14.44.35207"),
+            ("windows-compiler-vswhere", "msvc-17.14.39"),
+        ] {
+            let inventory =
+                FixturePlatformSource::with_fixture(&root, EnvironmentId::Windows, fixture)
+                    .collect()?;
+            assert_eq!(
+                inventory.fields().compiler_identity.observed_value(),
+                Some(expected)
+            );
+        }
         Ok(())
     }
 

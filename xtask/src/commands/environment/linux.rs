@@ -79,14 +79,22 @@ struct LinuxResponses {
     os_release: Option<String>,
     uname: Option<String>,
     sysfs_hardware: Vec<String>,
-    sysfs_gpu: Vec<String>,
-    lspci: Option<String>,
-    drm_drivers: Vec<String>,
+    gpu_cards: Vec<LinuxGpuCard>,
     rust_toolchain: Option<String>,
     compiler: Option<String>,
     session_type: Option<String>,
     current_desktop: Option<String>,
     dpkg_query: Option<BTreeMap<String, Option<String>>>,
+}
+
+/// One graphics card observed from its matching DRM card directory.
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct LinuxGpuCard {
+    card: String,
+    vendor: String,
+    device: String,
+    driver: Option<String>,
 }
 
 fn collect_linux_responses(
@@ -102,19 +110,15 @@ fn collect_linux_responses(
     ) {
         return Err(EnvironmentCommandError::EnvironmentMismatch);
     }
+    let (gpu_id, driver_version) =
+        gpu_and_driver(&responses.gpu_cards, responses.dpkg_query.as_ref());
     let fields = EnvironmentFields {
         operating_system: operating_system(responses.os_release.as_deref()),
         minimum_version: InventoryValue::missing(MissingReason::NotDeclaredByLock),
         architecture: architecture(responses.uname.as_deref()),
         hardware_id: first_line_value(responses.sysfs_hardware.iter().map(String::as_str)),
-        gpu_id: gpu_model(
-            responses.sysfs_gpu.iter().map(String::as_str),
-            responses.lspci.as_deref(),
-        ),
-        driver_version: driver_version(
-            responses.drm_drivers.iter().map(String::as_str),
-            responses.dpkg_query.as_ref(),
-        ),
+        gpu_id,
+        driver_version,
         compiler_identity: native_compiler_identity(responses.compiler.as_deref()),
         sdk_identity: linux_sdk_identity(responses.dpkg_query.as_ref()),
         rust_toolchain: compiler_identity(responses.rust_toolchain.as_deref()),
@@ -157,31 +161,36 @@ fn architecture(raw: Option<&str>) -> InventoryValue {
     observed_or_missing(normalized.to_owned())
 }
 
-fn gpu_model<'responses>(
-    mut sysfs_gpu: impl Iterator<Item = &'responses str>,
-    lspci: Option<&str>,
-) -> InventoryValue {
-    if let Some(line) = sysfs_gpu.find_map(parse_sysfs_gpu) {
-        return observed_or_missing(line);
-    }
-    gpu_from_lspci(lspci)
-}
-
-fn parse_sysfs_gpu(line: &str) -> Option<String> {
-    let (vendor, device) = line.split_once('\t')?;
-    pci_gpu_id(vendor, device)
-}
-
-fn gpu_from_lspci(raw: Option<&str>) -> InventoryValue {
-    let Some(identifier) = raw
-        .and_then(|output| output.lines().next())
-        .and_then(|line| line.split_whitespace().nth(2))
-        .and_then(|identifier| identifier.split_once(':'))
-        .and_then(|(vendor, device)| pci_gpu_id(vendor, device))
-    else {
-        return InventoryValue::missing(MissingReason::SourceUnavailable);
+fn gpu_and_driver(
+    cards: &[LinuxGpuCard],
+    dpkg_query: Option<&BTreeMap<String, Option<String>>>,
+) -> (InventoryValue, InventoryValue) {
+    let qualifying = cards
+        .iter()
+        .filter_map(|card| {
+            card.card
+                .strip_prefix("card")
+                .filter(|suffix| {
+                    !suffix.is_empty() && suffix.bytes().all(|byte| byte.is_ascii_digit())
+                })
+                .and_then(|_| pci_gpu_id(&card.vendor, &card.device))
+                .map(|gpu_id| (card, gpu_id))
+        })
+        .collect::<Vec<_>>();
+    let [(card, gpu_id)] = qualifying.as_slice() else {
+        let reason = if qualifying.is_empty() {
+            MissingReason::SourceUnavailable
+        } else {
+            MissingReason::UnsupportedBySource
+        };
+        return (
+            InventoryValue::missing(reason),
+            InventoryValue::missing(reason),
+        );
     };
-    observed_or_missing(identifier)
+    let gpu_id = observed_or_missing(gpu_id.clone());
+    let driver_version = driver_version(card.driver.as_deref(), dpkg_query);
+    (gpu_id, driver_version)
 }
 
 fn pci_gpu_id(vendor: &str, device: &str) -> Option<String> {
@@ -256,11 +265,11 @@ fn compositor_value(raw: Option<&str>) -> InventoryValue {
     observed_or_missing(atomize(compositor))
 }
 
-fn driver_version<'driver>(
-    mut drivers: impl Iterator<Item = &'driver str>,
+fn driver_version(
+    driver: Option<&str>,
     dpkg_query: Option<&BTreeMap<String, Option<String>>>,
 ) -> InventoryValue {
-    let Some(driver) = drivers.next().and_then(first_line) else {
+    let Some(driver) = driver.and_then(first_line) else {
         return InventoryValue::missing(MissingReason::SourceUnavailable);
     };
     let Some(packages) = dpkg_query else {
@@ -402,9 +411,7 @@ fn live_responses() -> LinuxResponses {
         .iter()
         .filter_map(|path| read_file_bounded(Path::new(path), SOURCE_FILE_LIMIT))
         .collect(),
-        sysfs_gpu: live_sysfs_gpu(),
-        lspci: command_stdout("lspci", &["-Dn", "-d", "::0300"], COMMAND_OUTPUT_LIMIT),
-        drm_drivers: live_drm_drivers(),
+        gpu_cards: live_gpu_cards(),
         rust_toolchain: command_stdout("rustc", &["+1.98.0", "--version"], COMMAND_OUTPUT_LIMIT),
         compiler: command_stdout("cc", &["--version"], COMMAND_OUTPUT_LIMIT),
         session_type: std::env::var("XDG_SESSION_TYPE").ok(),
@@ -434,30 +441,27 @@ fn live_drm_card_paths() -> Vec<std::path::PathBuf> {
 }
 
 #[cfg(target_os = "linux")]
-fn live_sysfs_gpu() -> Vec<String> {
+fn live_gpu_cards() -> Vec<LinuxGpuCard> {
     live_drm_card_paths()
         .iter()
         .filter_map(|path| {
+            let card = path.file_name()?.to_str()?.to_owned();
             let vendor = read_file_bounded(&path.join("device/vendor"), SOURCE_FILE_LIMIT)?;
             let device = read_file_bounded(&path.join("device/device"), SOURCE_FILE_LIMIT)?;
-            Some(format!(
-                "{}\t{}",
-                first_line(&vendor)?,
-                first_line(&device)?
-            ))
-        })
-        .collect()
-}
-
-#[cfg(target_os = "linux")]
-fn live_drm_drivers() -> Vec<String> {
-    live_drm_card_paths()
-        .iter()
-        .filter_map(|path| fs::read_link(path.join("device/driver")).ok())
-        .filter_map(|path| {
-            path.file_name()
-                .and_then(|name| name.to_str())
-                .map(str::to_owned)
+            let driver = fs::read_link(path.join("device/driver"))
+                .ok()
+                .and_then(|driver_path| {
+                    driver_path
+                        .file_name()
+                        .and_then(|name| name.to_str())
+                        .map(str::to_owned)
+                });
+            Some(LinuxGpuCard {
+                card,
+                vendor: first_line(&vendor)?.to_owned(),
+                device: first_line(&device)?.to_owned(),
+                driver,
+            })
         })
         .collect()
 }

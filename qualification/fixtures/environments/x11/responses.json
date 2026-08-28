@@ -2,9 +2,14 @@
   "osRelease": "ID=ubuntu\nVERSION_ID=\"26.04\"\n",
   "uname": "x86_64\n",
   "sysfsHardware": ["Standard Q35\n"],
-  "sysfsGpu": ["0x1002\t0x73bf\n"],
-  "lspci": null,
-  "drmDrivers": [],
+  "gpuCards": [
+    {
+      "card": "card0",
+      "vendor": "0x1002",
+      "device": "0x73bf",
+      "driver": null
+    }
+  ],
   "rustToolchain": "rustc 1.98.0 (88d9e12ae 2026-08-20)\n",
   "compiler": "clang version 21.1.0\n",
   "sessionType": "x11",

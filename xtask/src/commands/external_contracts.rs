@@ -133,7 +133,13 @@ fn verify_snapshots(root: &Path) -> Result<(), ExternalContractsError> {
                 require_absent(object, "commit", &metadata)?;
                 require_absent(object, "path", &metadata)?;
                 require_string(object, "retrievalUrl", identity.retrieval_url, &metadata)?;
-                require_publication_source(object, identity.publication_source, &metadata)?;
+                require_publication_source(
+                    root,
+                    object,
+                    identity.publication_source,
+                    identity.retrieval_url,
+                    &metadata,
+                )?;
                 require_string(object, "license", identity.license, &metadata)?;
                 require_license_fields(
                     object,
@@ -270,8 +276,10 @@ fn require_license_fields(
 }
 
 fn require_publication_source(
+    root: &Path,
     object: &serde_json::Map<String, Value>,
     expected: &PublicationSource,
+    retrieval_url: &str,
     metadata_path: &Path,
 ) -> Result<(), ExternalContractsError> {
     let publication = object
@@ -283,7 +291,49 @@ fn require_publication_source(
     require_string(publication, "localPath", expected.local_path, metadata_path)?;
     require_string(publication, "sha256", expected.sha256, metadata_path)?;
     require_string(publication, "path", expected.path, metadata_path)?;
-    require_string(publication, "commit", expected.commit, metadata_path)
+    require_string(publication, "commit", expected.commit, metadata_path)?;
+    verify_publication_source_bytes(
+        &root.join(expected.local_path),
+        expected.sha256,
+        retrieval_url,
+        metadata_path,
+    )
+}
+
+fn verify_publication_source_bytes(
+    source_path: &Path,
+    expected_sha256: &str,
+    retrieval_url: &str,
+    metadata_path: &Path,
+) -> Result<(), ExternalContractsError> {
+    let expected = expected_sha256.parse::<Sha256Digest>().map_err(|_| {
+        ExternalContractsError::SourceIdentity {
+            path: metadata_path.to_path_buf(),
+        }
+    })?;
+    let actual = hash_file(source_path).map_err(|source| ExternalContractsError::Io {
+        path: source_path.to_path_buf(),
+        source,
+    })?;
+    if actual != expected {
+        return Err(ExternalContractsError::SourceIdentity {
+            path: metadata_path.to_path_buf(),
+        });
+    }
+    let bytes = fs::read(source_path).map_err(|source| ExternalContractsError::Io {
+        path: source_path.to_path_buf(),
+        source,
+    })?;
+    if bytes
+        .windows(retrieval_url.len())
+        .any(|window| window == retrieval_url.as_bytes())
+    {
+        Ok(())
+    } else {
+        Err(ExternalContractsError::SourceIdentity {
+            path: metadata_path.to_path_buf(),
+        })
+    }
 }
 
 fn verify_proposal(root: &Path) -> Result<(), ExternalContractsError> {
@@ -575,7 +625,8 @@ fn workspace_root() -> Result<PathBuf, ()> {
 }
 
 struct DerivedSchemaRegistry {
-    temporary_directory: TemporaryDirectory,
+    /// Keeps copied schema inputs alive for the registry's complete lifetime.
+    _temporary_directory: TemporaryDirectory,
     registry: SchemaRegistry,
     spdx_schema_identity: String,
 }
@@ -600,14 +651,13 @@ impl DerivedSchemaRegistry {
             .map_err(ExternalContractsError::DerivedSchema)?
             .to_owned();
         Ok(Self {
-            temporary_directory,
+            _temporary_directory: temporary_directory,
             registry,
             spdx_schema_identity,
         })
     }
 
     fn registry(&self) -> &SchemaRegistry {
-        let _ = self.temporary_directory.path();
         &self.registry
     }
 

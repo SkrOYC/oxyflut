@@ -579,6 +579,13 @@ fn collect_nullable_member(
             evidence_path,
             Some(upstream_owner),
         ),
+        Some(Value::String(value)) if value.trim().is_empty() => push_block(
+            blocking,
+            field_path,
+            BlockingKind::Unresolved,
+            evidence_path,
+            Some(upstream_owner),
+        ),
         Some(_) => {}
         None => push_block(
             blocking,
@@ -665,6 +672,23 @@ mod tests {
         assert_eq!(report.gate, ReadinessGate::CandidateImplementation);
         assert_eq!(report.status, ReadinessStatus::Ready);
         assert!(report.blocking.is_empty());
+        Ok(())
+    }
+
+    #[test]
+    fn blank_required_strings_are_unresolved_in_the_readiness_report()
+    -> Result<(), Box<dyn std::error::Error>> {
+        let mut lock: Value = serde_json::from_slice(COMPLETE)?;
+        *lock
+            .pointer_mut("/referenceEnvironments/macos-arm64/minimumVersion")
+            .ok_or("complete lock must contain the macOS minimum version")? =
+            Value::String(" \t".to_owned());
+
+        let report = candidate_implementation_report(&lock)?;
+        assert!(report.blocking.iter().any(|blocking| {
+            blocking.field_path == "referenceEnvironments.macos-arm64.minimumVersion"
+                && blocking.kind == BlockingKind::Unresolved
+        }));
         Ok(())
     }
 
