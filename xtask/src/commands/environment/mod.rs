@@ -1052,6 +1052,30 @@ mod tests {
     }
 
     #[test]
+    fn macos_receipt_failure_retains_its_typed_reason() -> Result<(), Box<dyn Error>> {
+        let root = test_workspace_root()?;
+        let inventory = FixturePlatformSource::with_fixture(
+            &root,
+            EnvironmentId::Macos,
+            "macos-pkgutil-failure",
+        )
+        .collect()?;
+        let missing = inventory
+            .system_package_lock()
+            .packages()
+            .iter()
+            .find(|package| package.name() == "com.apple.pkg.CLTools_SDK_macOS")
+            .ok_or("required package must remain in the inventory")?;
+        assert!(matches!(
+            missing.version(),
+            InventoryValue::Missing {
+                reason: MissingReason::InventoryExceedsBound
+            }
+        ));
+        Ok(())
+    }
+
+    #[test]
     fn windows_pci_pnp_identifier_strips_the_bus_prefix_before_parsing()
     -> Result<(), Box<dyn Error>> {
         let root = test_workspace_root()?;

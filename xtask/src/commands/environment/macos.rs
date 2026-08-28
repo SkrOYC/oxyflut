@@ -74,6 +74,8 @@ struct MacosResponses {
     rust_toolchain: Option<String>,
     session: Option<String>,
     pkgutil_pkg_info: Option<BTreeMap<String, Option<String>>>,
+    #[serde(default)]
+    package_failures: BTreeMap<String, MissingReason>,
     #[serde(skip)]
     source_failures: BTreeMap<&'static str, MissingReason>,
 }
@@ -132,6 +134,7 @@ fn collect_macos_responses(
         protocol_version: InventoryValue::missing(MissingReason::ManualCapture),
         system_package_lock: package_lock(
             responses.pkgutil_pkg_info.as_ref(),
+            &responses.package_failures,
             responses.source_missing_reason("pkgutil_pkg_info"),
         ),
     };
@@ -211,6 +214,7 @@ fn raw_identity(raw: Option<&str>, missing_reason: MissingReason) -> InventoryVa
 
 fn package_lock(
     package_info: Option<&BTreeMap<String, Option<String>>>,
+    package_failures: &BTreeMap<String, MissingReason>,
     missing_reason: MissingReason,
 ) -> SystemPackageLock {
     let Some(package_info) = package_info else {
@@ -228,8 +232,14 @@ fn package_lock(
                         .map_err(|_| MissingReason::UnsupportedBySource),
                     None => Err(MissingReason::UnsupportedBySource),
                 },
-                None => SystemPackage::missing((*package).to_owned(), MissingReason::NotInstalled)
-                    .map_err(|_| MissingReason::UnsupportedBySource),
+                None => SystemPackage::missing(
+                    (*package).to_owned(),
+                    package_failures
+                        .get(*package)
+                        .copied()
+                        .unwrap_or(MissingReason::NotInstalled),
+                )
+                .map_err(|_| MissingReason::UnsupportedBySource),
             },
         )
         .collect::<Result<Vec<_>, _>>();
@@ -297,6 +307,7 @@ fn observed_or_missing(value: String) -> InventoryValue {
 #[cfg(target_os = "macos")]
 fn live_responses() -> MacosResponses {
     let mut source_failures = BTreeMap::new();
+    let (pkgutil_pkg_info, package_failures) = live_pkgutil_package_info(&mut source_failures);
     MacosResponses {
         sw_vers: capture_response(
             command_stdout("sw_vers", &["-productVersion"]),
@@ -338,7 +349,8 @@ fn live_responses() -> MacosResponses {
             "session",
             &mut source_failures,
         ),
-        pkgutil_pkg_info: Some(live_pkgutil_package_info(&mut source_failures)),
+        pkgutil_pkg_info: Some(pkgutil_pkg_info),
+        package_failures,
         source_failures,
     }
 }
@@ -361,18 +373,24 @@ fn capture_response<T>(
 #[cfg(target_os = "macos")]
 fn live_pkgutil_package_info(
     source_failures: &mut BTreeMap<&'static str, MissingReason>,
-) -> BTreeMap<String, Option<String>> {
-    MACOS_PACKAGE_REQUIREMENTS
-        .iter()
-        .map(|package| {
-            let info = capture_response(
-                command_stdout("pkgutil", &["--pkg-info", package]),
-                "pkgutil_pkg_info",
-                source_failures,
-            );
-            ((*package).to_owned(), info)
-        })
-        .collect()
+) -> (
+    BTreeMap<String, Option<String>>,
+    BTreeMap<String, MissingReason>,
+) {
+    let mut package_info = BTreeMap::new();
+    let mut package_failures = BTreeMap::new();
+    for package in MACOS_PACKAGE_REQUIREMENTS {
+        let info = match command_stdout("pkgutil", &["--pkg-info", package]) {
+            Ok(info) => info,
+            Err(reason) => {
+                source_failures.insert("pkgutil_pkg_info", reason);
+                package_failures.insert((*package).to_owned(), reason);
+                None
+            }
+        };
+        package_info.insert((*package).to_owned(), info);
+    }
+    (package_info, package_failures)
 }
 
 #[cfg(target_os = "macos")]

@@ -5,7 +5,7 @@ use oxyflut_qualification::environment::{InventoryValue, MissingReason};
 
 use super::{
     PROTOCOL_COMMAND_OUTPUT_LIMIT, WAYLAND_PROTOCOL_INTERFACES, capture_response, read_bounded,
-    read_bounded_prefix, wayland_protocol_version,
+    read_bounded_prefix, wayland_protocol_version, x11_protocol_version,
 };
 
 #[test]
@@ -37,6 +37,30 @@ fn oversized_wayland_response_reports_inventory_exceeds_bound()
     assert!(captured.truncated);
     assert!(matches!(
         wayland_protocol_version(
+            Some(&captured.contents),
+            MissingReason::ManualCapture,
+            captured.truncated,
+        ),
+        InventoryValue::Missing {
+            reason: MissingReason::InventoryExceedsBound
+        }
+    ));
+    Ok(())
+}
+
+#[test]
+fn oversized_x11_response_reports_inventory_exceeds_bound() -> Result<(), Box<dyn std::error::Error>>
+{
+    let mut response = "version number: 11.0\n".to_owned();
+    response.push_str(&"x".repeat(PROTOCOL_COMMAND_OUTPUT_LIMIT));
+
+    let captured = read_bounded_prefix(Cursor::new(response), PROTOCOL_COMMAND_OUTPUT_LIMIT)
+        .map_err(|reason| {
+            std::io::Error::other(format!("could not capture protocol prefix: {reason:?}"))
+        })?;
+    assert!(captured.truncated);
+    assert!(matches!(
+        x11_protocol_version(
             Some(&captured.contents),
             MissingReason::ManualCapture,
             captured.truncated,

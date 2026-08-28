@@ -1,0 +1,17 @@
+{
+  "swVers": "26.5\n",
+  "uname": "arm64\n",
+  "sysctlModel": "MacBookPro18,3\n",
+  "systemProfiler": "{\"SPDisplaysDataType\":[{\"_name\":\"Apple M3 Pro\"}]}",
+  "compiler": "Apple clang version 17.0.0 (clang-1700.0.13.3)\n",
+  "sdk": "26.5\n",
+  "rustToolchain": "rustc 1.98.0 (88d9e12ae 2026-08-20)\n",
+  "session": "Aqua\n",
+  "pkgutilPkgInfo": {
+    "com.apple.pkg.CLTools_Executables": "package-id: com.apple.pkg.CLTools_Executables\nversion: 26.6-17F113\n",
+    "com.apple.pkg.Xcode": "package-id: com.apple.pkg.Xcode\nversion: 26.6-17F113\n"
+  },
+  "packageFailures": {
+    "com.apple.pkg.CLTools_SDK_macOS": "inventory-exceeds-bound"
+  }
+}

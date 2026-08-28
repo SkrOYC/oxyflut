@@ -4,7 +4,9 @@
 //! retains the bounded architecture, toolchain, session, protocol, and package facts that bind that
 //! projection to a complete companion inventory artifact. On PCI platforms, `gpuId` uses
 //! `pci:<vendor-hex4>:<device-hex4>` with lowercase hexadecimal values. On Apple silicon,
-//! `gpuId` uses `apple:<model-slug>`.
+//! `gpuId` uses `apple:<model-slug>`. `driverVersion` uses `apple-driver-<version>` for a
+//! macOS manual capture, `driver-<version>` from Windows display-driver data, and
+//! `<kernel-driver>/<package>=<version>` from the Linux package database.
 
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};

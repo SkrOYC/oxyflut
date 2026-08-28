@@ -283,6 +283,14 @@ fn readiness_summaries(
             FamilySummary::ok("readiness", LOCK_PATH),
             FamilySummary::failed("promotion", PHASE_PATH),
         ],
+        Err(validators::readiness::ReadinessValidationError::Readiness(
+            validators::readiness::ReadinessError::Invariant {
+                code: "resolved-tool-unverifiable-host",
+            },
+        )) => [
+            FamilySummary::deferred("readiness", "resolved-tool-unverifiable-host", LOCK_PATH),
+            FamilySummary::deferred("promotion", "resolved-tool-unverifiable-host", PHASE_PATH),
+        ],
         Err(_) => [
             FamilySummary::failed("readiness", LOCK_PATH),
             FamilySummary::failed("promotion", LOCK_PATH),
@@ -571,6 +579,24 @@ mod tests {
         assert_eq!(
             rust_contract_summary(Err(RustContractError::UnsupportedHost)).line(),
             "rust-contract: failed (unsupported host)"
+        );
+    }
+
+    #[test]
+    fn readiness_unverifiable_host_is_deferred_with_its_typed_code() {
+        let summaries = readiness_summaries(Err(
+            validators::readiness::ReadinessValidationError::Readiness(
+                validators::readiness::ReadinessError::Invariant {
+                    code: "resolved-tool-unverifiable-host",
+                },
+            ),
+        ));
+        assert_eq!(
+            summaries.map(|summary| summary.line()),
+            [
+                "readiness: deferred (resolved-tool-unverifiable-host; .constitution/tech-spec/contracts/qualification-lock.json)".to_owned(),
+                "promotion: deferred (resolved-tool-unverifiable-host; .constitution/tech-spec/contracts/specification-phase.json)".to_owned(),
+            ]
         );
     }
 
