@@ -147,10 +147,18 @@ fn committed_complete_synthetic_resolved_tools_match_the_staged_manifest()
     let manifest = toolchain::ToolchainManifest::from_json(&fs::read(
         source.join("qualification/tools/native-contract-toolchain.json"),
     )?)?;
-    let expected = Value::Array(toolchain::lock::lock_resolved_tools(&manifest)?);
+    let fixture_tools = lock
+        .get("resolvedTools")
+        .and_then(Value::as_array)
+        .ok_or("complete fixture must contain resolved tools")?;
+    let expected = toolchain::lock::lock_resolved_tools(&manifest)?;
 
-    // This reads the committed fixture before `complete_fixture_root` stages policy digests.
-    assert_eq!(lock.get("resolvedTools"), Some(&expected));
+    // This checks name, version, sha256, sourceIdentity, licenseId, hostTriple, and every Nix
+    // path byte-for-byte. Only the Rustup prefix is host-resolved through manifest `pathRoot`.
+    assert_eq!(
+        toolchain::lock::normalize_rustup_paths(&manifest, fixture_tools)?,
+        toolchain::lock::normalize_rustup_paths(&manifest, &expected)?,
+    );
     Ok(())
 }
 
@@ -482,7 +490,7 @@ fn complete_fixture_root() -> Result<PathBuf, Box<dyn Error>> {
     complete_accessibility_maps(&root, &source, &mut platform)?;
     write_json(&platform_path, &platform)?;
 
-    let mut lock = read_json(&source.join(COMPLETE_SYNTHETIC))?;
+    let mut lock = read_readiness_fixture(&source, &source.join(COMPLETE_SYNTHETIC))?;
     let policy = lock
         .get_mut("measurementPolicy")
         .and_then(Value::as_object_mut)
@@ -630,6 +638,19 @@ fn skip_on_unsupported_host() -> Result<bool, Box<dyn Error>> {
 
 fn read_json(path: &Path) -> Result<Value, Box<dyn Error>> {
     Ok(serde_json::from_slice(&fs::read(path)?)?)
+}
+
+fn read_readiness_fixture(root: &Path, path: &Path) -> Result<Value, Box<dyn Error>> {
+    let mut lock = read_json(path)?;
+    let manifest = toolchain::ToolchainManifest::from_json(&fs::read(
+        root.join("qualification/tools/native-contract-toolchain.json"),
+    )?)?;
+    let tools = lock
+        .get_mut("resolvedTools")
+        .and_then(Value::as_array_mut)
+        .ok_or("readiness fixture must contain resolved tools")?;
+    *tools = toolchain::lock::resolve_fixture_rustup_paths(&manifest, tools)?;
+    Ok(lock)
 }
 
 fn write_json(path: &Path, value: &Value) -> Result<(), Box<dyn Error>> {

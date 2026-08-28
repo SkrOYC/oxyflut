@@ -68,6 +68,101 @@ pub(crate) fn lock_resolved_tools(
         .collect()
 }
 
+/// Resolves manifest-relative Rustup fixture paths against the current host.
+///
+/// Fixtures retain the staged manifest's relative Rustup path. This helper replaces only that
+/// path with the absolute path resolved through `pathRoot`, leaving every other fixture field for
+/// the caller to verify.
+///
+/// # Errors
+///
+/// Returns an error when the manifest is invalid, the fixture isn't a lock tool, or a Rustup tool
+/// doesn't retain its manifest-relative path.
+#[cfg(test)]
+pub(crate) fn resolve_fixture_rustup_paths(
+    manifest: &ToolchainManifest,
+    fixture_tools: &[Value],
+) -> Result<Vec<Value>, ToolchainError> {
+    let resolved_tools = lock_resolved_tools(manifest)?;
+    fixture_tools
+        .iter()
+        .map(|value| {
+            let mut fixture_tool = LockResolvedTool::from_value(value)?;
+            let staged_tool = manifest.tool(&fixture_tool.name)?;
+            if staged_tool.path_root.as_deref() == Some("rustup-home") {
+                if fixture_tool.executable_path != staged_tool.executable_path {
+                    return Err(ToolchainError::ExecutableSubstitution {
+                        name: fixture_tool.name,
+                    });
+                }
+                let resolved_tool = resolved_tools
+                    .iter()
+                    .find(|tool| {
+                        tool.get("name") == Some(&Value::String(fixture_tool.name.clone()))
+                    })
+                    .ok_or_else(|| ToolchainError::MissingTool {
+                        name: fixture_tool.name.clone(),
+                    })?;
+                fixture_tool.executable_path = resolved_tool
+                    .get("executablePath")
+                    .and_then(Value::as_str)
+                    .map(str::to_owned)
+                    .ok_or_else(|| ToolchainError::MissingTool {
+                        name: fixture_tool.name.clone(),
+                    })?;
+            }
+            Ok(fixture_tool.to_value())
+        })
+        .collect()
+}
+
+/// Replaces a current-host Rustup prefix with the manifest-relative path for comparison.
+///
+/// The result lets tests compare committed fixtures and host-resolved entries without accepting a
+/// substituted Rustup path.
+///
+/// # Errors
+///
+/// Returns an error when the manifest is invalid, the tool set is malformed, or a Rustup path is
+/// neither the manifest-relative path nor the absolute path that `pathRoot` resolves.
+#[cfg(test)]
+pub(crate) fn normalize_rustup_paths(
+    manifest: &ToolchainManifest,
+    lock_tools: &[Value],
+) -> Result<Vec<Value>, ToolchainError> {
+    let resolved_tools = lock_resolved_tools(manifest)?;
+    lock_tools
+        .iter()
+        .map(|value| {
+            let mut lock_tool = LockResolvedTool::from_value(value)?;
+            let staged_tool = manifest.tool(&lock_tool.name)?;
+            if staged_tool.path_root.as_deref() == Some("rustup-home") {
+                let resolved_tool = resolved_tools
+                    .iter()
+                    .find(|tool| tool.get("name") == Some(&Value::String(lock_tool.name.clone())))
+                    .ok_or_else(|| ToolchainError::MissingTool {
+                        name: lock_tool.name.clone(),
+                    })?;
+                let resolved_path = resolved_tool
+                    .get("executablePath")
+                    .and_then(Value::as_str)
+                    .ok_or_else(|| ToolchainError::MissingTool {
+                        name: lock_tool.name.clone(),
+                    })?;
+                if lock_tool.executable_path != staged_tool.executable_path
+                    && lock_tool.executable_path != resolved_path
+                {
+                    return Err(ToolchainError::ExecutableSubstitution {
+                        name: lock_tool.name,
+                    });
+                }
+                lock_tool.executable_path = staged_tool.executable_path.clone();
+            }
+            Ok(lock_tool.to_value())
+        })
+        .collect()
+}
+
 #[derive(Clone, Debug, Eq, PartialEq)]
 struct LockResolvedTool {
     name: String,

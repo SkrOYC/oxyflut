@@ -170,6 +170,39 @@ pub(crate) fn validate_workspace(root: &Path) -> Result<ReadinessReport, Readine
     validate_documents_with_attribution(root, &lock, &phase, &registry)
 }
 
+/// Validates a readiness fixture after resolving its manifest-relative Rustup paths.
+///
+/// Fixture files retain a host-independent Rustup path. This test-only loader resolves that path
+/// through the staged manifest without modifying the fixture bytes that promotion digests bind.
+#[cfg(test)]
+pub(crate) fn validate_fixture_workspace(
+    root: &Path,
+) -> Result<ReadinessReport, ReadinessValidationError> {
+    let registry =
+        super::schema::compile_workspace(root).map_err(ReadinessError::SchemaRegistry)?;
+    let lock_path = root.join(LOCK_PATH);
+    let phase_path = root.join(PHASE_PATH);
+    let mut lock = read_json(&lock_path)?;
+    let manifest_path = root.join(TOOLCHAIN_MANIFEST_PATH);
+    let manifest = crate::toolchain::ToolchainManifest::from_json(
+        &fs::read(&manifest_path).map_err(|source| ReadinessError::Io {
+            path: manifest_path,
+            source,
+        })?,
+    )
+    .map_err(|_| invariant("resolved-tool-manifest"))?;
+    let tools = lock
+        .get_mut("resolvedTools")
+        .and_then(Value::as_array_mut)
+        .ok_or_else(|| invariant("resolved-tool-manifest"))?;
+    *tools = crate::toolchain::lock::resolve_fixture_rustup_paths(&manifest, tools)
+        .map_err(|_| invariant("resolved-tool-manifest"))?;
+    let phase = read_json(&phase_path)?;
+    validate_schema(&registry, LOCK_SCHEMA, &lock, "qualification-lock")?;
+    validate_schema(&registry, PHASE_SCHEMA, &phase, "specification-phase")?;
+    validate_documents_with_attribution(root, &lock, &phase, &registry)
+}
+
 #[cfg(test)]
 fn validate_documents(
     root: &Path,

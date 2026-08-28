@@ -642,7 +642,7 @@ mod tests {
                 .join(".constitution/tech-spec/contracts/specification-phase.json"),
         )?;
 
-        let result = validators::readiness::validate_workspace(temporary.path());
+        let result = validators::readiness::validate_fixture_workspace(temporary.path());
         assert!(
             matches!(
                 &result,

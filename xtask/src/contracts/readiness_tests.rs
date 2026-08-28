@@ -7,8 +7,7 @@ use serde_json::{Value, json};
 
 use super::super::{digests::DigestError, schema, traceability};
 use super::{
-    GateStatus, PromotionStatus, ReadinessError, read_json, validate_documents,
-    validate_platform_value,
+    GateStatus, PromotionStatus, ReadinessError, validate_documents, validate_platform_value,
 };
 
 #[test]
@@ -632,6 +631,26 @@ fn two_candidate_selection(
         "selectedCandidate": selected_candidate,
         "calculation": calculation
     })
+}
+
+fn read_json(path: &Path) -> Result<Value, Box<dyn Error>> {
+    let mut value = super::read_json(path)?;
+    let Some(tools) = value.get_mut("resolvedTools").and_then(Value::as_array_mut) else {
+        return Ok(value);
+    };
+    let root = path
+        .ancestors()
+        .find(|ancestor| {
+            ancestor
+                .join("qualification/tools/native-contract-toolchain.json")
+                .is_file()
+        })
+        .ok_or("readiness lock fixture must include the staged toolchain manifest")?;
+    let manifest = crate::toolchain::ToolchainManifest::from_json(&fs::read(
+        root.join("qualification/tools/native-contract-toolchain.json"),
+    )?)?;
+    *tools = crate::toolchain::lock::resolve_fixture_rustup_paths(&manifest, tools)?;
+    Ok(value)
 }
 
 fn workspace_root() -> Result<PathBuf, Box<dyn Error>> {

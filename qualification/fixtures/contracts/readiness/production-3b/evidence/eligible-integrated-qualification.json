@@ -8,7 +8,7 @@
     "candidateCommit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
     "adapterCommit": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
   },
-  "lockDigest": "8b86f7ee0b8f6a02605158969230d2621159512b1eef917a184618863287f582",
+  "lockDigest": "c54251416803b3cded73eb6041fa2d7890ac0f993347657157bb17dec417a156",
   "environmentResults": {
     "macos": {
       "CAP-CMP-001": {
