@@ -111,27 +111,29 @@ The output in `C:\Temp\wf-epic-b\B007-windows\owner-confirmation.txt` must ident
 
 ### Session and access procedure
 
-### macOS arm64 access
+#### macOS arm64 access
 
-| Field | Value |
-| :-- | :-- |
-| Session type, compositor, or X server | No session recorded |
-| Interactive-session availability | No access procedure |
-| Administrator requirements | Unknown; no owner |
-| Access procedure | None |
-| Scheduling constraints and repeatable access window | None; blocked pending B007-Q01 |
+| Field                                 | Value                          |
+| :------------------------------------ | :----------------------------- |
+| Session type, compositor, or X server | No session recorded            |
+| Interactive-session availability      | No access procedure            |
+| Administrator requirements            | Unknown; no owner              |
+| Access procedure                      | None                           |
+| Scheduling constraints                | None; blocked pending B007-Q01 |
+| Repeatable access window              | None; blocked pending B007-Q01 |
 
-### Windows x86-64 access
+#### Windows x86-64 access
 
-| Field | Value |
-| :-- | :-- |
-| Session type, compositor, or X server | No session recorded |
-| Interactive-session availability | No access procedure |
-| Administrator requirements | Unknown; no owner |
-| Access procedure | None |
-| Scheduling constraints and repeatable access window | None; blocked pending B007-Q02 |
+| Field                                 | Value                          |
+| :------------------------------------ | :----------------------------- |
+| Session type, compositor, or X server | No session recorded            |
+| Interactive-session availability      | No access procedure            |
+| Administrator requirements            | Unknown; no owner              |
+| Access procedure                      | None                           |
+| Scheduling constraints                | None; blocked pending B007-Q02 |
+| Repeatable access window              | None; blocked pending B007-Q02 |
 
-### Wayland x86-64 access
+#### Wayland x86-64 access
 
 | Field | Value |
 | :-- | :-- |
@@ -142,7 +144,7 @@ The output in `C:\Temp\wf-epic-b\B007-windows\owner-confirmation.txt` must ident
 | Scheduling constraints | on request, any time, no notice requirement ([Owner attestation](#owner-attestation), HITL) |
 | Repeatable access window | owner-operated sessions on request; not unattended ([Owner attestation](#owner-attestation), HITL) |
 
-### X11 x86-64 access
+#### X11 x86-64 access
 
 | Field | Value |
 | :-- | :-- |
@@ -424,6 +426,12 @@ After the script exited 0, an independent `pgrep -a Xvfb` produced no process li
 script exit: 0
 post-run pgrep exit: 1
 ```
+
+## Options and trade-offs
+
+- Option A: Confirm reference-hardware access through a named accountable owner with a usable procedure and repeatable access window. Trade-off: this enables reference-environment qualification only after the configuration also conforms to every Stage 3 reference pin.
+- Option B: Use non-reference exploratory access on an owner-operated host. Trade-off: this supports bounded investigation but cannot establish reference-environment qualification or second-configuration evidence.
+- Option C: Remain blocked with a recorded unblock procedure. Trade-off: this prevents unsupported access claims but defers all environment-specific investigation until a named owner and usable procedure are available.
 
 ## Recommendation
 
