@@ -1,9 +1,10 @@
 //! Typed, content-free pre-implementation readiness reporting.
 //!
 //! This module classifies the candidate-implementation inputs recorded in a schema-validated
-//! qualification lock. The `xtask` command performs the shared schema, exact-set, immutable
-//! reference, and digest validation before presenting this report. The report itself is read-only
-//! and never infers readiness from a missing error.
+//! qualification lock. [`StagedInputRegistry`] records the repository paths for lock inputs whose
+//! schema binds only a SHA-256 digest. In particular, path-less measurement-policy inputs use
+//! `qualification/staged/<field>.json`; `xtask` confines and hashes those files before presenting
+//! this report. The report itself is read-only and never infers readiness from a missing error.
 
 use serde_json::{Map, Value};
 use thiserror::Error;
@@ -54,22 +55,22 @@ const POLICY_FIELDS: &[PolicyField] = &[
     },
     PolicyField {
         name: "scoringAnchors",
-        evidence_path: None,
+        evidence_path: Some("qualification/staged/scoring-anchors.json"),
         upstream_owner: "OXY-D001",
     },
     PolicyField {
         name: "assessors",
-        evidence_path: None,
+        evidence_path: Some("qualification/staged/assessors.json"),
         upstream_owner: "OXY-D001",
     },
     PolicyField {
         name: "fuzzCorpora",
-        evidence_path: None,
+        evidence_path: Some("qualification/staged/fuzz-corpora.json"),
         upstream_owner: "OXY-D001",
     },
     PolicyField {
         name: "securityPatchRehearsal",
-        evidence_path: None,
+        evidence_path: Some("qualification/staged/security-patch-rehearsal.json"),
         upstream_owner: "OXY-D001",
     },
     PolicyField {
@@ -78,6 +79,34 @@ const POLICY_FIELDS: &[PolicyField] = &[
         upstream_owner: "OXY-C001",
     },
 ];
+/// Maps measurement-policy digest fields to their immutable repository inputs.
+///
+/// The qualification-lock schema gives four staged measurement-policy inputs only a SHA-256
+/// field. Until Stage 3 types their references, their conventional paths are the authoritative
+/// repository-local referents for readiness validation.
+pub struct StagedInputRegistry;
+
+impl StagedInputRegistry {
+    /// Returns the repository-relative staged input path for a measurement-policy digest field.
+    #[must_use]
+    pub fn measurement_policy_path(field: &str) -> Option<&'static str> {
+        match field {
+            "rawMeasurementSchema" => {
+                Some(".constitution/tech-spec/data-models/raw-measurement.schema.json")
+            }
+            "sampleValidityRules" => Some("qualification/schemas/sample-validity.schema.json"),
+            "platformContracts" => {
+                Some(".constitution/tech-spec/contracts/platform-contracts.json")
+            }
+            "scoringAnchors" => Some("qualification/staged/scoring-anchors.json"),
+            "assessors" => Some("qualification/staged/assessors.json"),
+            "fuzzCorpora" => Some("qualification/staged/fuzz-corpora.json"),
+            "securityPatchRehearsal" => Some("qualification/staged/security-patch-rehearsal.json"),
+            _ => None,
+        }
+    }
+}
+
 const KNOWN_UNKNOWN_BINDINGS: &[KnownUnknownBinding] = &[
     KnownUnknownBinding {
         known_unknown: "minimum-platform-and-protocol-versions",
@@ -606,12 +635,39 @@ struct KnownUnknownBinding {
 mod tests {
     use serde_json::Value;
 
-    use super::{BlockingKind, ReadinessGate, ReadinessStatus, candidate_implementation_report};
+    use super::{
+        BlockingKind, ReadinessGate, ReadinessStatus, StagedInputRegistry,
+        candidate_implementation_report,
+    };
 
     const COMPLETE: &[u8] =
         include_bytes!("../../../qualification/fixtures/readiness/complete.synthetic.json");
     const CLEARED_WITHOUT_EVIDENCE: &[u8] =
         include_bytes!("../../../qualification/fixtures/readiness/cleared-without-evidence.json");
+
+    #[test]
+    fn staged_input_registry_binds_every_pathless_measurement_policy_digest() {
+        assert_eq!(
+            StagedInputRegistry::measurement_policy_path("scoringAnchors"),
+            Some("qualification/staged/scoring-anchors.json")
+        );
+        assert_eq!(
+            StagedInputRegistry::measurement_policy_path("assessors"),
+            Some("qualification/staged/assessors.json")
+        );
+        assert_eq!(
+            StagedInputRegistry::measurement_policy_path("fuzzCorpora"),
+            Some("qualification/staged/fuzz-corpora.json")
+        );
+        assert_eq!(
+            StagedInputRegistry::measurement_policy_path("securityPatchRehearsal"),
+            Some("qualification/staged/security-patch-rehearsal.json")
+        );
+        assert_eq!(
+            StagedInputRegistry::measurement_policy_path("layoutVisitCap"),
+            None
+        );
+    }
 
     #[test]
     fn complete_synthetic_lock_reports_a_ready_candidate_gate()
