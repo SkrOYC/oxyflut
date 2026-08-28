@@ -6,6 +6,7 @@
 - **Clock start / stop:** 2026-08-28T16:52:30Z / 2026-08-28T17:47:05Z.
 - **Round-4 correction clock start / stop:** 2026-08-28T18:00:03Z / 2026-08-28T18:10:12Z.
 - **Round-5 correction clock start / stop:** 2026-08-28T18:21:52Z / 2026-08-28T18:28:54Z.
+- **Round-6 correction clock start / stop:** 2026-08-28T18:36:43Z / 2026-08-28T18:42:09Z.
 - **Scope result:** This report changes no product capability, architecture boundary, source tree, or specification. The only repository file changed is this report.
 
 ## Question
@@ -123,13 +124,40 @@ exit "$status"
 
 P1a writes `input-sources.json` and `input-source-selection.json` on every input-source result and uses exit `0`, `20`, `21`, or `22` as defined above. Exit `23` is `p1a-compile-failed`. Exit `24` is `p1a-evidence-write-failed`, including a missing raw result or sidecar write. The status capture and sidecar run after every inventory result, so a selection failure can't skip evidence preservation.
 
-P1 has separate allocation invocations. The focused invocation is a standalone Objective-C AppKit probe with two `NSTextInputContext(client:)` instances, one per view, and contains no integrated candidate code. The integrated invocation is a P6-supplied host built from the frozen integrated fork and adapter inputs. P6 must write `integrated-input-lock.json` with `sourceDigestAlgorithm`, `qualificationLockPath`, `qualificationLockSha256`, `forkCommit`, `forkSourceSha256`, `adapterCommit`, `adapterSourceSha256`, `integratedProbeArtifactManifestPath`, `integratedProbeArtifactManifestSha256`, `integratedProbeExecutablePath`, and `integratedProbeExecutableSha256`.
+P1 has separate allocation invocations. The focused invocation is a standalone Objective-C AppKit probe with two `NSTextInputContext(client:)` instances, one per view, and contains no integrated candidate code. The integrated invocation is a P6-supplied host built from the frozen integrated fork and adapter inputs.
 
-Neither the existing `artifact-manifest.schema.json` nor the qualification lock defines a source-digest algorithm: the artifact manifest records source commits, a qualification-lock digest, and file SHA-256 values, while the qualification lock records only the two candidate commits. P6 therefore defines `git-archive-tar-sha256-v1`. For each source root, P6 must require a clean ordinary Git worktree, reject every gitlink, and require `git -C ROOT status --porcelain=v1 --untracked-files=all` to produce no bytes. In the following commands, `ROOT` is that root and `COMMIT` is its frozen lower-case commit from `sourcePins.integratedFork.commit` or `sourcePins.oxyflutAdapter.commit`. P6 must require `git -C ROOT rev-parse HEAD` to equal `COMMIT`, export it with `git archive --format=tar --mtime='1970-01-01T00:00:00Z' COMMIT`, extract it into an empty directory, and create the build-input tar with GNU tar under `LC_ALL=C` and `TZ=UTC` using `--format=posix --sort=name --mtime='1970-01-01 00:00:00 UTC' --owner=0 --group=0 --numeric-owner --pax-option=delete=atime,delete=ctime`. P6 hashes the resulting tar's exact bytes with SHA-256. It records the Git and GNU tar versions and executable SHA-256 values in the P6 inventory. The integrated host must compile only from the two extracted canonical build-input tars, not from either live source root. The canonical-tar digest defines `forkSourceSha256` and `adapterSourceSha256`. Git documents that `git archive` writes the named tree to standard output and that `--mtime` sets archive-entry modification time. See S31.
+P6 has separate prebuild and post-build records. Before compilation, it must write `integrated-input-lock.json` with only the input keys `sourceDigestAlgorithm`, `qualificationLockSha256`, `forkCommit`, `forkSourceSha256`, `adapterCommit`, `adapterSourceSha256`, and `toolchainIdentities`. `toolchainIdentities` is a nonempty array sorted by `name`; every entry contains `name`, `version`, and `executableSha256`, and the array includes `git` plus every compiler, linker, SDK driver, build tool, and archive extractor that extracts a source archive or creates the executable. The prebuild lock contains no executable, artifact-manifest, attestation, or other post-build path or digest.
 
-P6 writes the input lock atomically as UTF-8 with LF line endings, then writes the SHA-256 of those exact bytes to `integrated-input-lock.json.sha256`. P6 embeds an `integrated-build-provenance.json` blob in the integrated probe executable. That blob contains the source-digest algorithm, both commit and canonical-tar digest pairs, and the input-lock SHA-256. P6 also writes a schema-valid artifact manifest for that executable. Its `source.candidateCommit`, `source.adapterCommit`, and `qualificationLockDigest` must equal the lock's fork commit, adapter commit, and qualification-lock SHA-256, and its `files` entry for the executable must have the lock's executable path and SHA-256.
+Neither the existing `artifact-manifest.schema.json` nor the qualification lock defines a source-digest algorithm: the artifact manifest records source commits, a qualification-lock digest, and file SHA-256 values, while the qualification lock records only the two candidate commits. P6 therefore defines `git-archive-tar-sha256-v2`; `git-archive-tar-sha256-v1` is not an acceptable input-lock value because it did not define one byte stream.
 
-Before it initializes either view, the integrated runner must compute and retain the input-lock SHA-256, compare it with the P6 sidecar and `qualificationLockSha256`, recompute the qualification-lock SHA-256, and compare the P6 lock's fork and adapter commits with `sourcePins.integratedFork.commit` and `sourcePins.oxyflutAdapter.commit`. It must reject either unresolved status or a nonmatching commit. It must verify the artifact-manifest digest, its source and qualification-lock fields, and the executable file digest. It must obtain the embedded blob through that executable's `--build-provenance-json` output and require exact agreement with the P6 lock. On a preflight failure, it must write a transcript preflight record and validation record before returning. A mismatch fails before view initialization with exit `40` and `integrated-input-lock-invalid`.
+For each source root, P6 must require a clean ordinary nonbare Git worktree, reject every gitlink, and require `git -C "$ROOT" status --porcelain=v1 --untracked-files=all` to produce no bytes. In the following normative commands, `ROOT` is that absolute worktree, `COMMIT` is its frozen lower-case commit from `sourcePins.integratedFork.commit` or `sourcePins.oxyflutAdapter.commit`, `WORKDIR` is `/tmp/wf-epic-b/OXY-B001/integrated-inventory`, and `ARCHIVE` is either `$WORKDIR/fork-source.tar` or `$WORKDIR/adapter-source.tar`. The commands use the sole tree operand `"$COMMIT"`; no path operands, `--worktree-attributes`, compression format, or external tar implementation participate in the source digest.
+
+```sh
+set -o pipefail
+mkdir -p "$WORKDIR" || exit 84
+test "$(git -C "$ROOT" rev-parse --is-inside-work-tree)" = true || exit 82
+test "$(git -C "$ROOT" rev-parse --is-bare-repository)" = false || exit 82
+test -z "$(git -C "$ROOT" status --porcelain=v1 --untracked-files=all)" || exit 82
+test "$(git -C "$ROOT" rev-parse HEAD)" = "$COMMIT" || exit 82
+git -C "$ROOT" ls-tree -r "$COMMIT" > "$WORKDIR/tree.txt" || exit 82
+if LC_ALL=C grep -q '^160000 ' "$WORKDIR/tree.txt"; then exit 82; fi
+test ! -s "$(git -C "$ROOT" rev-parse --git-path info/attributes)" || exit 82
+test -z "$(git -C "$ROOT" config --get-all core.attributesFile)" || exit 82
+LC_ALL=C TZ=UTC git -C "$ROOT" -c tar.umask=0002 archive --format=tar --prefix=src/ "$COMMIT" > "$ARCHIVE" || exit 82
+sha256sum "$ARCHIVE"
+```
+
+The first whitespace-delimited field from `sha256sum "$ARCHIVE"` is the only canonical-source digest and becomes `forkSourceSha256` or `adapterSourceSha256`. The saved `ARCHIVE` bytes, rather than either live worktree, are the only source material from which P6 may extract and compile the integrated host. Extraction is a later build operation and cannot redefine the source digest; its executable identity belongs in `toolchainIdentities`.
+
+The normative command fixes the Git format, prefix, commit operand, tar file-mode policy, and commit-derived archive time. Git documents that `git archive` writes the named tree to standard output and, for a commit rather than a tree, uses the recorded commit time. The archive is deterministic for that recorded Git executable, commit, and effective committed attributes. The caveat is material: committed `.gitattributes` can apply `export-ignore`, which removes paths, or `export-subst`, which expands placeholders. P6 deliberately hashes that exported archive, not an assumed raw checkout; it rejects local `info/attributes` and `core.attributesFile` overrides and doesn't pass `--worktree-attributes`. See S32.
+
+After both source archives and all toolchain identities are known but before compilation, P6 writes the input lock atomically as UTF-8 with LF line endings, then writes the SHA-256 of those exact bytes to `integrated-input-lock.json.sha256`. P6 embeds an `integrated-build-provenance.json` blob in the integrated probe executable at build time. That blob contains the source-digest algorithm, both input commit and source-digest pairs, the qualification-lock SHA-256, and the input-lock SHA-256. It contains no executable, artifact-manifest, or attestation digest.
+
+After compilation, P6 hashes the executable, then writes a schema-valid artifact manifest for that executable. Its `source.candidateCommit`, `source.adapterCommit`, and `qualificationLockDigest` must equal the prebuild lock's fork commit, adapter commit, and qualification-lock SHA-256, and its `files` entry for the executable must contain the executable path and SHA-256. P6 then hashes the completed artifact manifest and writes `integrated-build-attestation.json` atomically as UTF-8 with LF line endings, followed by `integrated-build-attestation.json.sha256`. The attestation contains exactly `inputLockPath`, `inputLockSha256`, `executablePath`, `executableSha256`, `artifactManifestPath`, and `artifactManifestSha256`. The executable digest, artifact-manifest digest, and every other post-build digest appear only in this post-build attestation or the artifact manifest, never in the hashed input lock. This one-way sequence prevents a cryptographic fixed point.
+
+Before it initializes either view, the integrated runner receives the prebuild input lock and sidecar, the qualification lock, and the post-build attestation and sidecar. It recomputes the exact-byte attestation SHA-256 and requires equality with `integrated-build-attestation.json.sha256` before parsing its fields. It then performs two independent input comparisons: it recomputes the exact-byte `integrated-input-lock.json` SHA-256 and requires equality with `integrated-input-lock.json.sha256` and with `inputLockSha256` returned by the executable's `--build-provenance-json`; separately, it recomputes the exact-byte `qualification-lock.json` SHA-256 and requires equality with the input lock's `qualificationLockSha256` field. It must never compare either file's digest with the other's identity field.
+
+The runner then compares the input lock's fork and adapter commits with `sourcePins.integratedFork.commit` and `sourcePins.oxyflutAdapter.commit`, rejecting an unresolved status or nonmatching commit. It requires the embedded provenance's source-digest algorithm, two input commit-and-digest pairs, qualification-lock SHA-256, and input-lock SHA-256 to agree exactly with the input lock. It recomputes the executable SHA-256 and requires it to equal `integrated-build-attestation.json`'s `executableSha256`; it recomputes the artifact-manifest SHA-256 and requires it to equal the attestation's `artifactManifestSha256`; and it requires the manifest's source, qualification-lock, executable path, and executable SHA-256 fields to agree with the input lock and attestation. It also requires the attestation's `inputLockSha256` to equal the recomputed input-lock digest. On a preflight failure, it must write a transcript preflight record and validation record before returning. A mismatch fails before view initialization with exit `40` and `integrated-input-lock-invalid`.
 
 P1 doesn't select an input source. Before it initializes a view, observes a preliminary callback, or runs a matrix action, each focused and integrated allocation invocation must call `TISCopyCurrentKeyboardInputSource`, read `kTISPropertyInputSourceID`, and compare that observed ID with `selectedInputSourceId` from the P1a selection record. Each invocation must write its first transcript record with `event: "input-source-continuity-check"`, the P1a selected ID, the observed ID, and the comparison result. If the call returns no source or the IDs differ, the focused run exits `34` with `input-source-changed-since-p1a` and the integrated run exits `44` with the same result. Each must write its validation record and raw-output sidecar, invoke no preliminary callback, and run no matrix action. This check detects a source change between P1a and either allocation without moving selection ownership out of P1a.
 
@@ -189,18 +217,19 @@ exit "$status"
 
 The focused run exits `0` only when its continuity check, preliminary callback, and every matrix validation pass. It exits `30` with `cjk-composition-not-observed` before V5, `31` with `focused-ime-validation-failed` after a matrix failure, `32` with `focused-ime-compile-failed`, `33` with `focused-ime-evidence-write-failed`, or `34` with `input-source-changed-since-p1a`. Every noncompile result writes `output/focused/validation.json`; the sidecar failure code takes precedence if an expected raw file or its sidecar can't be written.
 
-The integrated P1 command runs only after P6. It captures the runner status before it hashes the P1a records, the P6 lock, and every integrated raw output.
+The integrated P1 command runs only after P6. It captures the runner status before it hashes the P1a records, the P6 prebuild input lock and sidecar, the P6 post-build attestation and sidecar, and every integrated raw output.
 
 ```sh
 repo_root=/home/oscar/GitHub/oxyflut
 workdir=/tmp/wf-epic-b/OXY-B001/mac-ime-probe
 lock=/tmp/wf-epic-b/OXY-B001/integrated-inventory/integrated-input-lock.json
+attestation=/tmp/wf-epic-b/OXY-B001/integrated-inventory/integrated-build-attestation.json
 cd "$workdir" || exit 45
 mkdir -p output/integrated || exit 45
 set +e
-./run-integrated-ime-probe --input-lock "$lock" --qualification-lock "$repo_root/.constitution/tech-spec/contracts/qualification-lock.json" --allocation integrated --two-views --input-source-selection output/input-source-selection.json --input-source-inventory output/input-sources.json --c-abi-contract "$repo_root/.constitution/tech-spec/contracts/oxyflut-substrate.h" --require-build-provenance-json --require-current-keyboard-input-source-before-preliminary --require-nstextinputclient-through-oxy-platform-event --require-preliminary-set-marked-text --matrix ime-matrix.json --jsonl output/integrated/transcript.jsonl --validation output/integrated/validation.json
+./run-integrated-ime-probe --input-lock "$lock" --build-attestation "$attestation" --qualification-lock "$repo_root/.constitution/tech-spec/contracts/qualification-lock.json" --allocation integrated --two-views --input-source-selection output/input-source-selection.json --input-source-inventory output/input-sources.json --c-abi-contract "$repo_root/.constitution/tech-spec/contracts/oxyflut-substrate.h" --require-build-provenance-json --require-current-keyboard-input-source-before-preliminary --require-nstextinputclient-through-oxy-platform-event --require-preliminary-set-marked-text --matrix ime-matrix.json --jsonl output/integrated/transcript.jsonl --validation output/integrated/validation.json
 status=$?
-shasum -a 256 output/input-sources.json output/input-source-selection.json "$lock" output/integrated/transcript.jsonl output/integrated/validation.json > output/integrated/raw-output.sha256
+shasum -a 256 output/input-sources.json output/input-source-selection.json "$lock" "$lock.sha256" "$attestation" "$attestation.sha256" output/integrated/transcript.jsonl output/integrated/validation.json > output/integrated/raw-output.sha256
 write_status=$?
 if [ "$write_status" -ne 0 ]; then
   exit 45
@@ -208,7 +237,7 @@ fi
 exit "$status"
 ```
 
-The runner must validate the P6 lock before it initializes either view, including the source-digest algorithm, the frozen identities, the qualification-lock identity, the canonical-tar digests, the artifact manifest and executable digests, and the executable's embedded provenance. It exits `0` only when those checks, the input-source continuity check, C-ABI route, preliminary callback, and every matrix validation pass. It exits `40` with `integrated-input-lock-invalid`, `41` with `nstextinputclient-c-abi-route-missing`, `42` with `cjk-composition-not-observed` before V5, `43` with `integrated-ime-validation-failed`, `44` with `input-source-changed-since-p1a`, or `45` with `integrated-ime-evidence-write-failed`. Every nonzero result retains B001-04 as KU. The sidecar failure code takes precedence if an expected raw file, input-lock digest, or sidecar can't be written.
+The runner must validate the P6 prebuild input lock, its sidecar, the qualification lock, the post-build attestation, the artifact manifest, the executable digest, and the executable's embedded provenance before it initializes either view. It must apply the two distinct input-lock and qualification-lock comparisons defined above; artifact and executable output checks come from the post-build attestation, not from the input lock. It exits `0` only when those checks, the input-source continuity check, C-ABI route, preliminary callback, and every matrix validation pass. It exits `40` with `integrated-input-lock-invalid`, `41` with `nstextinputclient-c-abi-route-missing`, `42` with `cjk-composition-not-observed` before V5, `43` with `integrated-ime-validation-failed`, `44` with `input-source-changed-since-p1a`, or `45` with `integrated-ime-evidence-write-failed`. Every nonzero result retains B001-04 as KU. The sidecar failure code takes precedence if an expected raw file, input-lock digest, attestation, or sidecar can't be written.
 
 ### Accessibility qualification corpus
 
@@ -263,14 +292,14 @@ The P5 command is `cd /tmp/wf-epic-b/OXY-B001/mac-recovery-probe && xcrun --sdk 
 
 | Probe | Scope and command | Procedure and expected output |
 | :-- | :-- | :-- |
-| P1 | P1a and separate focused and integrated commands in [Input method editor qualification corpus](#input-method-editor-qualification-corpus). | P1a inventories, selects, confirms, and hashes the active source record with exit `0`, `20`, `21`, `22`, `23`, or `24`. Each allocation invocation rereads the current keyboard input source, records its observed ID before the preliminary callback, and fails `34` or `44` if it differs from P1a's selected ID. P1 hashes the selection record and every produced raw output after it captures each allocation status. The focused run is standalone. The integrated run follows P6, validates the embedded build provenance and P6 lock digest, binds its fork and adapter digests, and records only after `OxySubstrateCallbacks.on_platform_event` receives the translated input method editor event. |
+| P1 | P1a and separate focused and integrated commands in [Input method editor qualification corpus](#input-method-editor-qualification-corpus). | P1a inventories, selects, confirms, and hashes the active source record with exit `0`, `20`, `21`, `22`, `23`, or `24`. Each allocation invocation rereads the current keyboard input source, records its observed ID before the preliminary callback, and fails `34` or `44` if it differs from P1a's selected ID. P1 hashes the selection record and every produced raw output after it captures each allocation status. The focused run is standalone. The integrated run follows P6, independently validates the prebuild input lock and qualification lock, then validates the post-build attestation, artifact manifest, executable digest, and embedded provenance, and records only after `OxySubstrateCallbacks.on_platform_event` receives the translated input method editor event. |
 | D0 | Stage 3 semantic-role decision specified in [Spec edits required](#downstream-impact). | Adds and validates the candidate-neutral closed role registry with complete `name`, stable `code`, `ax`, `uia`, and `atspi` records from the recorded AX, UIA, and AT-SPI vocabulary crosswalk. It also performs the version-6 per-role-map migration. This decision must complete before P2R; it is not a candidate probe. |
 | P2R | `validate-and-freeze-role-registry.sh` command in [Stage 3 semantic-role decision and P2R registry freeze](#stage-3-semantic-role-decision-and-p2r-registry-freeze). | Validates the Stage 3 registry and the frozen snapshot against their separate schemas, records the source digest, and writes the snapshot and SHA-256 only when complete role records, vocabulary records, and stable unique codes pass. |
 | P2 | `mac-accessibility-probe` command in [Accessibility qualification corpus](#accessibility-qualification-corpus), after D0 and P2R. | Before either candidate starts, validates the Stage 3 registry and snapshot against their schemas, recomputes and compares the source digest, and verifies exact equality of complete role and vocabulary-source records. It then validates focused and integrated version-6 maps against the same complete schema and records VoiceOver traversal and every declared reverse action. |
 | P3 | `cd /tmp/wf-epic-b/OXY-B001/mac-timing-probe && xcrun --sdk macosx clang -fobjc-arc -framework AppKit -framework Metal timing_probe.m -o timing_probe && ./timing_probe --two-views --observer-process --move-displays --seconds 10 --jsonl timing.jsonl`. | Records observer and candidate process IDs, display identities, link timestamps, presentation times, and display epochs while each candidate stream is blocked. |
 | P4 | `cd /tmp/wf-epic-b/OXY-B001/mac-routing-probe && ./routing_probe --allocation focused --two-windows --interleave --teardown && ./routing_probe --allocation integrated --through-c-abi --two-windows --interleave --teardown`. | Proves each request carries an owning view generation and stale target behavior. |
 | P5 | `mac-recovery-probe` command in [Recovery qualification corpus](#recovery-qualification-corpus). | Runs drawable loss, real sleep and wake, display topology, resize, and available graphics-error cases through both allocations. |
-| P6 | `repo_root=/home/oscar/GitHub/oxyflut && cd /tmp/wf-epic-b/OXY-B001/integrated-inventory && ./inventory.sh --qualification-lock "$repo_root/.constitution/tech-spec/contracts/qualification-lock.json" --fork-root "$FORK_ROOT" --adapter-root "$ADAPTER_ROOT" --inventory-output inventory.json --input-lock-output integrated-input-lock.json`. `FORK_ROOT` and `ADAPTER_ROOT` name the two absolute local Git worktrees; the script rejects an unset, nonabsolute, dirty, non-Git, or submodule-containing root. | Reads the resolved integrated-fork and Oxyflut-adapter commits from the qualification lock, constructs the `git-archive-tar-sha256-v1` canonical build-input tars, compiles only from them, embeds the provenance blob, hashes the exact input-lock bytes, writes a schema-valid executable artifact manifest, and emits the commit-bound macOS path and symbol inventory. It exits `0` only with both frozen identities, canonical-tar digests, input-lock sidecar, provenance blob, executable manifest, and complete inventory. It exits `80` with `integrated-input-pin-missing`, `81` with `integrated-inventory-incomplete`, `82` with `integrated-source-verification-failed`, `83` with `integrated-probe-compile-failed`, or `84` with `integrated-inventory-write-failed`. |
+| P6 | `repo_root=/home/oscar/GitHub/oxyflut && cd /tmp/wf-epic-b/OXY-B001/integrated-inventory && ./inventory.sh --qualification-lock "$repo_root/.constitution/tech-spec/contracts/qualification-lock.json" --fork-root "$FORK_ROOT" --adapter-root "$ADAPTER_ROOT" --inventory-output inventory.json --input-lock-output integrated-input-lock.json --artifact-manifest-output integrated-probe-artifact-manifest.json --build-attestation-output integrated-build-attestation.json`. `FORK_ROOT` and `ADAPTER_ROOT` name the two absolute local Git worktrees; the script rejects an unset, nonabsolute, dirty, non-Git, or submodule-containing root. | Reads the resolved integrated-fork and Oxyflut-adapter commits from the qualification lock, constructs the `git-archive-tar-sha256-v2` canonical source archives, writes and sidecars the input-only lock before compilation, compiles only from those saved archives, embeds the provenance blob, hashes the executable, writes the schema-valid executable artifact manifest, and finally writes and sidecars the post-build attestation. It emits the commit-bound macOS path and symbol inventory. It exits `0` only with both frozen identities, canonical-source digests, input-lock sidecar, provenance blob, executable manifest, post-build attestation, and complete inventory. It exits `80` with `integrated-input-pin-missing`, `81` with `integrated-inventory-incomplete`, `82` with `integrated-source-verification-failed`, `83` with `integrated-probe-compile-failed`, or `84` with `integrated-inventory-write-failed`. |
 | P7 | `cd /tmp/wf-epic-b/OXY-B001/evidence-lock && ./lock.sh ../sources ../mac-* > manifest.json`. | Fetches each cited source again, preserves the exact fetched bytes under the evidence root, then computes fixture SHA-256 values and writes a manifest that verifies every path and digest. |
 | P8 | `cd /tmp/wf-epic-b/OXY-B001/macos-availability && ./collect-apple-availability.sh > availability.json && ./verify-maximum-minimum.sh availability.json`. | Preserves authoritative availability for every `not stated` interface and either derives one verified maximum or retains B001-02 as a KU. |
 
@@ -283,10 +312,10 @@ The P5 command is `cd /tmp/wf-epic-b/OXY-B001/mac-recovery-probe && xcrun --sdk 
 ## Recommendation
 
 - **Chosen option:** A/C mix. Choose A for B001-01, B001-03, B001-06, B001-09, B001-12, and B001-15. Choose C for B001-02, B001-04, B001-05, B001-07, B001-08, B001-10, B001-11, B001-13, B001-14, and B001-16 through B001-18.
-- **Why it fits:** The recommendation treats only preserved, authoritative interface evidence as KK. It does not turn a platform API, a source listing, or a plausible deployment target into candidate behavior evidence. P1-P8 each specify a host, input, command, and expected output.
+- **Why it fits:** The recommendation treats only preserved, authoritative interface evidence as KK. It does not turn a platform API, a source listing, or a plausible deployment target into candidate behavior evidence. P1-P8 each specify a host, input, command, and expected output. P6 uses a one-way provenance chain: an input-only lock is embedded at build time, while the executable and artifact-manifest digests are recorded only after the build in a separate attestation.
 - **Rejected option:** Reject B because the documented 14.0 display-link introduction does not prove the historical availability of every other required interface. Reject deprecated `CVDisplayLink`, candidate-internal clocks as independent meters, `MTLDeviceNotificationName.wasRemoved` on Apple Silicon, default-window routing, and a map or recovery claim without preserved traces.
 - **Capability and architecture guard:** This recommendation preserves the P0 capabilities and the accepted Platform integration and reentrancy boundaries. It chooses no substrate and introduces no product capability or architecture boundary.
-- **Stage 3 edits:** Apply only the exact deployment-target retentions and the D0 role-registry, per-role accessibility-map migration, generated-role-constant, traceability, and migration-note instructions in [Downstream impact](#downstream-impact).
+- **Stage 3 edits:** Apply only the exact deployment-target retentions and the D0 role-registry, per-role accessibility-map migration, generated-role-constant, traceability, and migration-note instructions in [Downstream impact](#downstream-impact). The P6 provenance correction is a report-runbook change and requires no current Stage 3 specification edit.
 
 ## Downstream impact
 
@@ -376,6 +405,7 @@ Table 3 records every authoritative source used by a claim in this report. Each 
 | S29 | https://learn.microsoft.com/en-us/windows/win32/winauto/uiauto-controltypesoverview | https://learn.microsoft.com/en-us/windows/win32/winauto/uiauto-controltypesoverview | 2026-08-28T17:42:45Z | `acc76e7490add3c968e212242e95d54a51d7498eef0ce6e884ace5ee3b684aec` |
 | S30 | https://gnome.pages.gitlab.gnome.org/at-spi2-core/devel-docs/doc-org.a11y.atspi.Accessible.html | https://gnome.pages.gitlab.gnome.org/at-spi2-core/devel-docs/doc-org.a11y.atspi.Accessible.html | 2026-08-28T17:42:46Z | `235e0fab627d0238c68b2987b283e0aab5b5cc7f1cf023b3c85f892a4d33a2d4` |
 | S31 | https://git-scm.com/docs/git-archive | https://git-scm.com/docs/git-archive | 2026-08-28T18:20:02Z | `21b89779c56ae813b5a7383ab1dd942a3773d01e1dc732aac7e7f1bc828ba023` |
+| S32 | https://git-scm.com/docs/git-archive | https://git-scm.com/docs/git-archive | 2026-08-28T18:36:43Z | `eeb017eadfe17d6e3a7587fbf07e966ae276674cc6f519b335318b77343dce4c` |
 
 #### Preserved verbatim excerpts
 
@@ -569,6 +599,16 @@ Creates an archive of the specified format containing the tree structure for the
 Set modification time of archive entries. Without this option the committer time is used if <tree-ish> is a commit or tag, and the current time if it is a tree.
 ```
 
+`S32`
+
+```text
+Creates an archive of the specified format containing the tree structure for the named tree, and writes it out to the standard output. If <prefix> is specified it is prepended to the filenames in the archive.
+On the other hand, when a commit ID or tag ID is provided, the commit time as recorded in the referenced commit object is used instead.
+Files and directories with the attribute export-ignore won’t be added to archive files.
+If the attribute export-subst is set for a file then Git will expand several placeholders when adding this file to an archive.
+Note that attributes are by default taken from the `.gitattributes` files in the tree that is being archived.
+```
+
 The following command produced the table digests from these normalized excerpts.
 
 ```text
@@ -609,6 +649,13 @@ $ sha256sum /tmp/wf-epic-b/OXY-B001/round5-excerpts/S31.txt
 21b89779c56ae813b5a7383ab1dd942a3773d01e1dc732aac7e7f1bc828ba023  /tmp/wf-epic-b/OXY-B001/round5-excerpts/S31.txt
 ```
 
+The following Round-6 command produced the S32 digest from the normalized UTF-8 excerpt with LF line endings and one trailing LF.
+
+```text
+$ sha256sum /tmp/wf-epic-b/OXY-B001/round6-git-archive/S32.txt
+eeb017eadfe17d6e3a7587fbf07e966ae276674cc6f519b335318b77343dce4c  /tmp/wf-epic-b/OXY-B001/round6-git-archive/S32.txt
+```
+
 ### Cited official source URLs
 
 - S1: https://developer.apple.com/documentation/xcode-release-notes/xcode-26_6-release-notes
@@ -639,3 +686,4 @@ $ sha256sum /tmp/wf-epic-b/OXY-B001/round5-excerpts/S31.txt
 - S29: https://learn.microsoft.com/en-us/windows/win32/winauto/uiauto-controltypesoverview
 - S30: https://gnome.pages.gitlab.gnome.org/at-spi2-core/devel-docs/doc-org.a11y.atspi.Accessible.html
 - S31: https://git-scm.com/docs/git-archive
+- S32: https://git-scm.com/docs/git-archive
