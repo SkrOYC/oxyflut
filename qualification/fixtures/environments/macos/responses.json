@@ -5,8 +5,11 @@
   "systemProfiler": "{\"SPDisplaysDataType\":[{\"_name\":\"Apple M3 Pro\"}]}",
   "compiler": "Apple clang version 17.0.0 (clang-1700.0.13.3)\n",
   "sdk": "26.5\n",
-  "compositor": "Aqua\n",
+  "rustToolchain": "rustc 1.98.0 (88d9e12ae 2026-08-20)\n",
   "session": "Aqua\n",
-  "protocolVersion": "AppKit SDK 26.6\n",
-  "packageReceipts": ["xcode\t26.6-17F113\n", "macos-sdk\t26.5\n"]
+  "pkgutilPkgs": "com.apple.pkg.Xcode\ncom.apple.pkg.CLTools\n",
+  "pkgutilPkgInfo": {
+    "com.apple.pkg.Xcode": "package-id: com.apple.pkg.Xcode\nversion: 26.6-17F113\n",
+    "com.apple.pkg.CLTools": "package-id: com.apple.pkg.CLTools\nversion: 26.6-17F113\n"
+  }
 }

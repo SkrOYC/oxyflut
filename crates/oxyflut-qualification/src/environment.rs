@@ -2,7 +2,9 @@
 //!
 //! The qualification lock admits a six-field environment projection. An [`EnvironmentInventory`]
 //! retains the bounded architecture, toolchain, session, protocol, and package facts that bind that
-//! projection to a complete companion inventory artifact.
+//! projection to a complete companion inventory artifact. On PCI platforms, `gpuId` uses
+//! `pci:<vendor-hex4>:<device-hex4>` with lowercase hexadecimal values. On Apple silicon,
+//! `gpuId` uses `apple:<model-slug>`.
 
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
@@ -23,6 +25,8 @@ pub const MAXIMUM_OBSERVED_VALUE_BYTES: usize = 256;
 pub enum MissingReason {
     /// The active lock does not declare the required minimum value.
     NotDeclaredByLock,
+    /// The platform requires a bounded manual capture because no authoritative CLI exposes it.
+    ManualCapture,
     /// The current host does not provide this source.
     UnavailableOnHost,
     /// The authoritative source is unavailable on the host.
@@ -261,6 +265,8 @@ pub struct EnvironmentFields {
     pub compiler_identity: InventoryValue,
     /// Platform SDK identity.
     pub sdk_identity: InventoryValue,
+    /// Rust toolchain identity retained only in the complete inventory artifact.
+    pub rust_toolchain: InventoryValue,
     /// Compositor identity.
     pub compositor: InventoryValue,
     /// Display-session identity.
@@ -298,6 +304,7 @@ impl EnvironmentInventory {
             &fields.driver_version,
             &fields.compiler_identity,
             &fields.sdk_identity,
+            &fields.rust_toolchain,
             &fields.compositor,
             &fields.session,
             &fields.protocol_version,
@@ -364,7 +371,7 @@ impl EnvironmentInventory {
 
     /// Returns the complete candidate-neutral inventory field names in stable order.
     #[must_use]
-    pub const fn field_names() -> [&'static str; 12] {
+    pub const fn field_names() -> [&'static str; 13] {
         [
             "operatingSystem",
             "minimumVersion",
@@ -374,6 +381,7 @@ impl EnvironmentInventory {
             "driverVersion",
             "compilerIdentity",
             "sdkIdentity",
+            "rustToolchain",
             "compositor",
             "session",
             "protocolVersion",
@@ -418,6 +426,7 @@ impl EnvironmentInventory {
             "driverVersion": self.fields.driver_version,
             "compilerIdentity": self.fields.compiler_identity,
             "sdkIdentity": self.fields.sdk_identity,
+            "rustToolchain": self.fields.rust_toolchain,
             "compositor": self.fields.compositor,
             "session": self.fields.session,
             "protocolVersion": self.fields.protocol_version,
@@ -461,7 +470,8 @@ fn validate_observed_value(value: &str) -> Result<(), EnvironmentError> {
     if value.is_empty()
         || value.len() > MAXIMUM_OBSERVED_VALUE_BYTES
         || !value.bytes().all(|byte| {
-            byte.is_ascii_alphanumeric() || matches!(byte, b'.' | b'-' | b'_' | b':' | b'+')
+            byte.is_ascii_alphanumeric()
+                || matches!(byte, b'.' | b'-' | b'_' | b':' | b'+' | b'=' | b'/')
         })
     {
         return Err(EnvironmentError::ObservedValue);

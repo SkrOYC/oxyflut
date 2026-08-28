@@ -2,11 +2,10 @@
   "operatingSystem": "{\"Version\":\"11-25H2\"}",
   "processor": "{\"Architecture\":9}",
   "computerSystem": "{\"Model\":\"Standard PC\"}",
-  "videoController": "{\"PNPDeviceID\":\"PCI\\\\VEN_10DE&DEV_2684&SUBSYS_00000000&REV_A1\",\"DriverVersion\":\"32.0.15.6094\"}",
+  "videoController": "{\"PNPDeviceID\":\"PCI\\\\VEN_10DE&DEV_2684&SUBSYS_00000000&REV_A1\"}",
+  "pnpSignedDriver": "{\"DeviceID\":\"PCI\\\\VEN_10DE&DEV_2684&SUBSYS_00000000&REV_A1\",\"DriverVersion\":\"32.0.15.6094\"}",
   "compiler": "Microsoft C/C++ Optimizing Compiler Version 19.44.35207 for x64\n",
   "sdk": "{\"Version\":\"10.0.26100.8876\"}",
-  "compositor": "DWM\n",
-  "session": "Windows Desktop\n",
-  "protocolVersion": "Win32 10.0.26100\n",
-  "packageReceipts": ["windows-sdk\t10.0.26100.8876\n", "vs-build-tools\t17.14.39\n"]
+  "rustToolchain": "rustc 1.98.0 (88d9e12ae 2026-08-20)\n",
+  "packageCatalog": "[{\"Name\":\"Microsoft.WindowsSDK\",\"Version\":\"10.0.26100.8876\"},{\"Name\":\"Microsoft.VisualStudio.BuildTools\",\"Version\":\"17.14.39\"}]"
 }
