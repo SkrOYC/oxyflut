@@ -6,6 +6,7 @@
 - **Initial report clock start / stop:** 2026-08-28T17:34:55Z / 2026-08-28T17:45:57Z.
 - **Round-4 correction clock start / stop:** 2026-08-28T17:54:56Z / 2026-08-28T18:06:35Z.
 - **Round-5 correction clock start / stop:** 2026-08-28T18:14:44Z / 2026-08-28T18:23:58Z.
+- **Round-6 correction clock start / stop:** 2026-08-28T18:31:37Z / 2026-08-28T18:42:14Z.
 
 ## Question
 
@@ -17,7 +18,7 @@ Table 1. Wayland baseline decisions
 
 | Row | Answer and evidence | Status | Next bounded probe |
 | :-- | :-- | :-- | :-- |
-| Reference compositor, session, and package lock | [Ubuntu 26.04 LTS release notes](https://documentation.ubuntu.com/release-notes/26.04/) establish Ubuntu 26.04 LTS, but the fetched release-note content names no compositor, session, package version, or package-lock digest. The non-reference host is NixOS 26.05 with Hyprland 0.55.4, so its registry cannot establish Ubuntu compositor behavior. | KU (gating) | P1: On the selected Ubuntu 26.04 x86-64 Wayland session, record `gnome-shell --version` or the selected compositor's version command, `dpkg-query -W` for the compositor, `gtk4`, `wayland-protocols`, and `at-spi2-core`, the package-manifest SHA-256, a filtered `wayland-info` registry, and the mechanically derived 99-member P1 checklist below. Run a 120-frame visible-surface probe with `WAYLAND_DEBUG=client` that binds every required global, creates every required non-global object, and emits every checklist member. The script parses the preserved floor derivation, so P1 must regenerate the checklist rather than maintain a manual operation list. The fixture uses `wl_pointer.set_cursor`, not `cursor-shape-v1`. Expected output: one named compositor version, one package-lock digest, negotiated versions for every required interface, the generated checklist, and a session-specific transcript covering every checklist member. |
+| Reference compositor, session, and package lock | [Ubuntu 26.04 LTS release notes](https://documentation.ubuntu.com/release-notes/26.04/) establish Ubuntu 26.04 LTS, but the fetched release-note content names no compositor, session, package version, or package-lock digest. The non-reference host is NixOS 26.05 with Hyprland 0.55.4, so its registry cannot establish Ubuntu compositor behavior. | KU (gating) | P1: On the selected Ubuntu 26.04 x86-64 Wayland session, record `gnome-shell --version` or the selected compositor's version command, `dpkg-query -W` for the compositor, `gtk4`, `wayland-protocols`, and `at-spi2-core`, the package-manifest SHA-256, a filtered `wayland-info` registry, and the mechanically derived 97-member deterministic P1 checklist below, plus the four retained event gates. Run a 120-frame visible-surface probe with `WAYLAND_DEBUG=client` that binds every required global, creates every required non-global object, and emits every checklist member. The script parses the preserved floor derivation, so P1 must regenerate the checklist rather than maintain a manual operation list. The fixture uses `wl_pointer.set_cursor`, not `cursor-shape-v1`. Expected output: one named compositor version, one package-lock digest, negotiated versions for every required interface, the generated checklist, and a session-specific transcript covering every checklist member. |
 | Wayland core object protocol floors | The pinned [Wayland core XML](https://raw.githubusercontent.com/wayland-mirror/wayland/1ab6b693b16e1d9734496fe60c8a6ed277e4dec3/protocol/wayland.xml) establishes these operation-derived floors: `wl_compositor` 1, `wl_surface` 1, `wl_callback` 1, `wl_seat` 5, `wl_pointer` 5, `wl_keyboard` 4, `wl_touch` 3, `wl_output` 3, `wl_data_device_manager` 1, `wl_data_device` 2, `wl_data_offer` 1, and `wl_data_source` 1. The preserved XML parser output names every required request and event. The P0 completeness derivation now includes per-view and protocol-object teardown: `wl_surface.destroy`; `wl_seat.release`; `wl_pointer.release`; `wl_keyboard.release`; `wl_touch.release`; `wl_output.release`; and `wl_data_device.release`, as well as cursor, keyboard keymap and repeat, touch, output geometry and scale, clipboard selection and offers, and text-input candidate geometry. `wl_seat.release` raises its floor to 5; `wl_touch.release` and `wl_output.release` raise their floors to 3; and `wl_data_device.release` raises its floor to 2. `wl_pointer` 5 still supplies `axis_source`, `axis_stop`, and `frame`; `wl_keyboard` 4 still supplies `repeat_info`. | KK | Not required for the source-level floors. P1 must bind each required global and create every listed non-global object at the listed floor. |
 | Wayland shell, scale, IME, and presentation protocol floors | The pinned [xdg-shell](https://raw.githubusercontent.com/wayland-mirror/wayland-protocols/d5aed4e4903a77aefaef03359d1ffdc0d5093456/stable/xdg-shell/xdg-shell.xml), [viewporter](https://raw.githubusercontent.com/wayland-mirror/wayland-protocols/d5aed4e4903a77aefaef03359d1ffdc0d5093456/stable/viewporter/viewporter.xml), [fractional-scale](https://raw.githubusercontent.com/wayland-mirror/wayland-protocols/d5aed4e4903a77aefaef03359d1ffdc0d5093456/staging/fractional-scale/fractional-scale-v1.xml), [text-input-v3](https://raw.githubusercontent.com/wayland-mirror/wayland-protocols/d5aed4e4903a77aefaef03359d1ffdc0d5093456/unstable/text-input/text-input-unstable-v3.xml), and version-1 [presentation-time](https://raw.githubusercontent.com/wayland-mirror/wayland-protocols/37a1560cf6981a11d44dd200d9409d09b4f0074e/stable/presentation-time/presentation-time.xml) XML establish floor 1 for `xdg_wm_base`, `xdg_surface`, `xdg_toplevel`, `wp_viewporter`, `wp_viewport`, `wp_fractional_scale_manager_v1`, `wp_fractional_scale_v1`, `zwp_text_input_manager_v3`, `zwp_text_input_v3`, `wp_presentation`, and `wp_presentation_feedback`. The required operations cover toplevel configure acknowledgement, fractional-scale destination sizing, IME surrounding text, candidate geometry through `zwp_text_input_v3.set_cursor_rectangle`, commits, and per-commit `feedback`, `sync_output`, `presented`, or `discarded`; they also cover `xdg_wm_base.destroy`, `xdg_surface.destroy`, `xdg_toplevel.destroy`, `wp_viewporter.destroy`, `wp_viewport.destroy`, `wp_fractional_scale_manager_v1.destroy`, `wp_fractional_scale_v1.destroy`, `zwp_text_input_manager_v3.destroy`, `zwp_text_input_v3.disable`, `zwp_text_input_v3.destroy`, and `wp_presentation.destroy`. Version 2 changes only the variable-refresh `refresh` contract, which the harness does not consume. | KK | Not required for the source-level floors. P1 must bind each required manager global, create its listed non-global objects, and verify the `wp_presentation` transcript. |
 | GTK 4.20.4 source API floor | The official [GTK 4.20 source index](https://download.gnome.org/sources/gtk/4.20/) publishes GTK 4.20.4. The immutable [GTK 4.20.4 `gtkenums.h`](https://gitlab.gnome.org/GNOME/gtk/-/raw/4.20.4/gtk/gtkenums.h) source defines `GTK_INPUT_HINT_PRIVATE` and describes it as a request not to update personalized data. The preserved source SHA-256 is `c2ef75dc175e7d8b6a28c1ace0e45898a0f2f4b14454b980fd310e545eb485c9`. | KK | Not required for the source API floor. P1 must lock the Ubuntu package that supplies it. |
@@ -32,7 +33,7 @@ Table 1. Wayland baseline decisions
 | Focused allocation accessibility map | [GTK defines an accessibility tree](https://docs.gtk.org/gtk4/iface.Accessible.html) with role, state, property, and relation attributes and a platform accessibility context. No focused candidate source identity, exported tree, forward map, reverse action map, artifact path, or digest exists. | KU (gating) | P3F: After the focused source identity is locked, launch its two-view AT-SPI fixture under Orca and `pyatspi2`. Enumerate every required `accessibility-map.schema.json` forward key and reverse action, including Unicode-scalar text payloads, view generation, acknowledgement, stale target, and secure-field redaction. Expected output: one complete map JSON file and SHA-256. |
 | Integrated allocation accessibility map | The [GTK accessibility interfaces](https://docs.gtk.org/gtk4/iface.Accessible.html) document a possible host mechanism, but they do not establish the pinned Flutter fork's inherited interfaces or its Oxyflut map. No fork commit, source tree, exported tree, forward map, reverse action map, artifact path, or digest exists. | KU (gating) | P3I: After the integrated fork and adapter commits are locked, run the same two-view Orca and `pyatspi2` fixture. First inventory inherited GTK and AT-SPI interfaces, then enumerate every forward key and reverse action. Expected output: the inventory, one complete map JSON file, and SHA-256. |
 | Host scheduling and presentation feedback roles | [`GdkFrameClock`](https://docs.gtk.org/gdk4/class.FrameClock.html) tells an application when to update and repaint, but GTK states that it can use a simple timer instead of hardware vertical sync. The [version-1 presentation-time XML](https://raw.githubusercontent.com/wayland-mirror/wayland-protocols/37a1560cf6981a11d44dd200d9409d09b4f0074e/stable/presentation-time/presentation-time.xml) creates feedback for a submitted `wl_surface.commit` and emits one terminal presented or discarded result for that content update. Therefore `GdkFrameClock` is only a host wakeup mechanism until P4 qualifies it, and `wp_presentation` feedback is acknowledgement only, never an independent opportunity meter. | KK | Not required for the interface-role decision. P4 qualifies the meter and scheduling behavior. |
-| Independent presentation-opportunity meter | No compositor evidence or host probe proves a qualified meter or the trace's independence from either candidate. The prospective trace is Linux DRM `drm:drm_vblank_event`, captured with `trace-cmd record -e drm:drm_vblank_event`. The fetched [upstream Linux stable v6.18.44 tracepoint definition](https://raw.githubusercontent.com/gregkh/linux/v6.18.44/drivers/gpu/drm/drm_trace.h) gives `TP_PROTO(int crtc, unsigned int seq, ktime_t time, bool high_prec)`. The fetched [upstream Linux stable v6.18.44 vblank call site](https://raw.githubusercontent.com/gregkh/linux/v6.18.44/drivers/gpu/drm/drm_vblank.c) calls `trace_drm_vblank_event(pipe, seq, now, high_prec)` after `drm_crtc_from_index(dev, pipe)`; its adjacent kernel comment defines `pipe` as the index of the CRTC where the event occurred. The [DRM UAPI CRTC-index documentation](https://docs.kernel.org/gpu/drm-uapi.html#crtc-index) states that an index and object ID differ and that `DRM_IOCTL_MODE_GETRESOURCES` returns CRTC IDs in index order. [ftrace documentation](https://docs.kernel.org/trace/ftrace.html) defines `mono` as `CLOCK_MONOTONIC` and documents `trace_marker`. `uname -r` establishes only this non-reference host's release string, not its source or patch identity, and establishes nothing about P4's Ubuntu kernel. The upstream sources therefore establish neither the live schema nor the call-site semantics of P4's kernel. Pipe-to-CRTC mapping remains KU (gating) until P4 preserves the Ubuntu package, source or patch identity, live format, and matching source evidence. The local source-selection probe stopped because the tracepoint and `trace-cmd` are absent, so it establishes no usable trace, output attribution, calibrated clock relation, or independence. | KU (gating) | P4: On the selected P1 Ubuntu 26.04 x86-64 session, first preserve `uname -r` and `dpkg -s linux-image-$(uname -r)`. Then preserve the package's source and patch identity by either running `apt-get source` for the source package selected by that installed image and recording its source version plus the `debian/patches` inventory, recording the installed `linux-source` package and its `debian/patches` inventory, or recording the Ubuntu kernel Git tag and commit resolved by the installed package. Capture `cat /sys/kernel/tracing/events/drm/drm_vblank_event/format` verbatim and its SHA-256. Compare its field schema with the identified kernel source, and preserve source excerpts showing both the tracepoint definition and the `trace_drm_vblank_event` call-site argument semantics. If the live format, source identity, or call-site semantics do not establish that the trace `crtc` field is the call site's pipe index, STOP P4 and retain this KU. Next verify `drm:drm_vblank_event` in `available_events`, permission to record it and write `trace_marker`, and the ability to set `trace_clock` to `mono`. If any check fails, STOP P4 and retain this KU. Before capture, use `drmModeGetResources`; for every established trace pipe `i`, record `resources->crtcs[i]` as the UAPI CRTC object ID, then record each active connector's CRTC object ID, connector identity, mode, and refresh interval. Pair that DRM inventory with contemporaneous `wl_surface.enter` or `leave` and `wl_output` logs; if a pairing is not unambiguous, STOP P4 and retain this KU. Capture a settled 10-second epoch with `trace-cmd record -e drm:drm_vblank_event` and record observer and candidate records on `CLOCK_MONOTONIC`. At epoch start and end, take `t_before = clock_gettime(CLOCK_MONOTONIC)`, write a uniquely identified `P4_CAL` `trace_marker`, then take `t_after = clock_gettime(CLOCK_MONOTONIC)`. Preserve the marker intervals and offset calculations, but do not apply a calibration pass/fail tolerance: it is KU (gating). To derive that tolerance, run a fixed 10,000-marker calibration probe and preserve (1) the selected ftrace clock and its observed timestamp resolution, (2) `clock_getres(CLOCK_MONOTONIC)` and the observed `clock_gettime` resolution, (3) the distribution of `t_after - t_before` as the trace-marker write-latency bound, and (4) the frozen causal-matching algorithm and its matching-window width. Use those four terms to derive and justify a clock-calibration and causal-matching uncertainty budget before setting any acceptance tolerance. Reject an epoch on output-association change. Prove no candidate callback or IPC path feeds the trace by preserving the observer process graph and callback or IPC edge inventory; any such edge fails P4. Apply `CON-FRM-001`'s 10% rule only to the measured 95th-percentile interval-error result after the causal matcher and independent meter are qualified, never to the clock-calibration offset. Expected output: Ubuntu image package record, source or patch identity, live format and SHA-256, source schema and call-site excerpts, trace command, selected trace clock, pipe-to-CRTC-ID-to-connector inventory, surface-output pairing log, four monotonic samples and two `P4_CAL` markers, the 10,000-marker uncertainty-budget record, observer process graph, callback or IPC edge inventory, per-output epoch log, and the separately calculated `CON-FRM-001` result. |
+| Independent presentation-opportunity meter | No compositor evidence or host probe proves a qualified meter or the trace's independence from either candidate. The prospective trace is Linux DRM `drm:drm_vblank_event`, captured with `trace-cmd record -e drm:drm_vblank_event`. The fetched [upstream Linux stable v6.18.44 tracepoint definition](https://raw.githubusercontent.com/gregkh/linux/v6.18.44/drivers/gpu/drm/drm_trace.h) gives `TP_PROTO(int crtc, unsigned int seq, ktime_t time, bool high_prec)`. The fetched [upstream Linux stable v6.18.44 vblank call site](https://raw.githubusercontent.com/gregkh/linux/v6.18.44/drivers/gpu/drm/drm_vblank.c) calls `trace_drm_vblank_event(pipe, seq, now, high_prec)` after `drm_crtc_from_index(dev, pipe)`; its adjacent kernel comment defines `pipe` as the index of the CRTC where the event occurred. The [DRM UAPI CRTC-index documentation](https://docs.kernel.org/gpu/drm-uapi.html#crtc-index) states that an index and object ID differ and that `DRM_IOCTL_MODE_GETRESOURCES` returns CRTC IDs in index order. [ftrace documentation](https://docs.kernel.org/trace/ftrace.html) defines `mono` as `CLOCK_MONOTONIC` and documents `trace_marker`. `uname -r` establishes only this non-reference host's release string, not its source or patch identity, and establishes nothing about P4's Ubuntu kernel. The upstream sources therefore establish neither the live schema nor the call-site semantics of P4's kernel. Pipe-to-CRTC mapping remains KU (gating) until P4 preserves the Ubuntu package, source or patch identity, live format, and matching source evidence. The local source-selection probe stopped because the tracepoint and `trace-cmd` are absent, so it establishes no usable trace, output attribution, calibrated clock relation, or independence. | KU (gating) | P4: On the selected P1 Ubuntu 26.04 x86-64 session, first preserve `uname -r` and `dpkg -s linux-image-$(uname -r)`. Then preserve the package's source and patch identity by either running `apt-get source` for the source package selected by that installed image and recording its source version plus the `debian/patches` inventory, recording the installed `linux-source` package and its `debian/patches` inventory, or recording the Ubuntu kernel Git tag and commit resolved by the installed package. Capture `cat /sys/kernel/tracing/events/drm/drm_vblank_event/format` verbatim and its SHA-256. Compare its field schema with the identified kernel source, and preserve source excerpts showing both the tracepoint definition and the `trace_drm_vblank_event` call-site argument semantics. If the live format, source identity, or call-site semantics do not establish that the trace `crtc` field is the call site's pipe index, STOP P4 and retain this KU. Next verify `drm:drm_vblank_event` in `available_events`, permission to record it and write `trace_marker`, and the ability to set `trace_clock` to `mono`. If any check fails, STOP P4 and retain this KU. Before capture, use `drmModeGetResources`; for every established trace pipe `i`, record `resources->crtcs[i]` as the UAPI CRTC object ID, then record each active connector's CRTC object ID, connector identity, mode, and refresh interval. Pair that DRM inventory with contemporaneous `wl_surface.enter` or `leave` and `wl_output` logs; if a pairing is not unambiguous, STOP P4 and retain this KU. Capture a settled 10-second epoch with `trace-cmd record -e drm:drm_vblank_event` and record observer and candidate records on `CLOCK_MONOTONIC`. At epoch start and end, take `t_before = clock_gettime(CLOCK_MONOTONIC)`, write a uniquely identified `P4_CAL` `trace_marker`, then take `t_after = clock_gettime(CLOCK_MONOTONIC)`. Preserve the marker intervals and offset calculations, but do not apply a calibration pass/fail tolerance: it is KU (gating). Run P4C, a characterization-only fixed 10,000-marker calibration probe. For marker pair `i`, record ftrace marker timestamp `m_i`, `t_before_i`, and `t_after_i`; calculate `d_i = m_i - (t_before_i + t_after_i) / 2`, the offset estimate `d_bar = mean(d_i)`, and `SE(d_bar) = sample_sd(d_i) / sqrt(10,000)`. Record trace timestamp resolution `r_trace` as the smallest positive difference among monotonically increasing ftrace `mono` timestamps, and record clock timestamp resolution `r_clock` as the larger of `clock_getres(CLOCK_MONOTONIC)` and the smallest positive difference among monotonically increasing `clock_gettime` results. Let `w_max = max(t_after_i - t_before_i)`. Predeclare the characterization bound `U_95 = 1.96 * SE(d_bar) + r_trace / 2 + r_clock / 2 + w_max / 2`. Record the frozen causal-matching algorithm and its matching-window width, but do not choose either a maximum acceptable `U_95` or a matching tolerance from characterization data. P4C cannot close P4. Before candidate measurements, a reviewed Stage 3 decision must freeze the numeric maximum acceptable `U_95`, the causal-matching algorithm version, and the matching-window width; P4 qualification compares the predeclared calculation with that decision. Reject an epoch on output-association change. Prove no candidate callback or IPC path feeds the trace by preserving the observer process graph and callback or IPC edge inventory; any such edge fails P4. Apply `CON-FRM-001`'s 10% rule only to the measured 95th-percentile interval-error result after the causal matcher and independent meter are qualified, never to the clock-calibration offset. Expected output: Ubuntu image package record, source or patch identity, live format and SHA-256, source schema and call-site excerpts, trace command, selected trace clock, pipe-to-CRTC-ID-to-connector inventory, surface-output pairing log, four monotonic samples and two `P4_CAL` markers, the 10,000-marker uncertainty-budget record, observer process graph, callback or IPC edge inventory, per-output epoch log, and the separately calculated `CON-FRM-001` result. |
 | Output association mechanism | The [core protocol](https://raw.githubusercontent.com/wayland-mirror/wayland/1ab6b693b16e1d9734496fe60c8a6ed277e4dec3/protocol/wayland.xml) states that a surface can be displayed on zero or more outputs. It emits `wl_surface.enter` and `wl_surface.leave` when surface creation, movement, or resizing changes output membership. | KK | Not required for protocol mechanics. P4 and P5 apply the mechanism to each allocation. |
 | Focused allocation service routing | No focused candidate exists to prove that every GTK, Wayland, IME, accessibility, clipboard, timing, and recovery request carries its owning `GdkSurface` and view generation across the reentrancy barrier; the [core protocol](https://raw.githubusercontent.com/wayland-mirror/wayland/1ab6b693b16e1d9734496fe60c8a6ed277e4dec3/protocol/wayland.xml) only establishes surface identity mechanics. | KU (gating) | P5F: Use an instrumented two-window focused fixture. Interleave focus, IME, AT-SPI reverse action, clipboard, output move, close, and late-callback events. Expected output: normalized event log in which every request has the expected surface identity and live view generation, and stale events return the defined error. |
 | Integrated allocation service routing | No pinned Flutter fork or adapter exists to prove that every inherited callback carries its owning `GdkSurface` and view generation before the C ABI and reentrancy barrier; the [core protocol](https://raw.githubusercontent.com/wayland-mirror/wayland/1ab6b693b16e1d9734496fe60c8a6ed277e4dec3/protocol/wayland.xml) does not identify inherited Flutter callbacks. | KU (gating) | P5I: Run the P5F scenario through the locked integrated fork. Expected output: inherited-interface inventory and normalized C-ABI event log with the same ownership, generation, and stale-event results. |
@@ -143,7 +144,7 @@ The v1 source SHA-256 is `91e5e14481a13717fef8403203a2eaa052c85fd853c1c440ba081e
 
 ### Wayland baseline source floors
 
-The following XML parser reads the pinned source files and computes each floor as the highest `since` value among the required P0 operations, including every client-issued teardown or release operation for an object used by the P0 flow. XML members with no `since` attribute have version 1. This establishes source API floors only. It does not establish an Ubuntu compositor's advertisement or behavior.
+The following round-5 parser output is historical evidence only. Round 6 supersedes its operation set and checklist below because the earlier parser omitted foundational registry operations, included drag-and-drop-only events, and made nondeterministic events ordinary pass requirements. XML members with no `since` attribute have version 1. Both derivations establish source API floors only; neither establishes an Ubuntu compositor's advertisement or behavior.
 
 ```text
 $ nix shell nixpkgs#python3 -c python3 /tmp/wf-epic-b/OXY-B003/round-5/derive-wayland-floors.py
@@ -173,9 +174,9 @@ wp_presentation_feedback declared=1 required=sync_output@1,presented@1,discarded
 exit=0
 ```
 
-### P1 mechanically-derived transcript checklist
+### Round-5 historical P1 transcript checklist (superseded)
 
-The P1 transcript checklist is generated only from the required member list in the preserved Wayland floor derivation. Do not maintain a manual P1 operation list: after any derivation change, run this script again and require the transcript to cover every emitted interface member.
+This historical checklist was generated from the round-5 derivation. It is not a valid P1 pass rule because it lacks foundational members, includes drag-and-drop-only events, and requires nondeterministic events. The round-6 parser below is the sole checklist generator for P1.
 
 ````python
 #!/usr/bin/env python3
@@ -217,7 +218,7 @@ if __name__ == "__main__":
     main()
 ````
 
-The parser ran against this report after the corrected floor derivation. Its output is the complete P1 acceptance checklist:
+The historical parser ran against the report before the round-6 correction. Its output is retained for audit only and is not a P1 acceptance checklist:
 
 ```text
 $ nix shell nixpkgs#python3 -c python3 /tmp/wf-epic-b/OXY-B003/round-5/derive-p1-transcript-checklist.py .constitution/spikes/SPK-B003.md
@@ -324,6 +325,341 @@ P1 transcript interface.request/event checklist:
 - wp_presentation_feedback.discarded
 exit=0
 ```
+
+### Round-6 correction: deterministic P1 operation derivation
+
+The round-5 99-member checklist is retained above as historical evidence only. It is superseded: it omitted registry discovery and synchronization, included four operating-system drag-and-drop events, and treated events without a deterministic stimulus as ordinary pass members. No subsequent P1, Stage 3 edit, or recommendation may describe that historical 99-member list as complete.
+
+[`CAP-CLP-001`](../prd/capabilities.md#interaction-and-text) makes copy, cut, and paste P0. [`CAP-INP-001`](../prd/capabilities.md#interaction-and-text) and [`CAP-INP-002`](../prd/capabilities.md#interaction-and-text) make pointer, touch, and deterministic gesture disambiguation P0. The PRD contains no P0 operating-system drag-and-drop capability. The corrected selection retains the two-client clipboard flow, but excludes `wl_data_device.enter`, `wl_data_device.leave`, `wl_data_device.motion`, `wl_data_device.drop`, and `wl_data_device.start_drag`. The absence of `start_drag` is intentional: the report does not claim a partial drag-and-drop source or target flow is P0.
+
+The [Wayland protocol specification](https://wayland.freedesktop.org/docs/html/apa.html) states that `wl_display.sync` asks the server to emit `wl_callback.done`, and that clients use `wl_display.get_registry` followed by `sync` to finish the initial global burst before `wl_registry.bind`. The corrected source selection therefore adds `wl_display.get_registry`, `wl_display.sync`, `wl_display.delete_id`, `wl_registry.global`, `wl_registry.bind`, and the separately gated `wl_registry.global_remove`. The pinned [Wayland core XML](https://raw.githubusercontent.com/wayland-mirror/wayland/1ab6b693b16e1d9734496fe60c8a6ed277e4dec3/protocol/wayland.xml) is the source of record for each selected operation and its `since` value.
+
+The derivation has one explicit rule for every listed operation: include a request or event only when it is a foundational discovery or synchronization operation, a P0 surface, input, clipboard, shell, scale, IME, presentation-acknowledgement, or teardown operation; attach that operation's rule, controlled stimulus, and expected result in the derivation output. Four selected events have no protocol-defined deterministic stimulus on an unselected compositor. They remain separate KU gates and are excluded from the deterministic P1 pass rule. The resulting source set has 101 selected operations: 97 deterministic P1 pass operations and four retained KU events. This is not a 101-member acceptance checklist.
+
+Table 2. Corrected operation-set and event-gate answers
+
+| Row | Answer and evidence | Status | Next bounded probe |
+| :-- | :-- | :-- | :-- |
+| Corrected operation selection and deterministic pass subset | The round-6 script below verifies the SHA-256 of each pinned XML before parsing it, rejects the five drag-and-drop members, derives 101 selected operations and all floors, and mechanically marks 97 operations as deterministic pass members. The preserved run records the six immutable input URL-to-SHA-256 pairs and `selected_operations=101 deterministic_pass_operations=97 ku_events_excluded_from_pass=4`. The PRD citations above establish why clipboard is retained and operating-system drag-and-drop is not P0. | KK | Not required for the source-level selection. P1 must regenerate the parser output from the preserved derivation output rather than copy a list. |
+| Nondeterministic foundational and compositor-selected events | `wl_registry.global_remove`, `wl_touch.cancel`, `xdg_wm_base.ping`, and `wp_presentation_feedback.discarded` are selected source operations, but neither their pinned XML nor the fetched protocol specification defines a deterministic stimulus available to this report's unselected reference compositor. They are excluded from the 97-member pass rule. In particular, rendering frames cannot deterministically produce `wl_touch.cancel`. | KU (gating) | P1E: On the selected Ubuntu compositor, record a documented compositor test-control or controlled physical procedure for each event. Invoke the procedure once per event and preserve the `WAYLAND_DEBUG=client` line and its stimulus log. Expected output: `global_remove` with the removed global name; `cancel` after an active touch sequence; `ping` followed by the fixture's `pong`; and `discarded` for the named presentation-feedback object. If the locked compositor exposes no deterministic procedure for an event, STOP that event subprobe and retain this KU. |
+
+Table 3 maps every event that remains in the deterministic subset to a controlled P1 stimulus and expected transcript result. The script emits the matching `stimulus` and `expected` tags for every request and event, so the table is also the controlled-input procedure for the generated checklist.
+
+| Stimulus tag | Controlled P1 procedure | Expected event result |
+| :-- | :-- | :-- |
+| `registry-sync` | Connect the noncandidate fixture, call `wl_display.get_registry`, record every `global`, bind each required advertised global at the derived floor, then call `wl_display.sync`. | `wl_registry.global` names every required global; `wl_callback.done` terminates the sync barrier; `wl_display.delete_id` releases the callback ID. |
+| `map-surface` | Create an xdg toplevel, attach and damage a buffer, request a frame callback, commit, map it first on output A, then use the locked compositor's recorded window-move procedure to move it fully to connected output B. | `wl_surface.enter` identifies A; the move yields `wl_surface.leave` for A and `wl_surface.enter` for B; the compositor emits `xdg_surface.configure`. |
+| `bind-seat` | Bind the selected seat at its derived floor before creating pointer, keyboard, and touch objects. | `wl_seat.capabilities` includes the required pointer, keyboard, and touch capabilities. |
+| `hid-pointer` | Use a lab-controlled USB HID pointer to enter and leave the fixture, move it, click, send a wheel scroll sequence that ends, and set a cursor. | `wl_pointer.enter`, `leave`, `motion`, `button`, `axis`, `axis_source`, `axis_stop`, and `frame` appear in the recorded sequence. |
+| `hid-keyboard` | Focus the fixture and a second controlled client in turn with the USB HID pointer, press and release a modifier and a key, then hold a repeatable key. | `wl_keyboard.keymap`, `enter`, `leave`, `key`, `modifiers`, and `repeat_info` appear; the key record shows the controlled press and release. |
+| `hid-touch` | Use a lab-controlled USB HID touchscreen to send one contact down, move it, and lift it over the fixture. | `wl_touch.down`, `motion`, `up`, and `frame` occur in one completed touch sequence. |
+| `bind-output` | Bind every output at the derived floor before mapping the fixture. | `wl_output.geometry`, `mode`, `done`, and `scale` describe each bound output. |
+| `clipboard-two-client` | Client A creates a data source, offers a fixed UTF-8 MIME type, and sets the selection. Client B receives the selection and MIME offer, calls `receive`, and verifies the fixed payload. Client C then takes the selection. | Client B records `wl_data_device.data_offer`, `selection`, and `wl_data_offer.offer`; A records `wl_data_source.send` for B's receive and `wl_data_source.cancelled` when C takes selection. |
+| `map-toplevel` | Map the titled, app-ID-bearing xdg toplevel and acknowledge its first configure. | `xdg_surface.configure` and `xdg_toplevel.configure` arrive; the fixture responds with `xdg_surface.ack_configure`. |
+| `map-close-toplevel` | Use the locked compositor's recorded close-window procedure, such as the session's documented close shortcut, while the fixture is mapped. | `xdg_toplevel.close` arrives for the fixture. |
+| `fractional-output` | Map the fixture onto a selected output whose locked session configuration has a fractional scale. | `wp_fractional_scale_v1.preferred_scale` reports the preferred scale. |
+| `ime-composition` | Use the locked IME package and its predeclared input sequence to start composition, update preedit text, commit text, and request a surrounding-text deletion. | `zwp_text_input_v3.preedit_string`, `commit_string`, `delete_surrounding_text`, and `done` complete the corresponding committed transaction. |
+| `present-frame` | Create presentation feedback immediately before a buffer commit, then wait for displayed output while the surface remains mapped. | `wp_presentation_feedback.sync_output` identifies the main output and `presented` completes that feedback object. |
+
+The four event gates have deliberately different handling. `compositor-global-removal` means invoking the selected compositor's documented test control to remove a previously advertised global and expecting `wl_registry.global_remove`. `compositor-touch-cancel` means invoking its documented active-touch cancellation control and expecting `wl_touch.cancel`; no frame-rendering procedure substitutes for it. `compositor-ping` means invoking its documented client-hang detection control and expecting `xdg_wm_base.ping`, followed by the fixture's `pong`. `compositor-discard` means invoking its documented feedback-discard control and expecting `wp_presentation_feedback.discarded`. Each remains P1E KU (gating) until the stated procedure is actually preserved on the selected session.
+
+The complete primary derivation script is preserved here. It uses only immutable pinned XML inputs, verifies each input digest before parsing, and asserts that every KU item is an event and every drag-and-drop operation is absent.
+
+```python
+#!/usr/bin/env python3
+"""Derive selected Wayland P0 floors from pinned protocol XML."""
+from __future__ import annotations
+
+from hashlib import sha256
+from pathlib import Path
+import sys
+import xml.etree.ElementTree as ET
+
+SOURCES = (
+    ("wayland.xml", "https://raw.githubusercontent.com/wayland-mirror/wayland/1ab6b693b16e1d9734496fe60c8a6ed277e4dec3/protocol/wayland.xml", "7eb8569529235c85e16d15612fc367da4538b7d515b13e32ec48ba0742c42610"),
+    ("xdg-shell.xml", "https://raw.githubusercontent.com/wayland-mirror/wayland-protocols/d5aed4e4903a77aefaef03359d1ffdc0d5093456/stable/xdg-shell/xdg-shell.xml", "f241ab95c262eb45af6507bf0178b8dcd88d5e1cc8fc6ec4a9944d9e5b15ac98"),
+    ("viewporter.xml", "https://raw.githubusercontent.com/wayland-mirror/wayland-protocols/d5aed4e4903a77aefaef03359d1ffdc0d5093456/stable/viewporter/viewporter.xml", "dcb12279a03746301fe490aaed4b38a403485a925abfce2ccfceb644e104fe71"),
+    ("fractional-scale-v1.xml", "https://raw.githubusercontent.com/wayland-mirror/wayland-protocols/d5aed4e4903a77aefaef03359d1ffdc0d5093456/staging/fractional-scale/fractional-scale-v1.xml", "5941de5d28f427ecdadddc8623a6f6af0a30b0ab4726847236ba7a7652b81316"),
+    ("text-input-unstable-v3.xml", "https://raw.githubusercontent.com/wayland-mirror/wayland-protocols/d5aed4e4903a77aefaef03359d1ffdc0d5093456/unstable/text-input/text-input-unstable-v3.xml", "49048087a67011a8840bca889cd2b0ba374382be1ed54ec98adf7837fdca1982"),
+    ("presentation-time-v1.xml", "https://raw.githubusercontent.com/wayland-mirror/wayland-protocols/37a1560cf6981a11d44dd200d9409d09b4f0074e/stable/presentation-time/presentation-time.xml", "91e5e14481a13717fef8403203a2eaa052c85fd853c1c440ba081effa7178d12"),
+)
+# interface|rule|stimulus|expected|members; every listed member inherits its row rule.
+SPECS = """
+wl_display|foundation-registry|registry-sync|registry-object-or-sync-barrier|get_registry sync
+wl_display|foundation-id-reuse|registry-sync|delete-id-after-callback|delete_id
+wl_registry|foundation-registry|registry-sync|advertised-globals-or-bound-object|global bind
+wl_registry|foundation-global-removal|compositor-global-removal|global-remove|global_remove
+wl_compositor|surface-factory|map-surface|surface-object|create_surface
+wl_surface|surface-lifecycle|map-surface|mapped-commit-or-output-membership|attach damage frame commit enter leave destroy
+wl_callback|synchronization|registry-sync|done|done
+wl_seat|input-discovery|bind-seat|required-capabilities-and-devices|capabilities get_pointer get_keyboard get_touch release
+wl_pointer|pointer-input|hid-pointer|pointer-event|enter leave motion button axis axis_source axis_stop frame set_cursor release
+wl_keyboard|keyboard-input|hid-keyboard|keyboard-event|keymap enter leave key modifiers repeat_info release
+wl_touch|touch-input|hid-touch|touch-event|down up motion frame release
+wl_touch|touch-cancellation|compositor-touch-cancel|cancel|cancel
+wl_output|output-description|bind-output|output-description|geometry mode done scale release
+wl_data_device_manager|clipboard-factory|clipboard-two-client|clipboard-objects|create_data_source get_data_device
+wl_data_device|clipboard-selection|clipboard-two-client|selection-offer|data_offer selection set_selection release
+wl_data_offer|clipboard-receive|clipboard-two-client|mime-offer-and-payload|offer receive destroy
+wl_data_source|clipboard-source|clipboard-two-client|mime-send-and-cancel|offer send cancelled destroy
+xdg_wm_base|xdg-shell|map-toplevel|xdg-object-or-pong|get_xdg_surface pong destroy
+xdg_wm_base|xdg-ping|compositor-ping|ping|ping
+xdg_surface|xdg-shell|map-toplevel|configure-and-ack|get_toplevel ack_configure configure destroy
+xdg_toplevel|toplevel-lifecycle|map-close-toplevel|configure-or-close|set_title set_app_id configure close destroy
+wp_viewporter|scale-factory|map-surface|viewport-object|get_viewport destroy
+wp_viewport|destination-sizing|map-surface|destination-size|set_destination destroy
+wp_fractional_scale_manager_v1|fractional-scale-factory|fractional-output|scale-object|get_fractional_scale destroy
+wp_fractional_scale_v1|fractional-scale|fractional-output|preferred-scale|preferred_scale destroy
+zwp_text_input_manager_v3|ime-factory|ime-composition|text-input-object|get_text_input destroy
+zwp_text_input_v3|ime-round-trip|ime-composition|ime-transaction|enable disable set_surrounding_text set_text_change_cause set_content_type set_cursor_rectangle commit preedit_string commit_string delete_surrounding_text done destroy
+wp_presentation|presentation-ack-factory|present-frame|feedback-object|feedback destroy
+wp_presentation_feedback|presentation-ack|present-frame|output-label-or-presented|sync_output presented
+wp_presentation_feedback|presentation-discard|compositor-discard|discarded|discarded
+""".strip()
+KU_EVENTS = frozenset(("wl_registry.global_remove", "wl_touch.cancel", "xdg_wm_base.ping", "wp_presentation_feedback.discarded"))
+FORBIDDEN_DND = frozenset(("wl_data_device.enter", "wl_data_device.leave", "wl_data_device.motion", "wl_data_device.drop", "wl_data_device.start_drag"))
+
+
+def main() -> None:
+    root = Path(sys.argv[1]) if len(sys.argv) == 2 else Path(__file__).with_name("sources")
+    interfaces = {}
+    print("input-url-sha256-map")
+    for filename, url, expected_hash in SOURCES:
+        content = (root / filename).read_bytes()
+        actual_hash = sha256(content).hexdigest()
+        if actual_hash != expected_hash:
+            raise SystemExit(f"digest mismatch: {filename} expected={expected_hash} actual={actual_hash}")
+        print(f"input file={filename} url={url} sha256={actual_hash}")
+        interfaces.update({node.attrib["name"]: node for node in ET.fromstring(content).findall("interface")})
+    seen, floors, operations = set(), {}, []
+    print("derived-operations")
+    for spec in SPECS.splitlines():
+        interface, rule, stimulus, expected, names = spec.split("|")
+        members = {node.attrib["name"]: node for node in (*interfaces[interface].findall("request"), *interfaces[interface].findall("event"))}
+        for name in names.split():
+            qualified = f"{interface}.{name}"
+            if qualified in seen or qualified in FORBIDDEN_DND:
+                raise SystemExit(f"invalid selected operation: {qualified}")
+            seen.add(qualified)
+            node = members[name]
+            kind, since = node.tag, int(node.attrib.get("since", "1"))
+            qualification = "ku" if qualified in KU_EVENTS else "pass"
+            if qualification == "ku" and kind != "event":
+                raise SystemExit(f"KU operation is not an event: {qualified}")
+            operations.append((qualified, qualification))
+            floors.setdefault(interface, []).append((name, since))
+            print(f"operation={qualified} kind={kind} since={since} qualification={qualification} rule={rule} stimulus={stimulus} expected={expected}")
+    print("derived-floors")
+    for interface, members in floors.items():
+        required = ",".join(f"{name}@{since}" for name, since in members)
+        print(f"floor interface={interface} declared={interfaces[interface].attrib['version']} required={required} floor={max(since for _, since in members)}")
+    passed = sum(qualification == "pass" for _, qualification in operations)
+    print(f"summary selected_operations={len(operations)} deterministic_pass_operations={passed} ku_events_excluded_from_pass={len(operations) - passed}")
+
+
+if __name__ == "__main__":
+    main()
+```
+
+The complete parser is also preserved. It accepts only primary-derivation operation lines and emits the pass subset plus the excluded KU events; it does not parse prose or a manually maintained list.
+
+```python
+#!/usr/bin/env python3
+"""Emit the deterministic P1 checklist from derive-wayland-floors.py output."""
+
+from __future__ import annotations
+
+import re
+import sys
+from pathlib import Path
+
+
+ROW = re.compile(r"^operation=(?P<member>[a-z0-9_]+\.[a-z0-9_]+) kind=(?P<kind>request|event) since=\d+ qualification=(?P<qualification>pass|ku) ")
+
+
+def main() -> None:
+    rows = Path(sys.argv[1]).read_text(encoding="utf-8").splitlines()
+    checklist: list[str] = []
+    ku_events: list[str] = []
+    for row in rows:
+        match = ROW.match(row)
+        if match is None:
+            continue
+        if match.group("qualification") == "pass":
+            checklist.append(match.group("member"))
+        else:
+            ku_events.append(match.group("member"))
+    if not checklist or not ku_events:
+        raise SystemExit("missing pass operation or KU event")
+    print(f"derived_deterministic_pass_operations={len(checklist)}")
+    print("P1 deterministic transcript checklist:")
+    print(*(f"- {member}" for member in checklist), sep="\n")
+    print(f"retained_ku_events_excluded_from_pass={len(ku_events)}")
+    print(*(f"- {member}" for member in ku_events), sep="\n")
+
+
+if __name__ == "__main__":
+    main()
+```
+
+The following fresh command and trimmed output preserve the input map, derived floors, and count. The omitted `operation=` lines are reproducible only from the complete script and the digests shown here; the parser output after this block preserves the entire deterministic checklist.
+
+```text
+$ nix shell nixpkgs#python3 -c python3 /tmp/wf-epic-b/OXY-B003/round-6/derive-wayland-floors.py /tmp/wf-epic-b/OXY-B003/round-6/sources > /tmp/wf-epic-b/OXY-B003/round-6/derive-wayland-floors.out
+$ grep -E '^(input file=|floor interface=|summary)' /tmp/wf-epic-b/OXY-B003/round-6/derive-wayland-floors.out
+input file=wayland.xml url=https://raw.githubusercontent.com/wayland-mirror/wayland/1ab6b693b16e1d9734496fe60c8a6ed277e4dec3/protocol/wayland.xml sha256=7eb8569529235c85e16d15612fc367da4538b7d515b13e32ec48ba0742c42610
+input file=xdg-shell.xml url=https://raw.githubusercontent.com/wayland-mirror/wayland-protocols/d5aed4e4903a77aefaef03359d1ffdc0d5093456/stable/xdg-shell/xdg-shell.xml sha256=f241ab95c262eb45af6507bf0178b8dcd88d5e1cc8fc6ec4a9944d9e5b15ac98
+input file=viewporter.xml url=https://raw.githubusercontent.com/wayland-mirror/wayland-protocols/d5aed4e4903a77aefaef03359d1ffdc0d5093456/stable/viewporter/viewporter.xml sha256=dcb12279a03746301fe490aaed4b38a403485a925abfce2ccfceb644e104fe71
+input file=fractional-scale-v1.xml url=https://raw.githubusercontent.com/wayland-mirror/wayland-protocols/d5aed4e4903a77aefaef03359d1ffdc0d5093456/staging/fractional-scale/fractional-scale-v1.xml sha256=5941de5d28f427ecdadddc8623a6f6af0a30b0ab4726847236ba7a7652b81316
+input file=text-input-unstable-v3.xml url=https://raw.githubusercontent.com/wayland-mirror/wayland-protocols/d5aed4e4903a77aefaef03359d1ffdc0d5093456/unstable/text-input/text-input-unstable-v3.xml sha256=49048087a67011a8840bca889cd2b0ba374382be1ed54ec98adf7837fdca1982
+input file=presentation-time-v1.xml url=https://raw.githubusercontent.com/wayland-mirror/wayland-protocols/37a1560cf6981a11d44dd200d9409d09b4f0074e/stable/presentation-time/presentation-time.xml sha256=91e5e14481a13717fef8403203a2eaa052c85fd853c1c440ba081effa7178d12
+floor interface=wl_display declared=1 required=get_registry@1,sync@1,delete_id@1 floor=1
+floor interface=wl_registry declared=1 required=global@1,bind@1,global_remove@1 floor=1
+floor interface=wl_compositor declared=6 required=create_surface@1 floor=1
+floor interface=wl_surface declared=6 required=attach@1,damage@1,frame@1,commit@1,enter@1,leave@1,destroy@1 floor=1
+floor interface=wl_callback declared=1 required=done@1 floor=1
+floor interface=wl_seat declared=10 required=capabilities@1,get_pointer@1,get_keyboard@1,get_touch@1,release@5 floor=5
+floor interface=wl_pointer declared=10 required=enter@1,leave@1,motion@1,button@1,axis@1,axis_source@5,axis_stop@5,frame@5,set_cursor@1,release@3 floor=5
+floor interface=wl_keyboard declared=10 required=keymap@1,enter@1,leave@1,key@1,modifiers@1,repeat_info@4,release@3 floor=4
+floor interface=wl_touch declared=10 required=down@1,up@1,motion@1,frame@1,release@3,cancel@1 floor=3
+floor interface=wl_output declared=4 required=geometry@1,mode@1,done@2,scale@2,release@3 floor=3
+floor interface=wl_data_device_manager declared=3 required=create_data_source@1,get_data_device@1 floor=1
+floor interface=wl_data_device declared=3 required=data_offer@1,selection@1,set_selection@1,release@2 floor=2
+floor interface=wl_data_offer declared=3 required=offer@1,receive@1,destroy@1 floor=1
+floor interface=wl_data_source declared=3 required=offer@1,send@1,cancelled@1,destroy@1 floor=1
+floor interface=xdg_wm_base declared=6 required=get_xdg_surface@1,pong@1,destroy@1,ping@1 floor=1
+floor interface=xdg_surface declared=6 required=get_toplevel@1,ack_configure@1,configure@1,destroy@1 floor=1
+floor interface=xdg_toplevel declared=6 required=set_title@1,set_app_id@1,configure@1,close@1,destroy@1 floor=1
+floor interface=wp_viewporter declared=1 required=get_viewport@1,destroy@1 floor=1
+floor interface=wp_viewport declared=1 required=set_destination@1,destroy@1 floor=1
+floor interface=wp_fractional_scale_manager_v1 declared=1 required=get_fractional_scale@1,destroy@1 floor=1
+floor interface=wp_fractional_scale_v1 declared=1 required=preferred_scale@1,destroy@1 floor=1
+floor interface=zwp_text_input_manager_v3 declared=1 required=get_text_input@1,destroy@1 floor=1
+floor interface=zwp_text_input_v3 declared=1 required=enable@1,disable@1,set_surrounding_text@1,set_text_change_cause@1,set_content_type@1,set_cursor_rectangle@1,commit@1,preedit_string@1,commit_string@1,delete_surrounding_text@1,done@1,destroy@1 floor=1
+floor interface=wp_presentation declared=1 required=feedback@1,destroy@1 floor=1
+floor interface=wp_presentation_feedback declared=1 required=sync_output@1,presented@1,discarded@1 floor=1
+summary selected_operations=101 deterministic_pass_operations=97 ku_events_excluded_from_pass=4
+exit=0
+```
+
+The parser ran only on the freshly generated primary output. Its full result is the deterministic P1 checklist; the four KU events are visibly excluded from the pass rule.
+
+```text
+$ nix shell nixpkgs#python3 -c python3 /tmp/wf-epic-b/OXY-B003/round-6/derive-p1-transcript-checklist.py /tmp/wf-epic-b/OXY-B003/round-6/derive-wayland-floors.out
+derived_deterministic_pass_operations=97
+P1 deterministic transcript checklist:
+- wl_display.get_registry
+- wl_display.sync
+- wl_display.delete_id
+- wl_registry.global
+- wl_registry.bind
+- wl_compositor.create_surface
+- wl_surface.attach
+- wl_surface.damage
+- wl_surface.frame
+- wl_surface.commit
+- wl_surface.enter
+- wl_surface.leave
+- wl_surface.destroy
+- wl_callback.done
+- wl_seat.capabilities
+- wl_seat.get_pointer
+- wl_seat.get_keyboard
+- wl_seat.get_touch
+- wl_seat.release
+- wl_pointer.enter
+- wl_pointer.leave
+- wl_pointer.motion
+- wl_pointer.button
+- wl_pointer.axis
+- wl_pointer.axis_source
+- wl_pointer.axis_stop
+- wl_pointer.frame
+- wl_pointer.set_cursor
+- wl_pointer.release
+- wl_keyboard.keymap
+- wl_keyboard.enter
+- wl_keyboard.leave
+- wl_keyboard.key
+- wl_keyboard.modifiers
+- wl_keyboard.repeat_info
+- wl_keyboard.release
+- wl_touch.down
+- wl_touch.up
+- wl_touch.motion
+- wl_touch.frame
+- wl_touch.release
+- wl_output.geometry
+- wl_output.mode
+- wl_output.done
+- wl_output.scale
+- wl_output.release
+- wl_data_device_manager.create_data_source
+- wl_data_device_manager.get_data_device
+- wl_data_device.data_offer
+- wl_data_device.selection
+- wl_data_device.set_selection
+- wl_data_device.release
+- wl_data_offer.offer
+- wl_data_offer.receive
+- wl_data_offer.destroy
+- wl_data_source.offer
+- wl_data_source.send
+- wl_data_source.cancelled
+- wl_data_source.destroy
+- xdg_wm_base.get_xdg_surface
+- xdg_wm_base.pong
+- xdg_wm_base.destroy
+- xdg_surface.get_toplevel
+- xdg_surface.ack_configure
+- xdg_surface.configure
+- xdg_surface.destroy
+- xdg_toplevel.set_title
+- xdg_toplevel.set_app_id
+- xdg_toplevel.configure
+- xdg_toplevel.close
+- xdg_toplevel.destroy
+- wp_viewporter.get_viewport
+- wp_viewporter.destroy
+- wp_viewport.set_destination
+- wp_viewport.destroy
+- wp_fractional_scale_manager_v1.get_fractional_scale
+- wp_fractional_scale_manager_v1.destroy
+- wp_fractional_scale_v1.preferred_scale
+- wp_fractional_scale_v1.destroy
+- zwp_text_input_manager_v3.get_text_input
+- zwp_text_input_manager_v3.destroy
+- zwp_text_input_v3.enable
+- zwp_text_input_v3.disable
+- zwp_text_input_v3.set_surrounding_text
+- zwp_text_input_v3.set_text_change_cause
+- zwp_text_input_v3.set_content_type
+- zwp_text_input_v3.set_cursor_rectangle
+- zwp_text_input_v3.commit
+- zwp_text_input_v3.preedit_string
+- zwp_text_input_v3.commit_string
+- zwp_text_input_v3.delete_surrounding_text
+- zwp_text_input_v3.done
+- zwp_text_input_v3.destroy
+- wp_presentation.feedback
+- wp_presentation.destroy
+- wp_presentation_feedback.sync_output
+- wp_presentation_feedback.presented
+retained_ku_events_excluded_from_pass=4
+- wl_registry.global_remove
+- wl_touch.cancel
+- xdg_wm_base.ping
+- wp_presentation_feedback.discarded
+exit=0
+```
+
+### Round-6 correction: P4 calibration characterization and qualification boundary
+
+P4C is a characterization probe, not qualification. Before any candidate measurement, P4C records exactly 10,000 trace-marker pairs. For pair `i`, it records the ftrace `mono` timestamp `m_i` for the unique marker and the surrounding userspace readings `t_before_i` and `t_after_i`. It calculates `d_i = m_i - (t_before_i + t_after_i) / 2`, `d_bar = mean(d_i)`, and `SE(d_bar) = sample_sd(d_i) / sqrt(10,000)`. It records `r_trace` as the smallest positive difference between monotonically increasing ftrace `mono` timestamps, `r_clock` as the larger of `clock_getres(CLOCK_MONOTONIC)` and the smallest positive difference between monotonically increasing `clock_gettime(CLOCK_MONOTONIC)` results, and `w_max = max(t_after_i - t_before_i)`.
+
+P4C predeclares the recorded 95% characterization bound as `U_95 = 1.96 * SE(d_bar) + r_trace / 2 + r_clock / 2 + w_max / 2`. The first term is the 95% confidence half-width for the estimated offset; the remaining terms conservatively account for trace timestamp quantization, userspace timestamp resolution, and an unknown marker time within the widest bracket. P4C also records, but does not tune, the causal-matching algorithm version and matching-window width.
+
+P4C cannot close P4 or any P0 timing gate by itself. A reviewed Stage 3 decision must freeze the numeric maximum acceptable `U_95`, the causal-matching algorithm version, and its matching-window width before candidate measurements begin. Qualification can only compare candidate data against those already frozen values. This report does not choose an acceptable tolerance, infer one from P4C data, or apply `CON-FRM-001` to offset uncertainty. `CON-FRM-001` remains a separate measured interval-error rule after the independent meter and causal matcher qualify.
 
 ### DRM trace source selection
 
@@ -694,6 +1030,7 @@ The report relies on the following fetched authoritative sources:
 - [Pinned fractional-scale-v1 protocol XML](https://raw.githubusercontent.com/wayland-mirror/wayland-protocols/d5aed4e4903a77aefaef03359d1ffdc0d5093456/staging/fractional-scale/fractional-scale-v1.xml).
 - [Pinned text-input-v3 protocol XML](https://raw.githubusercontent.com/wayland-mirror/wayland-protocols/d5aed4e4903a77aefaef03359d1ffdc0d5093456/unstable/text-input/text-input-unstable-v3.xml).
 - [Pinned Wayland core protocol XML](https://raw.githubusercontent.com/wayland-mirror/wayland/1ab6b693b16e1d9734496fe60c8a6ed277e4dec3/protocol/wayland.xml).
+- [Wayland protocol specification](https://wayland.freedesktop.org/docs/html/apa.html).
 - [Pinned Vulkan registry XML](https://raw.githubusercontent.com/KhronosGroup/Vulkan-Docs/20a9e5892e2aab7b9776b16a238b10fc8133090a/xml/vk.xml).
 - [Linux v6.18 DRM tracepoint fallback source](https://raw.githubusercontent.com/torvalds/linux/v6.18/drivers/gpu/drm/drm_trace.h).
 - [Upstream Linux stable v6.18.44 DRM tracepoint definition](https://raw.githubusercontent.com/gregkh/linux/v6.18.44/drivers/gpu/drm/drm_trace.h).
@@ -764,13 +1101,13 @@ $ exit "$status"
 ## Options and trade-offs
 
 - **Option A:** Freeze the selected Ubuntu compositor session, package manifest, and protocol registry only after P1 records compositor/version evidence and the visible-surface transcript. This is required for a reference baseline, but it is not complete in this spike.
-- **Option B:** Use a prospective Linux DRM `drm:drm_vblank_event` trace as the opportunity-meter design. P4 must establish Ubuntu kernel package and source or patch identity, live tracepoint schema and call-site semantics, trace access, pipe-index-to-CRTC-ID-to-output association, a `mono` trace clock, a justified calibration uncertainty budget, and no candidate callback or IPC path before it becomes a meter.
+- **Option B:** Use a prospective Linux DRM `drm:drm_vblank_event` trace as the opportunity-meter design. P4 must establish Ubuntu kernel package and source or patch identity, live tracepoint schema and call-site semantics, trace access, pipe-index-to-CRTC-ID-to-output association, a `mono` trace clock, P4C's predeclared `U_95` characterization, the reviewed Stage 3 maximum-uncertainty decision, and no candidate callback or IPC path before it becomes a meter.
 - **Option C:** Keep candidate behavior and environment-dependent rows as gating KUs. This prevents the reference distribution label, protocol advertisement, `GdkFrameClock`, or per-commit feedback from becoming unearned qualification evidence.
 
 ## Recommendation
 
-- **Chosen option:** Use a mix of A, B, and C. Freeze the source-level core, shell, scale, text-input, clipboard, presentation, GTK, and AT-SPI floors from cited upstream sources. Use Orca and AT-SPI 2.60.6 with documented Unicode-scalar offsets for the common accessibility baseline. Require the Option B DRM trace design for P4 only after its Ubuntu kernel identity, live format, and call-site semantics are evidenced, and retain Option C for every unproven reference-session and candidate-specific row, including the calibration tolerance.
-- **Why it fits:** The source floors contain every derived P0 operation, including creation, cursor, keyboard, touch, output, candidate geometry, clipboard source, offer, selection, and the client-issued release and destroy operations needed for per-view lifecycle and teardown. Presentation version 1 has acknowledgement and output-association operations. Version 2 only changes the variable-refresh `refresh` obligation, which the harness does not consume. Retaining KUs for server advertisement, behavior, and logical-index representation prevents source facts from becoming compositor or candidate claims. The DRM trace's independence from candidate callback streams remains unresolved until P4 proves it, along with Ubuntu kernel identity, live schema and call-site semantics, trace access, pipe-to-output attribution, and a justified clock-calibration and causal-matching uncertainty budget. `CON-FRM-001` remains the separately applied measured interval-error gate.
+- **Chosen option:** Use a mix of A, B, and C. Freeze the source-level core, shell, scale, text-input, clipboard, presentation, GTK, and AT-SPI floors from cited upstream sources. Use Orca and AT-SPI 2.60.6 with documented Unicode-scalar offsets for the common accessibility baseline. Require the Option B DRM trace design for P4 only after its Ubuntu kernel identity, live format, and call-site semantics are evidenced, and retain Option C for every unproven reference-session and candidate-specific row, including the calibration acceptance bound until reviewed Stage 3 freezes it before candidate measurements.
+- **Why it fits:** The corrected source selection contains 101 operations, including foundational registry and synchronization, creation, cursor, keyboard, touch, output, candidate geometry, clipboard source, offer, selection, and client-issued release and destroy operations needed for per-view lifecycle and teardown. It excludes operating-system drag-and-drop because the PRD does not make it P0. The mechanical parser makes 97 operations the deterministic P1 transcript and retains four compositor-specific events as separate KUs. Presentation version 1 has acknowledgement and output-association operations. Version 2 only changes the variable-refresh `refresh` obligation, which the harness does not consume. Retaining KUs for server advertisement, behavior, and logical-index representation prevents source facts from becoming compositor or candidate claims. The DRM trace's independence from candidate callback streams remains unresolved until P4 proves it, along with Ubuntu kernel identity, live schema and call-site semantics, trace access, pipe-to-output attribution, P4C's predeclared clock-characterization calculation and the reviewed Stage 3 maximum-uncertainty decision made before candidate measurements. `CON-FRM-001` remains the separately applied measured interval-error gate.
 - **Rejected options:** Reject a nominal refresh-rate timer, a harness-owned `wl_surface.frame` callback as an independent meter, `wp_presentation` feedback as an opportunity source, a protocol-global list as compositor behavior, an unspecified assistive technology, a scalar-to-logical equivalence assumption, a global IME index unit for every operation, and a candidate map inferred from GTK documentation.
 - **Sensitive-field rule:** Set `GtkInputPurpose` to `PASSWORD` or `PIN` as applicable and set `GtkInputHints.PRIVATE`. Continue to provide only protocol-required redacted surrounding context and never emit raw text to diagnostics. GTK describes the hint as a request, not a privacy guarantee; P2 and P3 must verify the redaction path.
 
@@ -1075,26 +1412,27 @@ Stage 3 can make the following exact edits without changing product capabilities
   "independent presentation-opportunity source",
   "injectable recovery mechanisms",
   "immutable evidence for every status-bearing platform claim",
-  "P1 must prove the selected Ubuntu session advertises every required global, creates every required non-global interface at its frozen floor, and emits every member of the mechanically regenerated P1 transcript checklist derived from the preserved Wayland floor derivation.",
+  "P1 must prove the selected Ubuntu session advertises every required global, creates every required non-global interface at its frozen floor, and emits all 97 members of the mechanically regenerated deterministic P1 transcript checklist. P1E separately retains wl_registry.global_remove, wl_touch.cancel, xdg_wm_base.ping, and wp_presentation_feedback.discarded until a documented compositor-specific controlled procedure produces each event.",
   "P3B must freeze the TextIndex::Logical representation and establish scalar-to-logical pairs bound to an immutable TextLayoutId.",
   "P3 must lock at-spi2-core 2.60.6 or a separately reviewed replacement and establish scalar text, caret, selection, and EditableText-operation behavior.",
-  "P4 must record the Ubuntu kernel image package identity, source or patch identity, live drm_vblank_event format and SHA-256, and source evidence for matching tracepoint schema and pipe call-site semantics; then establish trace access, pipe-index-to-CRTC-object-ID-to-connector attribution, unambiguous surface-output pairing, a mono trace clock, a justified clock-calibration and causal-matching uncertainty budget, and trace independence from each candidate. CON-FRM-001's 10% rule applies only to the measured interval-error result."
+  "P4C must characterize exactly 10,000 trace-marker pairs using U_95 = 1.96 * SE(d_bar) + r_trace / 2 + r_clock / 2 + w_max / 2; it cannot close P4. Before candidate measurements, reviewed Stage 3 must freeze the numeric maximum acceptable U_95, causal-matching algorithm version, and matching-window width. P4 must then record the Ubuntu kernel image package identity, source or patch identity, live drm_vblank_event format and SHA-256, and source evidence for matching tracepoint schema and pipe call-site semantics; then establish trace access, pipe-index-to-CRTC-object-ID-to-connector attribution, unambiguous surface-output pairing, a mono trace clock, the predeclared calibration calculation, and trace independence from each candidate. CON-FRM-001's 10% rule applies only to the measured interval-error result."
 ]
 ```
 
 - `.constitution/tech-spec/contracts/platform-contracts.json` -> `environments.wayland.ime.numericNegotiation`: replace the value with `"Use the writable Gtk.InputPurpose and Gtk.InputHints properties for each focus generation; no project-defined numeric handshake exists. Surrounding cursor and anchor positions use UTF-8 bytes. P2 must establish every other GtkIMContext operation unit."`.
 - `.constitution/tech-spec/contracts/platform-contracts.json` -> `environments.wayland.timing.interactiveOpportunitySource`: replace the value with `"GdkFrameClock is a host wakeup only; each allocation must prove output-associated display-synchronized scheduling in P4."`.
-- `.constitution/tech-spec/contracts/platform-contracts.json` -> `environments.wayland.timing.independentMeterSource`: replace the value with `"Prospective only: Linux DRM drm_vblank_event captured by trace-cmd with the mono trace clock. P4 must record the Ubuntu kernel image package identity, source or patch identity, live tracepoint format and SHA-256, and source evidence that its schema and call site establish pipe semantics. It must map each established pipe index through drmModeGetResources to a UAPI CRTC object ID and active connector, prove an unambiguous surface-output pairing and callback or IPC independence, and preserve a clock-calibration and causal-matching uncertainty budget. No clock-calibration acceptance tolerance is frozen. Apply CON-FRM-001's 10% limit only to the measured interval-error result after meter and matcher qualification."`.
+- `.constitution/tech-spec/contracts/platform-contracts.json` -> `environments.wayland.timing.independentMeterSource`: replace the value with `"Prospective only: Linux DRM drm_vblank_event captured by trace-cmd with the mono trace clock. P4 must record the Ubuntu kernel image package identity, source or patch identity, live tracepoint format and SHA-256, and source evidence that its schema and call site establish pipe semantics. It must map each established pipe index through drmModeGetResources to a UAPI CRTC object ID and active connector, prove an unambiguous surface-output pairing and callback or IPC independence, and preserve a clock-calibration and causal-matching uncertainty budget. P4C records the predeclared `U_95`calculation but cannot set its acceptance threshold. Before candidate measurements, reviewed Stage 3 must freeze the numeric maximum acceptable`U_95`, causal-matching algorithm version, and matching-window width. Apply CON-FRM-001's 10% limit only to the measured interval-error result after meter and matcher qualification."`.
 - `.constitution/tech-spec/contracts/platform-contracts.json` -> `environments.wayland.timing.presentationFeedback`: replace the value with `"wp_presentation v1 feedback for per-commit acknowledgement and main-output association only; never an independent presentation-opportunity meter."`.
 - `.constitution/tech-spec/contracts/platform-contracts.json` -> `environments.wayland.timing.perDisplayAssociation`: replace the value with `"Track each wl_surface enter/leave output set and begin a display epoch on every set change. Use wp_presentation_feedback.sync_output only to label a submitted frame's main output."`.
 - `.constitution/tech-spec/contracts/platform-contracts.json` -> `environments.wayland.accessibilityMaps`, `recoveryBaseline`, `allocations.focused`, and `allocations.integrated`: retain every `"ku-gating"` status and `null` path/digest until P3F, P3I, P5F, P5I, P6F, and P6I produce the named immutable artifacts.
-- `.constitution/tech-spec/stack.md` -> `Platform qualification pins` -> `Wayland` row: replace `"minimum compositor and protocol versions are gating KUs"` with `"the Ubuntu compositor/session package manifest and selected-session advertisement of the frozen Wayland floors remain gating KUs; P1 must record package versions, manifest digest, registry, and a visible-surface transcript covering all 99 members of the mechanically regenerated P0 floor-derivation checklist, including client-issued release and destroy operations"`.
+- `.constitution/tech-spec/stack.md` -> `Platform qualification pins` -> `Wayland` row: replace `"minimum compositor and protocol versions are gating KUs"` with `"the Ubuntu compositor/session package manifest and selected-session advertisement of the frozen Wayland floors remain gating KUs; P1 must record package versions, manifest digest, registry, and a visible-surface transcript covering all 97 members of the mechanically regenerated deterministic P1 checklist, retaining the four named event gates separately, and including client-issued release and destroy operations"`.
 - `.constitution/tech-spec/contracts/qualification-lock.json` -> `preImplementationKnownUnknowns` and `gatingKnownUnknowns`: add `"wayland-ubuntu-compositor-session-package-lock"`, `"wayland-frozen-protocol-reference-session-transcript"`, `"wayland-ime-operation-unit-transcript"`, `"wayland-atspi-scalar-logical-representation"`, `"wayland-atspi-text-caret-selection-editable-transcript"`, `"wayland-orca-atspi-maps-for-both-allocations"`, `"wayland-drm-vblank-kernel-identity-live-schema-callsite"`, `"wayland-drm-vblank-calibration-uncertainty-budget"`, `"wayland-service-routing-for-both-allocations"`, and `"wayland-recovery-injection-for-both-allocations"`.
-- `.constitution/tech-spec/adrs/ADR-0005-platform-hosts.md` -> `Consequences`: add `"Wayland qualification freezes source-level core, shell, scale, text-input, clipboard, and wp_presentation floors, including all client-issued P0 teardown operations. P1 must prove the selected session advertises them and records the mechanically derived 99-member complete P0-operation transcript. wp_presentation v1 supplies per-commit acknowledgement and output association only, not the independent presentation-opportunity meter. P4 evaluates a Linux DRM drm_vblank_event trace only after Ubuntu kernel package and source or patch identity, live-format and call-site-semantic evidence, access, pipe-index-to-CRTC-object-ID-to-output attribution, a justified trace_marker-bracketed CLOCK_MONOTONIC uncertainty budget, and callback or IPC independence pass. CON-FRM-001's 10% interval-error limit is applied only to qualified measured matching results."`.
+- `.constitution/tech-spec/contracts/qualification-lock.json` -> new gating entry `wayland-drm-vblank-calibration-acceptance-bound`: replace its value with `"Before any candidate measurement, reviewed Stage 3 must record the numeric maximum acceptable U_95, causal-matching algorithm version, matching-window width, and review reference. P4C records U_95 = 1.96 * SE(d_bar) + r_trace / 2 + r_clock / 2 + w_max / 2 but cannot close this entry."`.
+- `.constitution/tech-spec/adrs/ADR-0005-platform-hosts.md` -> `Consequences`: add `"Wayland qualification freezes source-level core, shell, scale, text-input, clipboard, and wp_presentation floors, including all client-issued P0 teardown operations. P1 must prove the selected session advertises them and records the mechanically derived 97-member deterministic P1 transcript and retains the four named nondeterministic event gates separately. wp_presentation v1 supplies per-commit acknowledgement and output association only, not the independent presentation-opportunity meter. P4 evaluates a Linux DRM drm_vblank_event trace only after Ubuntu kernel package and source or patch identity, live-format and call-site-semantic evidence, access, pipe-index-to-CRTC-object-ID-to-output attribution, the trace_marker-bracketed U_95 characterization, the reviewed Stage 3 maximum-uncertainty decision made before candidate measurements, and callback or IPC independence pass. CON-FRM-001's 10% interval-error limit is applied only to qualified measured matching results."`.
 
 ## Downstream impact
 
 - **ADRs to write or update:** Stage 3 updates `ADR-0005-platform-hosts.md` with the `wp_presentation` boundary. `ADR-0006-execution-domains.md` requires no change because the report does not alter its queue or ownership boundary.
 - **Tickets unblocked in `tasks/active/`:** `OXY-D001` can consume the documented protocol and conversion mechanics, but it remains blocked from qualification measurements by P1 through P6.
 - **Tickets to add or split:** Add P1 through P6 as bounded Wayland evidence tasks if the Stage 4 plan does not already schedule equivalent probes.
-- **Remaining gates:** The 12 KU (gating) rows retain the Wayland environment as `ku-gating`. Neither allocation is eligible for scoring until they close.
+- **Remaining gates:** The 13 KU (gating) rows retain the Wayland environment as `ku-gating`. Neither allocation is eligible for scoring until they close.
