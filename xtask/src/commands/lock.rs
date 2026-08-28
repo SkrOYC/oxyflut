@@ -62,11 +62,18 @@ fn report_candidate_implementation_gate(root: &Path) -> CommandOutcome {
         println!("{}", invalid_status_line(&failure));
         return invalid_outcome();
     }
-    if validators::readiness::validate_workspace(root).is_err() {
-        println!("lock status: invalid (readiness)");
-        return invalid_outcome();
+    match validators::readiness::validate_workspace(root) {
+        Ok(_)
+        | Err(validators::readiness::ReadinessValidationError::Readiness(
+            validators::readiness::ReadinessError::Invariant {
+                code: "resolved-tool-unverifiable-host",
+            },
+        )) => emit_candidate_report(&report),
+        Err(_) => {
+            println!("lock status: invalid (readiness)");
+            invalid_outcome()
+        }
     }
-    emit_candidate_report(&report)
 }
 
 fn report_measurement_gate(root: &Path, gate: &str) -> CommandOutcome {
@@ -115,9 +122,38 @@ fn candidate_report_at(root: &Path) -> Result<ReadinessReport, CandidateReportEr
         .map_err(|_| CandidateReportError::ExternalLockRead)?;
     let active_external_lock: Value = serde_json::from_slice(&external_bytes)
         .map_err(|_| CandidateReportError::ExternalLockJson)?;
-    validate_staged_candidate_inputs(root, &lock).map_err(CandidateReportError::StagedInput)?;
-    candidate_implementation_report(&lock, &active_external_lock)
-        .map_err(CandidateReportError::Readiness)
+    candidate_report_from_values(
+        &lock,
+        &active_external_lock,
+        validate_staged_candidate_inputs(root, &lock),
+    )
+}
+
+fn candidate_report_from_values(
+    lock: &Value,
+    active_external_lock: &Value,
+    staged_validation: Result<(), StagedCandidateInputError>,
+) -> Result<ReadinessReport, CandidateReportError> {
+    let toolchain_is_unverifiable = match staged_validation {
+        Ok(()) => false,
+        Err(StagedCandidateInputError::ResolvedToolUnverifiableHost) => true,
+        Err(error) => return Err(CandidateReportError::StagedInput(error)),
+    };
+    let mut report = candidate_implementation_report(lock, active_external_lock)
+        .map_err(CandidateReportError::Readiness)?;
+    if toolchain_is_unverifiable {
+        report.blocking.push(ReadinessBlocking {
+            field_path: "resolvedTools".to_owned(),
+            kind: oxyflut_qualification::readiness::BlockingKind::ResolvedToolUnverifiableHost,
+            evidence_path: Some(TOOLCHAIN_MANIFEST_PATH.to_owned()),
+            referent: None,
+            upstream_owner: Some("OXY-A008".to_owned()),
+        });
+        report.blocking.sort_unstable();
+        report.blocking.dedup();
+        report.status = ReadinessStatus::Open;
+    }
+    Ok(report)
 }
 
 fn validate_staged_candidate_inputs(
@@ -195,6 +231,9 @@ fn verify_resolved_tools(root: &Path, lock: &Value) -> Result<(), StagedCandidat
         Err(toolchain::lock::ResolvedToolValidationFailure::Mismatch) => {
             Err(StagedCandidateInputError::ResolvedToolMismatch)
         }
+        Err(toolchain::lock::ResolvedToolValidationFailure::UnverifiableHost) => {
+            Err(StagedCandidateInputError::ResolvedToolUnverifiableHost)
+        }
         Err(toolchain::lock::ResolvedToolValidationFailure::Invalid) => {
             Err(StagedCandidateInputError::ResolvedToolsInvalid)
         }
@@ -256,6 +295,7 @@ enum StagedCandidateInputError {
     ToolManifest,
     ResolvedToolMissing,
     ResolvedToolMismatch,
+    ResolvedToolUnverifiableHost,
     ResolvedToolsInvalid,
 }
 
@@ -271,6 +311,7 @@ impl StagedCandidateInputError {
             Self::ToolManifest => "resolved-tool-manifest",
             Self::ResolvedToolMissing => "resolved-tool-missing",
             Self::ResolvedToolMismatch => "resolved-tool-mismatch",
+            Self::ResolvedToolUnverifiableHost => "resolved-tool-unverifiable-host",
             Self::ResolvedToolsInvalid => "resolved-tool-invalid",
         }
     }
@@ -296,6 +337,7 @@ impl StagedCandidateInputError {
             | Self::ToolManifest
             | Self::ResolvedToolMissing
             | Self::ResolvedToolMismatch
+            | Self::ResolvedToolUnverifiableHost
             | Self::ResolvedToolsInvalid => None,
         }
     }

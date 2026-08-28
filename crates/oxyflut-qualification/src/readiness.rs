@@ -364,6 +364,8 @@ pub enum BlockingKind {
     Ku,
     /// A referenced immutable input has a different digest.
     DigestMismatch,
+    /// The staged native toolchain host cannot verify the resolved tool entries.
+    ResolvedToolUnverifiableHost,
     /// A field has a syntactically present but unresolved value.
     Unresolved,
 }
@@ -377,6 +379,7 @@ impl BlockingKind {
             Self::Null => "null",
             Self::Ku => "ku",
             Self::DigestMismatch => "digest-mismatch",
+            Self::ResolvedToolUnverifiableHost => "resolved-tool-unverifiable-host",
             Self::Unresolved => "unresolved",
         }
     }

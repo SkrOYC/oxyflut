@@ -10,8 +10,9 @@ use oxyflut_qualification::readiness::StagedInputRegistry;
 use serde_json::Value;
 
 use super::{
-    candidate_report_at, candidate_report_error_lines, candidate_report_lines, invalid_status_line,
-    run, run_at_root, workspace_root,
+    StagedCandidateInputError, candidate_report_at, candidate_report_error_lines,
+    candidate_report_from_values, candidate_report_lines, emit_candidate_report,
+    invalid_status_line, run, run_at_root, workspace_root,
 };
 use crate::{CommandOutcome, toolchain};
 
@@ -315,6 +316,28 @@ fn candidate_report_lines_are_stable_and_content_free() -> Result<(), Box<dyn Er
     ] {
         assert!(lines.iter().any(|actual| actual == line), "{line}");
     }
+    Ok(())
+}
+
+#[test]
+fn resolved_tools_on_an_unverifiable_host_keep_the_candidate_gate_open()
+-> Result<(), Box<dyn Error>> {
+    let source = source_root()?;
+    let lock = read_json(&source.join(COMPLETE_SYNTHETIC))?;
+    let external_lock = read_json(
+        &source.join("qualification/schemas/external/proposed-external-contract-lock.json"),
+    )?;
+    let report = candidate_report_from_values(
+        &lock,
+        &external_lock,
+        Err(StagedCandidateInputError::ResolvedToolUnverifiableHost),
+    )
+    .map_err(|_| "unverifiable host must produce a candidate report")?;
+
+    assert_eq!(emit_candidate_report(&report), CommandOutcome::ValidButOpen);
+    assert!(candidate_report_lines(&report).iter().any(|line| {
+        line == "blocking: field-path=resolvedTools kind=resolved-tool-unverifiable-host evidence-path=qualification/tools/native-contract-toolchain.json upstream-owner=OXY-A008"
+    }));
     Ok(())
 }
 

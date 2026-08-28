@@ -19,6 +19,8 @@ pub(crate) enum ResolvedToolValidationFailure {
     Missing,
     /// A declared tool differs from the staged manifest.
     Mismatch,
+    /// The staged host cannot verify otherwise well-formed tool entries.
+    UnverifiableHost,
     /// A manifest or lock entry is malformed or cannot be validated.
     Invalid,
 }
@@ -30,6 +32,7 @@ impl ResolvedToolValidationFailure {
         match self {
             Self::Missing => "resolved-tool-missing",
             Self::Mismatch => "resolved-tool-mismatch",
+            Self::UnverifiableHost => "resolved-tool-unverifiable-host",
             Self::Invalid => "resolved-tool-invalid",
         }
     }
@@ -78,33 +81,32 @@ pub(crate) fn verify_lock_resolved_tools_classified(
     manifest: &ToolchainManifest,
     lock_tools: &[Value],
 ) -> Result<(), ResolvedToolValidationFailure> {
-    match verify_lock_resolved_tools(manifest, lock_tools) {
-        Ok(()) => Ok(()),
-        Err(
-            ToolchainError::ExecutableSubstitution { .. }
-            | ToolchainError::LockEntryMismatch { .. }
-            | ToolchainError::SourceIdentityMismatch { .. }
-            | ToolchainError::VersionMismatch { .. }
-            | ToolchainError::MetadataMismatch { .. }
-            | ToolchainError::DigestMismatch { .. }
-            | ToolchainError::HeaderCheckerMismatch,
-        ) => Err(ResolvedToolValidationFailure::Mismatch),
-        Err(ToolchainError::MissingTool { .. }) => Err(ResolvedToolValidationFailure::Missing),
-        Err(
-            ToolchainError::UnsupportedHost { .. }
-            | ToolchainError::ReadinessField { .. }
-            | ToolchainError::InvalidAuthority
-            | ToolchainError::InvalidNote
-            | ToolchainError::InvalidManifest { .. }
-            | ToolchainError::DuplicateTool { .. }
-            | ToolchainError::UnknownTool { .. }
-            | ToolchainError::MissingLibcHeaders
-            | ToolchainError::LibcHeadersMismatch
-            | ToolchainError::ToolExecution { .. }
-            | ToolchainError::ToolExecutionFailed { .. }
-            | ToolchainError::Io(_)
-            | ToolchainError::Json(_),
-        ) => Err(ResolvedToolValidationFailure::Invalid),
+    verify_lock_resolved_tools(manifest, lock_tools).map_err(classify_validation_failure)
+}
+
+fn classify_validation_failure(error: ToolchainError) -> ResolvedToolValidationFailure {
+    match error {
+        ToolchainError::ExecutableSubstitution { .. }
+        | ToolchainError::LockEntryMismatch { .. }
+        | ToolchainError::SourceIdentityMismatch { .. }
+        | ToolchainError::VersionMismatch { .. }
+        | ToolchainError::MetadataMismatch { .. }
+        | ToolchainError::DigestMismatch { .. }
+        | ToolchainError::HeaderCheckerMismatch => ResolvedToolValidationFailure::Mismatch,
+        ToolchainError::MissingTool { .. } => ResolvedToolValidationFailure::Missing,
+        ToolchainError::UnsupportedHost { .. } => ResolvedToolValidationFailure::UnverifiableHost,
+        ToolchainError::ReadinessField { .. }
+        | ToolchainError::InvalidAuthority
+        | ToolchainError::InvalidNote
+        | ToolchainError::InvalidManifest { .. }
+        | ToolchainError::DuplicateTool { .. }
+        | ToolchainError::UnknownTool { .. }
+        | ToolchainError::MissingLibcHeaders
+        | ToolchainError::LibcHeadersMismatch
+        | ToolchainError::ToolExecution { .. }
+        | ToolchainError::ToolExecutionFailed { .. }
+        | ToolchainError::Io(_)
+        | ToolchainError::Json(_) => ResolvedToolValidationFailure::Invalid,
     }
 }
 
@@ -288,6 +290,23 @@ impl LockResolvedTool {
             ),
             ("version", Value::String(self.version.clone())),
         ])
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{ResolvedToolValidationFailure, classify_validation_failure};
+    use crate::toolchain::ToolchainError;
+
+    #[test]
+    fn unsupported_host_is_unverifiable_not_invalid() {
+        assert_eq!(
+            classify_validation_failure(ToolchainError::UnsupportedHost {
+                supported_host: "x86_64-unknown-linux-gnu",
+                detected_host: "aarch64-apple-darwin".to_owned(),
+            }),
+            ResolvedToolValidationFailure::UnverifiableHost
+        );
     }
 }
 

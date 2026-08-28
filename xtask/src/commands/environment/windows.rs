@@ -507,7 +507,7 @@ fn live_responses() -> WindowsResponses {
         compiler_env: std::env::var("VCToolsVersion").ok(),
         compiler_vswhere: capture_response(
             command_stdout("vswhere", &["-latest", "-property", "installationVersion"]),
-            "compiler",
+            "compiler_vswhere",
             &mut source_failures,
         ),
         sdk: capture_response(
