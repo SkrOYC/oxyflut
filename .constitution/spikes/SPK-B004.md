@@ -3,7 +3,7 @@
 ## Time box
 
 - Budget: 1 focused day.
-- Clock start / stop: 2026-08-28T16:47:53Z / 2026-08-28T16:58:24Z.
+- Clock start / stop: 2026-08-28T17:06:40Z / 2026-08-28T17:12:18Z.
 
 ## Question
 
@@ -20,7 +20,7 @@ Table 1 answers each part of the decision.
 | Linux assistive technology and base AT-SPI surface | Select Orca `50.1.2-1ubuntu1` as the reference assistive technology and `at-spi2-core` `2.60.0-1` as the service package. Orca documents that it works through AT-SPI. The `Atspi.Text` and D-Bus references define text, attributes, extents, caret, selection, and offset operations. | KK | [Orca documentation](https://help.gnome.org/users/orca/stable/introduction.html.en); [Orca package](https://packages.ubuntu.com/resolute/orca); [AT-SPI Text interface](https://gnome.pages.gitlab.gnome.org/at-spi2-core/libatspi/iface.Text.html); [Ubuntu AT-SPI Text D-Bus reference](https://documentation.ubuntu.com/desktop/en/latest/reference/accessibility/dbus/org.a11y.atspi.Text/). | Not applicable. |
 | Focused allocation forward and reverse AT-SPI map | No focused candidate exists to map every semantics role, property, relation, state, value, geometry, text range, event, and `Action` invocation to the selected AT-SPI interfaces. | KU (gating) | The AT-SPI references establish the target interface family but not an Oxyflut implementation: [AT-SPI Text interface](https://gnome.pages.gitlab.gnome.org/at-spi2-core/libatspi/iface.Text.html); [Ubuntu AT-SPI Text D-Bus reference](https://documentation.ubuntu.com/desktop/en/latest/reference/accessibility/dbus/org.a11y.atspi.Text/). | Build the focused candidate's two-window semantics fixture on the frozen native Xorg session with Orca and an AT-SPI D-Bus recorder. Produce a versioned map artifact and hash that enumerates forward events and reverse actions, routes each action by XID and view generation, and reports a stale-target error after teardown. |
 | Integrated allocation forward and reverse AT-SPI map | The integrated fork commit is not pinned, and its inherited GTK and AT-SPI path has not been enumerated. A complete map cannot be inferred from Flutter or GTK documentation. | KU (gating) | [AT-SPI Text interface](https://gnome.pages.gitlab.gnome.org/at-spi2-core/libatspi/iface.Text.html); the qualification lock records no integrated fork commit. | After Stage 3 records the integrated fork commit, enumerate its Linux embedder sources and run the same two-window Orca and AT-SPI recorder fixture as the focused allocation. Preserve the inherited interface inventory, map artifact, hash, and reverse-action routing result. |
-| Unicode-scalar AT-SPI offset fixtures | For GTK 4.22.2, the selected AT-SPI provider's Text offsets are Unicode-scalar indices: its `GetCharacterAtOffset` path bounds `offset` with `g_utf8_strlen`, converts it with `g_utf8_offset_to_pointer`, and returns `g_utf8_get_char` as `gunichar`. GLib defines that conversion as a UTF-8 byte sequence to a Unicode character. The AT-SPI XML separately states that `CharacterCount` can differ from the returned UTF-8 byte count. The preserved probe uses hand-listed logical, grapheme, UTF-8, and UTF-16 boundaries, tests both conversion directions, and rejects every interior byte and UTF-16-unit offset. It proves a scalar boundary can be inside the combining-sequence grapheme. | KK | [AT-SPI Text D-Bus XML](https://gitlab.gnome.org/GNOME/at-spi2-core/-/raw/main/xml/Text.xml); [GTK 4.22.2 AT-SPI text bridge source](https://gitlab.gnome.org/GNOME/gtk/-/raw/4.22.2/gtk/a11y/gtkatspitext.c); [GTK 4.22.2 accessible text source](https://gitlab.gnome.org/GNOME/gtk/-/raw/4.22.2/gtk/gtkaccessibletext.c); [GLib UTF-8 character conversion](https://docs.gtk.org/glib/func.utf8_get_char.html); preserved Unicode probe output. | Not applicable to the GTK text-unit KK. The host has no AT-SPI service, so a real D-Bus offset observation remains in each allocation's native-Xorg forward and reverse map probe. |
+| Unicode-scalar AT-SPI offset fixtures | The audited Ubuntu `libgtk-4-1` source package dispatches `GetCharacterAtOffset` first through `GtkAccessibleText` when `GTK_IS_ACCESSIBLE_TEXT` and only otherwise through the `GtkEditable` fallback. The generic path passes `offset, offset + 1` to `gtk_accessible_text_get_contents`; its GTK 4.22.2 contract names both bounds as character ranges and its `CharacterCount` helper uses `g_utf8_strlen`. The editable fallback separately bounds with `g_utf8_strlen` and explicitly converts through `g_utf8_offset_to_pointer` before `g_utf8_get_char`. GLib documents both functions in character units. The source-package audit confirms that the two cited GTK files byte-match the Ubuntu original tarball and that no header in the 25 applied Debian patches targets either file. The AT-SPI XML separately states that `CharacterCount` can differ from returned UTF-8 byte count. The preserved fixture probe tests logical, grapheme, UTF-8, and UTF-16 boundaries in ASCII, multibyte, combining, and bidirectional text, and proves a scalar boundary can occur inside the combining-sequence grapheme. | KK | [AT-SPI Text D-Bus XML](https://gitlab.gnome.org/GNOME/at-spi2-core/-/raw/main/xml/Text.xml); [GTK 4.22.2 AT-SPI text bridge source](https://gitlab.gnome.org/GNOME/gtk/-/raw/4.22.2/gtk/a11y/gtkatspitext.c); [GTK 4.22.2 accessible text implementation](https://gitlab.gnome.org/GNOME/gtk/-/raw/4.22.2/gtk/gtkaccessibletext.c); [GTK 4.22.2 GtkAccessibleText API documentation](https://gitlab.gnome.org/GNOME/gtk/-/raw/4.22.2/gtk/gtkaccessibletext.h); [GLib UTF-8 string length](https://docs.gtk.org/glib/func.utf8_strlen.html); [GLib UTF-8 offset conversion](https://docs.gtk.org/glib/func.utf8_offset_to_pointer.html); [Ubuntu GTK source package](https://launchpad.net/ubuntu/+source/gtk4/4.22.2+ds-1ubuntu1); preserved Ubuntu source-package audit and Unicode probe output. | Not applicable to the audited provider-unit KK. Candidate compliance and a live D-Bus return remain gating KUs in each allocation's native-Xorg forward and reverse map probe. |
 | X Present feedback role | Require Present protocol 1.0 or later for presentation feedback. The specification says `PresentCompleteNotify` reports completion of a pending `PresentPixmap` request. It is acknowledgement feedback only. It is not an independent presentation-opportunity source, and no schedule may derive opportunities from it. | KK | [Present protocol specification](https://cgit.freedesktop.org/xorg/proto/presentproto/plain/presentproto.txt). | Not applicable. |
 | Independent timing meter and per-output association | `GdkFrameClock` can use a timer and is the host scheduler, so it cannot measure itself. The DRM API can request vblank events and can report monotonic timestamps and CRTC IDs when its capabilities are present, but this spike did not establish permission, output-to-CRTC mapping, calibration, or independence on the Ubuntu native Xorg session. | KU (gating) | [GdkFrameClock](https://docs.gtk.org/gdk4/class.FrameClock.html); [Linux DRM user-space API](https://docs.kernel.org/gpu/drm-uapi.html); preserved host DRM-node probe. | On the frozen Ubuntu native Xorg session, open a harness-owned DRM card FD distinct from both candidates. Require `DRM_CAP_TIMESTAMP_MONOTONIC=1` and `DRM_CAP_CRTC_IN_VBLANK_EVENT=1`, correlate each RandR output to its CRTC, and record 10 seconds of `DRM_EVENT_VBLANK`, candidate schedule callbacks, and Present completions for two windows. The expected result is one calibrated, per-CRTC opportunity stream whose collection consumes neither candidate callback stream. Retain this KU if the session denies the FD or cannot establish the mapping. |
 | Focused allocation interface inventory and service routing | The documented GTK, X11, AT-SPI, Present, and Vulkan error surfaces identify possible inputs, not a focused adapter. No multi-view trace proves that every request and callback carries the owning XID and view generation through the reentrancy barrier. | KU (gating) | [GtkIMContext](https://docs.gtk.org/gtk4/class.IMContext.html); [Present protocol specification](https://cgit.freedesktop.org/xorg/proto/presentproto/plain/presentproto.txt); [Vulkan registry](https://raw.githubusercontent.com/KhronosGroup/Vulkan-Docs/main/xml/vk.xml). | Run a focused two-window fixture with distinct XIDs and generations. Issue IME, clipboard, AT-SPI action, resize, Present, and teardown events while one window is destroyed and recreated. Preserve a trace that shows the correct owner for every accepted event and a structured stale-generation rejection for every late event. |
@@ -41,7 +41,7 @@ Table 1 answers each part of the decision.
 - The official Ubuntu archive supplies the exact package versions in table 1. It does not substitute for a package-snapshot digest, a native Xorg session capture, or a server behavior probe.
 - The Ubuntu GTK package is 4.22.2, which satisfies the existing GTK 4.20 API-binding ceiling. The report does not change the product surface or architecture boundary.
 - `GtkIMContext` uses two different index conventions: UTF-8 byte offsets for surrounding-text cursor information and character offsets for deletion. The adapter must convert both through checked strong index types before state mutation.
-- For the selected GTK 4.22.2 AT-SPI provider, Text offsets are Unicode-scalar indices: its bridge bounds an offset with `g_utf8_strlen`, converts it through `g_utf8_offset_to_pointer`, and returns `g_utf8_get_char` as `gunichar`. AT-SPI returns UTF-8 text and its XML warns that returned byte length can exceed its character offsets.
+- For the audited Ubuntu GTK 4.22.2 source, the AT-SPI bridge selects the `GtkAccessibleText` path before the `GtkEditable` fallback. The generic path requests a one-character range and counts full text with `g_utf8_strlen`; only the fallback explicitly converts with `g_utf8_offset_to_pointer`. AT-SPI returns UTF-8 text and its XML warns that returned byte length can exceed its character offsets.
 
 ## Options and trade-offs
 
@@ -57,7 +57,7 @@ Table 2 selects an option for every decision area.
 | :-- | :-- | :-- |
 | Reference packages and protocol contracts | A | Freeze the exact Ubuntu package inputs in table 1. Use GTK 4.22.2, `GtkIMMulticontext` with `ibus-gtk4`, `at-spi2-core`, and Orca. Use Present 1.0 or later only for completion feedback. These are cited package and protocol facts. |
 | Native X server and extension behavior | C | Keep the environment gate open until the frozen Ubuntu native Xorg session records its server identity, negotiated extension versions, two-window output association, and Present behavior. The Xwayland probe is deliberately nonreference. |
-| AT-SPI maps and scalar conversion | A plus C | Freeze the GTK 4.22.2 Unicode-scalar conversion contract, audited fixtures, and Orca selection. Retain each allocation's complete forward and reverse map and real native-Xorg AT-SPI observation as separate gates because no candidate implementation exists. |
+| AT-SPI maps and scalar conversion | A plus C | Freeze the audited Ubuntu GTK 4.22.2 dispatch and Unicode-scalar unit contract, the fixtures, and the Orca selection. Retain each allocation's complete forward and reverse map and live native-Xorg AT-SPI observation as separate gates because no candidate implementation exists. |
 | Independent timing | C | Do not use `GdkFrameClock`, nominal timers, or Present completion as an independent source. Consider B only after the exact DRM sidecar probe passes. |
 | Service routing and recovery | C | Require per-XID and generation traces plus allocation-specific scripted recovery faults. Do not infer either property from GTK, Vulkan result names, or the architecture documents. |
 
@@ -108,11 +108,111 @@ DISPLAY=:0 XDG_SESSION_TYPE=wayland
 
 ### AT-SPI text-offset unit evidence
 
-The upstream AT-SPI Text XML says, "CharacterCount: The total number of characters in a text object. This may differ from the number of bytes that would be returned if the text is fetched in cases where characters are expressed using multiple bytes." It also says, "Returns: a text string containing characters from @startOffset to @endOffset-1, inclusive, encoded as UTF-8." [AT-SPI Text D-Bus XML](https://gitlab.gnome.org/GNOME/at-spi2-core/-/raw/main/xml/Text.xml) defines the protocol's non-byte character offsets.
+The upstream AT-SPI Text XML says, "CharacterCount: The total number of characters in a text object. This may differ from the number of bytes that would be returned if the text is fetched in cases where characters are expressed using multiple bytes." It also says, "Returns: a text string containing characters from @startOffset to @endOffset-1, inclusive, encoded as UTF-8." [AT-SPI Text D-Bus XML](https://gitlab.gnome.org/GNOME/at-spi2-core/-/raw/main/xml/Text.xml) defines non-byte protocol character offsets.
 
-The selected GTK 4.22.2 provider fixes the character unit. Its AT-SPI `GetCharacterAtOffset` implementation reads the D-Bus integer and executes `if (0 <= offset && offset < g_utf8_strlen (text, -1)) ch = g_utf8_get_char (g_utf8_offset_to_pointer (text, offset));`. Its `CharacterCount` property is `g_utf8_strlen (text, -1)`. The [GTK 4.22.2 AT-SPI text bridge source](https://gitlab.gnome.org/GNOME/gtk/-/raw/4.22.2/gtk/a11y/gtkatspitext.c) therefore indexes by a UTF-8 character count, converts the character offset to a pointer, and returns `gunichar`. The [GLib UTF-8 character conversion documentation](https://docs.gtk.org/glib/func.utf8_get_char.html) says, "Converts a sequence of bytes encoded as UTF-8 to a Unicode character." The [GTK 4.22.2 accessible text source](https://gitlab.gnome.org/GNOME/gtk/-/raw/4.22.2/gtk/gtkaccessibletext.c) independently documents ranges "in characters" and calculates the count with `g_utf8_strlen`. For this frozen GTK provider, an AT-SPI character offset is therefore a Unicode-scalar index, not a UTF-8 byte, UTF-16 unit, or grapheme index.
+#### GTK dispatch and unit contract
 
-The host session has no advertised AT-SPI or Orca service, so this spike did not make a real AT-SPI call. This preserves a bounded runtime observation in the focused and integrated native-Xorg map probes, rather than treating the absent service as a negative compatibility result.
+The [GTK 4.22.2 text bridge source](https://gitlab.gnome.org/GNOME/gtk/-/raw/4.22.2/gtk/a11y/gtkatspitext.c) selects the generic `GtkAccessibleText` vtable before the editable vtable. It contains the following selector:
+
+```c
+if (GTK_IS_ACCESSIBLE_TEXT (accessible))
+  return &accessible_text_vtable;
+else if (GTK_IS_EDITABLE (accessible))
+  return &editable_vtable;
+```
+
+For the primary `GtkAccessibleText` path, the [GTK 4.22.2 text bridge source](https://gitlab.gnome.org/GNOME/gtk/-/raw/4.22.2/gtk/a11y/gtkatspitext.c) requests the one-character range and decodes the returned UTF-8 sequence:
+
+```c
+GBytes *text = gtk_accessible_text_get_contents (accessible_text, offset, offset + 1);
+
+if (text != NULL)
+  {
+    const char *str = g_bytes_get_data (text, NULL);
+    if (g_utf8_strlen (str, -1) > 0)
+      ch = g_utf8_get_char (str);
+  }
+```
+
+The GTK 4.22.2 `GtkAccessibleText` API documentation defines `get_contents` with "@start: the beginning of the range, in characters" and "@end: the end of the range, in characters," and returns the requested slice as UTF-8. Its implementation calculates the character count from the complete `get_contents (self, 0, G_MAXUINT)` result with `len = g_utf8_strlen (str, -1);`. The bridge exports that helper as `CharacterCount`. [GTK 4.22.2 GtkAccessibleText API documentation](https://gitlab.gnome.org/GNOME/gtk/-/raw/4.22.2/gtk/gtkaccessibletext.h) and the [GTK 4.22.2 accessible text implementation](https://gitlab.gnome.org/GNOME/gtk/-/raw/4.22.2/gtk/gtkaccessibletext.c) establish the primary path's character-range and character-count units.
+
+The `GtkEditable` branch is a fallback, not the universal provider implementation. The [GTK 4.22.2 text bridge source](https://gitlab.gnome.org/GNOME/gtk/-/raw/4.22.2/gtk/a11y/gtkatspitext.c) gives its `GetCharacterAtOffset` branch the separate explicit conversion:
+
+```c
+text = gtk_editable_get_text (GTK_EDITABLE (widget));
+if (0 <= offset && offset < g_utf8_strlen (text, -1))
+  ch = g_utf8_get_char (g_utf8_offset_to_pointer (text, offset));
+```
+
+[GLib UTF-8 string length](https://docs.gtk.org/glib/func.utf8_strlen.html) says that `g_utf8_strlen` computes a string length in characters. [GLib UTF-8 offset conversion](https://docs.gtk.org/glib/func.utf8_offset_to_pointer.html) says that `g_utf8_offset_to_pointer` converts an integer character offset to a pointer in the string. The primary path's character-range contract and `g_utf8_strlen` count, plus the fallback's explicit conversion, establish a Unicode-scalar index rather than a UTF-8 byte, UTF-16-unit, or grapheme index for this GTK provider.
+
+#### Ubuntu source-package audit
+
+The [Ubuntu GTK source package](https://launchpad.net/ubuntu/+source/gtk4/4.22.2+ds-1ubuntu1) links the fetched [source descriptor](https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/gtk4/4.22.2+ds-1ubuntu1/gtk4_4.22.2+ds-1ubuntu1.dsc). Its `Checksums-Sha256` stanza names `gtk4_4.22.2+ds.orig.tar.xz` with SHA-256 `b06b9a4a82ed0b8a9260cc739296af1f96b7348d5e6b8d09435ab563910cd33d` and `gtk4_4.22.2+ds-1ubuntu1.debian.tar.xz` with SHA-256 `79d4685fc02fd7bcdb851f4ed7d0afc77becfa1a15b3489dd198df7ad3806e04`. The following preserved audit downloads both source inputs, verifies the checksums, compares the two upstream-tag files against the original tarball, lists the applied patch series, and searches every applied patch header for either target path.
+
+```text
+$ curl -sS -L --max-time 60 -o gtk4_4.22.2+ds-1ubuntu1.dsc https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/gtk4/4.22.2+ds-1ubuntu1/gtk4_4.22.2+ds-1ubuntu1.dsc
+http=200 bytes=4303
+$ grep -A 3 "^Checksums-Sha256:" gtk4_4.22.2+ds-1ubuntu1.dsc
+Checksums-Sha256:
+ b06b9a4a82ed0b8a9260cc739296af1f96b7348d5e6b8d09435ab563910cd33d 17128400 gtk4_4.22.2+ds.orig.tar.xz
+ 79d4685fc02fd7bcdb851f4ed7d0afc77becfa1a15b3489dd198df7ad3806e04 4011848 gtk4_4.22.2+ds-1ubuntu1.debian.tar.xz
+Files:
+$ curl -sS -L --max-time 180 -o gtk4_4.22.2+ds.orig.tar.xz http://archive.ubuntu.com/ubuntu/pool/main/g/gtk4/gtk4_4.22.2+ds.orig.tar.xz
+http=200 bytes=17128400
+$ curl -sS -L --max-time 120 -o gtk4_4.22.2+ds-1ubuntu1.debian.tar.xz http://archive.ubuntu.com/ubuntu/pool/main/g/gtk4/gtk4_4.22.2+ds-1ubuntu1.debian.tar.xz
+http=200 bytes=4011848
+$ sha256sum gtk4_4.22.2+ds.orig.tar.xz gtk4_4.22.2+ds-1ubuntu1.debian.tar.xz
+b06b9a4a82ed0b8a9260cc739296af1f96b7348d5e6b8d09435ab563910cd33d  gtk4_4.22.2+ds.orig.tar.xz
+79d4685fc02fd7bcdb851f4ed7d0afc77becfa1a15b3489dd198df7ad3806e04  gtk4_4.22.2+ds-1ubuntu1.debian.tar.xz
+$ tar -tJf gtk4_4.22.2+ds.orig.tar.xz | grep -E "(/|^)gtk/a11y/gtkatspitext\.c$|(/|^)gtk/gtkaccessibletext\.c$"
+gtk-4.22.2/gtk/a11y/gtkatspitext.c
+gtk-4.22.2/gtk/gtkaccessibletext.c
+$ tar -xJOf gtk4_4.22.2+ds.orig.tar.xz gtk-4.22.2/gtk/a11y/gtkatspitext.c > orig-gtkatspitext.c; tar -xJOf gtk4_4.22.2+ds.orig.tar.xz gtk-4.22.2/gtk/gtkaccessibletext.c > orig-gtkaccessibletext.c
+$ sha256sum gtkatspitext.c orig-gtkatspitext.c gtkaccessibletext.c orig-gtkaccessibletext.c
+65178d6d816cd7b1d91cdea177949aca249469d1b7b0072221e0fa1bb65b9e66  gtkatspitext.c
+65178d6d816cd7b1d91cdea177949aca249469d1b7b0072221e0fa1bb65b9e66  orig-gtkatspitext.c
+4efeb6bf88a05d47eb98fe69bc5905c5208343890a980b1fe89d7aaf99ff6e6e  gtkaccessibletext.c
+4efeb6bf88a05d47eb98fe69bc5905c5208343890a980b1fe89d7aaf99ff6e6e  orig-gtkaccessibletext.c
+$ cmp -s gtkatspitext.c orig-gtkatspitext.c && cmp -s gtkaccessibletext.c orig-gtkaccessibletext.c && printf "upstream-tag files match source orig tarball\n"
+upstream-tag files match source orig tarball
+```
+
+```text
+$ tar -xJf gtk4_4.22.2+ds-1ubuntu1.debian.tar.xz -C .
+$ grep -vE "^[[:space:]]*(#|$)" debian/patches/series
+debian/reftest_compare_surfaces-Report-how-much-the-images-diffe.patch
+insttests/Revert-build-Drop-the-install-tests-option.patch
+insttests/Revert-testsuite-Remove-leftover-test.in-files.patch
+workarounds/reftests-Allow-minor-differences-to-be-tolerated.patch
+workarounds/Disable-inscription-markup.ui-reftest.patch
+workarounds/tests-Mark-gltexture-as-expected-to-fail-on-big-endian-ma.patch
+workarounds/tests-Allow-longer-for-a-dialog-to-open.patch
+workarounds/nodeparser-Adjust-test-for-pango-1.52.0.patch
+workarounds/testsuite-skip-color-mix.patch
+workarounds/scaling-test-Skip-floating-point-pixel-formats-with-Cairo.patch
+workarounds/nodeparser-Mark-failing-tests-on-s390x.patch
+x11-scale/gdk-x11-check-surface-scale-on-input-region-opaque-region.patch
+x11-scale/gdk-x11-update-correct-shadow-size-according-to-window-si.patch
+x11-scale/gdk-x11-update-cursor-size-on-the-extent-after-scale-chan.patch
+x11-touch/xi2-Start-drag-grab-with-pointer-only-event-mask.patch
+x11-touch/xi2-Do-not-discard-emulated-pointer-events-during-drag-an.patch
+x11-touch/xi2-Expose-a-logical-touch-device.patch
+printdialog-Keep-GTask-alive-for-portal-repsonse.patch
+testsuite-Don-t-build-waylandsocket-test-if-Wayland-is-di.patch
+print-Fix-listing-printers-with-synchronous-backends.patch
+accessibility-Fix-regression.patch
+gtkapplication-wayland-Add-a-missing-NULL-check-when-forg.patch
+gskvulkanimage-fix-building-on-32-bit.patch
+Revert-testutils-Warn-if-setting-up-language-didn-t-work.patch
+application-wayland-Add-NULL-check-on-gtk_accessible_get_.patch
+$ matches=0; while IFS= read -r patch; do if grep -HnE "^(---|\\+\\+\\+|diff --git ).*(gtk/a11y/gtkatspitext\\.c|gtk/gtkaccessibletext\\.c)" "debian/patches/$patch"; then matches=$((matches + 1)); fi; done < <(grep -vE "^[[:space:]]*(#|$)" debian/patches/series); printf "applied-patches=%s target-path-header-match-files=%s\n" "$(grep -cvE "^[[:space:]]*(#|$)" debian/patches/series)" "$matches"
+applied-patches=25 target-path-header-match-files=0
+```
+
+The original tarball contains byte-identical copies of the two upstream-tag files, and no applied Debian patch header targets either path. This audit makes the cited dispatch and unit evidence applicable to Ubuntu `libgtk-4-1` `4.22.2+ds-1ubuntu1`.
+
+The host session has no advertised AT-SPI or Orca service, so this spike did not make a real AT-SPI call. Candidate compliance and runtime D-Bus behavior remain bounded native-Xorg map probes for both allocations.
 
 ```text
 $ printf 'DBUS_SESSION_BUS_ADDRESS=%s\n' "${DBUS_SESSION_BUS_ADDRESS:-<unset>}"
@@ -292,9 +392,9 @@ exit=0
   1. In `.constitution/tech-spec/stack.md`, update the X11 row in `Platform qualification pins` to this exact value: `x86-64 Ubuntu 26.04 LTS native Xorg session with xserver-xorg-core 2:21.1.22-1ubuntu1, libgtk-4-1 4.22.2+ds-1ubuntu1, at-spi2-core 2.60.0-1, ibus-gtk4 1.5.34~rc2-1, and orca 50.1.2-1ubuntu1; record the signed package-snapshot digest before measurement.`
   2. In `.constitution/tech-spec/contracts/platform-contracts.json`, set `environments.x11.reference` to `Ubuntu 26.04 LTS x86-64 native Xorg session with xserver-xorg-core 2:21.1.22-1ubuntu1, libgtk-4-1 4.22.2+ds-1ubuntu1, at-spi2-core 2.60.0-1, ibus-gtk4 1.5.34~rc2-1, and orca 50.1.2-1ubuntu1; package-snapshot digest required before measurement.`
   3. In `.constitution/tech-spec/contracts/platform-contracts.json`, retain `environments.x11.minimumVersion` as `{"status":"ku-gating","value":null,"evidence":[]}` and keep `environments.x11.status` as `ku-gating`. Do not infer a native Xorg server or extension floor from the Resolute package page; replace this value only after the native Ubuntu Xorg probe preserves the server vendor, release, package version, and negotiated extensions.
-  4. In `.constitution/tech-spec/contracts/platform-contracts.json`, set the X11 `GTK` protocol row to `{"name":"GTK","version":"4.22.2+ds-1ubuntu1","status":"kk","evidence":["https://packages.ubuntu.com/resolute/libgtk-4-1","https://docs.gtk.org/gtk4/class.IMContext.html"]}`.
+  4. In `.constitution/tech-spec/contracts/platform-contracts.json`, set the X11 `GTK` protocol row to `{"name":"GTK","version":"4.22.2+ds-1ubuntu1","status":"kk","evidence":["https://packages.ubuntu.com/resolute/libgtk-4-1","https://launchpad.net/ubuntu/+source/gtk4/4.22.2+ds-1ubuntu1","https://gitlab.gnome.org/GNOME/gtk/-/raw/4.22.2/gtk/a11y/gtkatspitext.c","https://gitlab.gnome.org/GNOME/gtk/-/raw/4.22.2/gtk/gtkaccessibletext.c","https://docs.gtk.org/gtk4/class.IMContext.html"]}`.
   5. In `.constitution/tech-spec/contracts/platform-contracts.json`, set the X11 `X Present` protocol row to `{"name":"X Present","version":"1.0","status":"kk","evidence":["https://cgit.freedesktop.org/xorg/proto/presentproto/plain/presentproto.txt"]}` and set `environments.x11.timing.presentationFeedback` to `X Present 1.0 PresentCompleteNotify events acknowledge a pending PresentPixmap request; they are feedback only and never an independent presentation-opportunity source.`
-  6. In `.constitution/tech-spec/contracts/platform-contracts.json`, set the X11 `AT-SPI` protocol row to `{"name":"AT-SPI","version":"2.60.0-1","status":"kk","evidence":["https://packages.ubuntu.com/resolute/at-spi2-core","https://gnome.pages.gitlab.gnome.org/at-spi2-core/libatspi/iface.Text.html"]}`.
+  6. In `.constitution/tech-spec/contracts/platform-contracts.json`, set the X11 `AT-SPI` protocol row to `{"name":"AT-SPI","version":"2.60.0-1","status":"kk","evidence":["https://packages.ubuntu.com/resolute/at-spi2-core","https://gnome.pages.gitlab.gnome.org/at-spi2-core/libatspi/iface.Text.html","https://gitlab.gnome.org/GNOME/at-spi2-core/-/raw/main/xml/Text.xml","https://gitlab.gnome.org/GNOME/gtk/-/raw/4.22.2/gtk/a11y/gtkatspitext.c","https://gitlab.gnome.org/GNOME/gtk/-/raw/4.22.2/gtk/gtkaccessibletext.c","https://launchpad.net/ubuntu/+source/gtk4/4.22.2+ds-1ubuntu1"]}`.
   7. In `.constitution/tech-spec/contracts/platform-contracts.json`, set `environments.x11.ime.evidence` to `["https://docs.gtk.org/gtk4/class.IMMulticontext.html","https://packages.ubuntu.com/resolute/ibus-gtk4"]`, keep `environments.x11.ime.status` as `ku-gating`, and set `environments.x11.ime.numericNegotiation` to `GtkInputPurpose values are declarative input metadata; retain this item as KU until a complete native-Xorg IBus transcript establishes any required numeric exchange.`
   8. In `.constitution/tech-spec/contracts/platform-contracts.json`, set `environments.x11.timing.independentMeterSource` to `KU: a harness-owned DRM card FD must prove DRM_CAP_TIMESTAMP_MONOTONIC=1, DRM_CAP_CRTC_IN_VBLANK_EVENT=1, per-CRTC RandR association, calibrated timestamps, and independence from both candidate callback streams on the frozen native Xorg session.` Keep `environments.x11.timing.status` as `ku-gating`.
   9. In `.constitution/tech-spec/contracts/qualification-lock.json`, set `referenceEnvironments.x11-linux-x86_64.operatingSystem` to `Ubuntu 26.04 LTS native Xorg session; xserver-xorg-core 2:21.1.22-1ubuntu1; libgtk-4-1 4.22.2+ds-1ubuntu1; at-spi2-core 2.60.0-1; ibus-gtk4 1.5.34~rc2-1; orca 50.1.2-1ubuntu1`. Retain `referenceEnvironments.x11-linux-x86_64.minimumVersion` as `null` (gating) and `systemPackageLockDigest` as `null` until the native-Xorg probe establishes the server floor and Stage 3 records the real signed snapshot digest.
@@ -317,8 +417,15 @@ exit=0
 - [AT-SPI Text interface](https://gnome.pages.gitlab.gnome.org/at-spi2-core/libatspi/iface.Text.html)
 - [AT-SPI Text D-Bus XML](https://gitlab.gnome.org/GNOME/at-spi2-core/-/raw/main/xml/Text.xml)
 - [GTK 4.22.2 AT-SPI text bridge source](https://gitlab.gnome.org/GNOME/gtk/-/raw/4.22.2/gtk/a11y/gtkatspitext.c)
-- [GTK 4.22.2 accessible text source](https://gitlab.gnome.org/GNOME/gtk/-/raw/4.22.2/gtk/gtkaccessibletext.c)
+- [GTK 4.22.2 accessible text implementation](https://gitlab.gnome.org/GNOME/gtk/-/raw/4.22.2/gtk/gtkaccessibletext.c)
+- [GTK 4.22.2 GtkAccessibleText API documentation](https://gitlab.gnome.org/GNOME/gtk/-/raw/4.22.2/gtk/gtkaccessibletext.h)
 - [GLib UTF-8 character conversion](https://docs.gtk.org/glib/func.utf8_get_char.html)
+- [GLib UTF-8 string length](https://docs.gtk.org/glib/func.utf8_strlen.html)
+- [GLib UTF-8 offset conversion](https://docs.gtk.org/glib/func.utf8_offset_to_pointer.html)
+- [Ubuntu GTK source package](https://launchpad.net/ubuntu/+source/gtk4/4.22.2+ds-1ubuntu1)
+- [Ubuntu GTK source descriptor](https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/gtk4/4.22.2+ds-1ubuntu1/gtk4_4.22.2+ds-1ubuntu1.dsc)
+- [Ubuntu GTK original source tarball](http://archive.ubuntu.com/ubuntu/pool/main/g/gtk4/gtk4_4.22.2+ds.orig.tar.xz)
+- [Ubuntu GTK Debian patch tarball](http://archive.ubuntu.com/ubuntu/pool/main/g/gtk4/gtk4_4.22.2+ds-1ubuntu1.debian.tar.xz)
 - [Ubuntu AT-SPI Text D-Bus reference](https://documentation.ubuntu.com/desktop/en/latest/reference/accessibility/dbus/org.a11y.atspi.Text/)
 - [Present protocol specification](https://cgit.freedesktop.org/xorg/proto/presentproto/plain/presentproto.txt)
 - [Linux DRM user-space API](https://docs.kernel.org/gpu/drm-uapi.html)
