@@ -1,0 +1,21 @@
+{
+  "environment": "macos",
+  "operatingSystem": { "status": "observed", "value": "macos-26.5" },
+  "minimumVersion": { "status": "missing", "reason": "not-declared-by-lock" },
+  "architecture": { "status": "observed", "value": "arm64" },
+  "hardwareId": { "status": "observed", "value": "macbookpro18-3" },
+  "gpuId": { "status": "observed", "value": "apple-m3-pro" },
+  "driverVersion": { "status": "missing", "reason": "unsupported-by-source" },
+  "compilerIdentity": { "status": "observed", "value": "apple-clang-17.0" },
+  "sdkIdentity": { "status": "observed", "value": "macos-sdk-26.5" },
+  "compositor": { "status": "observed", "value": "aqua" },
+  "session": { "status": "observed", "value": "aqua" },
+  "protocolVersion": { "status": "observed", "value": "appkit-sdk-26.6" },
+  "systemPackageLock": {
+    "status": "observed",
+    "packages": [
+      { "name": "xcode", "version": "26.6-17F113" },
+      { "name": "macos-sdk", "version": "26.5" }
+    ]
+  }
+}
