@@ -2,8 +2,8 @@
 
 - Ticket: OXY-B007
 - Status: completed access register
-- Clock start: 2026-08-28T17:40:52Z
-- Clock stop: 2026-08-28T17:43:37Z
+- Clock start: 2026-08-28T17:54:20Z
+- Clock stop: 2026-08-28T17:55:46Z
 
 ## Purpose and scope
 
@@ -261,7 +261,7 @@ For interactive Xwayland access:
 
 For headless Xvfb access:
 
-1. Run the exact script preserved in the [X11 access probe](#x11-access-probe). It creates a unique log directory below `/tmp/wf-epic-b/OXY-B007` with `mktemp -d`, writes the server log to `$LOGDIR/xvfb99.log`, and records the server process ID in `XVFB_PID`.
+1. Run the exact script preserved in the [X11 access probe](#x11-access-probe). It first creates `/tmp/wf-epic-b/OXY-B007` and exits 1 if that fails, then creates a unique log directory below it with `mktemp -d` and exits 1 if that fails. It writes the server log to `$LOGDIR/xvfb99.log` and records the server process ID in `XVFB_PID`.
 2. The script runs `nix shell nixpkgs#xorg.xdpyinfo -c xdpyinfo -display :99 | head -15`. Success includes `name of display: :99`, `vendor string: The X.Org Foundation`, and `X.Org version: 21.1.24`.
 3. The script signals only its recorded process with `kill "$XVFB_PID"`, then waits for that exact process with `wait "$XVFB_PID"`. The recorded `wait exit: 0` establishes that the child process terminated successfully. The script then runs `pgrep -a Xvfb` and prints its status. [pgrep(1)](https://man7.org/linux/man-pages/man1/pgrep.1.html) defines exit 1 as no matching processes and exits 2 and 3 as command-line and fatal errors. The recorded `pgrep exit: 1` therefore establishes that no host process matched `Xvfb` when the probe ended.
 
@@ -358,13 +358,15 @@ xwininfo: Window id: 0x350 (the root window) (has no name)
 [pipeline exit: 0 0]
 ```
 
-The following Bash script was executed exactly. It creates its log directory, preserves the server log, records the started process ID, signals and waits for that exact process, and separately records the process-wide `pgrep` status:
+The following Bash script was executed exactly. It creates `/tmp/wf-epic-b/OXY-B007` before calling `mktemp`, exits 1 if either operation fails, preserves the server log, records the started process ID, signals and waits for that exact process, and separately records the process-wide `pgrep` status:
 
 ```bash
 #!/usr/bin/env bash
 set -u
 
-LOGDIR=$(mktemp -d /tmp/wf-epic-b/OXY-B007/xvfb.XXXXXX)
+BASE_DIR=/tmp/wf-epic-b/OXY-B007
+mkdir -p "$BASE_DIR" || exit 1
+LOGDIR=$(mktemp -d "$BASE_DIR/xvfb.XXXXXX") || exit 1
 LOGFILE="$LOGDIR/xvfb99.log"
 echo "log directory: $LOGDIR"
 Xvfb :99 -screen 0 1280x720x24 >"$LOGFILE" 2>&1 &
@@ -387,9 +389,8 @@ head -5 "$LOGFILE"
 The script was invoked as `bash /tmp/wf-epic-b/OXY-B007/xvfb-rerun.sh > /tmp/wf-epic-b/OXY-B007/xvfb-rerun.raw 2>&1`, which preserves both standard output and standard error in the raw transcript below.
 
 ```text
-log directory: /tmp/wf-epic-b/OXY-B007/xvfb.YwaR7c
-Xvfb PID: 2579846
-evaluation warning: The xorg package set has been deprecated, 'xorg.xdpyinfo' has been renamed to 'xdpyinfo'
+log directory: /tmp/wf-epic-b/OXY-B007/xvfb.6Qiocv
+Xvfb PID: 2695946
 name of display:    :99
 version number:    11.0
 vendor string:    The X.Org Foundation
@@ -416,6 +417,13 @@ The XKEYBOARD keymap compiler (xkbcomp) reports:
 ```
 
 `wait "$XVFB_PID"` completed with status 0 after `kill "$XVFB_PID"` returned 0, so the probe terminated and reaped the exact server process that it started. [pgrep(1)](https://man7.org/linux/man-pages/man1/pgrep.1.html) defines status 1 as no matching processes, status 2 as a command-line error, and status 3 as a fatal error. The separate `pgrep exit: 1` result establishes process-wide absence of a process matching `Xvfb` at the end of the probe.
+
+After the script exited 0, an independent `pgrep -a Xvfb` produced no process lines and exited 1, confirming that no Xvfb process remained on the host:
+
+```text
+script exit: 0
+post-run pgrep exit: 1
+```
 
 ## Recommendation
 
