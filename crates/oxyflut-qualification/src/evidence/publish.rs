@@ -25,7 +25,9 @@ static TEMPORARY_SEQUENCE: AtomicU64 = AtomicU64::new(0);
 
 /// Writes canonical JSON at one repository-relative immutable evidence path.
 ///
-/// The returned publication reports the canonical bytes' SHA-256 and whether this invocation created the file, even when the caller-selected file name binds another immutable record, such as a provenance sidecar.
+/// The returned publication reports the canonical bytes' SHA-256 and whether this invocation
+/// created the file, even when the caller-selected file name binds another immutable record, such
+/// as a provenance sidecar.
 ///
 /// # Errors
 ///
@@ -39,7 +41,8 @@ pub fn write_canonical_json_to_path(
     write_canonical_json_bytes_to_path(root, path, &bytes, |writer, bytes| writer.write_all(bytes))
 }
 
-/// Writes a content-addressed derived JSON record below the default evidence directory with verified `sourcePath` and `sourceSha256` provenance without opening its source for writing.
+/// Writes a content-addressed derived JSON record below the default evidence directory with
+/// verified `sourcePath` and `sourceSha256` provenance without opening its source for writing.
 ///
 /// # Errors
 ///

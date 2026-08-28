@@ -1,6 +1,8 @@
 //! Candidate-neutral capability-baseline parsing and structural validation.
 //!
-//! This module validates the durable baseline fields that are independent of the repository's active lock. The `xtask` command supplies the exact capability authority and reuses the traceability validator for approved-provenance evidence bindings.
+//! This module validates the durable baseline fields that are independent of the repository's
+//! active lock. The `xtask` command supplies the exact capability authority and reuses the
+//! traceability validator for approved-provenance evidence bindings.
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::Path;
@@ -240,7 +242,7 @@ fn validate_provenance(provenance: &Provenance) -> Result<(), BaselineError> {
 }
 
 fn validate_unique_nonempty(values: &[String], error: BaselineError) -> Result<(), BaselineError> {
-    if values.is_empty() || values.iter().any(String::is_empty) {
+    if values.is_empty() || values.iter().any(|value| value.trim().is_empty()) {
         return Err(error);
     }
     let unique = values.iter().collect::<BTreeSet<_>>();
@@ -248,4 +250,19 @@ fn validate_unique_nonempty(values: &[String], error: BaselineError) -> Result<(
         return Err(error);
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{BaselineError, validate_unique_nonempty};
+
+    #[test]
+    fn rejects_whitespace_only_entries() {
+        let values = vec![" \t".to_owned()];
+
+        assert!(matches!(
+            validate_unique_nonempty(&values, BaselineError::TestVectors),
+            Err(BaselineError::TestVectors)
+        ));
+    }
 }

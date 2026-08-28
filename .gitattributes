@@ -1,1 +1,2 @@
-qualification/schemas/external/spdx-3.0.1/schema/spdx-json-schema.json -text whitespace=-trailing-space
+qualification/schemas/external/** -text
+qualification/schemas/external/spdx-3.0.1/schema/spdx-json-schema.json whitespace=-trailing-space

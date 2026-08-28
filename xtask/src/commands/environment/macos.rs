@@ -10,8 +10,8 @@ use std::process::{Command, Stdio};
 use std::collections::BTreeMap;
 
 use oxyflut_qualification::environment::{
-    EnvironmentFields, EnvironmentInventory, InventoryValue, MissingReason, SystemPackage,
-    SystemPackageLock,
+    EnvironmentFields, EnvironmentInventory, InventoryValue, MAXIMUM_OBSERVED_VALUE_BYTES,
+    MissingReason, SystemPackage, SystemPackageLock,
 };
 use oxyflut_qualification::identifiers::EnvironmentId;
 use serde::Deserialize;
@@ -233,8 +233,12 @@ fn slug(value: &str) -> String {
 }
 
 fn observed_or_missing(value: String) -> InventoryValue {
+    let exceeds_observation_bound = value.len() > MAXIMUM_OBSERVED_VALUE_BYTES;
     match InventoryValue::observed(value) {
         Ok(value) => value,
+        Err(_) if exceeds_observation_bound => {
+            InventoryValue::missing(MissingReason::InventoryExceedsBound)
+        }
         Err(_) => InventoryValue::missing(MissingReason::UnsupportedBySource),
     }
 }
@@ -288,4 +292,19 @@ fn command_stdout(program: &str, arguments: &[&str]) -> Option<String> {
         return None;
     }
     String::from_utf8(output).ok()
+}
+
+#[cfg(test)]
+mod tests {
+    use oxyflut_qualification::environment::{
+        InventoryValue, MAXIMUM_OBSERVED_VALUE_BYTES, MissingReason,
+    };
+
+    #[test]
+    fn oversized_observation_reports_the_bound() {
+        assert_eq!(
+            super::observed_or_missing("a".repeat(MAXIMUM_OBSERVED_VALUE_BYTES + 1)),
+            InventoryValue::missing(MissingReason::InventoryExceedsBound)
+        );
+    }
 }

@@ -8,8 +8,8 @@ use std::io::Read;
 use std::process::{Command, Stdio};
 
 use oxyflut_qualification::environment::{
-    EnvironmentFields, EnvironmentInventory, InventoryValue, MissingReason, SystemPackage,
-    SystemPackageLock,
+    EnvironmentFields, EnvironmentInventory, InventoryValue, MAXIMUM_OBSERVED_VALUE_BYTES,
+    MissingReason, SystemPackage, SystemPackageLock,
 };
 use oxyflut_qualification::identifiers::EnvironmentId;
 use serde::Deserialize;
@@ -395,8 +395,12 @@ fn atomize(value: &str) -> String {
 }
 
 fn observed_or_missing(value: String) -> InventoryValue {
+    let exceeds_observation_bound = value.len() > MAXIMUM_OBSERVED_VALUE_BYTES;
     match InventoryValue::observed(value) {
         Ok(value) => value,
+        Err(_) if exceeds_observation_bound => {
+            InventoryValue::missing(MissingReason::InventoryExceedsBound)
+        }
         Err(_) => InventoryValue::missing(MissingReason::UnsupportedBySource),
     }
 }
@@ -505,10 +509,20 @@ fn command_output(program: &str, arguments: &[&str]) -> Option<CommandOutput> {
 mod tests {
     use std::error::Error;
 
-    use oxyflut_qualification::environment::MissingReason;
+    use oxyflut_qualification::environment::{
+        InventoryValue, MAXIMUM_OBSERVED_VALUE_BYTES, MissingReason,
+    };
     use oxyflut_qualification::identifiers::EnvironmentId;
 
     use super::collect_fixture_windows;
+
+    #[test]
+    fn oversized_observation_reports_the_bound() {
+        assert_eq!(
+            super::observed_or_missing("a".repeat(MAXIMUM_OBSERVED_VALUE_BYTES + 1)),
+            InventoryValue::missing(MissingReason::InventoryExceedsBound)
+        );
+    }
 
     #[test]
     fn windows_operating_system_normalizer_accepts_windows_11_25h2_editions()
