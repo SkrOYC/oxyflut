@@ -211,8 +211,8 @@ impl RawMeasurement {
     ///
     /// # Errors
     ///
-    /// Returns an error when a raw sample is incomplete, reordered, duplicated, unadmitted, or
-    /// bound to a missing, changed, or different-lock harness input.
+    /// Returns an error when a raw sample is incomplete, reordered, duplicated, has an invalid
+    /// admission decision, or is bound to a missing, changed, or different-lock harness input.
     pub fn validate(
         &self,
         root: &Path,
@@ -248,7 +248,6 @@ impl RawMeasurement {
 
         let mut keys = BTreeSet::new();
         let mut previous_time = None;
-        let mut admitted_samples = 0_usize;
         for sample in &self.samples {
             let constraint = ConstraintId::parse(&sample.constraint_id)
                 .map_err(|_| MeasurementError::Constraint)?;
@@ -266,14 +265,6 @@ impl RawMeasurement {
                 return Err(MeasurementError::Unit);
             }
             validate_validity(sample.valid, sample.exclusion_reason)?;
-            if sample.valid {
-                admitted_samples = admitted_samples
-                    .checked_add(1)
-                    .ok_or(MeasurementError::Arithmetic)?;
-            }
-        }
-        if admitted_samples == 0 {
-            return Err(MeasurementError::NoAdmittedSamples);
         }
         Ok(())
     }
@@ -366,19 +357,12 @@ impl SampleValidityRecord {
         }
 
         let mut seen_rules = BTreeSet::new();
-        let mut units = BTreeMap::<ConstraintId, &str>::new();
+        let mut constraints = BTreeSet::new();
         for rule in &self.rules {
             let constraint = ConstraintId::parse(&rule.constraint_id)
                 .map_err(|_| MeasurementError::Constraint)?;
             if !seen_rules.insert((constraint.clone(), rule.statistic)) {
                 return Err(MeasurementError::DuplicateComparisonRule);
-            }
-            if let Some(unit) = units.get(&constraint) {
-                if *unit != rule.unit {
-                    return Err(MeasurementError::ComparisonRule);
-                }
-            } else {
-                units.insert(constraint, &rule.unit);
             }
             if rule.unit.trim().is_empty() || !rule.retain_all_valid_observations {
                 return Err(MeasurementError::ComparisonRule);
@@ -391,6 +375,24 @@ impl SampleValidityRecord {
                     return Err(MeasurementError::ComparisonRule);
                 }
                 (ComparisonStatistic::MaximumBound, None) => {}
+            }
+            if prd_meter_rules_for(&constraint).next().is_none() {
+                return Err(MeasurementError::UnsupportedComparisonMeter);
+            }
+            if !prd_meter_rules_for(&constraint).any(|expected| expected.matches(rule)) {
+                return Err(MeasurementError::ComparisonRule);
+            }
+            constraints.insert(constraint);
+        }
+        for constraint in constraints {
+            for expected in prd_meter_rules_for(&constraint) {
+                if !self
+                    .rules
+                    .iter()
+                    .any(|rule| rule.constraint_id == constraint.as_str() && expected.matches(rule))
+                {
+                    return Err(MeasurementError::ComparisonRule);
+                }
             }
         }
         Ok(())
@@ -517,8 +519,8 @@ impl MeasurementTemplates {
 
 /// Produces typed templates bound to the SHA-256 of one committed qualification lock.
 ///
-/// The generator supports only the PRD meters with explicit nearest-rank or maximum-bound rules:
-/// `CON-PERF-001`, `CON-PERF-003`, and `CON-MEM-001`.
+/// The generator supports only the PRD meters in the authoritative nearest-rank and maximum-bound
+/// table.
 ///
 /// # Errors
 ///
@@ -533,8 +535,7 @@ pub fn generate_templates(
             path: qualification_lock_path.to_path_buf(),
             source,
         })?;
-    let rules = template_rules(&parameters.constraint_id)?
-        .iter()
+    let rules = prd_meter_rules_for(&parameters.constraint_id)
         .map(|rule| ComparisonBoundInput {
             constraint_id: parameters.constraint_id.to_string(),
             statistic: rule.statistic,
@@ -542,7 +543,10 @@ pub fn generate_templates(
             unit: rule.unit.to_owned(),
             retain_all_valid_observations: true,
         })
-        .collect();
+        .collect::<Vec<_>>();
+    if rules.is_empty() {
+        return Err(MeasurementError::UnsupportedComparisonMeter);
+    }
     let sample_validity = SampleValidityRecord {
         schema: SAMPLE_VALIDITY_SCHEMA.to_owned(),
         schema_version: SAMPLE_VALIDITY_SCHEMA_VERSION.to_owned(),
@@ -772,9 +776,6 @@ pub enum MeasurementError {
     /// A raw measurement contained no samples.
     #[error("raw measurement has no samples")]
     NoSamples,
-    /// A raw measurement contained no admitted samples.
-    #[error("raw measurement has no admitted samples")]
-    NoAdmittedSamples,
     /// A raw measurement repeated a constraint, launch, and ordinal tuple.
     #[error("raw measurement has a duplicate sample key")]
     DuplicateSampleKey,
@@ -888,50 +889,66 @@ fn maximum_bound(values: impl Iterator<Item = f64>) -> Result<f64, MeasurementEr
         .ok_or(MeasurementError::NoValidObservations)
 }
 
-#[derive(Clone, Copy)]
-struct TemplateRule {
+/// One PRD-defined comparison rule for a meter that has explicit sample-validity inputs.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+struct PrdMeterRule {
+    constraint_id: &'static str,
     statistic: ComparisonStatistic,
     percentile: Option<u8>,
     unit: &'static str,
 }
 
-fn template_rules(constraint: &ConstraintId) -> Result<&'static [TemplateRule], MeasurementError> {
-    const PERF_001: [TemplateRule; 2] = [
-        TemplateRule {
-            statistic: ComparisonStatistic::NearestRank,
-            percentile: Some(99),
-            unit: "ms",
-        },
-        TemplateRule {
-            statistic: ComparisonStatistic::MaximumBound,
-            percentile: None,
-            unit: "ms",
-        },
-    ];
-    const PERF_003: [TemplateRule; 1] = [TemplateRule {
+impl PrdMeterRule {
+    fn matches_constraint(self, constraint: &ConstraintId) -> bool {
+        self.constraint_id == constraint.as_str()
+    }
+
+    fn matches(self, rule: &ComparisonBoundInput) -> bool {
+        self.statistic == rule.statistic
+            && self.percentile == rule.percentile
+            && self.unit == rule.unit
+    }
+}
+
+/// The complete set of PRD meters whose explicit nearest-rank or maximum-bound inputs can be
+/// represented by a sample-validity rule.
+const PRD_METER_TABLE: &[PrdMeterRule] = &[
+    PrdMeterRule {
+        constraint_id: "CON-PERF-001",
+        statistic: ComparisonStatistic::NearestRank,
+        percentile: Some(99),
+        unit: "ms",
+    },
+    PrdMeterRule {
+        constraint_id: "CON-PERF-001",
         statistic: ComparisonStatistic::MaximumBound,
         percentile: None,
         unit: "ms",
-    }];
-    const MEM_001: [TemplateRule; 2] = [
-        TemplateRule {
-            statistic: ComparisonStatistic::NearestRank,
-            percentile: Some(95),
-            unit: "MiB",
-        },
-        TemplateRule {
-            statistic: ComparisonStatistic::MaximumBound,
-            percentile: None,
-            unit: "MiB",
-        },
-    ];
+    },
+    PrdMeterRule {
+        constraint_id: "CON-PERF-003",
+        statistic: ComparisonStatistic::MaximumBound,
+        percentile: None,
+        unit: "ms",
+    },
+    PrdMeterRule {
+        constraint_id: "CON-MEM-001",
+        statistic: ComparisonStatistic::NearestRank,
+        percentile: Some(95),
+        unit: "MiB",
+    },
+    PrdMeterRule {
+        constraint_id: "CON-MEM-001",
+        statistic: ComparisonStatistic::MaximumBound,
+        percentile: None,
+        unit: "MiB",
+    },
+];
 
-    match constraint.as_str() {
-        "CON-PERF-001" => Ok(&PERF_001),
-        "CON-PERF-003" => Ok(&PERF_003),
-        "CON-MEM-001" => Ok(&MEM_001),
-        _ => Err(MeasurementError::UnsupportedComparisonMeter),
-    }
+fn prd_meter_rules_for(constraint: &ConstraintId) -> impl Iterator<Item = &'static PrdMeterRule> {
+    PRD_METER_TABLE
+        .iter()
+        .filter(move |rule| rule.matches_constraint(constraint))
 }
 
 #[cfg(test)]

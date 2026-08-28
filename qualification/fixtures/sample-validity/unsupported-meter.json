@@ -1,0 +1,28 @@
+{
+  "$schema": "urn:oxyflut:staged:sample-validity:1",
+  "schemaVersion": "1.0.0",
+  "lockDigest": "c536f10a949349531c62dbd3b508fde8a920f31f625169396b36efd4c2f4d2fc",
+  "environment": "macos",
+  "candidate": "focused",
+  "meterVersion": "synthetic-meter-v1",
+  "exclusionCategories": [
+    "measurement-tool-failure",
+    "unrelated-operating-system-interruption",
+    "physical-disconnect"
+  ],
+  "rules": [
+    {
+      "constraintId": "CON-FRM-001",
+      "statistic": "nearest-rank",
+      "percentile": 99,
+      "unit": "ms",
+      "retainAllValidObservations": true
+    },
+    {
+      "constraintId": "CON-FRM-001",
+      "statistic": "maximum-bound",
+      "unit": "ms",
+      "retainAllValidObservations": true
+    }
+  ]
+}
