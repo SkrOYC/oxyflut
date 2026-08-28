@@ -2,6 +2,16 @@
 
 All notable changes to the Stage 4 execution plan appear in this file.
 
+## [v0.2.20] - 2026-08-28
+
+### Fixed
+
+- Applied PR review round 8 corrections in `e9adbbe`: accepted Debian package-version tildes, typed macOS and Windows capture-bound failures, enforced staged external-proposal and resolved-tool invariants, and raised only Linux protocol-source captures to 256 KiB pending OXY-D001 confirmation.
+
+### Noted
+
+- OXY-D001 must state the raw-measurement per-`(constraintId, launch)` monotonic-clock scope, define Wayland interface-set completeness, and confirm the temporary Linux protocol-source capture bound against real Ubuntu 26.04 output sizes.
+
 ## [v0.2.19] - 2026-08-28
 
 ### Fixed
