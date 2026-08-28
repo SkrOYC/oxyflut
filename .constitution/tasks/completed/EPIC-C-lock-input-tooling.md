@@ -228,6 +228,8 @@ Checker: cargo +1.98.0 run -p xtask -- lock status --gate candidate-implementati
 
 - **Touched Files:** `xtask/src/contracts/{readiness,readiness_tests}.rs`, `xtask/src/toolchain/{lock,error}.rs`, `xtask/src/toolchain.rs`, `xtask/src/commands/lock_tests.rs`, and `.constitution/tasks/active/EPIC-C-lock-input-tooling.md`.
 - **Justification:** The command reuses the Foundation readiness validator and staged-toolchain verifier. The complete synthetic fixture commits the staged manifest's absolute Rustup paths, and its direct test compares those committed values before fixture setup stages policy digests. This ticket records the required scope deviation and OXY-D001 input.
+- **Touched Files:** `qualification/fixtures/contracts/readiness/{ready,production-3b}/`.
+- **Justification:** Each fixture lock with nonempty `resolvedTools` now stages the exact manifest and absolute entries. Dependent immutable fixture digests were refreshed after this input changed.
 - **Touched Files:** `.constitution/tech-spec/guidelines.md`, `.constitution/tasks/completed/EPIC-C-lock-input-tooling.md`.
 - **Justification:** PR review required factual command descriptions and a durable record of the manual-capture lock input after Epic C moved to completed tasks.
 - **OXY-D001 input:** `qualification-lock.schema.json` binds `measurementPolicy.{scoringAnchors,assessors,fuzzCorpora,securityPatchRehearsal}` as path-less digests; the repository convention `qualification/staged/<field>.json` is proposed as their referent and should be typed by Stage 3.
@@ -256,7 +258,7 @@ Epic C completed its 21 story points without claiming that any staged input is c
 | PR review round 3 | `ec115a2`, `1595b03`, `e1fc92d` | Targeted validation and the final review quality gate passed. | Corrected SLSA derivation, reference-environment validation, immutable artifacts, readiness reporting, and meter parsing without changing qualification readiness. |
 | PR review round 4 | `1a5fbb2`, `119eacd`, `5ee7b8c` | Targeted validation and the final review quality gate passed. | Corrected Windows release normalization, bounded Linux protocol collection, immutable artifacts, readiness diagnostics, and meter parsing without changing qualification readiness. |
 | PR review round 5 | `8d163ae` | Targeted validation and the final review quality gate passed. | Conservatively rejected truncated protocol responses and preserved pre-existing immutable artifacts after companion publication failures without changing qualification readiness. |
-| PR review round 6 | `e5036d8` | Targeted validation and the final review quality gate passed. | Rejected unobservable Linux sessions and relative resolved tools, verified the committed complete tool fixture, scoped raw clocks per launch, and narrowed the evidence writer surface without changing qualification readiness. |
+| PR review round 6 | `e5036d8`, `00f4908` | Targeted validation and the final review quality gate passed. | Rejected unobservable Linux sessions and relative resolved tools, verified committed complete and readiness fixtures, scoped raw clocks per launch, and narrowed the evidence writer surface without changing qualification readiness. |
 
 ### Stage 3 revisions required — routed to OXY-D001
 
