@@ -24,6 +24,7 @@ const EXTERNAL_CONTRACT_LOCK_PROPOSAL_PATH: &str =
     "qualification/schemas/external/proposed-external-contract-lock.json";
 const RAW_MEASUREMENT_SCHEMA_PATH: &str =
     ".constitution/tech-spec/data-models/raw-measurement.schema.json";
+const TOOLCHAIN_MANIFEST_PATH: &str = "qualification/tools/native-contract-toolchain.json";
 const LOCK_SCHEMA: &str = "urn:oxyflut:schema:qualification-lock:5";
 const PHASE_SCHEMA: &str = "urn:oxyflut:schema:specification-phase:1";
 const BASELINE_SCHEMA: &str = "urn:oxyflut:schema:capability-baseline:4";
@@ -348,6 +349,7 @@ fn candidate_input_issues(
     if tools.is_empty() {
         issues.push("resolved-tools".to_owned());
     }
+    let mut contains_absolute_executable = false;
     for tool in tools {
         let tool = tool.as_object().ok_or_else(|| invariant("resolved-tool"))?;
         for field in [
@@ -364,14 +366,33 @@ fn candidate_input_issues(
         if let (Some(executable_path), Some(digest)) = (
             nonempty_string(tool, "executablePath")?,
             nonempty_string(tool, "sha256")?,
-        ) && !Path::new(executable_path).is_absolute()
-        {
-            let _ = digests::verify_reference(root, executable_path, digest)?;
+        ) {
+            if Path::new(executable_path).is_absolute() {
+                contains_absolute_executable = true;
+            } else {
+                let _ = digests::verify_reference(root, executable_path, digest)?;
+            }
         }
+    }
+    if contains_absolute_executable {
+        verify_absolute_resolved_tools(root, tools)?;
     }
 
     sort_and_deduplicate(&mut issues);
     Ok(issues)
+}
+
+fn verify_absolute_resolved_tools(root: &Path, tools: &[Value]) -> Result<(), ReadinessError> {
+    let manifest_path = root.join(TOOLCHAIN_MANIFEST_PATH);
+    let manifest = crate::toolchain::ToolchainManifest::from_json(
+        &fs::read(&manifest_path).map_err(|source| ReadinessError::Io {
+            path: manifest_path,
+            source,
+        })?,
+    )
+    .map_err(|_| invariant("resolved-tool-manifest"))?;
+    crate::toolchain::verify_lock_resolved_tools(&manifest, tools)
+        .map_err(|_| invariant("resolved-tool-manifest"))
 }
 
 fn measurement_input_issues(

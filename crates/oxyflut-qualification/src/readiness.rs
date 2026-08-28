@@ -1,9 +1,9 @@
 //! Typed, content-free pre-implementation readiness reporting.
 //!
 //! This module classifies the candidate-implementation inputs recorded in a schema-validated
-//! qualification lock. [`StagedInputRegistry`] records the repository paths for lock inputs whose
-//! schema binds only a SHA-256 digest. In particular, path-less measurement-policy inputs use
-//! `qualification/staged/<field>.json`; `xtask` confines and hashes those files before presenting
+//! qualification lock. [`StagedInputRegistry`] reads the single measurement-policy field-to-path
+//! table below. The table records fixed schema and contract inputs, conventional staged inputs,
+//! and path-less policy fields. `xtask` confines and hashes the applicable files before presenting
 //! this report. The report itself is read-only and never infers readiness from a missing error.
 
 use serde_json::{Map, Value};
@@ -78,32 +78,27 @@ const POLICY_FIELDS: &[PolicyField] = &[
         evidence_path: Some(".constitution/tech-spec/contracts/external-contract-lock.json"),
         upstream_owner: "OXY-C001",
     },
+    PolicyField {
+        name: "layoutVisitCap",
+        evidence_path: None,
+        upstream_owner: "OXY-D001",
+    },
 ];
-/// Maps measurement-policy digest fields to their immutable repository inputs.
+/// Looks up conventional repository paths for measurement-policy fields.
 ///
-/// The qualification-lock schema gives four staged measurement-policy inputs only a SHA-256
-/// field. Until Stage 3 types their references, their conventional paths are the authoritative
-/// repository-local referents for readiness validation.
+/// The qualification lock explicitly types `capabilityBaseline` but doesn't declare its path in
+/// this table. `layoutVisitCap` is a scalar and has no file. The remaining path-less digest fields
+/// use the conventional staged paths recorded in [`POLICY_FIELDS`] until Stage 3 types them.
 pub struct StagedInputRegistry;
 
 impl StagedInputRegistry {
-    /// Returns the repository-relative staged input path for a measurement-policy digest field.
+    /// Returns the repository-relative input path when one field has a conventional referent.
     #[must_use]
     pub fn measurement_policy_path(field: &str) -> Option<&'static str> {
-        match field {
-            "rawMeasurementSchema" => {
-                Some(".constitution/tech-spec/data-models/raw-measurement.schema.json")
-            }
-            "sampleValidityRules" => Some("qualification/schemas/sample-validity.schema.json"),
-            "platformContracts" => {
-                Some(".constitution/tech-spec/contracts/platform-contracts.json")
-            }
-            "scoringAnchors" => Some("qualification/staged/scoring-anchors.json"),
-            "assessors" => Some("qualification/staged/assessors.json"),
-            "fuzzCorpora" => Some("qualification/staged/fuzz-corpora.json"),
-            "securityPatchRehearsal" => Some("qualification/staged/security-patch-rehearsal.json"),
-            _ => None,
-        }
+        POLICY_FIELDS
+            .iter()
+            .find(|policy_field| policy_field.name == field)
+            .and_then(|policy_field| policy_field.evidence_path)
     }
 }
 
@@ -514,14 +509,6 @@ fn collect_measurement_policy(lock: &Map<String, Value>, blocking: &mut Vec<Read
             field.upstream_owner,
         );
     }
-    collect_nullable_member(
-        blocking,
-        policy,
-        "layoutVisitCap",
-        "measurementPolicy.layoutVisitCap",
-        None,
-        "OXY-D001",
-    );
 }
 
 fn collect_resolved_tools(lock: &Map<String, Value>, blocking: &mut Vec<ReadinessBlocking>) {
