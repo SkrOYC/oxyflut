@@ -1435,4 +1435,4 @@ Stage 3 can make the following exact edits without changing product capabilities
 - **ADRs to write or update:** Stage 3 updates `ADR-0005-platform-hosts.md` with the `wp_presentation` boundary. `ADR-0006-execution-domains.md` requires no change because the report does not alter its queue or ownership boundary.
 - **Tickets unblocked in `tasks/active/`:** `OXY-D001` can consume the documented protocol and conversion mechanics, but it remains blocked from qualification measurements by P1 through P6.
 - **Tickets to add or split:** Add P1 through P6 as bounded Wayland evidence tasks if the Stage 4 plan does not already schedule equivalent probes.
-- **Remaining gates:** The 13 KU (gating) rows retain the Wayland environment as `ku-gating`. Neither allocation is eligible for scoring until they close.
+- **Remaining gates:** The 12 KU (gating) rows retain the Wayland environment as `ku-gating`. Neither allocation is eligible for scoring until they close.
