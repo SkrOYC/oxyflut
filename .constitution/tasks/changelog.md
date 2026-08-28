@@ -7,6 +7,7 @@ All notable changes to the Stage 4 execution plan appear in this file.
 ### Fixed
 
 - Completed Epic C PR review rounds 1 and 2: `25dc154`, `ca0a25f`, `b983d0d`, `923ce71`, `f0d9b6b`, `91e7b60`, `2422a57`, `30ca7cf`, and `ff9d6a8`.
+- Applied PR review round 3 corrections for SLSA schema derivation, reference-environment validation, immutable artifact pairs, readiness reporting, and meter parsing.
 
 ### Noted
 

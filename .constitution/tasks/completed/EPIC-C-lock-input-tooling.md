@@ -182,7 +182,7 @@ Commands:
 - **Justification:** Fixture-backed collectors deserialize bounded raw platform responses through the same collector parsers as live sources; the existing stack-pinned `serde` dependency supplies those derives and records xtask's direct use in the workspace lockfile.
 - **Touched Files:** `.constitution/tasks/active/EPIC-C-lock-input-tooling.md`.
 - **Justification:** The execution rules require this scope-deviation record.
-- **OXY-D001 input:** macOS `compositor`, `protocolVersion`, and `driverVersion`, plus Windows `compositor`, `session`, and `protocolVersion`, require a bounded manual capture because no authoritative content-free CLI provides them. The collectors emit `missing { reason: manual-capture }` rather than inferring a value.
+- **OXY-D001 input:** macOS `compositor`, `protocolVersion`, and `driverVersion`, plus Windows `compositor`, `session`, and `protocolVersion`, require a bounded manual capture because no authoritative content-free CLI provides them. Linux `protocolVersion` requires the same capture only when `wayland-info` or `xdpyinfo` is unavailable or unparseable. The collectors emit `missing { reason: manual-capture }` rather than inferring a value.
 
 #### OXY-C005 Implement the pre-implementation readiness report
 
@@ -227,6 +227,8 @@ Checker: cargo +1.98.0 run -p xtask -- lock status --gate candidate-implementati
 - **External-lock decision:** The external lock has per-contract `epistemicStatus` values rather than one root status. When every active contract is `ku-gating`, readiness verifies the staged proposal. Otherwise, readiness verifies the active lock.
 - **Touched Files:** `xtask/src/main.rs`, `.constitution/tech-spec/changelog.md`, `.constitution/tasks/active/EPIC-D-readiness-reconciliation.md`, `.constitution/tasks/completed/EPIC-C-lock-input-tooling.md`, and `.constitution/tasks/changelog.md`.
 - **Justification:** PR review required removal of obsolete command-outcome allowances, correction of the staged SLSA license record, explicit OXY-D001 ownership gaps, and complete Epic C review records.
+- **Touched Files:** `.constitution/tasks/{critical-path,changelog}.md`.
+- **Justification:** PR review round 3 aligned the active-plan version with its changelog and recorded the review corrections without changing qualification readiness.
 
 ## Completion
 

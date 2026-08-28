@@ -251,6 +251,9 @@ fn candidate_report_lines_are_stable_and_content_free() -> Result<(), Box<dyn Er
     assert!(lines.iter().any(|line| {
         line == "blocking: field-path=resolvedTools kind=missing evidence-path=qualification/tools/native-contract-toolchain.json upstream-owner=OXY-A008"
     }));
+    assert!(lines.iter().any(|line| {
+        line == "blocking: field-path=measurementPolicy.externalContractLock kind=null evidence-path=qualification/schemas/external/proposed-external-contract-lock.json referent=proposal upstream-owner=OXY-C001"
+    }));
     Ok(())
 }
 

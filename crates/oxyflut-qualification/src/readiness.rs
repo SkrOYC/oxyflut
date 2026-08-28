@@ -32,6 +32,13 @@ const WORKLOAD_FIELDS: &[&str] = &[
     "cacheStates",
     "releaseFlags",
 ];
+/// The active Stage 3 external-contract lock path.
+pub const EXTERNAL_CONTRACT_LOCK_PATH: &str =
+    ".constitution/tech-spec/contracts/external-contract-lock.json";
+/// The staged external-contract lock proposal path.
+pub const EXTERNAL_CONTRACT_LOCK_PROPOSAL_PATH: &str =
+    "qualification/schemas/external/proposed-external-contract-lock.json";
+
 const POLICY_FIELDS: &[PolicyField] = &[
     PolicyField {
         name: "rawMeasurementSchema",
@@ -75,7 +82,7 @@ const POLICY_FIELDS: &[PolicyField] = &[
     },
     PolicyField {
         name: "externalContractLock",
-        evidence_path: Some(".constitution/tech-spec/contracts/external-contract-lock.json"),
+        evidence_path: None,
         upstream_owner: "OXY-C001",
     },
     PolicyField {
@@ -172,7 +179,7 @@ const KNOWN_UNKNOWN_BINDINGS: &[KnownUnknownBinding] = &[
     KnownUnknownBinding {
         known_unknown: "external-distribution-schema-snapshots-and-verifiers",
         required_field: "measurementPolicy.externalContractLock",
-        evidence_path: Some(".constitution/tech-spec/contracts/external-contract-lock.json"),
+        evidence_path: None,
         upstream_owner: "OXY-C001",
     },
     KnownUnknownBinding {
@@ -182,6 +189,71 @@ const KNOWN_UNKNOWN_BINDINGS: &[KnownUnknownBinding] = &[
         upstream_owner: "OXY-A008",
     },
 ];
+
+/// Selects the immutable external-contract lock that readiness validates.
+#[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
+pub enum ExternalContractLockReferent {
+    /// Every active contract remains a gating known unknown, so use the staged proposal.
+    Proposal,
+    /// At least one active contract is locked, so use the active lock.
+    Active,
+}
+
+impl ExternalContractLockReferent {
+    /// Returns the selected repository-relative lock path.
+    #[must_use]
+    pub const fn evidence_path(self) -> &'static str {
+        match self {
+            Self::Proposal => EXTERNAL_CONTRACT_LOCK_PROPOSAL_PATH,
+            Self::Active => EXTERNAL_CONTRACT_LOCK_PATH,
+        }
+    }
+
+    /// Returns the stable content-free selector name.
+    #[must_use]
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::Proposal => "proposal",
+            Self::Active => "active",
+        }
+    }
+}
+
+/// Reports why an active external-contract lock cannot select a referent.
+#[derive(Debug, Error, Eq, PartialEq)]
+pub enum ExternalContractLockReferentError {
+    /// The active lock did not contain a contracts object.
+    #[error("external-contract lock contracts map is invalid")]
+    InvalidContracts,
+    /// The active lock did not name any contracts.
+    #[error("external-contract lock contracts map is empty")]
+    EmptyContracts,
+}
+
+/// Selects the external-contract lock referent from the active per-contract statuses.
+///
+/// # Errors
+///
+/// Returns an error when the active lock lacks a nonempty contracts map.
+pub fn external_contract_lock_referent(
+    active_external_lock: &Value,
+) -> Result<ExternalContractLockReferent, ExternalContractLockReferentError> {
+    let contracts = active_external_lock
+        .get("contracts")
+        .and_then(Value::as_object)
+        .ok_or(ExternalContractLockReferentError::InvalidContracts)?;
+    if contracts.is_empty() {
+        return Err(ExternalContractLockReferentError::EmptyContracts);
+    }
+    let all_unresolved = contracts.values().all(|contract| {
+        contract.get("epistemicStatus").and_then(Value::as_str) == Some("ku-gating")
+    });
+    Ok(if all_unresolved {
+        ExternalContractLockReferent::Proposal
+    } else {
+        ExternalContractLockReferent::Active
+    })
+}
 
 /// The readiness gate represented by a [`ReadinessReport`].
 #[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
@@ -258,6 +330,8 @@ pub struct ReadinessBlocking {
     pub kind: BlockingKind,
     /// The immutable evidence path when the lock schema declares one.
     pub evidence_path: Option<String>,
+    /// The selector used when `evidence_path` identifies an external-contract lock.
+    pub referent: Option<ExternalContractLockReferent>,
     /// The ticket or upstream decision that owns resolution of this field.
     pub upstream_owner: Option<String>,
 }
@@ -285,6 +359,9 @@ pub enum ReadinessError {
     /// A named KU cannot be attributed to a required field or upstream owner.
     #[error("qualification lock contains an unowned pre-implementation KU")]
     UnmappedKnownUnknown,
+    /// The active external-contract lock could not select an immutable referent.
+    #[error("qualification lock external-contract referent is invalid")]
+    ExternalContractReferent(#[from] ExternalContractLockReferentError),
 }
 
 /// Classifies the candidate-implementation inputs in one schema-validated qualification lock.
@@ -297,7 +374,10 @@ pub enum ReadinessError {
 ///
 /// Returns an error if a field needed to classify the report has an unexpected JSON shape or a KU
 /// lacks the required field and upstream-owner attribution.
-pub fn candidate_implementation_report(lock: &Value) -> Result<ReadinessReport, ReadinessError> {
+pub fn candidate_implementation_report(
+    lock: &Value,
+    active_external_lock: &Value,
+) -> Result<ReadinessReport, ReadinessError> {
     let lock = lock.as_object().ok_or(ReadinessError::InvalidLock {
         code: "lock-object",
     })?;
@@ -319,11 +399,11 @@ pub fn candidate_implementation_report(lock: &Value) -> Result<ReadinessReport, 
         }
     }
 
-    collect_known_unknowns(lock, &mut blocking)?;
+    collect_known_unknowns(lock, active_external_lock, &mut blocking)?;
     collect_candidate_artifacts(lock, &mut blocking);
     collect_reference_environments(lock, &mut blocking);
     collect_workload(lock, &mut blocking);
-    collect_measurement_policy(lock, &mut blocking);
+    collect_measurement_policy(lock, active_external_lock, &mut blocking)?;
     collect_resolved_tools(lock, &mut blocking);
 
     blocking.sort_unstable();
@@ -343,6 +423,7 @@ pub fn candidate_implementation_report(lock: &Value) -> Result<ReadinessReport, 
 
 fn collect_known_unknowns(
     lock: &Map<String, Value>,
+    active_external_lock: &Value,
     blocking: &mut Vec<ReadinessBlocking>,
 ) -> Result<(), ReadinessError> {
     let known_unknowns = lock
@@ -365,11 +446,18 @@ fn collect_known_unknowns(
             });
         }
         let field_path = format!("preImplementationKnownUnknowns.{known_unknown}");
-        push_block(
+        let referent = (known_unknown == "external-distribution-schema-snapshots-and-verifiers")
+            .then(|| external_contract_lock_referent(active_external_lock))
+            .transpose()?;
+        let evidence_path = referent
+            .map(ExternalContractLockReferent::evidence_path)
+            .or(binding.evidence_path);
+        push_block_with_referent(
             blocking,
             &field_path,
             BlockingKind::Ku,
-            binding.evidence_path,
+            evidence_path,
+            referent,
             Some(binding.upstream_owner),
         );
     }
@@ -488,7 +576,11 @@ fn collect_workload(lock: &Map<String, Value>, blocking: &mut Vec<ReadinessBlock
     }
 }
 
-fn collect_measurement_policy(lock: &Map<String, Value>, blocking: &mut Vec<ReadinessBlocking>) {
+fn collect_measurement_policy(
+    lock: &Map<String, Value>,
+    active_external_lock: &Value,
+    blocking: &mut Vec<ReadinessBlocking>,
+) -> Result<(), ReadinessError> {
     let Some(policy) = object_member(lock, "measurementPolicy") else {
         push_block(
             blocking,
@@ -497,18 +589,26 @@ fn collect_measurement_policy(lock: &Map<String, Value>, blocking: &mut Vec<Read
             None,
             Some("OXY-D001"),
         );
-        return;
+        return Ok(());
     };
     for field in POLICY_FIELDS {
-        collect_nullable_member(
+        let referent = (field.name == "externalContractLock")
+            .then(|| external_contract_lock_referent(active_external_lock))
+            .transpose()?;
+        let evidence_path = referent
+            .map(ExternalContractLockReferent::evidence_path)
+            .or(field.evidence_path);
+        collect_nullable_member_with_referent(
             blocking,
             policy,
             field.name,
             &format!("measurementPolicy.{}", field.name),
-            field.evidence_path,
+            evidence_path,
+            referent,
             field.upstream_owner,
         );
     }
+    Ok(())
 }
 
 fn collect_resolved_tools(lock: &Map<String, Value>, blocking: &mut Vec<ReadinessBlocking>) {
@@ -571,27 +671,50 @@ fn collect_nullable_member(
     evidence_path: Option<&str>,
     upstream_owner: &str,
 ) {
+    collect_nullable_member_with_referent(
+        blocking,
+        object,
+        field,
+        field_path,
+        evidence_path,
+        None,
+        upstream_owner,
+    );
+}
+
+fn collect_nullable_member_with_referent(
+    blocking: &mut Vec<ReadinessBlocking>,
+    object: &Map<String, Value>,
+    field: &str,
+    field_path: &str,
+    evidence_path: Option<&str>,
+    referent: Option<ExternalContractLockReferent>,
+    upstream_owner: &str,
+) {
     match object.get(field) {
-        Some(Value::Null) => push_block(
+        Some(Value::Null) => push_block_with_referent(
             blocking,
             field_path,
             BlockingKind::Null,
             evidence_path,
+            referent,
             Some(upstream_owner),
         ),
-        Some(Value::String(value)) if value.trim().is_empty() => push_block(
+        Some(Value::String(value)) if value.trim().is_empty() => push_block_with_referent(
             blocking,
             field_path,
             BlockingKind::Unresolved,
             evidence_path,
+            referent,
             Some(upstream_owner),
         ),
         Some(_) => {}
-        None => push_block(
+        None => push_block_with_referent(
             blocking,
             field_path,
             BlockingKind::Missing,
             evidence_path,
+            referent,
             Some(upstream_owner),
         ),
     }
@@ -604,10 +727,29 @@ fn push_block(
     evidence_path: Option<&str>,
     upstream_owner: Option<&str>,
 ) {
+    push_block_with_referent(
+        blocking,
+        field_path,
+        kind,
+        evidence_path,
+        None,
+        upstream_owner,
+    );
+}
+
+fn push_block_with_referent(
+    blocking: &mut Vec<ReadinessBlocking>,
+    field_path: &str,
+    kind: BlockingKind,
+    evidence_path: Option<&str>,
+    referent: Option<ExternalContractLockReferent>,
+    upstream_owner: Option<&str>,
+) {
     blocking.push(ReadinessBlocking {
         field_path: field_path.to_owned(),
         kind,
         evidence_path: evidence_path.map(str::to_owned),
+        referent,
         upstream_owner: upstream_owner.map(str::to_owned),
     });
 }
@@ -638,6 +780,8 @@ mod tests {
         include_bytes!("../../../qualification/fixtures/readiness/complete.synthetic.json");
     const CLEARED_WITHOUT_EVIDENCE: &[u8] =
         include_bytes!("../../../qualification/fixtures/readiness/cleared-without-evidence.json");
+    const ACTIVE_EXTERNAL_CONTRACT_LOCK: &[u8] =
+        include_bytes!("../../../.constitution/tech-spec/contracts/external-contract-lock.json");
 
     #[test]
     fn staged_input_registry_binds_every_pathless_measurement_policy_digest() {
@@ -667,7 +811,7 @@ mod tests {
     fn complete_synthetic_lock_reports_a_ready_candidate_gate()
     -> Result<(), Box<dyn std::error::Error>> {
         let lock: Value = serde_json::from_slice(COMPLETE)?;
-        let report = candidate_implementation_report(&lock)?;
+        let report = candidate_implementation_report(&lock, &active_external_contract_lock()?)?;
 
         assert_eq!(report.gate, ReadinessGate::CandidateImplementation);
         assert_eq!(report.status, ReadinessStatus::Ready);
@@ -684,7 +828,7 @@ mod tests {
             .ok_or("complete lock must contain the macOS minimum version")? =
             Value::String(" \t".to_owned());
 
-        let report = candidate_implementation_report(&lock)?;
+        let report = candidate_implementation_report(&lock, &active_external_contract_lock()?)?;
         assert!(report.blocking.iter().any(|blocking| {
             blocking.field_path == "referenceEnvironments.macos-arm64.minimumVersion"
                 && blocking.kind == BlockingKind::Unresolved
@@ -696,7 +840,7 @@ mod tests {
     fn clearing_a_ku_string_without_its_evidence_keeps_the_gate_open()
     -> Result<(), Box<dyn std::error::Error>> {
         let lock: Value = serde_json::from_slice(CLEARED_WITHOUT_EVIDENCE)?;
-        let report = candidate_implementation_report(&lock)?;
+        let report = candidate_implementation_report(&lock, &active_external_contract_lock()?)?;
         let known_unknowns = report
             .blocking
             .iter()
@@ -731,5 +875,42 @@ mod tests {
             blocking.field_path == "resolvedTools" && blocking.kind == BlockingKind::Missing
         }));
         Ok(())
+    }
+
+    #[test]
+    fn external_contract_referent_requires_contracts_and_uses_the_staged_proposal_when_open()
+    -> Result<(), Box<dyn std::error::Error>> {
+        let active = active_external_contract_lock()?;
+        assert_eq!(
+            super::external_contract_lock_referent(&active)?,
+            super::ExternalContractLockReferent::Proposal
+        );
+        let mut partially_resolved = active.clone();
+        *partially_resolved
+            .pointer_mut("/contracts/spdx-3.0.1/epistemicStatus")
+            .ok_or("active external lock must contain SPDX status")? =
+            Value::String("kk-locked".to_owned());
+        assert_eq!(
+            super::external_contract_lock_referent(&partially_resolved)?,
+            super::ExternalContractLockReferent::Active
+        );
+        let lock: Value = serde_json::from_slice(CLEARED_WITHOUT_EVIDENCE)?;
+        let report = candidate_implementation_report(&lock, &partially_resolved)?;
+        assert!(report.blocking.iter().any(|blocking| {
+            blocking.field_path == "measurementPolicy.externalContractLock"
+                && blocking.evidence_path.as_deref() == Some(super::EXTERNAL_CONTRACT_LOCK_PATH)
+                && blocking.referent == Some(super::ExternalContractLockReferent::Active)
+        }));
+
+        let empty = serde_json::json!({"contracts": {}});
+        assert!(matches!(
+            super::external_contract_lock_referent(&empty),
+            Err(super::ExternalContractLockReferentError::EmptyContracts)
+        ));
+        Ok(())
+    }
+
+    fn active_external_contract_lock() -> Result<Value, serde_json::Error> {
+        serde_json::from_slice(ACTIVE_EXTERNAL_CONTRACT_LOCK)
     }
 }
