@@ -10,5 +10,6 @@ workspace = true
 
 [dependencies]
 oxyflut-qualification = { version = "=0.1.0", path = "../crates/oxyflut-qualification" }
+serde = { workspace = true, features = ["derive", "std"] }
 serde_json = { workspace = true, features = ["std"] }
 thiserror.workspace = true

@@ -13,7 +13,7 @@ use std::io;
 use std::path::{Path, PathBuf};
 
 use oxyflut_qualification::environment::EnvironmentInventory;
-use oxyflut_qualification::evidence::{EvidenceError, write_canonical_json_to_path};
+use oxyflut_qualification::evidence::{EvidenceError, EvidenceRef, write_canonical_json_to_path};
 use oxyflut_qualification::identifiers::{EnvironmentId, RepositoryPath};
 use oxyflut_qualification::schema::SchemaError;
 use thiserror::Error;
@@ -32,7 +32,7 @@ pub(crate) trait PlatformSource {
     fn collect(&self) -> Result<EnvironmentInventory, EnvironmentCommandError>;
 }
 
-/// Inspects one live reference environment and writes its lock-compatible evidence projection.
+/// Inspects one live reference environment and writes its immutable evidence pair.
 pub(crate) fn run(arguments: &[String]) -> CommandOutcome {
     let (environment, output) = match parse_arguments(arguments) {
         Ok(arguments) => arguments,
@@ -54,12 +54,16 @@ pub(crate) fn run(arguments: &[String]) -> CommandOutcome {
 
     let source = live_source(environment);
     match inspect_with_source(&root, source.as_ref(), &output) {
-        Ok(reference) => {
-            println!("environment inspect: ok ({})", reference.path.as_str());
+        Ok(references) => {
+            println!(
+                "environment inspect: ok ({}; {})",
+                references.projection.path.as_str(),
+                references.inventory.path.as_str()
+            );
             CommandOutcome::Success
         }
-        Err(_) => CommandOutcome::failed(CommandError::ValidationFailed {
-            code: "environment-inspect-invalid",
+        Err(error) => CommandOutcome::failed(CommandError::ValidationFailed {
+            code: error.code(),
             hint: "rerun: environment inspect --environment ENVIRONMENT --output PATH",
         }),
     }
@@ -86,19 +90,61 @@ fn live_source(environment: EnvironmentId) -> Box<dyn PlatformSource> {
     }
 }
 
+struct EnvironmentEvidence {
+    projection: EvidenceRef,
+    inventory: EvidenceRef,
+}
+
 fn inspect_with_source(
     root: &Path,
     source: &dyn PlatformSource,
     output: &RepositoryPath,
-) -> Result<oxyflut_qualification::evidence::EvidenceRef, EnvironmentCommandError> {
+) -> Result<EnvironmentEvidence, EnvironmentCommandError> {
     let inventory = source.collect()?;
     if inventory.environment() != source.environment() {
         return Err(EnvironmentCommandError::SourceEnvironment);
     }
+    validate_architecture(source.environment(), &inventory)?;
     let projection = inventory.lock_environment_value();
-    validate_lock_environment_projection(root, inventory.environment(), &projection)?;
-    write_canonical_json_to_path(root, output, &projection)
-        .map_err(EnvironmentCommandError::Evidence)
+    validate_lock_environment_projection(root, source.environment(), &projection)?;
+
+    let projection_reference = write_canonical_json_to_path(root, output, &projection)
+        .map_err(EnvironmentCommandError::Evidence)?;
+    let inventory_path = companion_inventory_path(output)?;
+    let complete_inventory =
+        inventory.inventory_value(&projection_reference.path, &projection_reference.sha256);
+    let inventory_reference =
+        write_canonical_json_to_path(root, &inventory_path, &complete_inventory)
+            .map_err(EnvironmentCommandError::Evidence)?;
+    Ok(EnvironmentEvidence {
+        projection: projection_reference,
+        inventory: inventory_reference,
+    })
+}
+
+fn companion_inventory_path(
+    output: &RepositoryPath,
+) -> Result<RepositoryPath, EnvironmentCommandError> {
+    let stem = match output.as_str().strip_suffix(".json") {
+        Some(stem) => stem,
+        None => output.as_str(),
+    };
+    RepositoryPath::parse(&format!("{stem}.inventory.json"))
+        .map_err(|_| EnvironmentCommandError::InventoryPath)
+}
+
+fn validate_architecture(
+    environment: EnvironmentId,
+    inventory: &EnvironmentInventory,
+) -> Result<(), EnvironmentCommandError> {
+    let expected = match environment {
+        EnvironmentId::Macos => "aarch64",
+        EnvironmentId::Windows | EnvironmentId::Wayland | EnvironmentId::X11 => "x86_64",
+    };
+    match inventory.fields().architecture.observed_value() {
+        Some(actual) if actual == expected => Ok(()),
+        Some(_) | None => Err(EnvironmentCommandError::EnvironmentMismatch),
+    }
 }
 
 fn validate_lock_environment_projection(
@@ -139,10 +185,13 @@ pub(crate) enum EnvironmentCommandError {
     /// A source was asked to collect a nonmatching environment.
     #[error("environment source does not match its requested environment")]
     SourceEnvironment,
+    /// The host session, operating system, or architecture cannot satisfy the requested lock key.
+    #[error("environment does not match the requested qualification lock key")]
+    EnvironmentMismatch,
     /// The host does not run the requested operating system.
     #[error("environment source is unavailable on this host")]
     UnsupportedHost,
-    /// A fixture inventory could not be read.
+    /// A fixture response could not be read.
     #[cfg(test)]
     #[error("environment fixture could not be read")]
     FixtureIo {
@@ -152,9 +201,16 @@ pub(crate) enum EnvironmentCommandError {
         #[source]
         source: io::Error,
     },
+    /// A fixture response was not valid JSON.
+    #[cfg(test)]
+    #[error("environment fixture response JSON is invalid")]
+    FixtureJson(#[source] serde_json::Error),
     /// A collected inventory was invalid.
     #[error("environment inventory is invalid")]
     Inventory(#[source] oxyflut_qualification::environment::EnvironmentError),
+    /// The output path could not derive a distinct companion inventory path.
+    #[error("environment companion inventory path is invalid")]
+    InventoryPath,
     /// The active qualification lock could not be read.
     #[error("qualification lock could not be read")]
     Io {
@@ -176,9 +232,31 @@ pub(crate) enum EnvironmentCommandError {
     /// The lock-compatible environment projection failed schema validation.
     #[error("environment lock projection failed schema validation")]
     Schema(#[from] SchemaError),
-    /// The immutable evidence writer could not publish the validated projection.
+    /// The immutable evidence writer could not publish the validated projection or inventory.
     #[error("environment evidence publication failed")]
     Evidence(#[source] EvidenceError),
+}
+
+impl EnvironmentCommandError {
+    const fn code(&self) -> &'static str {
+        match self {
+            Self::EnvironmentMismatch => "environment-mismatch",
+            Self::SourceEnvironment => "environment-source-mismatch",
+            Self::UnsupportedHost => "environment-unsupported-host",
+            #[cfg(test)]
+            Self::FixtureIo { .. } => "environment-fixture-io",
+            #[cfg(test)]
+            Self::FixtureJson(_) => "environment-fixture-json",
+            Self::Inventory(_) => "environment-inventory",
+            Self::InventoryPath => "environment-inventory-path",
+            Self::Io { .. } => "environment-lock-io",
+            Self::LockJson(_) => "environment-lock-json",
+            Self::LockShape => "environment-lock-shape",
+            Self::SchemaRegistry(_) => "environment-schema-registry",
+            Self::Schema(_) => "environment-lock-schema",
+            Self::Evidence(_) => "environment-evidence",
+        }
+    }
 }
 
 #[cfg(test)]
@@ -188,20 +266,20 @@ mod tests {
     use std::fs;
     use std::path::PathBuf;
 
-    use oxyflut_qualification::environment::{EnvironmentInventory, InventoryValue};
+    use oxyflut_qualification::environment::{EnvironmentInventory, InventoryValue, MissingReason};
     use oxyflut_qualification::evidence::{MediaType, canonical_json_bytes, verify_file};
     use oxyflut_qualification::identifiers::{EnvironmentId, RepositoryPath};
 
     use super::{
-        EnvironmentCommandError, PlatformSource, inspect_with_source, parse_arguments,
-        workspace_root,
+        EnvironmentCommandError, PlatformSource, companion_inventory_path, inspect_with_source,
+        parse_arguments, workspace_root,
     };
     use crate::CommandOutcome;
     use crate::commands::environment::fixtures::FixturePlatformSource;
 
     #[test]
-    fn fixture_collectors_emit_one_candidate_neutral_inventory_shape() -> Result<(), Box<dyn Error>>
-    {
+    fn raw_fixture_collectors_emit_one_candidate_neutral_inventory_shape()
+    -> Result<(), Box<dyn Error>> {
         let root = test_workspace_root()?;
         for environment in EnvironmentId::tier_one() {
             let source = FixturePlatformSource::new(&root, environment);
@@ -234,7 +312,7 @@ mod tests {
     }
 
     #[test]
-    fn fixture_collectors_keep_missing_values_explicit_and_never_default_them()
+    fn raw_fixture_collectors_keep_missing_values_explicit_and_never_default_them()
     -> Result<(), Box<dyn Error>> {
         let root = test_workspace_root()?;
         let source = FixturePlatformSource::new(&root, EnvironmentId::X11);
@@ -255,7 +333,7 @@ mod tests {
     }
 
     #[test]
-    fn fixture_adapters_are_deterministic_and_schema_valid_for_every_lock_fragment()
+    fn raw_fixture_adapters_are_deterministic_and_schema_valid_for_every_lock_fragment()
     -> Result<(), Box<dyn Error>> {
         let root = test_workspace_root()?;
         for environment in EnvironmentId::tier_one() {
@@ -273,7 +351,7 @@ mod tests {
     }
 
     #[test]
-    fn inspect_writes_only_the_schema_permitted_projection_through_the_evidence_writer()
+    fn inspect_writes_bound_projection_and_complete_inventory_through_the_evidence_writer()
     -> Result<(), Box<dyn Error>> {
         let root = test_workspace_root()?;
         let output_text = format!(
@@ -282,21 +360,27 @@ mod tests {
         );
         let output = output_text.parse::<RepositoryPath>()?;
         let output_path = root.join(&output_text);
-        if output_path.exists() {
-            fs::remove_file(&output_path)?;
-        }
+        let inventory_path = root.join(companion_inventory_path(&output)?.as_str());
+        remove_if_exists(&output_path)?;
+        remove_if_exists(&inventory_path)?;
+
         let source = FixturePlatformSource::new(&root, EnvironmentId::Wayland);
-        let reference = inspect_with_source(&root, &source, &output)?;
-        let verified = verify_file(&root, &output, &MediaType::application_json())?;
-        let value: serde_json::Value = serde_json::from_slice(&fs::read(&output_path)?)?;
-        let keys = value
+        let references = inspect_with_source(&root, &source, &output)?;
+        let projection = verify_file(&root, &output, &MediaType::application_json())?;
+        let companion_path = companion_inventory_path(&output)?;
+        let companion = verify_file(&root, &companion_path, &MediaType::application_json())?;
+        let projection_value: serde_json::Value = serde_json::from_slice(&fs::read(&output_path)?)?;
+        let companion_value: serde_json::Value =
+            serde_json::from_slice(&fs::read(&inventory_path)?)?;
+
+        let projection_keys = projection_value
             .as_object()
             .ok_or("inventory projection must be an object")?
             .keys()
             .cloned()
             .collect::<BTreeSet<_>>();
         assert_eq!(
-            keys,
+            projection_keys,
             BTreeSet::from([
                 "driverVersion".to_owned(),
                 "gpuId".to_owned(),
@@ -306,9 +390,168 @@ mod tests {
                 "systemPackageLockDigest".to_owned(),
             ])
         );
-        assert_eq!(reference.sha256, verified.sha256());
-        assert_eq!(fs::read(&output_path)?, canonical_json_bytes(&value)?);
+        assert_eq!(references.projection.sha256, projection.sha256());
+        assert_eq!(references.inventory.sha256, companion.sha256());
+        assert_eq!(
+            fs::read(&output_path)?,
+            canonical_json_bytes(&projection_value)?
+        );
+        assert_eq!(
+            fs::read(&inventory_path)?,
+            canonical_json_bytes(&companion_value)?
+        );
+        assert_eq!(
+            companion_value
+                .pointer("/lockProjection/path")
+                .and_then(serde_json::Value::as_str),
+            Some(references.projection.path.as_str())
+        );
+        let projection_digest = references.projection.sha256.to_string();
+        assert_eq!(
+            companion_value
+                .pointer("/lockProjection/sha256")
+                .and_then(serde_json::Value::as_str),
+            Some(projection_digest.as_str())
+        );
+        assert_eq!(
+            companion_value
+                .pointer("/architecture/status")
+                .and_then(serde_json::Value::as_str),
+            Some("observed")
+        );
+        assert!(companion_value.pointer("/compilerIdentity").is_some());
+        assert!(companion_value.pointer("/sdkIdentity").is_some());
+        assert!(companion_value.pointer("/compositor").is_some());
+        assert!(companion_value.pointer("/session").is_some());
+        assert!(companion_value.pointer("/protocolVersion").is_some());
+        assert_eq!(
+            companion_value
+                .pointer("/systemPackageLock/digest/status")
+                .and_then(serde_json::Value::as_str),
+            Some("observed")
+        );
+        assert!(
+            companion_value
+                .pointer("/systemPackageLock/packages")
+                .and_then(serde_json::Value::as_array)
+                .is_some_and(|packages| !packages.is_empty())
+        );
+
         fs::remove_file(output_path)?;
+        fs::remove_file(inventory_path)?;
+        Ok(())
+    }
+
+    #[test]
+    fn inactive_session_fails_closed_without_writing_evidence() -> Result<(), Box<dyn Error>> {
+        let root = test_workspace_root()?;
+        let output = "qualification/fixtures/environments/inactive-session-test.json"
+            .parse::<RepositoryPath>()?;
+        assert_no_evidence(&root, &output)?;
+        let source =
+            FixturePlatformSource::with_fixture(&root, EnvironmentId::X11, "x11-on-wayland");
+        let result = inspect_with_source(&root, &source, &output);
+        assert!(matches!(
+            result,
+            Err(EnvironmentCommandError::EnvironmentMismatch)
+        ));
+        assert_no_evidence(&root, &output)?;
+        Ok(())
+    }
+
+    #[test]
+    fn wrong_architecture_fails_closed_without_writing_evidence() -> Result<(), Box<dyn Error>> {
+        let root = test_workspace_root()?;
+        let output = "qualification/fixtures/environments/architecture-test.json"
+            .parse::<RepositoryPath>()?;
+        assert_no_evidence(&root, &output)?;
+        let source =
+            FixturePlatformSource::with_fixture(&root, EnvironmentId::Wayland, "wayland-arm64");
+        let result = inspect_with_source(&root, &source, &output);
+        assert!(matches!(
+            result,
+            Err(EnvironmentCommandError::EnvironmentMismatch)
+        ));
+        assert_no_evidence(&root, &output)?;
+        Ok(())
+    }
+
+    #[test]
+    fn linux_collector_requires_the_complete_ubuntu_binary_package_set()
+    -> Result<(), Box<dyn Error>> {
+        let root = test_workspace_root()?;
+        let source = FixturePlatformSource::new(&root, EnvironmentId::Wayland);
+        let inventory = source.collect()?;
+        let names = inventory
+            .system_package_lock()
+            .packages()
+            .iter()
+            .map(|package| package.name())
+            .collect::<BTreeSet<_>>();
+        assert_eq!(
+            names,
+            BTreeSet::from([
+                "binutils",
+                "clang",
+                "libc6",
+                "libc6-dev",
+                "libglib2.0-0t64",
+                "libgtk-4-1",
+                "libwayland-client0",
+                "libwayland-server0",
+                "libx11-6",
+                "libxcb1",
+                "lld",
+                "rustc",
+                "xserver-xorg-core",
+            ])
+        );
+        assert!(
+            inventory
+                .system_package_lock()
+                .digest()
+                .observed_value()
+                .is_some()
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn missing_required_linux_package_is_typed_and_never_hashes_a_partial_set()
+    -> Result<(), Box<dyn Error>> {
+        let root = test_workspace_root()?;
+        let source = FixturePlatformSource::with_fixture(
+            &root,
+            EnvironmentId::Wayland,
+            "wayland-missing-package",
+        );
+        let inventory = source.collect()?;
+        assert!(inventory.system_package_lock().digest().is_missing());
+        let missing = inventory
+            .system_package_lock()
+            .packages()
+            .iter()
+            .find(|package| package.name() == "libwayland-server0")
+            .ok_or("required package must remain in the inventory")?;
+        assert!(matches!(
+            missing.version(),
+            InventoryValue::Missing {
+                reason: MissingReason::NotInstalled
+            }
+        ));
+        Ok(())
+    }
+
+    #[test]
+    fn windows_pci_pnp_identifier_strips_the_bus_prefix_before_parsing()
+    -> Result<(), Box<dyn Error>> {
+        let root = test_workspace_root()?;
+        let source = FixturePlatformSource::new(&root, EnvironmentId::Windows);
+        let inventory = source.collect()?;
+        assert_eq!(
+            inventory.fields().gpu_id.observed_value(),
+            Some("pci-VEN_10DE-DEV_2684")
+        );
         Ok(())
     }
 
@@ -360,6 +603,25 @@ mod tests {
         workspace_root().map_err(|_| "xtask must remain directly below the workspace root".into())
     }
 
+    fn remove_if_exists(path: &PathBuf) -> Result<(), Box<dyn Error>> {
+        match fs::remove_file(path) {
+            Ok(()) => Ok(()),
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(()),
+            Err(error) => Err(error.into()),
+        }
+    }
+
+    fn assert_no_evidence(
+        root: &std::path::Path,
+        output: &RepositoryPath,
+    ) -> Result<(), Box<dyn Error>> {
+        let projection = root.join(output.as_str());
+        let inventory = root.join(companion_inventory_path(output)?.as_str());
+        assert!(!projection.exists());
+        assert!(!inventory.exists());
+        Ok(())
+    }
+
     struct WrongEnvironmentSource;
 
     impl PlatformSource for WrongEnvironmentSource {
@@ -384,6 +646,11 @@ mod tests {
         assert!(matches!(
             super::windows::WindowsSource.collect(),
             Err(EnvironmentCommandError::UnsupportedHost)
+        ));
+        #[cfg(not(target_os = "linux"))]
+        assert!(matches!(
+            super::linux::collect_linux(EnvironmentId::Wayland),
+            Err(EnvironmentCommandError::EnvironmentMismatch)
         ));
     }
 

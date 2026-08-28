@@ -1,26 +1,24 @@
 //! Candidate-neutral reference-environment inventory primitives.
 //!
-//! The qualification lock permits only operating system, minimum version, hardware, GPU, driver,
-//! and system-package-lock values. An [`EnvironmentInventory`] retains the additional observed
-//! compiler, SDK, and session facts needed to derive that projection without treating them as
-//! candidate data. [`EnvironmentInventory::lock_environment_value`] deliberately projects only
-//! the fields admitted by the binding lock schema.
+//! The qualification lock admits a six-field environment projection. An [`EnvironmentInventory`]
+//! retains the bounded architecture, toolchain, session, protocol, and package facts that bind that
+//! projection to a complete companion inventory artifact.
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 use thiserror::Error;
 
 use crate::evidence::canonical_json_bytes;
-use crate::hash::hash_reader;
-use crate::identifiers::EnvironmentId;
+use crate::hash::{Sha256Digest, hash_reader};
+use crate::identifiers::{EnvironmentId, RepositoryPath};
 
-/// Maximum number of system packages retained in one inventory.
+/// Maximum number of system-package records retained in one inventory.
 pub const MAXIMUM_SYSTEM_PACKAGES: usize = 64;
 /// Maximum length of one collected non-private observation.
 pub const MAXIMUM_OBSERVED_VALUE_BYTES: usize = 256;
 
 /// Explains why a collector did not emit an observed value.
-#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum MissingReason {
     /// The active lock does not declare the required minimum value.
@@ -40,7 +38,7 @@ pub enum MissingReason {
 }
 
 /// One observed non-private value or an explicit typed absence.
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(tag = "status", rename_all = "kebab-case", deny_unknown_fields)]
 pub enum InventoryValue {
     /// A value observed from an authoritative source.
@@ -82,6 +80,15 @@ impl InventoryValue {
         }
     }
 
+    /// Returns the typed missing reason, if the source could not supply a value.
+    #[must_use]
+    pub const fn missing_reason(&self) -> Option<MissingReason> {
+        match self {
+            Self::Observed { .. } => None,
+            Self::Missing { reason } => Some(*reason),
+        }
+    }
+
     /// Returns true when the collector made an explicit missing observation.
     #[must_use]
     pub const fn is_missing(&self) -> bool {
@@ -96,25 +103,40 @@ impl InventoryValue {
     }
 }
 
-/// One bounded package name and version from an authoritative system package database.
-#[derive(Clone, Debug, Deserialize, Eq, Ord, PartialEq, PartialOrd)]
-#[serde(rename_all = "camelCase", deny_unknown_fields)]
+/// One bounded package name and its observed or explicitly missing package-database version.
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct SystemPackage {
     name: String,
-    version: String,
+    version: InventoryValue,
 }
 
 impl SystemPackage {
-    /// Creates one bounded package record.
+    /// Creates one observed bounded package record.
     ///
     /// # Errors
     ///
-    /// Returns [`EnvironmentError::ObservedValue`] when the package name or version is not a
+    /// Returns [`EnvironmentError::ObservedValue`] when the package name or version isn't a
     /// bounded machine-readable package-database value.
     pub fn new(name: String, version: String) -> Result<Self, EnvironmentError> {
         validate_observed_value(&name)?;
-        validate_observed_value(&version)?;
-        Ok(Self { name, version })
+        Ok(Self {
+            name,
+            version: InventoryValue::observed(version)?,
+        })
+    }
+
+    /// Creates one typed missing package record.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`EnvironmentError::ObservedValue`] when `name` isn't a bounded package-database
+    /// identifier.
+    pub fn missing(name: String, reason: MissingReason) -> Result<Self, EnvironmentError> {
+        validate_observed_value(&name)?;
+        Ok(Self {
+            name,
+            version: InventoryValue::missing(reason),
+        })
     }
 
     /// Returns the package name.
@@ -123,18 +145,24 @@ impl SystemPackage {
         &self.name
     }
 
-    /// Returns the package version.
+    /// Returns the observed version or typed missing value.
     #[must_use]
-    pub fn version(&self) -> &str {
+    pub fn version(&self) -> &InventoryValue {
         &self.version
     }
 
-    fn canonical_value(&self) -> Value {
+    fn canonical_value(&self) -> Option<Value> {
+        self.version
+            .observed_value()
+            .map(|version| json!({"name": self.name, "version": version}))
+    }
+
+    fn inventory_value(&self) -> Value {
         json!({"name": self.name, "version": self.version})
     }
 }
 
-/// A content-bounded system-package lock with a digest derived from its retained package list.
+/// A content-bounded system-package lock with a digest derived from its complete package list.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct SystemPackageLock {
     digest: InventoryValue,
@@ -142,36 +170,48 @@ pub struct SystemPackageLock {
 }
 
 impl SystemPackageLock {
-    /// Builds a package lock from no more than [`MAXIMUM_SYSTEM_PACKAGES`] sorted package records.
+    /// Builds a package lock from no more than [`MAXIMUM_SYSTEM_PACKAGES`] package records.
+    ///
+    /// The digest is present only when every retained required package has an observed version.
+    /// A missing package is retained as a typed record and leaves the digest null in lock
+    /// projections.
     ///
     /// # Errors
     ///
     /// Returns an error when the list is empty, oversized, duplicated, or cannot be canonically
     /// encoded and hashed.
-    pub fn from_packages(mut packages: Vec<SystemPackage>) -> Result<Self, EnvironmentError> {
+    pub fn from_records(mut packages: Vec<SystemPackage>) -> Result<Self, EnvironmentError> {
         if packages.is_empty() || packages.len() > MAXIMUM_SYSTEM_PACKAGES {
             return Err(EnvironmentError::SystemPackages);
         }
-        packages.sort_unstable();
-        if packages.windows(2).any(|pair| pair[0].name == pair[1].name) {
+        packages.sort_unstable_by(|left, right| left.name.cmp(&right.name));
+        if packages
+            .windows(2)
+            .any(|pair| pair[0].name.as_str() == pair[1].name.as_str())
+        {
             return Err(EnvironmentError::SystemPackages);
         }
-        let values = packages
+
+        let missing_reason = packages
             .iter()
-            .map(SystemPackage::canonical_value)
-            .collect::<Vec<_>>();
-        let bytes = canonical_json_bytes(&Value::Array(values))
-            .map_err(EnvironmentError::CanonicalEncoding)?;
-        let digest = hash_reader(std::io::Cursor::new(bytes)).map_err(EnvironmentError::Hash)?;
-        Ok(Self {
-            digest: InventoryValue::Observed {
-                value: digest.to_string(),
-            },
-            packages,
-        })
+            .find_map(|package| package.version.missing_reason());
+        let digest = match missing_reason {
+            Some(reason) => InventoryValue::missing(reason),
+            None => package_digest(&packages)?,
+        };
+        Ok(Self { digest, packages })
     }
 
-    /// Creates an explicit missing package lock with no fabricated digest or packages.
+    /// Builds a complete observed package lock.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when the package records cannot form one bounded unique lock.
+    pub fn from_packages(packages: Vec<SystemPackage>) -> Result<Self, EnvironmentError> {
+        Self::from_records(packages)
+    }
+
+    /// Creates an explicit missing package lock with no available package records.
     #[must_use]
     pub const fn missing(reason: MissingReason) -> Self {
         Self {
@@ -186,10 +226,19 @@ impl SystemPackageLock {
         &self.digest
     }
 
-    /// Returns the bounded package list used to derive the lock digest.
+    /// Returns the bounded package records used to derive the digest when it is present.
     #[must_use]
     pub fn packages(&self) -> &[SystemPackage] {
         &self.packages
+    }
+
+    fn inventory_value(&self) -> Value {
+        let packages = self
+            .packages
+            .iter()
+            .map(SystemPackage::inventory_value)
+            .collect::<Vec<_>>();
+        json!({"digest": self.digest, "packages": packages})
     }
 }
 
@@ -234,7 +283,7 @@ impl EnvironmentInventory {
     ///
     /// # Errors
     ///
-    /// Returns an error when an observed value is not content bounded or the package lock is
+    /// Returns an error when an observed value isn't content bounded or the package lock is
     /// internally inconsistent.
     pub fn new(
         environment: EnvironmentId,
@@ -265,58 +314,13 @@ impl EnvironmentInventory {
         })
     }
 
-    /// Parses a fixture-backed inventory document.
-    ///
-    /// Fixture package records are canonicalized and hashed locally; fixtures do not supply a
-    /// mutable or hand-written package-lock digest.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error when the fixture is malformed, names values outside the bounded inventory
-    /// grammar, or supplies packages beside an explicit missing lock.
-    pub fn parse_fixture_json(bytes: &[u8]) -> Result<Self, EnvironmentError> {
-        let document = serde_json::from_slice::<FixtureInventory>(bytes)
-            .map_err(EnvironmentError::FixtureJson)?;
-        let system_package_lock = match document.system_package_lock {
-            FixtureSystemPackageLock::Observed { packages } => {
-                let packages = packages
-                    .into_iter()
-                    .map(|package| SystemPackage::new(package.name, package.version))
-                    .collect::<Result<Vec<_>, _>>()?;
-                SystemPackageLock::from_packages(packages)?
-            }
-            FixtureSystemPackageLock::Missing { reason } => SystemPackageLock::missing(reason),
-        };
-        let environment = document
-            .environment
-            .parse::<EnvironmentId>()
-            .map_err(|_| EnvironmentError::FixtureEnvironment)?;
-        Self::new(
-            environment,
-            EnvironmentFields {
-                operating_system: document.operating_system,
-                minimum_version: document.minimum_version,
-                architecture: document.architecture,
-                hardware_id: document.hardware_id,
-                gpu_id: document.gpu_id,
-                driver_version: document.driver_version,
-                compiler_identity: document.compiler_identity,
-                sdk_identity: document.sdk_identity,
-                compositor: document.compositor,
-                session: document.session,
-                protocol_version: document.protocol_version,
-                system_package_lock,
-            },
-        )
-    }
-
     /// Returns the requested Tier 1 environment.
     #[must_use]
     pub const fn environment(&self) -> EnvironmentId {
         self.environment
     }
 
-    /// Returns all collected candidate-neutral fields, including values not serializable by lock v5.
+    /// Returns all collected candidate-neutral fields, including values excluded from lock v5.
     #[must_use]
     pub const fn fields(&self) -> &EnvironmentFields {
         &self.fields
@@ -378,11 +382,6 @@ impl EnvironmentInventory {
     }
 
     /// Projects this inventory to exactly the environment fields permitted by qualification-lock v5.
-    ///
-    /// Fields that v5 does not define, including architecture, compiler, SDK, compositor, session,
-    /// protocol, and the bounded package list, remain in this typed inventory and are never
-    /// serialized into the lock projection. This preserves the lock's closed schema while making
-    /// unavailable values explicit to collectors and fixtures.
     #[must_use]
     pub fn lock_environment_value(&self) -> Value {
         json!({
@@ -392,6 +391,37 @@ impl EnvironmentInventory {
             "gpuId": self.fields.gpu_id.lock_value(),
             "driverVersion": self.fields.driver_version.lock_value(),
             "systemPackageLockDigest": self.fields.system_package_lock.digest().lock_value(),
+        })
+    }
+
+    /// Returns the complete durable inventory bound to one immutable lock projection.
+    ///
+    /// This sidecar preserves all content-bounded observations that lock v5 cannot represent. Its
+    /// `lockProjection` path and SHA-256 bind it to the exact six-field projection.
+    #[must_use]
+    pub fn inventory_value(
+        &self,
+        projection_path: &RepositoryPath,
+        projection_sha256: &Sha256Digest,
+    ) -> Value {
+        json!({
+            "environment": self.environment.as_str(),
+            "lockProjection": {
+                "path": projection_path.as_str(),
+                "sha256": projection_sha256.to_string(),
+            },
+            "operatingSystem": self.fields.operating_system,
+            "minimumVersion": self.fields.minimum_version,
+            "architecture": self.fields.architecture,
+            "hardwareId": self.fields.hardware_id,
+            "gpuId": self.fields.gpu_id,
+            "driverVersion": self.fields.driver_version,
+            "compilerIdentity": self.fields.compiler_identity,
+            "sdkIdentity": self.fields.sdk_identity,
+            "compositor": self.fields.compositor,
+            "session": self.fields.session,
+            "protocolVersion": self.fields.protocol_version,
+            "systemPackageLock": self.fields.system_package_lock.inventory_value(),
         })
     }
 }
@@ -411,44 +441,20 @@ pub enum EnvironmentError {
     /// Canonical package-lock bytes could not be hashed.
     #[error("system package lock could not be hashed")]
     Hash(#[source] std::io::Error),
-    /// A fixture was not a valid bounded inventory document.
-    #[error("environment fixture JSON is invalid")]
-    FixtureJson(#[source] serde_json::Error),
-    /// A fixture named an environment outside the closed Tier 1 set.
-    #[error("environment fixture environment is invalid")]
-    FixtureEnvironment,
 }
 
-#[derive(Deserialize)]
-#[serde(rename_all = "camelCase", deny_unknown_fields)]
-struct FixtureInventory {
-    environment: String,
-    operating_system: InventoryValue,
-    minimum_version: InventoryValue,
-    architecture: InventoryValue,
-    hardware_id: InventoryValue,
-    gpu_id: InventoryValue,
-    driver_version: InventoryValue,
-    compiler_identity: InventoryValue,
-    sdk_identity: InventoryValue,
-    compositor: InventoryValue,
-    session: InventoryValue,
-    protocol_version: InventoryValue,
-    system_package_lock: FixtureSystemPackageLock,
-}
-
-#[derive(Deserialize)]
-#[serde(tag = "status", rename_all = "kebab-case", deny_unknown_fields)]
-enum FixtureSystemPackageLock {
-    Observed { packages: Vec<FixtureSystemPackage> },
-    Missing { reason: MissingReason },
-}
-
-#[derive(Deserialize)]
-#[serde(rename_all = "camelCase", deny_unknown_fields)]
-struct FixtureSystemPackage {
-    name: String,
-    version: String,
+fn package_digest(packages: &[SystemPackage]) -> Result<InventoryValue, EnvironmentError> {
+    let values = packages
+        .iter()
+        .map(SystemPackage::canonical_value)
+        .collect::<Option<Vec<_>>>()
+        .ok_or(EnvironmentError::SystemPackages)?;
+    let bytes =
+        canonical_json_bytes(&Value::Array(values)).map_err(EnvironmentError::CanonicalEncoding)?;
+    let digest = hash_reader(std::io::Cursor::new(bytes)).map_err(EnvironmentError::Hash)?;
+    Ok(InventoryValue::Observed {
+        value: digest.to_string(),
+    })
 }
 
 fn validate_observed_value(value: &str) -> Result<(), EnvironmentError> {
@@ -465,24 +471,31 @@ fn validate_observed_value(value: &str) -> Result<(), EnvironmentError> {
 
 fn validate_package_lock(lock: &SystemPackageLock) -> Result<(), EnvironmentError> {
     match (lock.digest(), lock.packages().is_empty()) {
-        (InventoryValue::Missing { .. }, true) => Ok(()),
         (InventoryValue::Observed { value }, false) => {
-            let packages = lock
+            if lock
                 .packages()
                 .iter()
-                .map(SystemPackage::canonical_value)
-                .collect::<Vec<_>>();
-            let bytes = canonical_json_bytes(&Value::Array(packages))
-                .map_err(EnvironmentError::CanonicalEncoding)?;
-            let digest =
-                hash_reader(std::io::Cursor::new(bytes)).map_err(EnvironmentError::Hash)?;
-            if value == &digest.to_string() {
+                .any(|package| package.version().is_missing())
+            {
+                return Err(EnvironmentError::SystemPackages);
+            }
+            let calculated = package_digest(lock.packages())?;
+            if calculated.observed_value() == Some(value) {
                 Ok(())
             } else {
                 Err(EnvironmentError::SystemPackages)
             }
         }
-        (InventoryValue::Missing { .. }, false) | (InventoryValue::Observed { .. }, true) => {
+        (InventoryValue::Missing { .. }, true) => Ok(()),
+        (InventoryValue::Missing { .. }, false)
+            if lock
+                .packages()
+                .iter()
+                .any(|package| package.version().is_missing()) =>
+        {
+            Ok(())
+        }
+        (InventoryValue::Observed { .. }, true) | (InventoryValue::Missing { .. }, false) => {
             Err(EnvironmentError::SystemPackages)
         }
     }

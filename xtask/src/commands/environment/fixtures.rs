@@ -1,4 +1,4 @@
-//! Deterministic fixture-backed reference-environment sources.
+//! Deterministic fixture-backed raw platform-response sources.
 
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -6,32 +6,40 @@ use std::path::{Path, PathBuf};
 use oxyflut_qualification::environment::EnvironmentInventory;
 use oxyflut_qualification::identifiers::EnvironmentId;
 
-use super::{EnvironmentCommandError, PlatformSource};
+use super::{EnvironmentCommandError, PlatformSource, linux, macos, windows};
 
 const FIXTURES_DIRECTORY: &str = "qualification/fixtures/environments";
-const INVENTORY_FILE: &str = "inventory.json";
+const RESPONSES_FILE: &str = "responses.json";
 
-/// Reads one checked environment inventory fixture for deterministic collector tests.
+/// Feeds checked raw platform responses through the same platform collectors used by live sources.
 pub(crate) struct FixturePlatformSource {
     root: PathBuf,
     environment: EnvironmentId,
+    fixture: String,
 }
 
 impl FixturePlatformSource {
-    /// Creates a fixture source rooted at one repository directory.
+    /// Creates a fixture source using the standard raw response fixture for one environment.
     #[must_use]
     pub(crate) fn new(root: &Path, environment: EnvironmentId) -> Self {
+        Self::with_fixture(root, environment, environment.as_str())
+    }
+
+    /// Creates a fixture source using one named raw response fixture.
+    #[must_use]
+    pub(crate) fn with_fixture(root: &Path, environment: EnvironmentId, fixture: &str) -> Self {
         Self {
             root: root.to_path_buf(),
             environment,
+            fixture: fixture.to_owned(),
         }
     }
 
     fn fixture_path(&self) -> PathBuf {
         self.root
             .join(FIXTURES_DIRECTORY)
-            .join(self.environment.as_str())
-            .join(INVENTORY_FILE)
+            .join(&self.fixture)
+            .join(RESPONSES_FILE)
     }
 }
 
@@ -44,12 +52,12 @@ impl PlatformSource for FixturePlatformSource {
         let path = self.fixture_path();
         let bytes = fs::read(&path)
             .map_err(|source| EnvironmentCommandError::FixtureIo { path, source })?;
-        let inventory = EnvironmentInventory::parse_fixture_json(&bytes)
-            .map_err(EnvironmentCommandError::Inventory)?;
-        if inventory.environment() == self.environment {
-            Ok(inventory)
-        } else {
-            Err(EnvironmentCommandError::SourceEnvironment)
+        match self.environment {
+            EnvironmentId::Macos => macos::collect_fixture_macos(&bytes),
+            EnvironmentId::Windows => windows::collect_fixture_windows(&bytes),
+            EnvironmentId::Wayland | EnvironmentId::X11 => {
+                linux::collect_fixture_linux(self.environment, &bytes)
+            }
         }
     }
 }
