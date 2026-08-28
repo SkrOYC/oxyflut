@@ -9,6 +9,9 @@ All notable changes to the technical specification appear in this file.
 - Amended 2026-08-27: Replaced `bunx prettier@3.9.6` with the immutable Nix-declared `prettier` 3.9.6 executable from the hash-pinned npm tarball. This doesn't change evidence formats or their compatibility.
 - Amended 2026-08-27: Added `devenv.nix`, `devenv.yaml`, `devenv.lock`, and `.envrc` as the required reproducible verification shell. Every verification command runs inside `devenv shell`.
 - Amended 2026-08-27: The staged native toolchain supports only `x86_64-unknown-linux-gnu`; other Tier 1 hosts remain an OXY-D001 lock input.
+- Amended 2026-08-28: Staged external-contract snapshots preserve SPDX 3.0.1 (`Community-Spec-1.0 AND CC-BY-3.0`), in-toto Statement v1 (`Apache-2.0`), SLSA Provenance v1 (`Community-Spec-1.0 AND Apache-2.0`), and DSSE Envelope v1 (`Apache-2.0`) source bytes with pinned local verifier adapters. They remain nonauthoritative pending Stage 3 adoption.
+- Amended 2026-08-28: Added the nonauthoritative staged `qualification/schemas/sample-validity.schema.json` proposal for `qualification-lock.schema.json#measurementPolicy.sampleValidityRules`.
+- Amended 2026-08-28: `environment inspect` writes a lock-compatible projection at `PATH` and a complete, digest-bound `PATH.inventory.json` companion inventory artifact. The companion artifact remains untyped by Stage 3.
 - The specification remains v0.15.0 because `contracts/specification-phase.json` and committed baselines require exact `specificationVersion` equality. Updating only the specification version would invalidate those bindings, so this amendment doesn't change the version.
 - Advanced platform contracts to v5 with the active specification version and typed immutable absent-event entries keyed by gate, event, environment, and candidate.
 - Advanced qualification evidence to v5 so every `not-applicable-kk` gate names an exact absent-event entry through a versioned, digest-bound platform-baseline reference.
@@ -18,6 +21,12 @@ All notable changes to the technical specification appear in this file.
 - `.constitution/tech-spec/data-models/capability-traceability.schema.json` `mappings[].contractTests[]` identifies a contract test but has no physical file location.
 - `.constitution/tech-spec/data-models/accessibility-map.schema.json` `reverseActions[].textLayoutBinding` has no text-layout generation value.
 - `.constitution/tech-spec/data-models/specification-phase.schema.json` `promotionEvidence.layoutQualification`, `finalContractSet`, `targetMatrix`, `losingCandidateRemoval`, and `billOfMaterials` use generic evidence references instead of typed schemas.
+- `.constitution/tech-spec/data-models/raw-measurement.schema.json` omits the `$schema` property, so raw-measurement instances cannot self-declare their schema.
+- No Stage 3 schema defines `qualification-lock.schema.json#measurementPolicy.sampleValidityRules`; `qualification/schemas/sample-validity.schema.json` is the proposed staged schema and its digest is the proposed binding value.
+- The proposed external-contract lock values in `qualification/schemas/external/proposed-external-contract-lock.json` await Stage 3 adoption.
+- `xtask environment inspect` writes the `PATH.inventory.json` companion artifact, but no Stage 3 schema defines it and `qualification-lock.schema.json#referenceEnvironments` has no typed reference to it.
+- `qualification-lock.schema.json#measurementPolicy.{scoringAnchors,assessors,fuzzCorpora,securityPatchRehearsal}` binds path-less digests; the repository convention `qualification/staged/<field>.json` is the proposed referent and needs Stage 3 typing.
+- `qualification-lock.schema.json#resolvedTools` lacks the `pathRoot` field used by `qualification/tools/native-contract-toolchain.json` for rustup-home-relative tools.
 
 ## [v0.14.0] - 2026-08-26
 

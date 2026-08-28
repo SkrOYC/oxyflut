@@ -22,13 +22,19 @@ Close this Stage 4 iteration without crossing an unresolved upstream decision. T
   - STOP after naming the exact Stage 3 revisions and remaining user or external inputs; don't set `candidateImplementationReady` from Stage 4.
 - **Description:** Consolidate the contract-validator results, six spike recommendations, hardware-access register, assessor confirmations, staged tool and external-contract manifests, baseline tooling, measurement templates, environment tooling, and read-only lock report. Produce an exact Stage 3 reconciliation checklist and the conditions for the next Stage 4 minor release. The checklist must separately name the approved 52-capability baseline, reference application, scenes, interaction scripts, fonts, assets, window matrix, cache states, release flags, scoring anchors, assessor assignments, reference-environment captures, and authoritative resolved-tool lock.
 
-##### OXY-D001 Inputs from Epic A
+##### OXY-D001 Inputs from Epics A and C
 
 The reconciliation report must name these Stage 3 revisions:
 
 - `.constitution/tech-spec/data-models/capability-traceability.schema.json` `mappings[].contractTests[]` identifies a contract test but has no physical file location.
 - `.constitution/tech-spec/data-models/accessibility-map.schema.json` `reverseActions[].textLayoutBinding` has no text-layout generation value.
 - `.constitution/tech-spec/data-models/specification-phase.schema.json` `promotionEvidence.layoutQualification`, `finalContractSet`, `targetMatrix`, `losingCandidateRemoval`, and `billOfMaterials` use generic evidence references instead of typed schemas.
+- `.constitution/tech-spec/data-models/raw-measurement.schema.json` omits the `$schema` property, so raw-measurement instances cannot self-declare their schema.
+- No Stage 3 schema defines `qualification-lock.schema.json#measurementPolicy.sampleValidityRules`; `qualification/schemas/sample-validity.schema.json` is the proposed staged schema and its digest is the proposed binding value.
+- The proposed external-contract lock values in `qualification/schemas/external/proposed-external-contract-lock.json` await Stage 3 adoption.
+- `xtask environment inspect` writes the `PATH.inventory.json` companion artifact, but no Stage 3 schema defines it and `qualification-lock.schema.json#referenceEnvironments` has no typed reference to it.
+- `qualification-lock.schema.json#measurementPolicy.{scoringAnchors,assessors,fuzzCorpora,securityPatchRehearsal}` binds path-less digests; the repository convention `qualification/staged/<field>.json` is the proposed referent and needs Stage 3 typing.
+- `qualification-lock.schema.json#resolvedTools` lacks the `pathRoot` field used by `qualification/tools/native-contract-toolchain.json` for rustup-home-relative tools.
 - Dependency advisory validation is deferred: `cargo deny --offline check advisories` and `cargo audit` can use a host-cached RustSec database, but the repository has no pinned vendored advisory database for CI. CI runs `cargo deny check licenses bans sources` until OXY-D001 records a pinned offline advisory database and its refresh policy.
 - The staged native toolchain supports only `x86_64-unknown-linux-gnu`; other Tier 1 hosts are an OXY-D001 lock input.
 

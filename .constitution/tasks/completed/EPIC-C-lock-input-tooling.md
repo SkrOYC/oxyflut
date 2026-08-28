@@ -220,3 +220,28 @@ Checker: cargo +1.98.0 run -p xtask -- lock status --gate candidate-implementati
 - **Justification:** The command reuses the Foundation readiness validator and staged-toolchain verifier. The focused test module keeps the command implementation within the repository file-size guidance. This ticket records the required scope deviation and OXY-D001 input.
 - **OXY-D001 input:** `qualification-lock.schema.json` binds `measurementPolicy.{scoringAnchors,assessors,fuzzCorpora,securityPatchRehearsal}` as path-less digests; the repository convention `qualification/staged/<field>.json` is proposed as their referent and should be typed by Stage 3.
 - **External-lock decision:** The external lock has per-contract `epistemicStatus` values rather than one root status. When every active contract is `ku-gating`, readiness verifies the staged proposal. Otherwise, readiness verifies the active lock.
+
+## Completion
+
+Epic C completed its 21 story points without claiming that any staged input is complete or changing either readiness flag.
+
+### Ticket completion
+
+| Ticket | Commits | Verification result | Deviations and assumptions |
+| :-- | :-- | :-- | :-- |
+| OXY-C001 | `a731182446550355898c6824ae25ee923346fb6d`, `316f93254ee500a76e1794aafde57d888b5f67fc` | `cargo +1.98.0 test -p xtask external_contracts` passed with exit 0. | Extended shared format validation, split focused command tests, and preserved authoritative SPDX CRLF bytes; see [deviations](#oxy-c001-deviations--justifications). |
+| OXY-C002 | `2fb134ed3be6e10a353ada4ab14557a281d01d87`, `81ede6ff048b1e9b3c699545704d45bf6c9c4333` | `cargo +1.98.0 run -p xtask -- baseline validate --input qualification/fixtures/baselines/complete.synthetic.json && cargo +1.98.0 test -p xtask baseline` passed with exit 0. | Reused the exact traceability authority and evidence writer to publish baseline drafts; see [deviations](#oxy-c002-deviations--justifications). |
+| OXY-C003 | `383021aae1fd1a9842a4fe7fcda3e642b4162455`, `3831555703ab6c09ef2f355dedd6ca7fdf20ae04` | `cargo +1.98.0 run -p xtask -- measurement validate --input qualification/fixtures/measurements/complete.synthetic.json && cargo +1.98.0 run -p xtask -- measurement validate --input qualification/fixtures/sample-validity/complete.synthetic.json && cargo +1.98.0 test -p xtask measurement` passed with exit 0. | Added a nonauthoritative staged schema and shared registry entry; the missing raw-measurement declaration and sample-validity contract are routed below; see [deviations](#oxy-c003-deviations--justifications). |
+| OXY-C004 | `fd32fb9565438aae4eeb47254c7dcece296acd23`, `3b0fc3ad18eaff0117ce67878315964e657c359b` | `cargo +1.98.0 test --workspace --all-features` passed with exit 0. | Added fixture-backed collector deserialization and a bounded projection-plus-inventory artifact pair; the companion artifact needs a Stage 3 schema; see [deviations](#oxy-c004-deviations--justifications). |
+| OXY-C005 | `05ee6f110e83c008c2252929f562c1a33e6fbed6`, `c0015f5bcf0c5e645275a08534ff71315a5ba484` | `cargo +1.98.0 run -p xtask -- lock status --gate candidate-implementation` returned the required exit 2 for the valid, open committed lock. | Reused readiness and staged-toolchain validation; path-less measurement-policy inputs and staged tool paths are routed below; see [deviations](#oxy-c005-deviations--justifications). |
+
+### Stage 3 revisions required — routed to OXY-D001
+
+The [OXY-D001 inputs from Epic C](../active/EPIC-D-readiness-reconciliation.md#oxy-d001-inputs-from-epics-a-and-c) must name these unresolved Stage 3 revisions:
+
+- `.constitution/tech-spec/data-models/raw-measurement.schema.json` omits the `$schema` property, so raw-measurement instances cannot self-declare their schema.
+- No Stage 3 schema defines `qualification-lock.schema.json#measurementPolicy.sampleValidityRules`; `qualification/schemas/sample-validity.schema.json` is the proposed staged schema and its digest is the proposed binding value.
+- The proposed external-contract lock values in `qualification/schemas/external/proposed-external-contract-lock.json` await Stage 3 adoption.
+- `xtask environment inspect` writes the `PATH.inventory.json` companion artifact, but no Stage 3 schema defines it and `qualification-lock.schema.json#referenceEnvironments` has no typed reference to it.
+- `qualification-lock.schema.json#measurementPolicy.{scoringAnchors,assessors,fuzzCorpora,securityPatchRehearsal}` binds path-less digests; the repository convention `qualification/staged/<field>.json` is the proposed referent and needs Stage 3 typing.
+- `qualification-lock.schema.json#resolvedTools` lacks the `pathRoot` field used by `qualification/tools/native-contract-toolchain.json` for rustup-home-relative tools.

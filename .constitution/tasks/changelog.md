@@ -2,6 +2,16 @@
 
 All notable changes to the Stage 4 execution plan appear in this file.
 
+## [v0.2.14] - 2026-08-28
+
+### Completed
+
+- Completed and archived Epic C tickets OXY-C001–OXY-C005: `a731182`, `316f932`, `2fb134e`, `81ede6f`, `383021a`, `3831555`, `fd32fb9`, `3b0fc3a`, `05ee6f1`, and `c0015f5`.
+
+### Noted
+
+- OXY-D001 must route the raw-measurement `$schema` declaration, `measurementPolicy.sampleValidityRules` schema, proposed external-contract lock, `PATH.inventory.json` companion inventory schema, path-less staged measurement-policy input references, and `resolvedTools.pathRoot` Stage 3 gaps.
+
 ## [v0.2.13] - 2026-08-27
 
 ### Completed
