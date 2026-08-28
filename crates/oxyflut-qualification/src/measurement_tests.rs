@@ -5,6 +5,7 @@ use std::path::{Path, PathBuf};
 
 use crate::hash::hash_file;
 use crate::identifiers::{CandidateId, ConstraintId, EnvironmentId, RepositoryPath};
+use crate::schema::SchemaRegistry;
 
 use super::{
     ComparisonStatistic, EvidenceBinding, MeasurementError, RawExclusionReason, RawSample,
@@ -57,6 +58,45 @@ fn templates_bind_one_identity_and_preserve_all_valid_observations() -> Result<(
     assert_eq!(
         raw.meter_version(),
         templates.sample_validity().meter_version()
+    );
+    Ok(())
+}
+
+#[test]
+fn template_serializations_omit_absent_conditional_fields_and_validate_their_schemas()
+-> Result<(), Box<dyn Error>> {
+    let root = workspace_root()?;
+    let templates = generate_templates(
+        &root.join(LOCK_PATH),
+        TemplateParameters::new(
+            ConstraintId::parse("CON-PERF-001")?,
+            EnvironmentId::Macos,
+            CandidateId::Focused,
+            "synthetic-meter-v1".to_owned(),
+        )?,
+    )?;
+    let log = EvidenceBinding::new(
+        RepositoryPath::parse(LOG_PATH)?,
+        hash_file(&root.join(LOG_PATH))?,
+    );
+    let raw = templates
+        .raw_measurement()
+        .build(vec![raw_sample(1, 1, 1, 1.0, log)?])?;
+    let registry = SchemaRegistry::from_directories(&[
+        root.join(".constitution/tech-spec/data-models"),
+        root.join("qualification/schemas"),
+    ])?;
+
+    let raw_value = raw.to_value()?;
+    registry.validate(super::RAW_MEASUREMENT_SCHEMA, &raw_value)?;
+    assert!(raw_value.pointer("/samples/0/exclusionReason").is_none());
+
+    let sample_validity_value = templates.sample_validity().to_value()?;
+    registry.validate(super::SAMPLE_VALIDITY_SCHEMA, &sample_validity_value)?;
+    assert!(
+        sample_validity_value
+            .pointer("/rules/1/percentile")
+            .is_none()
     );
     Ok(())
 }
