@@ -14,7 +14,9 @@ use crate::identifiers::RepositoryPath;
 
 use super::canonical_json_bytes;
 use super::verify::verify_existing_destination;
-use super::{DERIVED_EVIDENCE_DIRECTORY, EvidenceError, EvidenceRef, MediaType};
+use super::{
+    DERIVED_EVIDENCE_DIRECTORY, EvidenceError, EvidencePublication, EvidenceRef, MediaType,
+};
 
 const TEMPORARY_ATTEMPTS: u8 = 16;
 const LOCK_RECOVERY_ATTEMPTS: u8 = 2;
@@ -30,7 +32,7 @@ pub fn write_canonical_json_to_directory(
     root: &Path,
     directory: &RepositoryPath,
     record: &Value,
-) -> Result<EvidenceRef, EvidenceError> {
+) -> Result<EvidencePublication, EvidenceError> {
     super::ensure_evidence_path(directory)?;
     let bytes = canonical_json_bytes(record)?;
     let digest = hash_reader(Cursor::new(&bytes)).map_err(|source| EvidenceError::Io {
@@ -57,7 +59,7 @@ pub fn write_canonical_json_to_path(
     root: &Path,
     path: &RepositoryPath,
     record: &Value,
-) -> Result<EvidenceRef, EvidenceError> {
+) -> Result<EvidencePublication, EvidenceError> {
     let bytes = canonical_json_bytes(record)?;
     write_canonical_json_bytes_to_path(root, path, &bytes, |writer, bytes| writer.write_all(bytes))
 }
@@ -71,7 +73,7 @@ pub fn write_derived_json(
     root: &Path,
     record: &Value,
     source: &EvidenceRef,
-) -> Result<EvidenceRef, EvidenceError> {
+) -> Result<EvidencePublication, EvidenceError> {
     let directory = RepositoryPath::parse(DERIVED_EVIDENCE_DIRECTORY).map_err(|source| {
         EvidenceError::InvalidPath {
             path: DERIVED_EVIDENCE_DIRECTORY.to_owned(),
@@ -93,7 +95,7 @@ pub fn write_derived_json_to_directory(
     directory: &RepositoryPath,
     record: &Value,
     source: &EvidenceRef,
-) -> Result<EvidenceRef, EvidenceError> {
+) -> Result<EvidencePublication, EvidenceError> {
     write_derived_json_to_directory_with(root, directory, record, source, |writer, bytes| {
         writer.write_all(bytes)
     })
@@ -105,7 +107,7 @@ pub(super) fn write_derived_json_with<F>(
     record: &Value,
     source: &EvidenceRef,
     write: F,
-) -> Result<EvidenceRef, EvidenceError>
+) -> Result<EvidencePublication, EvidenceError>
 where
     F: FnOnce(&mut dyn Write, &[u8]) -> io::Result<()>,
 {
@@ -124,7 +126,7 @@ fn write_derived_json_to_directory_with<F>(
     record: &Value,
     source: &EvidenceRef,
     write: F,
-) -> Result<EvidenceRef, EvidenceError>
+) -> Result<EvidencePublication, EvidenceError>
 where
     F: FnOnce(&mut dyn Write, &[u8]) -> io::Result<()>,
 {
@@ -165,7 +167,7 @@ fn write_canonical_json_bytes_to_path<F>(
     path: &RepositoryPath,
     bytes: &[u8],
     write: F,
-) -> Result<EvidenceRef, EvidenceError>
+) -> Result<EvidencePublication, EvidenceError>
 where
     F: FnOnce(&mut dyn Write, &[u8]) -> io::Result<()>,
 {
@@ -184,8 +186,8 @@ where
         media_type: MediaType::application_json(),
         size_bytes,
     };
-    publish_immutable(root, &reference, bytes, write)?;
-    Ok(reference)
+    let created = publish_immutable(root, &reference, bytes, write)?;
+    Ok(EvidencePublication { reference, created })
 }
 
 fn publish_immutable<F>(
@@ -193,7 +195,7 @@ fn publish_immutable<F>(
     reference: &EvidenceRef,
     bytes: &[u8],
     write: F,
-) -> Result<(), EvidenceError>
+) -> Result<bool, EvidenceError>
 where
     F: FnOnce(&mut dyn Write, &[u8]) -> io::Result<()>,
 {
@@ -205,8 +207,8 @@ where
     let result = publish_without_replacing(root, reference, &destination, bytes, write);
     let lock_result = release_lock(&lock_path);
     match (result, lock_result) {
-        (Ok(()), Ok(())) => Ok(()),
-        (Ok(()), Err(error)) | (Err(error), Ok(())) | (Err(error), Err(_)) => Err(error),
+        (Ok(created), Ok(())) => Ok(created),
+        (Ok(_), Err(error)) | (Err(error), Ok(_)) | (Err(error), Err(_)) => Err(error),
     }
 }
 
@@ -216,7 +218,7 @@ fn publish_without_replacing<F>(
     destination: &Path,
     bytes: &[u8],
     write: F,
-) -> Result<(), EvidenceError>
+) -> Result<bool, EvidenceError>
 where
     F: FnOnce(&mut dyn Write, &[u8]) -> io::Result<()>,
 {
@@ -233,12 +235,13 @@ where
         Ok(()) => {
             remove_temporary(&temporary_path)?;
             sync_directory(&directory)?;
-            Ok(())
+            Ok(true)
         }
         Err(source) if source.kind() == io::ErrorKind::AlreadyExists => {
             remove_temporary(&temporary_path)?;
             reject_symlink_destination(destination)?;
-            verify_existing_destination(root, reference, destination)
+            verify_existing_destination(root, reference, destination)?;
+            Ok(false)
         }
         Err(source) => {
             let cleanup = remove_temporary(&temporary_path);
@@ -556,10 +559,10 @@ fn remove_temporary(temporary_path: &Path) -> Result<(), EvidenceError> {
     })
 }
 
-fn remove_temporary_after_failure(
+fn remove_temporary_after_failure<T>(
     temporary_path: &Path,
     write_error: io::Error,
-) -> Result<(), EvidenceError> {
+) -> Result<T, EvidenceError> {
     remove_temporary(temporary_path)?;
     Err(EvidenceError::Io {
         path: temporary_path.to_path_buf(),

@@ -6,8 +6,8 @@ use std::path::{Path, PathBuf};
 
 use oxyflut_qualification::baseline::{BaselineAuthority, BaselineError, CapabilityBaseline};
 use oxyflut_qualification::evidence::{
-    EvidenceError, MediaType, canonical_json_bytes, preserve_source,
-    write_canonical_json_to_directory, write_canonical_json_to_path,
+    EvidenceError, EvidencePublication, EvidenceRef, MediaType, canonical_json_bytes,
+    preserve_source, write_canonical_json_to_path,
 };
 use oxyflut_qualification::hash::hash_reader;
 use oxyflut_qualification::identifiers::RepositoryPath;
@@ -145,20 +145,66 @@ where
                 }
             })?;
             validate_artifact_pair(root, &draft_path, &sidecar_path)?;
-            let draft = write_canonical_json_to_directory(root, output, &canonical)?;
-            let sidecar = serde_json::json!({
-                "path": draft.path.as_str(),
-                "sha256": draft.sha256.to_string(),
-                "mediaType": draft.media_type.as_str(),
-                "sourcePath": source.path.as_str(),
-                "sourceSha256": source.sha256.to_string(),
-            });
-            let _ = write_canonical_json_to_path(root, &sidecar_path, &sidecar)?;
-            Some(draft)
+            Some(publish_artifact_pair(
+                root,
+                &draft_path,
+                &sidecar_path,
+                &canonical,
+                &source,
+            )?)
         }
         None => None,
     };
     Ok(output)
+}
+
+fn publish_artifact_pair(
+    root: &Path,
+    draft_path: &RepositoryPath,
+    sidecar_path: &RepositoryPath,
+    draft: &Value,
+    source: &EvidenceRef,
+) -> Result<EvidenceRef, BaselineCommandError> {
+    publish_artifact_pair_with(
+        draft_path,
+        sidecar_path,
+        draft,
+        source,
+        |path, value| write_canonical_json_to_path(root, path, value),
+        |path| fs::remove_file(root.join(path.as_str())),
+    )
+}
+
+fn publish_artifact_pair_with(
+    draft_path: &RepositoryPath,
+    sidecar_path: &RepositoryPath,
+    draft: &Value,
+    source: &EvidenceRef,
+    mut write: impl FnMut(&RepositoryPath, &Value) -> Result<EvidencePublication, EvidenceError>,
+    mut remove_draft: impl FnMut(&RepositoryPath) -> io::Result<()>,
+) -> Result<EvidenceRef, BaselineCommandError> {
+    let draft_publication = write(draft_path, draft).map_err(BaselineCommandError::Evidence)?;
+    let sidecar = serde_json::json!({
+        "path": draft_publication.reference.path.as_str(),
+        "sha256": draft_publication.reference.sha256.to_string(),
+        "mediaType": draft_publication.reference.media_type.as_str(),
+        "sourcePath": source.path.as_str(),
+        "sourceSha256": source.sha256.to_string(),
+    });
+    match write(sidecar_path, &sidecar) {
+        Ok(_) => Ok(draft_publication.reference),
+        Err(error) => {
+            if draft_publication.created {
+                remove_draft(&draft_publication.reference.path).map_err(|source| {
+                    BaselineCommandError::DraftCleanup {
+                        path: draft_publication.reference.path.clone(),
+                        source,
+                    }
+                })?;
+            }
+            Err(BaselineCommandError::Evidence(error))
+        }
+    }
 }
 
 fn validate_artifact_pair(
@@ -244,6 +290,12 @@ enum BaselineCommandError {
     SourceSnapshotMismatch,
     #[error("baseline artifact pair is partial; orphaned artifact: {orphaned}")]
     ArtifactPair { orphaned: RepositoryPath },
+    #[error("baseline draft cleanup failed")]
+    DraftCleanup {
+        path: RepositoryPath,
+        #[source]
+        source: io::Error,
+    },
     #[error("baseline input is not JSON")]
     Json(#[source] serde_json::Error),
     #[error("baseline schema validation failed")]
@@ -267,14 +319,16 @@ mod tests {
     use std::sync::atomic::{AtomicU64, Ordering};
 
     use oxyflut_qualification::evidence::{
-        MediaType, canonical_json_bytes, verify_file, verify_path_digest,
+        EvidenceError, MediaType, canonical_json_bytes, preserve_source, verify_file,
+        verify_path_digest, write_canonical_json_to_path,
     };
     use oxyflut_qualification::hash::hash_file;
     use oxyflut_qualification::identifiers::RepositoryPath;
     use serde_json::Value;
 
     use super::{
-        BaselineCommandError, run, run_at_root, validate_at, validate_at_with_before_publication,
+        BaselineCommandError, publish_artifact_pair_with, run, run_at_root, validate_at,
+        validate_at_with_before_publication,
     };
     use crate::CommandOutcome;
     use crate::contracts::{
@@ -473,6 +527,49 @@ mod tests {
             })
         );
 
+        Ok(())
+    }
+
+    #[test]
+    fn sidecar_publication_failure_removes_the_just_written_draft() -> Result<(), Box<dyn Error>> {
+        let root = temporary_directory("sidecar-failure")?;
+        let draft_path = "qualification/fixtures/baselines/draft.json".parse::<RepositoryPath>()?;
+        let sidecar_path =
+            "qualification/fixtures/baselines/draft.provenance.json".parse::<RepositoryPath>()?;
+        let source = preserve_source(
+            &root,
+            COMPLETE_FIXTURE.parse::<RepositoryPath>()?,
+            MediaType::application_json(),
+        )?;
+        let draft = serde_json::json!({"capabilities": []});
+        let mut write_count = 0;
+
+        let result = publish_artifact_pair_with(
+            &draft_path,
+            &sidecar_path,
+            &draft,
+            &source,
+            |path, value| {
+                write_count += 1;
+                if write_count == 1 {
+                    write_canonical_json_to_path(&root, path, value)
+                } else {
+                    Err(EvidenceError::WriteInProgress {
+                        path: root.join(path.as_str()),
+                    })
+                }
+            },
+            |path| fs::remove_file(root.join(path.as_str())),
+        );
+
+        assert!(matches!(
+            result,
+            Err(BaselineCommandError::Evidence(
+                EvidenceError::WriteInProgress { .. }
+            ))
+        ));
+        assert!(!root.join(draft_path.as_str()).exists());
+        assert!(!root.join(sidecar_path.as_str()).exists());
         Ok(())
     }
 

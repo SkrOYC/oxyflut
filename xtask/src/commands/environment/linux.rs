@@ -5,7 +5,7 @@ use std::collections::BTreeMap;
 #[cfg(target_os = "linux")]
 use std::fs;
 #[cfg(target_os = "linux")]
-use std::io::Read;
+use std::io::{self, Read};
 #[cfg(target_os = "linux")]
 use std::path::Path;
 #[cfg(target_os = "linux")]
@@ -377,6 +377,9 @@ fn wayland_protocol_version(
     missing_reason: MissingReason,
     truncated: bool,
 ) -> InventoryValue {
+    if truncated {
+        return InventoryValue::missing(MissingReason::InventoryExceedsBound);
+    }
     let Some(raw) = raw else {
         return InventoryValue::missing(missing_reason);
     };
@@ -410,7 +413,7 @@ fn wayland_protocol_version(
         })
         .collect::<Vec<_>>();
     if version.is_empty() {
-        return InventoryValue::missing(protocol_prefix_missing_reason(truncated));
+        return InventoryValue::missing(missing_reason);
     }
     observed_or_missing(format!("wayland-{}", version.join("-")))
 }
@@ -420,6 +423,9 @@ fn x11_protocol_version(
     missing_reason: MissingReason,
     truncated: bool,
 ) -> InventoryValue {
+    if truncated {
+        return InventoryValue::missing(MissingReason::InventoryExceedsBound);
+    }
     let Some(raw) = raw else {
         return InventoryValue::missing(missing_reason);
     };
@@ -434,17 +440,9 @@ fn x11_protocol_version(
                     .all(|byte| byte.is_ascii_digit() || byte == b'.')
         })
     else {
-        return InventoryValue::missing(protocol_prefix_missing_reason(truncated));
+        return InventoryValue::missing(missing_reason);
     };
     observed_or_missing(format!("x11-{version}"))
-}
-
-const fn protocol_prefix_missing_reason(truncated: bool) -> MissingReason {
-    if truncated {
-        MissingReason::InventoryExceedsBound
-    } else {
-        MissingReason::ManualCapture
-    }
 }
 
 fn driver_version(
@@ -926,9 +924,16 @@ fn command_stdout_prefix(
         .ok_or(MissingReason::SourceUnavailable)?;
     let output = read_bounded_prefix(stdout, limit)?;
     if output.truncated {
-        let _ = child.kill();
-        let _ = child.wait();
-        return Ok(Some(output));
+        let terminated = match child.kill() {
+            Ok(()) => true,
+            Err(error) if error.kind() == io::ErrorKind::InvalidInput => false,
+            Err(_) => return Err(MissingReason::SourceUnavailable),
+        };
+        let status = child.wait().map_err(|_| MissingReason::SourceUnavailable)?;
+        if status.success() || (terminated && status.code().is_none()) {
+            return Ok(Some(output));
+        }
+        return Ok(None);
     }
     let status = child.wait().map_err(|_| MissingReason::SourceUnavailable)?;
     Ok(status.success().then_some(output))

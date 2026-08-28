@@ -13,7 +13,9 @@ use std::io;
 use std::path::{Path, PathBuf};
 
 use oxyflut_qualification::environment::EnvironmentInventory;
-use oxyflut_qualification::evidence::{EvidenceError, EvidenceRef, write_canonical_json_to_path};
+use oxyflut_qualification::evidence::{
+    EvidenceError, EvidencePublication, EvidenceRef, write_canonical_json_to_path,
+};
 use oxyflut_qualification::identifiers::{EnvironmentId, RepositoryPath};
 use oxyflut_qualification::schema::SchemaError;
 use thiserror::Error;
@@ -135,27 +137,34 @@ fn publish_artifact_pair_with(
     inventory_path: &RepositoryPath,
     projection: &serde_json::Value,
     inventory: &EnvironmentInventory,
-    mut write: impl FnMut(&RepositoryPath, &serde_json::Value) -> Result<EvidenceRef, EvidenceError>,
+    mut write: impl FnMut(
+        &RepositoryPath,
+        &serde_json::Value,
+    ) -> Result<EvidencePublication, EvidenceError>,
     mut remove_projection: impl FnMut(&RepositoryPath) -> io::Result<()>,
 ) -> Result<EnvironmentEvidence, EnvironmentCommandError> {
-    let projection_reference =
+    let projection_publication =
         write(output, projection).map_err(EnvironmentCommandError::Evidence)?;
-    let complete_inventory =
-        inventory.inventory_value(&projection_reference.path, &projection_reference.sha256);
+    let complete_inventory = inventory.inventory_value(
+        &projection_publication.reference.path,
+        &projection_publication.reference.sha256,
+    );
     let inventory_reference = match write(inventory_path, &complete_inventory) {
-        Ok(reference) => reference,
+        Ok(publication) => publication.reference,
         Err(error) => {
-            remove_projection(&projection_reference.path).map_err(|source| {
-                EnvironmentCommandError::ProjectionCleanup {
-                    path: projection_reference.path.clone(),
-                    source,
-                }
-            })?;
+            if projection_publication.created {
+                remove_projection(&projection_publication.reference.path).map_err(|source| {
+                    EnvironmentCommandError::ProjectionCleanup {
+                        path: projection_publication.reference.path.clone(),
+                        source,
+                    }
+                })?;
+            }
             return Err(EnvironmentCommandError::Evidence(error));
         }
     };
     Ok(EnvironmentEvidence {
-        projection: projection_reference,
+        projection: projection_publication.reference,
         inventory: inventory_reference,
     })
 }
@@ -695,6 +704,49 @@ mod tests {
             ))
         ));
         assert!(!root.join(output.as_str()).exists());
+        assert!(!root.join(inventory_path.as_str()).exists());
+        Ok(())
+    }
+
+    #[test]
+    fn companion_publication_failure_preserves_an_identical_existing_projection()
+    -> Result<(), Box<dyn Error>> {
+        let workspace = temporary_directory("existing-projection")?;
+        let root = workspace.path();
+        let output = "qualification/evidence/environment.json".parse::<RepositoryPath>()?;
+        let inventory_path = companion_inventory_path(&output)?;
+        let inventory = FixturePlatformSource::new(root, EnvironmentId::Wayland).collect()?;
+        let projection = inventory.lock_environment_value();
+        let existing = write_canonical_json_to_path(root, &output, &projection)?;
+        assert!(existing.created);
+        let original_bytes = fs::read(root.join(output.as_str()))?;
+        let mut write_count = 0;
+
+        let result = publish_artifact_pair_with(
+            &output,
+            &inventory_path,
+            &projection,
+            &inventory,
+            |path, value| {
+                write_count += 1;
+                if write_count == 1 {
+                    write_canonical_json_to_path(root, path, value)
+                } else {
+                    Err(EvidenceError::WriteInProgress {
+                        path: root.join(path.as_str()),
+                    })
+                }
+            },
+            |path| fs::remove_file(root.join(path.as_str())),
+        );
+
+        assert!(matches!(
+            result,
+            Err(EnvironmentCommandError::Evidence(
+                EvidenceError::WriteInProgress { .. }
+            ))
+        ));
+        assert_eq!(fs::read(root.join(output.as_str()))?, original_bytes);
         assert!(!root.join(inventory_path.as_str()).exists());
         Ok(())
     }
