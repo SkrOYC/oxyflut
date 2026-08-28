@@ -181,17 +181,16 @@ fn candidate_artifact_source_revisions_and_resolved_tools_fail_closed() -> Resul
     let registry = schema::compile_workspace(&workspace_root()?)?;
     let phase = read_json(&root.join(super::PHASE_PATH))?;
 
-    let unresolved_tool_fields = validate_documents(
-        &root,
-        &read_json(&root.join("negative/unresolved-tool-fields-lock.json"))?,
-        &phase,
-        &registry,
-    )?;
-    let GateStatus::Open(issues) = unresolved_tool_fields.candidate_implementation else {
-        return Err("unresolved tool fields must keep the candidate gate open".into());
-    };
-    assert!(issues.contains(&"resolved-tool".to_owned()));
-    assert!(issues.contains(&"resolved-tool-digests".to_owned()));
+    let mut unresolved_tool_fields = read_json(&root.join(super::LOCK_PATH))?;
+    *unresolved_tool_fields
+        .pointer_mut("/resolvedTools/0/executablePath")
+        .ok_or("ready fixture must contain a resolved tool path")? = Value::Null;
+    assert!(matches!(
+        validate_documents(&root, &unresolved_tool_fields, &phase, &registry),
+        Err(ReadinessError::Invariant {
+            code: "resolved-tool-manifest"
+        })
+    ));
 
     let wrong_engine = validate_documents(
         &root,
@@ -206,26 +205,30 @@ fn candidate_artifact_source_revisions_and_resolved_tools_fail_closed() -> Resul
         })
     ));
 
-    let missing_tool = validate_documents(
-        &root,
-        &read_json(&root.join("negative/missing-tool-lock.json"))?,
-        &phase,
-        &registry,
-    );
+    let mut missing_tool = read_json(&root.join(super::LOCK_PATH))?;
+    let _ = missing_tool
+        .get_mut("resolvedTools")
+        .and_then(Value::as_array_mut)
+        .ok_or("ready fixture must contain resolved tools")?
+        .pop()
+        .ok_or("ready fixture must contain a resolved tool")?;
     assert!(matches!(
-        missing_tool,
-        Err(ReadinessError::Digest(DigestError::MissingFile { .. }))
+        validate_documents(&root, &missing_tool, &phase, &registry),
+        Err(ReadinessError::Invariant {
+            code: "resolved-tool-manifest"
+        })
     ));
 
-    let wrong_tool = validate_documents(
-        &root,
-        &read_json(&root.join("negative/mismatched-tool-lock.json"))?,
-        &phase,
-        &registry,
-    );
+    let mut wrong_tool = read_json(&root.join(super::LOCK_PATH))?;
+    *wrong_tool
+        .pointer_mut("/resolvedTools/0/sourceIdentity")
+        .ok_or("ready fixture must contain a resolved tool source")? =
+        Value::String("substituted-source".to_owned());
     assert!(matches!(
-        wrong_tool,
-        Err(ReadinessError::Digest(DigestError::DigestMismatch { .. }))
+        validate_documents(&root, &wrong_tool, &phase, &registry),
+        Err(ReadinessError::Invariant {
+            code: "resolved-tool-manifest"
+        })
     ));
     Ok(())
 }

@@ -15,15 +15,15 @@
   },
   "requiredProductionVersion": ">=1.0.0",
   "promotionEvidence": {
-    "qualificationLockDigest": "bd965282e577ba3b8e6e80c1e3ecb879f9e95ffa6f4c8bf2f5505208301872bf",
+    "qualificationLockDigest": "8b86f7ee0b8f6a02605158969230d2621159512b1eef917a184618863287f582",
     "selectedCandidate": "focused",
     "selectionDecision": {
       "path": "evidence/selection-decision.json",
-      "sha256": "82d081b06dcd8b8badc34f2af7eb5e32c86b2f334aa2038dcc0964ca186799b6"
+      "sha256": "a93dd1d089317d947a9826dcbcd663a8310e43ca508fcaebb99efd66434f7b1e"
     },
     "selectedCandidateQualification": {
       "path": "evidence/selected-qualification.json",
-      "sha256": "d9da988d9ef03ef2ec0b596163f56626d90250724da13b1a269f06e8925a9130"
+      "sha256": "aeb2745597b13bce82a1bf60417e85d47afa43d71397cb44f1da09423c2d41d2"
     },
     "layoutQualification": {
       "path": "evidence/layoutQualification.txt",
@@ -43,7 +43,7 @@
     },
     "allTier1Results": {
       "path": "evidence/all-tier1-results.json",
-      "sha256": "d9da988d9ef03ef2ec0b596163f56626d90250724da13b1a269f06e8925a9130"
+      "sha256": "aeb2745597b13bce82a1bf60417e85d47afa43d71397cb44f1da09423c2d41d2"
     },
     "losingCandidateRemoval": {
       "path": "evidence/losingCandidateRemoval.txt",

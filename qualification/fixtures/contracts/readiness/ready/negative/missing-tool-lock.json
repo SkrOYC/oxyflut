@@ -130,13 +130,103 @@
   },
   "resolvedTools": [
     {
-      "name": "tool",
-      "version": "1.0.0",
-      "sourceIdentity": "source",
-      "hostTriple": "host",
+      "name": "c-compiler",
+      "version": "clang version 21.1.8",
+      "sourceIdentity": "nix-store: /nix/store/p4p0xav61l9airp7fzr9b0d3l2hhd70g-oxyflut-clang-with-cc; derivation: oxyflut-clang-with-cc; version: 21.1.8",
+      "hostTriple": "x86_64-unknown-linux-gnu",
+      "licenseId": "Apache-2.0 WITH LLVM-exception",
+      "executablePath": "/nix/store/p4p0xav61l9airp7fzr9b0d3l2hhd70g-oxyflut-clang-with-cc/bin/cc",
+      "sha256": "9da8f78a013efc3b01ddb285e7b37cff0e33c2eebd0d1b68226726c6af9c065b"
+    },
+    {
+      "name": "cxx-compiler",
+      "version": "clang version 21.1.8",
+      "sourceIdentity": "nix-store: /nix/store/p4p0xav61l9airp7fzr9b0d3l2hhd70g-oxyflut-clang-with-cc; derivation: oxyflut-clang-with-cc; version: 21.1.8",
+      "hostTriple": "x86_64-unknown-linux-gnu",
+      "licenseId": "Apache-2.0 WITH LLVM-exception",
+      "executablePath": "/nix/store/p4p0xav61l9airp7fzr9b0d3l2hhd70g-oxyflut-clang-with-cc/bin/c++",
+      "sha256": "d6052c5763284caaed3d64e3d6d8f777f18ebbf76cffcca1994ba109740fbc00"
+    },
+    {
+      "name": "c-header-checker",
+      "version": "clang version 21.1.8",
+      "sourceIdentity": "nix-store: /nix/store/p4p0xav61l9airp7fzr9b0d3l2hhd70g-oxyflut-clang-with-cc; derivation: oxyflut-clang-with-cc; version: 21.1.8",
+      "hostTriple": "x86_64-unknown-linux-gnu",
+      "licenseId": "Apache-2.0 WITH LLVM-exception",
+      "executablePath": "/nix/store/p4p0xav61l9airp7fzr9b0d3l2hhd70g-oxyflut-clang-with-cc/bin/clang",
+      "sha256": "9da8f78a013efc3b01ddb285e7b37cff0e33c2eebd0d1b68226726c6af9c065b"
+    },
+    {
+      "name": "linker",
+      "version": "LLD 21.1.8 (compatible with GNU linkers)",
+      "sourceIdentity": "nix-store: /nix/store/046k2nb63mdrjza2igyv9dzg5mlbmjv4-lld-21.1.8; derivation: lld-21.1.8; version: 21.1.8",
+      "hostTriple": "x86_64-unknown-linux-gnu",
+      "licenseId": "Apache-2.0 WITH LLVM-exception",
+      "executablePath": "/nix/store/046k2nb63mdrjza2igyv9dzg5mlbmjv4-lld-21.1.8/bin/ld.lld",
+      "sha256": "875171c27d750149aad0367baf63b6fdd7e3efeaed01eca10f0915fda8e84a0d"
+    },
+    {
+      "name": "archiver",
+      "version": "GNU ar (GNU Binutils) 2.46",
+      "sourceIdentity": "nix-store: /nix/store/j5rd8xm5zqgzcb0l19942ms7r96q0hip-binutils-wrapper-2.46; derivation: binutils-wrapper-2.46; version: 2.46",
+      "hostTriple": "x86_64-unknown-linux-gnu",
+      "licenseId": "GPL-3.0-or-later",
+      "executablePath": "/nix/store/j5rd8xm5zqgzcb0l19942ms7r96q0hip-binutils-wrapper-2.46/bin/ar",
+      "sha256": "dd90cae6ee7029d967abef5c6032e56a1a6cb5a68664602eee4afdb503c48172"
+    },
+    {
+      "name": "symbol-inspector",
+      "version": "GNU nm (GNU Binutils) 2.46",
+      "sourceIdentity": "nix-store: /nix/store/j5rd8xm5zqgzcb0l19942ms7r96q0hip-binutils-wrapper-2.46; derivation: binutils-wrapper-2.46; version: 2.46",
+      "hostTriple": "x86_64-unknown-linux-gnu",
+      "licenseId": "GPL-3.0-or-later",
+      "executablePath": "/nix/store/j5rd8xm5zqgzcb0l19942ms7r96q0hip-binutils-wrapper-2.46/bin/nm",
+      "sha256": "e60fdda39285a8abd07680f3f7ac3d858095924c3591b90bf5018770158bbeb6"
+    },
+    {
+      "name": "bindgen",
+      "version": "bindgen 0.72.1",
+      "sourceIdentity": "nix-store: /nix/store/bjglapck78yxncsn63ijabd5nlkpasc6-rust-bindgen-0.72.1; derivation: rust-bindgen-0.72.1; version: 0.72.1",
+      "hostTriple": "x86_64-unknown-linux-gnu",
+      "licenseId": "BSD-3-Clause",
+      "executablePath": "/nix/store/bjglapck78yxncsn63ijabd5nlkpasc6-rust-bindgen-0.72.1/bin/bindgen",
+      "sha256": "59ac90771d95373ef90ca6793a3f4b873cd7ff2ea46c888235626a56c5d465b4"
+    },
+    {
+      "name": "cbindgen",
+      "version": "cbindgen 0.29.4",
+      "sourceIdentity": "nix-store: /nix/store/2wjxpw2zzyw3j6zyr2dhq9dg61s65hkp-rust-cbindgen-0.29.4; derivation: rust-cbindgen-0.29.4; version: 0.29.4",
+      "hostTriple": "x86_64-unknown-linux-gnu",
+      "licenseId": "MPL-2.0",
+      "executablePath": "/nix/store/2wjxpw2zzyw3j6zyr2dhq9dg61s65hkp-rust-cbindgen-0.29.4/bin/cbindgen",
+      "sha256": "418caa02784a9040862539ea471b821828dc3b736a801d86f0d000cf1b839459"
+    },
+    {
+      "name": "prettier",
+      "version": "3.9.6",
+      "sourceIdentity": "nix-store: /nix/store/rlyada1vki3f0yxn56m59b9ic15gxwq6-prettier-3.9.6; derivation: prettier-3.9.6; version: 3.9.6",
+      "hostTriple": "x86_64-unknown-linux-gnu",
       "licenseId": "MIT",
-      "executablePath": "tools/missing",
-      "sha256": "306c6ca7407560340797866e077e053627ad409277d1b9da58106fce4cf717cb"
+      "executablePath": "/nix/store/rlyada1vki3f0yxn56m59b9ic15gxwq6-prettier-3.9.6/bin/prettier",
+      "sha256": "d290d91c8844b248d4ac888808b3ad79caaaa074c6ecd763856c96962f7a2cf8"
+    },
+    {
+      "name": "rustfmt",
+      "version": "rustfmt 1.9.0-stable (88d9e12ae1 2026-08-18)",
+      "sourceIdentity": "rustup-toolchain: 1.98.0-x86_64-unknown-linux-gnu; commit: 88d9e12ae178fab0fb5cc050a94da85685d449ea",
+      "hostTriple": "x86_64-unknown-linux-gnu",
+      "licenseId": "MIT OR Apache-2.0",
+      "executablePath": "/home/oscar/.rustup/toolchains/1.98.0-x86_64-unknown-linux-gnu/bin/rustfmt",
+      "sha256": "5005cdcd39ded526dca8fa6ccd716d42fc7da54469034e055dbf54649bec7877"
+    },
+    {
+      "name": "rustc",
+      "version": "rustc 1.98.0 (88d9e12ae 2026-08-18)",
+      "sourceIdentity": "rustup-toolchain: 1.98.0-x86_64-unknown-linux-gnu; commit: 88d9e12ae178fab0fb5cc050a94da85685d449ea",
+      "hostTriple": "x86_64-unknown-linux-gnu",
+      "licenseId": "MIT OR Apache-2.0",
+      "executablePath": "/home/oscar/.rustup/toolchains/1.98.0-x86_64-unknown-linux-gnu/bin/rustc",
+      "sha256": "3690cc576ede140504698405d5d8fa3826aaadbe71699c6c4ed0a565d6f493e2"
     }
   ],
   "preImplementationKnownUnknowns": [],

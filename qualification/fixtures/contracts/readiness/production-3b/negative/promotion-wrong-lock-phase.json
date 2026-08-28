@@ -19,11 +19,11 @@
     "selectedCandidate": "focused",
     "selectionDecision": {
       "path": "evidence/selection-decision.json",
-      "sha256": "7e38224310f8a071370ccc01dea79e62c1264415a6174e39307b24eaf92a76b6"
+      "sha256": "a93dd1d089317d947a9826dcbcd663a8310e43ca508fcaebb99efd66434f7b1e"
     },
     "selectedCandidateQualification": {
       "path": "evidence/selected-qualification.json",
-      "sha256": "71cca4b4e644c07c4e45869401d4483c031f2003f0328451aa616dbf8624c68e"
+      "sha256": "aeb2745597b13bce82a1bf60417e85d47afa43d71397cb44f1da09423c2d41d2"
     },
     "layoutQualification": {
       "path": "evidence/layoutQualification.txt",
@@ -31,7 +31,7 @@
     },
     "acceptedAdr0010": {
       "path": ".constitution/tech-spec/adrs/ADR-0010-production-substrate.md",
-      "sha256": "a3209ed7a0f22792ea24b1ad71316400d613e1e0381006677d3476498b670aa1"
+      "sha256": "def9c6dc6c04476562b15fb7ff6e3cfcdc1486fa1e05c7df121db553ec10b136"
     },
     "finalContractSet": {
       "path": "evidence/finalContractSet.txt",
@@ -43,7 +43,7 @@
     },
     "allTier1Results": {
       "path": "evidence/all-tier1-results.json",
-      "sha256": "71cca4b4e644c07c4e45869401d4483c031f2003f0328451aa616dbf8624c68e"
+      "sha256": "aeb2745597b13bce82a1bf60417e85d47afa43d71397cb44f1da09423c2d41d2"
     },
     "losingCandidateRemoval": {
       "path": "evidence/losingCandidateRemoval.txt",
@@ -55,7 +55,7 @@
     },
     "releaseQualification": {
       "path": "evidence/release-qualification.json",
-      "sha256": "5c804526a35ba530846175449d0143c8816fbe378f0fb40dcb3e02aebe429e58"
+      "sha256": "c3a1469acc6626addacfb8fd0f022adc50d60e8e1964f597f43bd137fd453d6b"
     }
   }
 }
