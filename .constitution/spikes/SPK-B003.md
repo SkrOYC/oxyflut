@@ -7,10 +7,11 @@
 - **Round-4 correction clock start / stop:** 2026-08-28T17:54:56Z / 2026-08-28T18:06:35Z.
 - **Round-5 correction clock start / stop:** 2026-08-28T18:14:44Z / 2026-08-28T18:23:58Z.
 - **Round-6 correction clock start / stop:** 2026-08-28T18:31:37Z / 2026-08-28T18:42:14Z.
+- **Round-7 correction clock start / stop:** 2026-08-28T19:08:02Z / 2026-08-28T19:17:48Z.
 
 ## Question
 
-- **Decision this spike produces:** Freeze source-level Wayland core, shell, scale, text-input, clipboard, and presentation protocol floors from the pinned XML. Keep Ubuntu reference-session advertisement and behavior as a gating KU until P1 records the selected session's package lock, registry, and complete P0-operation transcript. Freeze GTK 4.20.4 and AT-SPI 2.60.6 source API floors, but retain their reference-package and candidate-behavior gates. Use writable `GtkIMContext` input-purpose and input-hints properties, and convert documented UTF-8 byte cursor positions explicitly. Use Orca with AT-SPI 2 as the Linux assistive-technology test client. Freeze documented AT-SPI character offsets as Unicode scalar boundaries, but retain scalar-to-`TextIndex::Logical` conversion, text, caret, selection, and editable-operation behavior as gating KUs. Select the Linux DRM `drm:drm_vblank_event` tracepoint as P4's prospective trace candidate, while retaining Ubuntu kernel identity, live schema and call-site semantics, independence, source access, output attribution, and clock-calibration and causal-matching tolerance as gating KUs. Retain the complete-map, routing, and recovery gates until their bounded reference probes pass.
+- **Decision this spike produces:** Freeze source-level Wayland core, shell, scale, text-input, clipboard, and presentation protocol floors from the pinned XML. Keep Ubuntu reference-session advertisement and behavior as a gating KU until P1 records the selected session's package lock, registry, and complete P0-operation transcript. Treat the `gtk4` crate `v4_20` feature in `stack.md` as the separate GTK API-binding ceiling, and use the audited Ubuntu `libgtk-4-1` `4.22.2+ds-1ubuntu1` package identity for both the Wayland and X11 reference inputs. Retain the Wayland session package-manifest and candidate-behavior gates. Freeze AT-SPI 2.60.6 source API floors. Use writable `GtkIMContext` input-purpose and input-hints properties, and convert documented UTF-8 byte cursor positions explicitly. Use Orca with AT-SPI 2 as the Linux assistive-technology test client. Freeze documented AT-SPI character offsets as Unicode scalar boundaries, but retain scalar-to-`TextIndex::Logical` conversion, text, caret, selection, and editable-operation behavior as gating KUs. Select the Linux DRM `drm:drm_vblank_event` tracepoint as P4's prospective trace candidate, while retaining Ubuntu kernel identity, live schema and call-site semantics, independence, source access, output attribution, and clock-calibration and causal-matching tolerance as gating KUs. Retain the complete-map, routing, and recovery gates until their bounded reference probes pass.
 
 Table 1 answers each Wayland baseline question. KK is a verified fact. KU (gating) is a named unresolved gate. No row is not applicable.
 
@@ -21,10 +22,10 @@ Table 1. Wayland baseline decisions
 | Reference compositor, session, and package lock | [Ubuntu 26.04 LTS release notes](https://documentation.ubuntu.com/release-notes/26.04/) establish Ubuntu 26.04 LTS, but the fetched release-note content names no compositor, session, package version, or package-lock digest. The non-reference host is NixOS 26.05 with Hyprland 0.55.4, so its registry cannot establish Ubuntu compositor behavior. | KU (gating) | P1: On the selected Ubuntu 26.04 x86-64 Wayland session, record `gnome-shell --version` or the selected compositor's version command, `dpkg-query -W` for the compositor, `gtk4`, `wayland-protocols`, and `at-spi2-core`, the package-manifest SHA-256, a filtered `wayland-info` registry, and the mechanically derived 97-member deterministic P1 checklist below, plus the four retained event gates. Run a 120-frame visible-surface probe with `WAYLAND_DEBUG=client` that binds every required global, creates every required non-global object, and emits every checklist member. The script parses the preserved floor derivation, so P1 must regenerate the checklist rather than maintain a manual operation list. The fixture uses `wl_pointer.set_cursor`, not `cursor-shape-v1`. Expected output: one named compositor version, one package-lock digest, negotiated versions for every required interface, the generated checklist, and a session-specific transcript covering every checklist member. |
 | Wayland core object protocol floors | The pinned [Wayland core XML](https://raw.githubusercontent.com/wayland-mirror/wayland/1ab6b693b16e1d9734496fe60c8a6ed277e4dec3/protocol/wayland.xml) establishes these operation-derived floors: `wl_compositor` 1, `wl_surface` 1, `wl_callback` 1, `wl_seat` 5, `wl_pointer` 5, `wl_keyboard` 4, `wl_touch` 3, `wl_output` 3, `wl_data_device_manager` 1, `wl_data_device` 2, `wl_data_offer` 1, and `wl_data_source` 1. The preserved XML parser output names every required request and event. The P0 completeness derivation now includes per-view and protocol-object teardown: `wl_surface.destroy`; `wl_seat.release`; `wl_pointer.release`; `wl_keyboard.release`; `wl_touch.release`; `wl_output.release`; and `wl_data_device.release`, as well as cursor, keyboard keymap and repeat, touch, output geometry and scale, clipboard selection and offers, and text-input candidate geometry. `wl_seat.release` raises its floor to 5; `wl_touch.release` and `wl_output.release` raise their floors to 3; and `wl_data_device.release` raises its floor to 2. `wl_pointer` 5 still supplies `axis_source`, `axis_stop`, and `frame`; `wl_keyboard` 4 still supplies `repeat_info`. | KK | Not required for the source-level floors. P1 must bind each required global and create every listed non-global object at the listed floor. |
 | Wayland shell, scale, IME, and presentation protocol floors | The pinned [xdg-shell](https://raw.githubusercontent.com/wayland-mirror/wayland-protocols/d5aed4e4903a77aefaef03359d1ffdc0d5093456/stable/xdg-shell/xdg-shell.xml), [viewporter](https://raw.githubusercontent.com/wayland-mirror/wayland-protocols/d5aed4e4903a77aefaef03359d1ffdc0d5093456/stable/viewporter/viewporter.xml), [fractional-scale](https://raw.githubusercontent.com/wayland-mirror/wayland-protocols/d5aed4e4903a77aefaef03359d1ffdc0d5093456/staging/fractional-scale/fractional-scale-v1.xml), [text-input-v3](https://raw.githubusercontent.com/wayland-mirror/wayland-protocols/d5aed4e4903a77aefaef03359d1ffdc0d5093456/unstable/text-input/text-input-unstable-v3.xml), and version-1 [presentation-time](https://raw.githubusercontent.com/wayland-mirror/wayland-protocols/37a1560cf6981a11d44dd200d9409d09b4f0074e/stable/presentation-time/presentation-time.xml) XML establish floor 1 for `xdg_wm_base`, `xdg_surface`, `xdg_toplevel`, `wp_viewporter`, `wp_viewport`, `wp_fractional_scale_manager_v1`, `wp_fractional_scale_v1`, `zwp_text_input_manager_v3`, `zwp_text_input_v3`, `wp_presentation`, and `wp_presentation_feedback`. The required operations cover toplevel configure acknowledgement, fractional-scale destination sizing, IME surrounding text, candidate geometry through `zwp_text_input_v3.set_cursor_rectangle`, commits, and per-commit `feedback`, `sync_output`, `presented`, or `discarded`; they also cover `xdg_wm_base.destroy`, `xdg_surface.destroy`, `xdg_toplevel.destroy`, `wp_viewporter.destroy`, `wp_viewport.destroy`, `wp_fractional_scale_manager_v1.destroy`, `wp_fractional_scale_v1.destroy`, `zwp_text_input_manager_v3.destroy`, `zwp_text_input_v3.disable`, `zwp_text_input_v3.destroy`, and `wp_presentation.destroy`. Version 2 changes only the variable-refresh `refresh` contract, which the harness does not consume. | KK | Not required for the source-level floors. P1 must bind each required manager global, create its listed non-global objects, and verify the `wp_presentation` transcript. |
-| GTK 4.20.4 source API floor | The official [GTK 4.20 source index](https://download.gnome.org/sources/gtk/4.20/) publishes GTK 4.20.4. The immutable [GTK 4.20.4 `gtkenums.h`](https://gitlab.gnome.org/GNOME/gtk/-/raw/4.20.4/gtk/gtkenums.h) source defines `GTK_INPUT_HINT_PRIVATE` and describes it as a request not to update personalized data. The preserved source SHA-256 is `c2ef75dc175e7d8b6a28c1ace0e45898a0f2f4b14454b980fd310e545eb485c9`. | KK | Not required for the source API floor. P1 must lock the Ubuntu package that supplies it. |
-| GTK release floor on the reference | The GTK 4.20.4 source floor does not identify the Ubuntu package revision, package digest, or session backend. | KU (gating) | P1: Record the installed `gtk4` package version and immutable package-manifest digest on the Ubuntu reference. Accept this gate only when it is GTK 4.20.4 or a separately reviewed replacement that exposes the cited API set. Expected output: package version, package origin, and digest. |
+| GTK 4.20.4 source API-binding ceiling | The official [GTK 4.20 source index](https://download.gnome.org/sources/gtk/4.20/) publishes GTK 4.20.4. The immutable [GTK 4.20.4 `gtkenums.h`](https://gitlab.gnome.org/GNOME/gtk/-/raw/4.20.4/gtk/gtkenums.h) source defines `GTK_INPUT_HINT_PRIVATE` and describes it as a request not to update personalized data. The preserved source SHA-256 is `c2ef75dc175e7d8b6a28c1ace0e45898a0f2f4b14454b980fd310e545eb485c9`. This source fact supports the `gtk4` crate `v4_20` binding ceiling in `stack.md`; it is not the Ubuntu reference-package identity. | KK | Not required for the documented API-binding ceiling. P1 must lock the Ubuntu package that supplies the Wayland session. |
+| GTK reference package and Wayland session lock | [SPK-B004's Ubuntu source-package audit](SPK-B004.md#ubuntu-source-package-audit) establishes the shared Ubuntu reference package identity as `libgtk-4-1` `4.22.2+ds-1ubuntu1`, with source-descriptor checksums and a patch audit. The official [Ubuntu package page](https://packages.ubuntu.com/resolute/libgtk-4-1) identifies the same binary package and version. That identity applies to both Linux sessions; the Wayland session still has no installed-package manifest digest or backend capture. The `v4_20` crate feature is a separate API-binding ceiling and does not require the reference package to be 4.20.4. | KU (gating) | P1: On the selected Ubuntu Wayland session, record `dpkg-query -W libgtk-4-1`, the package origin, and the immutable package-manifest digest. Accept this gate only when the installed package is `libgtk-4-1` `4.22.2+ds-1ubuntu1` and the manifest binds that package to the selected session. Expected output: package version, origin, manifest digest, and session identifier. |
 | `GtkIMContext` surrounding text and input-purpose mechanism | [`set_surrounding`](https://docs.gtk.org/gtk4/method.IMContext.set_surrounding.html) takes UTF-8 text and a byte index for the cursor. [`input-purpose`](https://docs.gtk.org/gtk4/property.IMContext.input-purpose.html) and [`input-hints`](https://docs.gtk.org/gtk4/property.IMContext.input-hints.html) are writable properties. [`GtkInputPurpose`](https://docs.gtk.org/gtk4/enum.InputPurpose.html) supplies typed purpose values, including `PASSWORD` and `PIN`; [`GtkInputHints.PRIVATE`](https://docs.gtk.org/gtk4/flags.InputHints.html) requests that an input method not update personalized data. These are properties, not a compositor numeric negotiation. | KK | Not required. P2 verifies the selected input method's behavior rather than the documented interface shape. |
-| Complete IME transcript and non-cursor operation units | GTK documents [`delete-surrounding`](https://docs.gtk.org/gtk4/signal.IMContext.delete-surrounding.html) arguments as character offsets and counts, but it does not state the scalar, grapheme, or another unit in the fetched API page. No selected Ubuntu IM module or candidate transcript exists. The report therefore does not infer a unit for deletion, preedit cursor position, or replacement behavior. | KU (gating) | P2: On the P1 session, use an instrumented noncandidate GTK 4.20.4 text widget and the ASCII, multibyte, combining, bidirectional, CJK-composition, replacement, candidate-geometry, and secure-field corpus. Log every `preedit-*`, `commit`, `retrieve-surrounding`, `delete-surrounding`, `focus-*`, and `reset` callback with typed indices. Expected output: a transcript that identifies every operation's unit and round trips each valid boundary. |
+| Complete IME transcript and non-cursor operation units | GTK documents [`delete-surrounding`](https://docs.gtk.org/gtk4/signal.IMContext.delete-surrounding.html) arguments as character offsets and counts, but it does not state the scalar, grapheme, or another unit in the fetched API page. No selected Ubuntu IM module or candidate transcript exists. The report therefore does not infer a unit for deletion, preedit cursor position, or replacement behavior. | KU (gating) | P2: On the P1 session, use an instrumented noncandidate GTK 4.22.2 text widget from the locked `libgtk-4-1` `4.22.2+ds-1ubuntu1` package and the ASCII, multibyte, combining, bidirectional, CJK-composition, replacement, candidate-geometry, and secure-field corpus. Log every `preedit-*`, `commit`, `retrieve-surrounding`, `delete-surrounding`, `focus-*`, and `reset` callback with typed indices. Expected output: a transcript that identifies every operation's unit and round trips each valid boundary. |
 | Linux assistive-technology selection | Select [Orca](https://help.gnome.org/users/orca/stable/) as the required screen-reader test client and AT-SPI 2 as its inspection and action transport. [GNOME's AT-SPI development documentation](https://gnome.pages.gitlab.gnome.org/at-spi2-core/devel-docs/atspi-python-stack.html) states that Orca builds a view of an application's accessible-object tree through `libatspi` and `pyatspi2`. | KK | Not required. P3 establishes the Ubuntu package lock and candidate behavior. |
 | AT-SPI API floor | The official [at-spi2-core 2.60.6 release notes](https://gitlab.gnome.org/GNOME/at-spi2-core/-/raw/2.60.6/NEWS) identify release 2.60.6. The immutable [AT-SPI 2.60.6 `Text.xml`](https://gitlab.gnome.org/GNOME/at-spi2-core/-/raw/2.60.6/xml/Text.xml) defines `CharacterCount`, `GetText`, `SetCaretOffset`, and selections. It does not define editable text. The immutable [AT-SPI 2.60.6 `EditableText.xml`](https://gitlab.gnome.org/GNOME/at-spi2-core/-/raw/2.60.6/xml/EditableText.xml) defines `SetTextContents`, `InsertText`, `CopyText`, `CutText`, `DeleteText`, and `PasteText`. Freeze 2.60.6 as the AT-SPI source API floor. The preserved `Text.xml` SHA-256 is `5c2d5049d2e427d630ca1ae288d0abe321f39c683336cb8a1373f41c4414d614`; the preserved `EditableText.xml` SHA-256 is `2ea1b94822f19b0b00c80b918b89833cfb67d1eeef99d69b8421d0e6f40920ff`. | KK | Not required for the source API floor. P3 must lock the Ubuntu package and run the behavior transcript. |
 | AT-SPI documented text-offset unit | The normative [AT-SPI 2.60.6 `Text.xml`](https://gitlab.gnome.org/GNOME/at-spi2-core/-/raw/2.60.6/xml/Text.xml) defines `CharacterCount` as a number of characters that can differ from fetched UTF-8 byte count. It defines `GetText` end offsets as the first character past the range, while the UTF-8 result bytes can exceed those offsets. It also states that `GetCharacterAtOffset` returns "the UCS-4 unicode code point of the given character." The [AT-SPI 2.60.6 `EditableText.xml`](https://gitlab.gnome.org/GNOME/at-spi2-core/-/raw/2.60.6/xml/EditableText.xml) defines edit positions as character offsets that can differ from UTF-8 byte offsets. Therefore the documented AT-SPI text, caret, selection, and editable-position unit is a Unicode scalar boundary, not a UTF-8 byte, UTF-16 unit, or grapheme boundary. The independent conversion fixture verifies scalar, UTF-8, UTF-16, and grapheme-boundary mechanics, not AT-SPI behavior or `TextIndex::Logical` conversion. | KK | Not required for the documented unit or scalar conversion mechanics. The next rows retain the representation and behavior gates. |
@@ -49,7 +50,7 @@ Table 1. Wayland baseline decisions
 
 ## Codebase baseline
 
-- **State today:** Stage 3 pins Ubuntu 26.04 LTS, GTK 4.20, `GtkIMContext`, AT-SPI families, `GdkFrameClock`, and `wp_presentation` feedback. It leaves the reference compositor, package lock, complete candidate maps, independent meter, routing traces, and injectable recovery gates unresolved.
+- **State today:** Stage 3 pins Ubuntu 26.04 LTS, the `gtk4` crate `v4_20` API-binding ceiling, `GtkIMContext`, AT-SPI families, `GdkFrameClock`, and `wp_presentation` feedback. SPK-B004 audits `libgtk-4-1` `4.22.2+ds-1ubuntu1` as the shared Ubuntu GTK package input for X11 and Wayland. Stage 3 still leaves the selected Wayland session's package-manifest lock, compositor, complete candidate maps, independent meter, routing traces, and injectable recovery gates unresolved.
 - **Discovered constraints:** A Wayland registry reports interfaces, not reference-compositor timing behavior. `wp_presentation` feedback follows a submitted content update. `GdkFrameClock` can use a timer. Each allocation needs separate evidence even when both use the same host protocol.
 
 ### Preserved non-reference probes
@@ -1106,7 +1107,7 @@ $ exit "$status"
 
 ## Recommendation
 
-- **Chosen option:** Use a mix of A, B, and C. Freeze the source-level core, shell, scale, text-input, clipboard, presentation, GTK, and AT-SPI floors from cited upstream sources. Use Orca and AT-SPI 2.60.6 with documented Unicode-scalar offsets for the common accessibility baseline. Require the Option B DRM trace design for P4 only after its Ubuntu kernel identity, live format, and call-site semantics are evidenced, and retain Option C for every unproven reference-session and candidate-specific row, including the calibration acceptance bound until reviewed Stage 3 freezes it before candidate measurements.
+- **Chosen option:** Use a mix of A, B, and C. Freeze the source-level core, shell, scale, text-input, clipboard, presentation, and AT-SPI floors from cited upstream sources. Apply the shared Ubuntu `libgtk-4-1` `4.22.2+ds-1ubuntu1` package identity to both Linux sessions while retaining the `gtk4` crate `v4_20` API-binding ceiling as a separate constraint. Use Orca and AT-SPI 2.60.6 with documented Unicode-scalar offsets for the common accessibility baseline. Require the Option B DRM trace design for P4 only after its Ubuntu kernel identity, live format, and call-site semantics are evidenced, and retain Option C for every unproven reference-session and candidate-specific row, including the calibration acceptance bound until reviewed Stage 3 freezes it before candidate measurements.
 - **Why it fits:** The corrected source selection contains 101 operations, including foundational registry and synchronization, creation, cursor, keyboard, touch, output, candidate geometry, clipboard source, offer, selection, and client-issued release and destroy operations needed for per-view lifecycle and teardown. It excludes operating-system drag-and-drop because the PRD does not make it P0. The mechanical parser makes 97 operations the deterministic P1 transcript and retains four compositor-specific events as separate KUs. Presentation version 1 has acknowledgement and output-association operations. Version 2 only changes the variable-refresh `refresh` obligation, which the harness does not consume. Retaining KUs for server advertisement, behavior, and logical-index representation prevents source facts from becoming compositor or candidate claims. The DRM trace's independence from candidate callback streams remains unresolved until P4 proves it, along with Ubuntu kernel identity, live schema and call-site semantics, trace access, pipe-to-output attribution, P4C's predeclared clock-characterization calculation and the reviewed Stage 3 maximum-uncertainty decision made before candidate measurements. `CON-FRM-001` remains the separately applied measured interval-error gate.
 - **Rejected options:** Reject a nominal refresh-rate timer, a harness-owned `wl_surface.frame` callback as an independent meter, `wp_presentation` feedback as an opportunity source, a protocol-global list as compositor behavior, an unspecified assistive technology, a scalar-to-logical equivalence assumption, a global IME index unit for every operation, and a candidate map inferred from GTK documentation.
 - **Sensitive-field rule:** Set `GtkInputPurpose` to `PASSWORD` or `PIN` as applicable and set `GtkInputHints.PRIVATE`. Continue to provide only protocol-required redacted surrounding context and never emit raw text to diagnostics. GTK describes the hint as a request, not a privacy guarantee; P2 and P3 must verify the redaction path.
@@ -1115,18 +1116,56 @@ $ exit "$status"
 
 Stage 3 can make the following exact edits without changing product capabilities or architecture boundaries:
 
-- `.constitution/tech-spec/contracts/platform-contracts.json` -> `environments.wayland.protocols`: replace the array with this schema-valid JSON value. Each `kk` entry has a non-null version and evidence; P1 retains server advertisement and behavior as a separate gate.
+- `.constitution/tech-spec/contracts/platform-contracts.json` -> `environments.wayland.protocols`: OXY-D001 must apply this replacement only after the preservation step commits all nine regular fixture files and replaces every exact `<to-be-computed-by-preservation-step>` token with the streamed SHA-256 of the associated fixture. The template is syntactically valid JSON, but it is deliberately not schema-valid or digest-validator-valid until that step completes. Each eventual `kk` entry has a non-null version and local evidence; P1 retains server advertisement and behavior as a separate gate.
+
+The Wayland GTK row uses the same Ubuntu `libgtk-4-1` `4.22.2+ds-1ubuntu1` package identity as SPK-B004's X11 row because both reference sessions use that package. This is not a change to the `gtk4` crate `v4_20` API-binding ceiling in `stack.md`. OXY-D001 must reconcile both platform rows to that package identity while preserving their separately captured fixture paths.
+
+The capture map covers all 26 evidence objects in the template. The URLs are canonical upstream sources and were fetched successfully for this correction. No Jina-proxied body digest is used: the preservation step must write the direct canonical-source response to the named repository fixture and hash that regular file.
+
+| Evidence objects | Fixture path | Canonical source URL |
+| :-- | :-- | :-- |
+| `GTK` (1) | `qualification/fixtures/external-contracts/wayland/s01-ubuntu-libgtk-4-1.html` | https://packages.ubuntu.com/resolute/libgtk-4-1 |
+| `wl_compositor`, `wl_surface`, `wl_callback`, `wl_seat`, `wl_pointer`, `wl_keyboard`, `wl_touch`, `wl_output`, `wl_data_device_manager`, `wl_data_device`, `wl_data_offer`, `wl_data_source` (12) | `qualification/fixtures/external-contracts/wayland/s02-wayland-core.xml` | https://raw.githubusercontent.com/wayland-mirror/wayland/1ab6b693b16e1d9734496fe60c8a6ed277e4dec3/protocol/wayland.xml |
+| `xdg_wm_base`, `xdg_surface`, `xdg_toplevel` (3) | `qualification/fixtures/external-contracts/wayland/s03-xdg-shell.xml` | https://raw.githubusercontent.com/wayland-mirror/wayland-protocols/d5aed4e4903a77aefaef03359d1ffdc0d5093456/stable/xdg-shell/xdg-shell.xml |
+| `wp_viewporter`, `wp_viewport` (2) | `qualification/fixtures/external-contracts/wayland/s04-viewporter.xml` | https://raw.githubusercontent.com/wayland-mirror/wayland-protocols/d5aed4e4903a77aefaef03359d1ffdc0d5093456/stable/viewporter/viewporter.xml |
+| `wp_fractional_scale_manager_v1`, `wp_fractional_scale_v1` (2) | `qualification/fixtures/external-contracts/wayland/s05-fractional-scale-v1.xml` | https://raw.githubusercontent.com/wayland-mirror/wayland-protocols/d5aed4e4903a77aefaef03359d1ffdc0d5093456/staging/fractional-scale/fractional-scale-v1.xml |
+| `zwp_text_input_manager_v3`, `zwp_text_input_v3` (2) | `qualification/fixtures/external-contracts/wayland/s06-text-input-unstable-v3.xml` | https://raw.githubusercontent.com/wayland-mirror/wayland-protocols/d5aed4e4903a77aefaef03359d1ffdc0d5093456/unstable/text-input/text-input-unstable-v3.xml |
+| `wp_presentation`, `wp_presentation_feedback` (2) | `qualification/fixtures/external-contracts/wayland/s07-presentation-time-v1.xml` | https://raw.githubusercontent.com/wayland-mirror/wayland-protocols/37a1560cf6981a11d44dd200d9409d09b4f0074e/stable/presentation-time/presentation-time.xml |
+| `AT-SPI` `Text.xml` (1) | `qualification/fixtures/external-contracts/wayland/s08-atspi-2.60.6-text.xml` | https://gitlab.gnome.org/GNOME/at-spi2-core/-/raw/2.60.6/xml/Text.xml |
+| `AT-SPI` `EditableText.xml` (1) | `qualification/fixtures/external-contracts/wayland/s09-atspi-2.60.6-editable-text.xml` | https://gitlab.gnome.org/GNOME/at-spi2-core/-/raw/2.60.6/xml/EditableText.xml |
+
+To preserve the fixtures, OXY-D001 must create `qualification/fixtures/external-contracts/wayland/`, fetch each canonical URL with `curl --fail --location --max-time 60 --output FIXTURE URL`, require `test -f FIXTURE` and `test ! -L FIXTURE`, calculate `sha256sum FIXTURE`, replace every matching token in the template with that output, commit the regular files, and run the contract digest validator. The validator then requires repository-relative paths, regular files, and streamed SHA-256 matches.
+
+The following trimmed Round-7 transport output records successful source fetches only. The Jina responses are not fixture bytes and their digests are intentionally absent. The source-package descriptor rechecks SPK-B004's package-audit input; it is not an additional object in this 26-object template.
+
+```text
+$ fetch_jina ubuntu-libgtk-4-1.html https://packages.ubuntu.com/resolute/libgtk-4-1; fetch_jina gtk4-source.dsc https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/gtk4/4.22.2+ds-1ubuntu1/gtk4_4.22.2+ds-1ubuntu1.dsc; fetch_jina gtk-gtkenums.h https://gitlab.gnome.org/GNOME/gtk/-/raw/4.20.4/gtk/gtkenums.h
+ubuntu-libgtk-4-1.html http=200 bytes=7822 canonical=https://packages.ubuntu.com/resolute/libgtk-4-1
+gtk4-source.dsc http=200 bytes=4501 canonical=https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/gtk4/4.22.2+ds-1ubuntu1/gtk4_4.22.2+ds-1ubuntu1.dsc
+gtk-gtkenums.h http=200 bytes=71988 canonical=https://gitlab.gnome.org/GNOME/gtk/-/raw/4.20.4/gtk/gtkenums.h
+$ fetch_raw_github wayland.xml https://raw.githubusercontent.com/wayland-mirror/wayland/1ab6b693b16e1d9734496fe60c8a6ed277e4dec3/protocol/wayland.xml; fetch_raw_github xdg-shell.xml https://raw.githubusercontent.com/wayland-mirror/wayland-protocols/d5aed4e4903a77aefaef03359d1ffdc0d5093456/stable/xdg-shell/xdg-shell.xml; fetch_raw_github viewporter.xml https://raw.githubusercontent.com/wayland-mirror/wayland-protocols/d5aed4e4903a77aefaef03359d1ffdc0d5093456/stable/viewporter/viewporter.xml
+wayland.xml http=200 bytes=151742 canonical=https://raw.githubusercontent.com/wayland-mirror/wayland/1ab6b693b16e1d9734496fe60c8a6ed277e4dec3/protocol/wayland.xml
+xdg-shell.xml http=200 bytes=61089 canonical=https://raw.githubusercontent.com/wayland-mirror/wayland-protocols/d5aed4e4903a77aefaef03359d1ffdc0d5093456/stable/xdg-shell/xdg-shell.xml
+viewporter.xml http=200 bytes=8133 canonical=https://raw.githubusercontent.com/wayland-mirror/wayland-protocols/d5aed4e4903a77aefaef03359d1ffdc0d5093456/stable/viewporter/viewporter.xml
+$ fetch_raw_github fractional-scale-v1.xml https://raw.githubusercontent.com/wayland-mirror/wayland-protocols/d5aed4e4903a77aefaef03359d1ffdc0d5093456/staging/fractional-scale/fractional-scale-v1.xml; fetch_raw_github text-input-unstable-v3.xml https://raw.githubusercontent.com/wayland-mirror/wayland-protocols/d5aed4e4903a77aefaef03359d1ffdc0d5093456/unstable/text-input/text-input-unstable-v3.xml; fetch_raw_github presentation-time-v1.xml https://raw.githubusercontent.com/wayland-mirror/wayland-protocols/37a1560cf6981a11d44dd200d9409d09b4f0074e/stable/presentation-time/presentation-time.xml
+fractional-scale-v1.xml http=200 bytes=4636 canonical=https://raw.githubusercontent.com/wayland-mirror/wayland-protocols/d5aed4e4903a77aefaef03359d1ffdc0d5093456/staging/fractional-scale/fractional-scale-v1.xml
+text-input-unstable-v3.xml http=200 bytes=21491 canonical=https://raw.githubusercontent.com/wayland-mirror/wayland-protocols/d5aed4e4903a77aefaef03359d1ffdc0d5093456/unstable/text-input/text-input-unstable-v3.xml
+presentation-time-v1.xml http=200 bytes=12642 canonical=https://raw.githubusercontent.com/wayland-mirror/wayland-protocols/37a1560cf6981a11d44dd200d9409d09b4f0074e/stable/presentation-time/presentation-time.xml
+$ fetch_jina Text.xml https://gitlab.gnome.org/GNOME/at-spi2-core/-/raw/2.60.6/xml/Text.xml; fetch_jina EditableText.xml https://gitlab.gnome.org/GNOME/at-spi2-core/-/raw/2.60.6/xml/EditableText.xml
+Text.xml http=200 bytes=25293 canonical=https://gitlab.gnome.org/GNOME/at-spi2-core/-/raw/2.60.6/xml/Text.xml
+EditableText.xml http=200 bytes=4421 canonical=https://gitlab.gnome.org/GNOME/at-spi2-core/-/raw/2.60.6/xml/EditableText.xml
+```
 
 ```json
 [
   {
     "name": "GTK",
-    "version": "4.20.4",
+    "version": "4.22.2+ds-1ubuntu1",
     "status": "kk",
     "evidence": [
       {
-        "path": "https://gitlab.gnome.org/GNOME/gtk/-/raw/4.20.4/gtk/gtkenums.h",
-        "sha256": "c2ef75dc175e7d8b6a28c1ace0e45898a0f2f4b14454b980fd310e545eb485c9"
+        "path": "qualification/fixtures/external-contracts/wayland/s01-ubuntu-libgtk-4-1.html",
+        "sha256": "<to-be-computed-by-preservation-step>"
       }
     ]
   },
@@ -1136,8 +1175,8 @@ Stage 3 can make the following exact edits without changing product capabilities
     "status": "kk",
     "evidence": [
       {
-        "path": "https://raw.githubusercontent.com/wayland-mirror/wayland/1ab6b693b16e1d9734496fe60c8a6ed277e4dec3/protocol/wayland.xml",
-        "sha256": "7eb8569529235c85e16d15612fc367da4538b7d515b13e32ec48ba0742c42610"
+        "path": "qualification/fixtures/external-contracts/wayland/s02-wayland-core.xml",
+        "sha256": "<to-be-computed-by-preservation-step>"
       }
     ]
   },
@@ -1147,8 +1186,8 @@ Stage 3 can make the following exact edits without changing product capabilities
     "status": "kk",
     "evidence": [
       {
-        "path": "https://raw.githubusercontent.com/wayland-mirror/wayland/1ab6b693b16e1d9734496fe60c8a6ed277e4dec3/protocol/wayland.xml",
-        "sha256": "7eb8569529235c85e16d15612fc367da4538b7d515b13e32ec48ba0742c42610"
+        "path": "qualification/fixtures/external-contracts/wayland/s02-wayland-core.xml",
+        "sha256": "<to-be-computed-by-preservation-step>"
       }
     ]
   },
@@ -1158,8 +1197,8 @@ Stage 3 can make the following exact edits without changing product capabilities
     "status": "kk",
     "evidence": [
       {
-        "path": "https://raw.githubusercontent.com/wayland-mirror/wayland/1ab6b693b16e1d9734496fe60c8a6ed277e4dec3/protocol/wayland.xml",
-        "sha256": "7eb8569529235c85e16d15612fc367da4538b7d515b13e32ec48ba0742c42610"
+        "path": "qualification/fixtures/external-contracts/wayland/s02-wayland-core.xml",
+        "sha256": "<to-be-computed-by-preservation-step>"
       }
     ]
   },
@@ -1169,8 +1208,8 @@ Stage 3 can make the following exact edits without changing product capabilities
     "status": "kk",
     "evidence": [
       {
-        "path": "https://raw.githubusercontent.com/wayland-mirror/wayland/1ab6b693b16e1d9734496fe60c8a6ed277e4dec3/protocol/wayland.xml",
-        "sha256": "7eb8569529235c85e16d15612fc367da4538b7d515b13e32ec48ba0742c42610"
+        "path": "qualification/fixtures/external-contracts/wayland/s02-wayland-core.xml",
+        "sha256": "<to-be-computed-by-preservation-step>"
       }
     ]
   },
@@ -1180,8 +1219,8 @@ Stage 3 can make the following exact edits without changing product capabilities
     "status": "kk",
     "evidence": [
       {
-        "path": "https://raw.githubusercontent.com/wayland-mirror/wayland/1ab6b693b16e1d9734496fe60c8a6ed277e4dec3/protocol/wayland.xml",
-        "sha256": "7eb8569529235c85e16d15612fc367da4538b7d515b13e32ec48ba0742c42610"
+        "path": "qualification/fixtures/external-contracts/wayland/s02-wayland-core.xml",
+        "sha256": "<to-be-computed-by-preservation-step>"
       }
     ]
   },
@@ -1191,8 +1230,8 @@ Stage 3 can make the following exact edits without changing product capabilities
     "status": "kk",
     "evidence": [
       {
-        "path": "https://raw.githubusercontent.com/wayland-mirror/wayland/1ab6b693b16e1d9734496fe60c8a6ed277e4dec3/protocol/wayland.xml",
-        "sha256": "7eb8569529235c85e16d15612fc367da4538b7d515b13e32ec48ba0742c42610"
+        "path": "qualification/fixtures/external-contracts/wayland/s02-wayland-core.xml",
+        "sha256": "<to-be-computed-by-preservation-step>"
       }
     ]
   },
@@ -1202,8 +1241,8 @@ Stage 3 can make the following exact edits without changing product capabilities
     "status": "kk",
     "evidence": [
       {
-        "path": "https://raw.githubusercontent.com/wayland-mirror/wayland/1ab6b693b16e1d9734496fe60c8a6ed277e4dec3/protocol/wayland.xml",
-        "sha256": "7eb8569529235c85e16d15612fc367da4538b7d515b13e32ec48ba0742c42610"
+        "path": "qualification/fixtures/external-contracts/wayland/s02-wayland-core.xml",
+        "sha256": "<to-be-computed-by-preservation-step>"
       }
     ]
   },
@@ -1213,8 +1252,8 @@ Stage 3 can make the following exact edits without changing product capabilities
     "status": "kk",
     "evidence": [
       {
-        "path": "https://raw.githubusercontent.com/wayland-mirror/wayland/1ab6b693b16e1d9734496fe60c8a6ed277e4dec3/protocol/wayland.xml",
-        "sha256": "7eb8569529235c85e16d15612fc367da4538b7d515b13e32ec48ba0742c42610"
+        "path": "qualification/fixtures/external-contracts/wayland/s02-wayland-core.xml",
+        "sha256": "<to-be-computed-by-preservation-step>"
       }
     ]
   },
@@ -1224,8 +1263,8 @@ Stage 3 can make the following exact edits without changing product capabilities
     "status": "kk",
     "evidence": [
       {
-        "path": "https://raw.githubusercontent.com/wayland-mirror/wayland/1ab6b693b16e1d9734496fe60c8a6ed277e4dec3/protocol/wayland.xml",
-        "sha256": "7eb8569529235c85e16d15612fc367da4538b7d515b13e32ec48ba0742c42610"
+        "path": "qualification/fixtures/external-contracts/wayland/s02-wayland-core.xml",
+        "sha256": "<to-be-computed-by-preservation-step>"
       }
     ]
   },
@@ -1235,8 +1274,8 @@ Stage 3 can make the following exact edits without changing product capabilities
     "status": "kk",
     "evidence": [
       {
-        "path": "https://raw.githubusercontent.com/wayland-mirror/wayland/1ab6b693b16e1d9734496fe60c8a6ed277e4dec3/protocol/wayland.xml",
-        "sha256": "7eb8569529235c85e16d15612fc367da4538b7d515b13e32ec48ba0742c42610"
+        "path": "qualification/fixtures/external-contracts/wayland/s02-wayland-core.xml",
+        "sha256": "<to-be-computed-by-preservation-step>"
       }
     ]
   },
@@ -1246,8 +1285,8 @@ Stage 3 can make the following exact edits without changing product capabilities
     "status": "kk",
     "evidence": [
       {
-        "path": "https://raw.githubusercontent.com/wayland-mirror/wayland/1ab6b693b16e1d9734496fe60c8a6ed277e4dec3/protocol/wayland.xml",
-        "sha256": "7eb8569529235c85e16d15612fc367da4538b7d515b13e32ec48ba0742c42610"
+        "path": "qualification/fixtures/external-contracts/wayland/s02-wayland-core.xml",
+        "sha256": "<to-be-computed-by-preservation-step>"
       }
     ]
   },
@@ -1257,8 +1296,8 @@ Stage 3 can make the following exact edits without changing product capabilities
     "status": "kk",
     "evidence": [
       {
-        "path": "https://raw.githubusercontent.com/wayland-mirror/wayland/1ab6b693b16e1d9734496fe60c8a6ed277e4dec3/protocol/wayland.xml",
-        "sha256": "7eb8569529235c85e16d15612fc367da4538b7d515b13e32ec48ba0742c42610"
+        "path": "qualification/fixtures/external-contracts/wayland/s02-wayland-core.xml",
+        "sha256": "<to-be-computed-by-preservation-step>"
       }
     ]
   },
@@ -1268,8 +1307,8 @@ Stage 3 can make the following exact edits without changing product capabilities
     "status": "kk",
     "evidence": [
       {
-        "path": "https://raw.githubusercontent.com/wayland-mirror/wayland-protocols/d5aed4e4903a77aefaef03359d1ffdc0d5093456/stable/xdg-shell/xdg-shell.xml",
-        "sha256": "f241ab95c262eb45af6507bf0178b8dcd88d5e1cc8fc6ec4a9944d9e5b15ac98"
+        "path": "qualification/fixtures/external-contracts/wayland/s03-xdg-shell.xml",
+        "sha256": "<to-be-computed-by-preservation-step>"
       }
     ]
   },
@@ -1279,8 +1318,8 @@ Stage 3 can make the following exact edits without changing product capabilities
     "status": "kk",
     "evidence": [
       {
-        "path": "https://raw.githubusercontent.com/wayland-mirror/wayland-protocols/d5aed4e4903a77aefaef03359d1ffdc0d5093456/stable/xdg-shell/xdg-shell.xml",
-        "sha256": "f241ab95c262eb45af6507bf0178b8dcd88d5e1cc8fc6ec4a9944d9e5b15ac98"
+        "path": "qualification/fixtures/external-contracts/wayland/s03-xdg-shell.xml",
+        "sha256": "<to-be-computed-by-preservation-step>"
       }
     ]
   },
@@ -1290,8 +1329,8 @@ Stage 3 can make the following exact edits without changing product capabilities
     "status": "kk",
     "evidence": [
       {
-        "path": "https://raw.githubusercontent.com/wayland-mirror/wayland-protocols/d5aed4e4903a77aefaef03359d1ffdc0d5093456/stable/xdg-shell/xdg-shell.xml",
-        "sha256": "f241ab95c262eb45af6507bf0178b8dcd88d5e1cc8fc6ec4a9944d9e5b15ac98"
+        "path": "qualification/fixtures/external-contracts/wayland/s03-xdg-shell.xml",
+        "sha256": "<to-be-computed-by-preservation-step>"
       }
     ]
   },
@@ -1301,8 +1340,8 @@ Stage 3 can make the following exact edits without changing product capabilities
     "status": "kk",
     "evidence": [
       {
-        "path": "https://raw.githubusercontent.com/wayland-mirror/wayland-protocols/d5aed4e4903a77aefaef03359d1ffdc0d5093456/stable/viewporter/viewporter.xml",
-        "sha256": "dcb12279a03746301fe490aaed4b38a403485a925abfce2ccfceb644e104fe71"
+        "path": "qualification/fixtures/external-contracts/wayland/s04-viewporter.xml",
+        "sha256": "<to-be-computed-by-preservation-step>"
       }
     ]
   },
@@ -1312,8 +1351,8 @@ Stage 3 can make the following exact edits without changing product capabilities
     "status": "kk",
     "evidence": [
       {
-        "path": "https://raw.githubusercontent.com/wayland-mirror/wayland-protocols/d5aed4e4903a77aefaef03359d1ffdc0d5093456/stable/viewporter/viewporter.xml",
-        "sha256": "dcb12279a03746301fe490aaed4b38a403485a925abfce2ccfceb644e104fe71"
+        "path": "qualification/fixtures/external-contracts/wayland/s04-viewporter.xml",
+        "sha256": "<to-be-computed-by-preservation-step>"
       }
     ]
   },
@@ -1323,8 +1362,8 @@ Stage 3 can make the following exact edits without changing product capabilities
     "status": "kk",
     "evidence": [
       {
-        "path": "https://raw.githubusercontent.com/wayland-mirror/wayland-protocols/d5aed4e4903a77aefaef03359d1ffdc0d5093456/staging/fractional-scale/fractional-scale-v1.xml",
-        "sha256": "5941de5d28f427ecdadddc8623a6f6af0a30b0ab4726847236ba7a7652b81316"
+        "path": "qualification/fixtures/external-contracts/wayland/s05-fractional-scale-v1.xml",
+        "sha256": "<to-be-computed-by-preservation-step>"
       }
     ]
   },
@@ -1334,8 +1373,8 @@ Stage 3 can make the following exact edits without changing product capabilities
     "status": "kk",
     "evidence": [
       {
-        "path": "https://raw.githubusercontent.com/wayland-mirror/wayland-protocols/d5aed4e4903a77aefaef03359d1ffdc0d5093456/staging/fractional-scale/fractional-scale-v1.xml",
-        "sha256": "5941de5d28f427ecdadddc8623a6f6af0a30b0ab4726847236ba7a7652b81316"
+        "path": "qualification/fixtures/external-contracts/wayland/s05-fractional-scale-v1.xml",
+        "sha256": "<to-be-computed-by-preservation-step>"
       }
     ]
   },
@@ -1345,8 +1384,8 @@ Stage 3 can make the following exact edits without changing product capabilities
     "status": "kk",
     "evidence": [
       {
-        "path": "https://raw.githubusercontent.com/wayland-mirror/wayland-protocols/d5aed4e4903a77aefaef03359d1ffdc0d5093456/unstable/text-input/text-input-unstable-v3.xml",
-        "sha256": "49048087a67011a8840bca889cd2b0ba374382be1ed54ec98adf7837fdca1982"
+        "path": "qualification/fixtures/external-contracts/wayland/s06-text-input-unstable-v3.xml",
+        "sha256": "<to-be-computed-by-preservation-step>"
       }
     ]
   },
@@ -1356,8 +1395,8 @@ Stage 3 can make the following exact edits without changing product capabilities
     "status": "kk",
     "evidence": [
       {
-        "path": "https://raw.githubusercontent.com/wayland-mirror/wayland-protocols/d5aed4e4903a77aefaef03359d1ffdc0d5093456/unstable/text-input/text-input-unstable-v3.xml",
-        "sha256": "49048087a67011a8840bca889cd2b0ba374382be1ed54ec98adf7837fdca1982"
+        "path": "qualification/fixtures/external-contracts/wayland/s06-text-input-unstable-v3.xml",
+        "sha256": "<to-be-computed-by-preservation-step>"
       }
     ]
   },
@@ -1367,8 +1406,8 @@ Stage 3 can make the following exact edits without changing product capabilities
     "status": "kk",
     "evidence": [
       {
-        "path": "https://raw.githubusercontent.com/wayland-mirror/wayland-protocols/37a1560cf6981a11d44dd200d9409d09b4f0074e/stable/presentation-time/presentation-time.xml",
-        "sha256": "91e5e14481a13717fef8403203a2eaa052c85fd853c1c440ba081effa7178d12"
+        "path": "qualification/fixtures/external-contracts/wayland/s07-presentation-time-v1.xml",
+        "sha256": "<to-be-computed-by-preservation-step>"
       }
     ]
   },
@@ -1378,8 +1417,8 @@ Stage 3 can make the following exact edits without changing product capabilities
     "status": "kk",
     "evidence": [
       {
-        "path": "https://raw.githubusercontent.com/wayland-mirror/wayland-protocols/37a1560cf6981a11d44dd200d9409d09b4f0074e/stable/presentation-time/presentation-time.xml",
-        "sha256": "91e5e14481a13717fef8403203a2eaa052c85fd853c1c440ba081effa7178d12"
+        "path": "qualification/fixtures/external-contracts/wayland/s07-presentation-time-v1.xml",
+        "sha256": "<to-be-computed-by-preservation-step>"
       }
     ]
   },
@@ -1389,16 +1428,26 @@ Stage 3 can make the following exact edits without changing product capabilities
     "status": "kk",
     "evidence": [
       {
-        "path": "https://gitlab.gnome.org/GNOME/at-spi2-core/-/raw/2.60.6/xml/Text.xml",
-        "sha256": "5c2d5049d2e427d630ca1ae288d0abe321f39c683336cb8a1373f41c4414d614"
+        "path": "qualification/fixtures/external-contracts/wayland/s08-atspi-2.60.6-text.xml",
+        "sha256": "<to-be-computed-by-preservation-step>"
       },
       {
-        "path": "https://gitlab.gnome.org/GNOME/at-spi2-core/-/raw/2.60.6/xml/EditableText.xml",
-        "sha256": "2ea1b94822f19b0b00c80b918b89833cfb67d1eeef99d69b8421d0e6f40920ff"
+        "path": "qualification/fixtures/external-contracts/wayland/s09-atspi-2.60.6-editable-text.xml",
+        "sha256": "<to-be-computed-by-preservation-step>"
       }
     ]
   }
 ]
+```
+
+The Round-7 `nix shell nixpkgs#python3 -c python3 -` template validator accepts only the exact preservation token in quoted JSON evidence values and lowercase 64-hexadecimal values in the retained source-record digest block. It confirms that the proposed paths are local and that all 26 evidence objects are present.
+
+```text
+template_evidence_objects=26
+template_remote_or_absolute_paths=0
+quoted_sha256_values=26 allowed_placeholders=26 malformed_quoted_values=0
+source_record_sha256_equals_values=16 malformed_source_record_values=0
+exit=0
 ```
 
 - `.constitution/tech-spec/contracts/platform-contracts.json` -> `environments.wayland.minimumVersion`: replace the value with `{"status":"ku-gating","value":null,"evidence":[]}`. Do not add `openQuestions` to this object because its schema has `additionalProperties: false`.
@@ -1425,7 +1474,7 @@ Stage 3 can make the following exact edits without changing product capabilities
 - `.constitution/tech-spec/contracts/platform-contracts.json` -> `environments.wayland.timing.presentationFeedback`: replace the value with `"wp_presentation v1 feedback for per-commit acknowledgement and main-output association only; never an independent presentation-opportunity meter."`.
 - `.constitution/tech-spec/contracts/platform-contracts.json` -> `environments.wayland.timing.perDisplayAssociation`: replace the value with `"Track each wl_surface enter/leave output set and begin a display epoch on every set change. Use wp_presentation_feedback.sync_output only to label a submitted frame's main output."`.
 - `.constitution/tech-spec/contracts/platform-contracts.json` -> `environments.wayland.accessibilityMaps`, `recoveryBaseline`, `allocations.focused`, and `allocations.integrated`: retain every `"ku-gating"` status and `null` path/digest until P3F, P3I, P5F, P5I, P6F, and P6I produce the named immutable artifacts.
-- `.constitution/tech-spec/stack.md` -> `Platform qualification pins` -> `Wayland` row: replace `"minimum compositor and protocol versions are gating KUs"` with `"the Ubuntu compositor/session package manifest and selected-session advertisement of the frozen Wayland floors remain gating KUs; P1 must record package versions, manifest digest, registry, and a visible-surface transcript covering all 97 members of the mechanically regenerated deterministic P1 checklist, retaining the four named event gates separately, and including client-issued release and destroy operations"`.
+- `.constitution/tech-spec/stack.md` -> `Platform qualification pins` -> `Wayland` row: replace the row with `"x86-64 Ubuntu 26.04 LTS Wayland session with libgtk-4-1 4.22.2+ds-1ubuntu1; the gtk4 crate v4_20 API-binding ceiling is separate; the Ubuntu compositor/session package manifest and selected-session advertisement of the frozen Wayland floors remain gating KUs; P1 must record package versions, manifest digest, registry, and a visible-surface transcript covering all 97 members of the mechanically regenerated deterministic P1 checklist, retaining the four named event gates separately, and including client-issued release and destroy operations."`.
 - `.constitution/tech-spec/contracts/qualification-lock.json` -> `preImplementationKnownUnknowns` and `gatingKnownUnknowns`: add `"wayland-ubuntu-compositor-session-package-lock"`, `"wayland-frozen-protocol-reference-session-transcript"`, `"wayland-ime-operation-unit-transcript"`, `"wayland-atspi-scalar-logical-representation"`, `"wayland-atspi-text-caret-selection-editable-transcript"`, `"wayland-orca-atspi-maps-for-both-allocations"`, `"wayland-drm-vblank-kernel-identity-live-schema-callsite"`, `"wayland-drm-vblank-calibration-uncertainty-budget"`, `"wayland-service-routing-for-both-allocations"`, and `"wayland-recovery-injection-for-both-allocations"`.
 - `.constitution/tech-spec/contracts/qualification-lock.json` -> new gating entry `wayland-drm-vblank-calibration-acceptance-bound`: replace its value with `"Before any candidate measurement, reviewed Stage 3 must record the numeric maximum acceptable U_95, causal-matching algorithm version, matching-window width, and review reference. P4C records U_95 = 1.96 * SE(d_bar) + r_trace / 2 + r_clock / 2 + w_max / 2 but cannot close this entry."`.
 - `.constitution/tech-spec/adrs/ADR-0005-platform-hosts.md` -> `Consequences`: add `"Wayland qualification freezes source-level core, shell, scale, text-input, clipboard, and wp_presentation floors, including all client-issued P0 teardown operations. P1 must prove the selected session advertises them and records the mechanically derived 97-member deterministic P1 transcript and retains the four named nondeterministic event gates separately. wp_presentation v1 supplies per-commit acknowledgement and output association only, not the independent presentation-opportunity meter. P4 evaluates a Linux DRM drm_vblank_event trace only after Ubuntu kernel package and source or patch identity, live-format and call-site-semantic evidence, access, pipe-index-to-CRTC-object-ID-to-output attribution, the trace_marker-bracketed U_95 characterization, the reviewed Stage 3 maximum-uncertainty decision made before candidate measurements, and callback or IPC independence pass. CON-FRM-001's 10% interval-error limit is applied only to qualified measured matching results."`.
@@ -1435,4 +1484,4 @@ Stage 3 can make the following exact edits without changing product capabilities
 - **ADRs to write or update:** Stage 3 updates `ADR-0005-platform-hosts.md` with the `wp_presentation` boundary. `ADR-0006-execution-domains.md` requires no change because the report does not alter its queue or ownership boundary.
 - **Tickets unblocked in `tasks/active/`:** `OXY-D001` can consume the documented protocol and conversion mechanics, but it remains blocked from qualification measurements by P1 through P6.
 - **Tickets to add or split:** Add P1 through P6 as bounded Wayland evidence tasks if the Stage 4 plan does not already schedule equivalent probes.
-- **Remaining gates:** The 12 KU (gating) rows retain the Wayland environment as `ku-gating`. Neither allocation is eligible for scoring until they close.
+- **Remaining gates:** The 12 KU (gating) rows in Table 1 retain the Wayland environment as `ku-gating`. Neither allocation is eligible for scoring until they close.
