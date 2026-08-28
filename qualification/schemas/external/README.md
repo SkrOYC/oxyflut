@@ -7,3 +7,5 @@ Each `source.json` records the upstream identity, license expression, license so
 The license-compatibility STOP condition is resolved: the snapshots preserve specification bytes for local verification. They aren't redistributed products or release payloads. Their source records retain the attribution and license information needed to review the fixtures without treating them as distributed artifacts.
 
 The derived SLSA `DigestSet` accepts hexadecimal values only; this intentional local narrowing is routed to OXY-D001.
+
+A staged external-contract proposal may satisfy the typed `externalContractLock` reference only while the `external-distribution-schema-snapshots-and-verifiers` KU independently gates; OXY-D001 must adopt or replace the proposal before clearing that KU.
