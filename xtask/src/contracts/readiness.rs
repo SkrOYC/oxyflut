@@ -5,6 +5,9 @@ use std::io;
 use std::path::{Path, PathBuf};
 
 use oxyflut_qualification::hash::Sha256Digest;
+use oxyflut_qualification::readiness::{
+    EXTERNAL_CONTRACT_LOCK_PATH, external_contract_lock_referent,
+};
 use oxyflut_qualification::schema::{SchemaError, SchemaRegistry};
 use serde_json::{Map, Value};
 use thiserror::Error;
@@ -18,10 +21,6 @@ mod promotion;
 const LOCK_PATH: &str = ".constitution/tech-spec/contracts/qualification-lock.json";
 const PHASE_PATH: &str = ".constitution/tech-spec/contracts/specification-phase.json";
 const PLATFORM_CONTRACTS_PATH: &str = ".constitution/tech-spec/contracts/platform-contracts.json";
-const EXTERNAL_CONTRACT_LOCK_PATH: &str =
-    ".constitution/tech-spec/contracts/external-contract-lock.json";
-const EXTERNAL_CONTRACT_LOCK_PROPOSAL_PATH: &str =
-    "qualification/schemas/external/proposed-external-contract-lock.json";
 const RAW_MEASUREMENT_SCHEMA_PATH: &str =
     ".constitution/tech-spec/data-models/raw-measurement.schema.json";
 const TOOLCHAIN_MANIFEST_PATH: &str = "qualification/tools/native-contract-toolchain.json";
@@ -484,17 +483,11 @@ fn external_contract_lock_input_path(
         &active,
         "external-contract-lock",
     )?;
-    let active_contracts = object_field(&active, "contracts")?;
     // The external-lock schema records status per contract. A wholly KU active lock has no active
     // immutable snapshot to bind, so readiness uses the staged proposal until reconciliation.
-    let all_unresolved = active_contracts.values().all(|contract| {
-        contract.get("epistemicStatus").and_then(Value::as_str) == Some("ku-gating")
-    });
-    if all_unresolved {
-        Ok(EXTERNAL_CONTRACT_LOCK_PROPOSAL_PATH)
-    } else {
-        Ok(EXTERNAL_CONTRACT_LOCK_PATH)
-    }
+    let referent = external_contract_lock_referent(&active)
+        .map_err(|_| invariant("external-contract-lock-referent"))?;
+    Ok(referent.evidence_path())
 }
 
 fn validate_capability_baseline(

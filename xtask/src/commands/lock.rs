@@ -4,8 +4,8 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use oxyflut_qualification::readiness::{
-    ReadinessBlocking, ReadinessReport, ReadinessStatus, StagedInputRegistry,
-    candidate_implementation_report,
+    EXTERNAL_CONTRACT_LOCK_PATH, ReadinessBlocking, ReadinessReport, ReadinessStatus,
+    StagedInputRegistry, candidate_implementation_report,
 };
 use serde_json::{Map, Value};
 
@@ -98,8 +98,10 @@ fn emit_candidate_report(report: &ReadinessReport) -> CommandOutcome {
 fn candidate_report_at(root: &Path) -> Result<ReadinessReport, ()> {
     let bytes = fs::read(root.join(LOCK_PATH)).map_err(|_| ())?;
     let lock: Value = serde_json::from_slice(&bytes).map_err(|_| ())?;
+    let external_bytes = fs::read(root.join(EXTERNAL_CONTRACT_LOCK_PATH)).map_err(|_| ())?;
+    let active_external_lock: Value = serde_json::from_slice(&external_bytes).map_err(|_| ())?;
     validate_staged_candidate_inputs(root, &lock)?;
-    candidate_implementation_report(&lock).map_err(|_| ())
+    candidate_implementation_report(&lock, &active_external_lock).map_err(|_| ())
 }
 
 fn validate_staged_candidate_inputs(root: &Path, lock: &Value) -> Result<(), ()> {
@@ -170,6 +172,10 @@ fn blocking_line(blocking: &ReadinessBlocking) -> String {
     if let Some(evidence_path) = &blocking.evidence_path {
         line.push_str(" evidence-path=");
         line.push_str(evidence_path);
+    }
+    if let Some(referent) = blocking.referent {
+        line.push_str(" referent=");
+        line.push_str(referent.as_str());
     }
     if let Some(upstream_owner) = &blocking.upstream_owner {
         line.push_str(" upstream-owner=");
