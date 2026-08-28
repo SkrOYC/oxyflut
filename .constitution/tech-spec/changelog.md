@@ -12,6 +12,7 @@ All notable changes to the technical specification appear in this file.
 - Amended 2026-08-28: Staged external-contract snapshots preserve SPDX 3.0.1 (`Community-Spec-1.0 AND CC-BY-3.0`), in-toto Statement v1 (`Apache-2.0`), SLSA Provenance v1 (`Community-Spec-1.0`), and DSSE Envelope v1 (`Apache-2.0`) source bytes with pinned local verifier adapters. They remain nonauthoritative pending Stage 3 adoption.
 - Amended 2026-08-28: Added the nonauthoritative staged `qualification/schemas/sample-validity.schema.json` proposal for `qualification-lock.schema.json#measurementPolicy.sampleValidityRules`.
 - Amended 2026-08-28: `environment inspect` writes a lock-compatible projection at `PATH` and a complete, digest-bound `PATH.inventory.json` companion inventory artifact. The companion artifact remains untyped by Stage 3.
+- Amended 2026-08-28: Narrowed the `baseline validate` command contract to one candidate-neutral capability baseline. Epic D owns the remaining baseline-validation ownership gap.
 - The specification remains v0.15.0 because `contracts/specification-phase.json` and committed baselines require exact `specificationVersion` equality. Updating only the specification version would invalidate those bindings, so this amendment doesn't change the version.
 - Advanced platform contracts to v5 with the active specification version and typed immutable absent-event entries keyed by gate, event, environment, and candidate.
 - Advanced qualification evidence to v5 so every `not-applicable-kk` gate names an exact absent-event entry through a versioned, digest-bound platform-baseline reference.
@@ -22,9 +23,11 @@ All notable changes to the technical specification appear in this file.
 - `.constitution/tech-spec/data-models/accessibility-map.schema.json` `reverseActions[].textLayoutBinding` has no text-layout generation value.
 - `.constitution/tech-spec/data-models/specification-phase.schema.json` `promotionEvidence.layoutQualification`, `finalContractSet`, `targetMatrix`, `losingCandidateRemoval`, and `billOfMaterials` use generic evidence references instead of typed schemas.
 - `.constitution/tech-spec/data-models/raw-measurement.schema.json` omits the `$schema` property, so raw-measurement instances cannot self-declare their schema.
+- `.constitution/tech-spec/data-models/raw-measurement.schema.json` doesn't state that `samples[].monotonicNs` is non-decreasing per `(constraintId, launch)`.
 - No Stage 3 schema defines `qualification-lock.schema.json#measurementPolicy.sampleValidityRules`; `qualification/schemas/sample-validity.schema.json` is the proposed staged schema and its digest is the proposed binding value.
 - The proposed external-contract lock values in `qualification/schemas/external/proposed-external-contract-lock.json` await Stage 3 adoption.
 - `xtask environment inspect` writes the `PATH.inventory.json` companion artifact, but no Stage 3 schema defines it and `qualification-lock.schema.json#referenceEnvironments` has no typed reference to it.
+- Wayland interface-set completeness has no Stage 3 rule. The companion inventory retains a partial observed `protocolVersion`, which lock v5 cannot represent.
 - `qualification-lock.schema.json#measurementPolicy.{scoringAnchors,assessors,fuzzCorpora,securityPatchRehearsal}` binds path-less digests; the repository convention `qualification/staged/<field>.json` is the proposed referent and needs Stage 3 typing.
 - `qualification-lock.schema.json#resolvedTools` lacks the `pathRoot` field used by `qualification/tools/native-contract-toolchain.json` for rustup-home-relative tools.
 
