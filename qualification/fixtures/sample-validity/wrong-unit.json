@@ -7,7 +7,7 @@
   "meterVersion": "synthetic-meter-v1",
   "exclusionCategories": [
     "measurement-tool-failure",
-    "unrelated-operating-system-interruption",
+    "unrelated-os-interruption",
     "physical-disconnect"
   ],
   "rules": [

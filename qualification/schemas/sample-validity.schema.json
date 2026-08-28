@@ -26,7 +26,7 @@
       "type": "array",
       "prefixItems": [
         { "const": "measurement-tool-failure" },
-        { "const": "unrelated-operating-system-interruption" },
+        { "const": "unrelated-os-interruption" },
         { "const": "physical-disconnect" }
       ],
       "items": false,

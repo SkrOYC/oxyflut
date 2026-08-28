@@ -45,8 +45,8 @@ pub enum SampleValidityExclusionCategory {
     #[serde(rename = "measurement-tool-failure")]
     MeasurementToolFailure,
     /// An unrelated operating-system interruption prevented a valid observation.
-    #[serde(rename = "unrelated-operating-system-interruption")]
-    UnrelatedOperatingSystemInterruption,
+    #[serde(rename = "unrelated-os-interruption")]
+    UnrelatedOsInterruption,
     /// A physical connection was interrupted during the observation.
     #[serde(rename = "physical-disconnect")]
     PhysicalDisconnect,
@@ -56,7 +56,7 @@ impl SampleValidityExclusionCategory {
     const fn all() -> [Self; 3] {
         [
             Self::MeasurementToolFailure,
-            Self::UnrelatedOperatingSystemInterruption,
+            Self::UnrelatedOsInterruption,
             Self::PhysicalDisconnect,
         ]
     }
