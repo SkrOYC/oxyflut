@@ -4,7 +4,8 @@
 
 - Status: Completed.
 - Budget: 1 focused day.
-- Clock start / stop: 2026-08-28T19:42:20Z / 2026-08-28T19:59:33Z.
+- Clock start / stop: 2026-08-28T20:23:54Z / 2026-08-28T20:33:24Z.
+- CHANGES: `fuzz-corpora.json` SHA-256 `59d3459130a585e335df491f464258f40b3708c48d237600df960722ffcda105`, 15,932 bytes; `security-patch-rehearsal.json` SHA-256 `27b6e4525723e2501d08e72169f8194bb070d4a79b32825f3cc70fe9e66fc14c`, 1,991 bytes.
 
 ## Question
 
@@ -17,9 +18,9 @@ Table 1. Decision answers
 | Can a disclosed upstream engine patch apply to every frozen Flutter line and both consumption paths? | KU (gating) | P1 tried both repositories: `flutter/flutter` resolves all three engine-revision [`DEPS` files](https://raw.githubusercontent.com/flutter/flutter/5f77625673248ee5846fbcaf5d3e1a3878386fd7/DEPS), while `flutter/engine` resolves only 3.44.0 with identical bytes. The resolved pins are `f139fd5d...` for 3.41.0 and `b6004397...` for 3.44.0 and 3.47.0; P1 fetched their actual `pngrtran.c` files. Both pins contain the `08da33b` postimage, so that real patch is already incorporated and cannot rehearse remediation. The 3.47.0 upstream focused SDK and full-engine graphs consume libpng; P1 preserves the GN chain and SDK archive evidence. The Oxyflut integrated fork has no source identity, so its actual consumption remains unverified. | Pin the integrated-fork commit and fetch its `DEPS`, `build/secondary/third_party/libpng/BUILD.gn`, `impeller/toolkit/interop/BUILD.gn`, and final GN dependency graph. Expect the fork revision, its libpng pin, and both focused and integrated `pngrtran.c` object paths before a real patch can replace the synthetic rehearsal. |
 | Which shared patch rehearsal applies before implementation? | KK | Select `OXY-SYN-SEC-001`, a synthetic shared image-decoder hardening patch. The pinned stack assigns both candidates one bounded Rust decoder above the substrate boundary. The patch replaces unchecked RGBA byte-count multiplication with checked `u64` arithmetic and rejects overflow or more than 67,108,864 decoded bytes before allocation or adapter entry. | Not applicable. |
 | What tests establish the synthetic patch result? | KK | The frozen post-patch tests are `checked_rgba_bytes_accepts_4096_by_4096_rgba`, `checked_rgba_bytes_rejects_4097_by_4096_rgba`, `checked_rgba_bytes_rejects_u32_max_square_without_decoder_or_adapter_call`, and `asset_decode_replays_image_registry`. P7 confirms the qualification scaffold does not yet define these functions, so the patch must add them before rehearsal; the frozen rehearsal runs all four. | Not applicable. |
-| Can every architecture ingress receive attributable, licensed, capped seed material? | KK | P3 maps all eight architecture ingress categories to five immutable source sets. P4 and P9 SHA-256-verified all 18 retained seed bytes and six retained license notices, including both Apache-2.0 and MIT notices for `image`. The Unicode 16.0.0 ReadMe is dated 2024-08-25, and the same-day immutable License V3 snapshot hashes to `f5062c9a...`; Unicode documents the SPDX identifier as `Unicode-3.0`. | Not applicable. |
+| Can every architecture ingress receive attributable, licensed, capped seed material? | KK | P3 maps all eight architecture ingress categories to five immutable source sets. P4 and P13a SHA-256-verified all 18 retained seed bytes and six retained license notices, including both Apache-2.0 and MIT notices for `image`. The normalized registry requires each set to carry a `licenses` array of objects with `licenseId`, `licenseUrl`, and `licenseSha256`; it applies each set's `capBytes` at ingestion and derives each ingress's `maxLenBytes` from its mapped sets. The Unicode 16.0.0 ReadMe is dated 2024-08-25, and the same-day immutable License V3 snapshot hashes to `f5062c9a...`; Unicode documents the SPDX identifier as `Unicode-3.0`. | Not applicable. |
 | Can the required memory, undefined-behavior, and concurrency instrumentation be frozen? | KK | The [LLVM libFuzzer documentation](https://llvm.org/docs/LibFuzzer.html) defines `-max_total_time` as a maximum run time, not CPU accounting. The [cargo-fuzz README](https://raw.githubusercontent.com/rust-fuzz/cargo-fuzz/0.13.2/README.md) directs users to the command help; P6 and P8 verify GNU Time accounting and that `--careful` is a `cargo fuzz build` option. The policy requires cumulative process CPU across resumed corpus shards, a 5-second timeout, dated `nightly-2026-08-12`, and executable-hash preflight. | Not applicable. |
-| How is the policy made immutable and attributable? | KK | P9 writes the exact displayed UTF-8, 2-space JSON byte streams with their displayed key order and one trailing LF, then verifies their SHA-256 values. Stage 3 must copy those bytes, retain and hash every license notice and seed byte stream, require a host tool record before each campaign, and reject any source, license, size, tool, or digest mismatch. | Not applicable. |
+| How is the policy made immutable and attributable? | KK | P13a writes the exact displayed UTF-8, 2-space JSON byte streams with their displayed key order and one trailing LF, then verifies their SHA-256 values. Stage 3 must copy those bytes, retain and hash every license notice and seed byte stream, require a host tool record before each campaign, and reject any source, license, size, tool, or digest mismatch. | Not applicable. |
 
 ## Context and objective
 
@@ -93,7 +94,7 @@ $ sha256sum source contract
 
 ### Instrumentation and campaign procedure
 
-Use one physical core for each parser campaign. Require at least `86_400` process CPU seconds per implemented untrusted parser ingress and `28_800` process CPU seconds for each supported thread-instrumented callback or teardown target. Require a 5-second libFuzzer timeout, the ingress cap as `-max_len`, and a zero unresolved-report result. In the commands, `TARGET` is the implemented ingress fuzz target, `CORPUS` is its admitted persistent corpus directory, `CAP` is the row's byte cap, `FUZZ_EXE` is the built target executable, `CPU_LOG` is the GNU Time output, `PACKAGE` owns the replay test, and `TEST_FILTER` selects that replay.
+Use one physical core for each parser campaign. Require at least `86_400` process CPU seconds per implemented untrusted parser ingress and `28_800` process CPU seconds for each supported thread-instrumented callback or teardown target. Require a 5-second libFuzzer timeout, `ingressMapping[INGRESS].maxLenBytes` as `-max_len`, and a zero unresolved-report result. Admission checks every source and derived input against its own `corpusSets[SET].capBytes` before it enters a corpus. `maxLenBytes` is the maximum `capBytes` of the corpus sets mapped to that ingress, so it bounds fuzz mutations without weakening per-set admission. In the commands, `INGRESS` is the architecture ingress, `TARGET` is its implemented fuzz target, `CORPUS` is its admitted persistent corpus directory, `MAX_LEN_BYTES` is `ingressMapping[INGRESS].maxLenBytes`, `FUZZ_EXE` is the built target executable, `CPU_LOG` is the GNU Time output, `PACKAGE` owns the replay test, and `TEST_FILTER` selects that replay.
 
 [`-max_total_time`](https://llvm.org/docs/LibFuzzer.html) is an elapsed-time maximum for one fuzzer invocation. It is only an operational bound. It cannot establish CON-SEC-001 or CON-SEC-002 process-CPU coverage. The [cargo-fuzz README](https://raw.githubusercontent.com/rust-fuzz/cargo-fuzz/0.13.2/README.md) directs users to command help, and P8 verifies that `--careful` is a `cargo fuzz build` option. Before a campaign, select `nightly-2026-08-12`, select exactly one `hostToolRecords` entry by both `hostname` and Rust host triple, then run this preflight. It resolves Rust tools through `rustup which --toolchain`, resolves non-Rust tools through `command -v`, compares every resolved executable hash with that selected record, and fails before build or execution on no match or any mismatch.
 
@@ -119,7 +120,7 @@ test "$(cargo +"$TOOLCHAIN" fuzz --version)" = "$(printf '%s' "$HOST_RECORD" | j
 test "$("$TIME_BIN" --version | head -n 1)" = "$(printf '%s' "$HOST_RECORD" | jq -er '.tools[] | select(.name == "time") | .version')"
 ```
 
-Build every AddressSanitizer target with `cargo +nightly-2026-08-12 fuzz build --sanitizer address --careful TARGET`, and build every ThreadSanitizer target with `cargo +nightly-2026-08-12 fuzz build --sanitizer thread --careful TARGET`. For every successful shard, run the built executable as `"$TIME_BIN" -v -o CPU_LOG FUZZ_EXE CORPUS -max_total_time=28800 -timeout=5 -max_len=CAP`, preserve `User time (seconds)`, `System time (seconds)`, and elapsed wall time from `CPU_LOG`, and record user plus system seconds in the shard ledger. Add only successful shards with the same target, sanitizer, and persistent `CORPUS`; resume until the applicable threshold is reached. `-max_total_time=28800` bounds one operational invocation only. Keep `CORPUS` as the first libFuzzer corpus directory. Before admitting another input directory, use `FUZZ_EXE -merge=1 CORPUS NEW_INPUTS`, then resume the timed target. The LLVM documentation states that the first corpus directory receives new inputs and describes `-merge=1` and resumable merge control files. Replay every minimized crash and retained seed with `cargo +nightly-2026-08-12 miri test -p PACKAGE TEST_FILTER`.
+Build every AddressSanitizer target with `cargo +nightly-2026-08-12 fuzz build --sanitizer address --careful TARGET`, and build every ThreadSanitizer target with `cargo +nightly-2026-08-12 fuzz build --sanitizer thread --careful TARGET`. For every successful shard, resolve `MAX_LEN_BYTES` from `ingressMapping[INGRESS].maxLenBytes`, then run `"$TIME_BIN" -v -o CPU_LOG FUZZ_EXE CORPUS -max_total_time=28800 -timeout=5 -max_len=MAX_LEN_BYTES`. Preserve `User time (seconds)`, `System time (seconds)`, and elapsed wall time from `CPU_LOG`, and record user plus system seconds in the shard ledger. Add only successful shards with the same target, sanitizer, and persistent `CORPUS`; resume until the applicable threshold is reached. `-max_total_time=28800` bounds one operational invocation only. Keep `CORPUS` as the first libFuzzer corpus directory. Before admitting another input directory, use `FUZZ_EXE -merge=1 CORPUS NEW_INPUTS`, then resume the timed target. The LLVM documentation states that the first corpus directory receives new inputs and describes `-merge=1` and resumable merge control files. Replay every minimized crash and retained seed with `cargo +nightly-2026-08-12 miri test -p PACKAGE TEST_FILTER`.
 
 P6 proves this host's `command time -v -o CPU_LOG` records the required three fields. P7 confirms the four post-patch test functions do not yet exist in the qualification scaffold, so OXY-SYN-SEC-001 must add them before rehearsal. P8 proves `nightly-2026-08-11` resolves commit `12c36e2539c54397c51d6ea4401defd8768a4f5b`, while `nightly-2026-08-12` resolves the required `3d6c19bb9ab4798ecfb2ee943df01a811720fc27`. P8 also re-hashes the executables from the dated selector. The captured host record uses only `nightly-2026-08-12`; the previous rolling-`nightly` record is inadmissible. This host records SHA-256 values for `rustc` `7de94a5c099c8d7ee4cafb905e36d882325faa480d8cff6513dd8c0887fac0c5`, `cargo` `1cf1cd7feded113706026c5f04fad33e45364546e3c0d92ddee0c1a4c8277296`, `cargo-miri` `40a69668c9ff4e5df3e6a87531f2b87dcc5c84e705ee5b06f915fb76383c94af`, `cargo-fuzz` 0.13.2 `db150590a2f9fa003fb167bc0eec3f90ba5574fcdd01f78110e6f397dda56582`, and GNU Time 1.10 `e8b9f5440e01a81e0692e68d07dfacb8059c434cae100c1fbb60b7ec52848480`. Stage 3 must stage an equivalent complete record for every campaign host and retain `resolved-tool-digests` as a gate until it does.
 
@@ -275,18 +276,18 @@ Independent verification result
 
 Table 3. Ingress-to-corpus and expected-test map
 
-| Architecture ingress | Seed sets | Expected parser or boundary test | Cap |
+| Architecture ingress | Seed sets | Expected parser or boundary test | Per-set admission caps; ingress `maxLenBytes` |
 | :-- | :-- | :-- | --: |
-| Application assets, fonts, and images | `image`, `font`, `json` | `asset_decode`, `font_registration`, and `asset_manifest_json` reject malformed or oversized input before allocation. | 1,048,576 bytes, except `json` at 65,536 bytes |
-| Pointer, touch, keyboard, window, display, and lifecycle events | `wpt-events` | `platform_event_normalization` rejects invalid shape, stale identity, invalid order, and cap breach. | 65,536 bytes |
-| Input method editor, clipboard, and platform-message content | `unicode-text`, `wpt-events` | `ime_transaction`, `clipboard_transaction`, and `platform_message` reject invalid range, index unit, sensitive-field, and payload size without recording content. | 8,388,608 bytes for Unicode seed files; 65,536 bytes for event seeds |
-| Accessibility properties and actions | `unicode-text`, `wpt-events` | `semantics_update` and `semantics_action` reject invalid node, action, range, and private payload without retargeting. | 8,388,608 bytes for Unicode seed files; 65,536 bytes for event seeds |
-| Candidate callbacks, resources, and errors | `json`, `wpt-events` | `abi_callback_decoder` and `abi_resource_validator` reject unknown status, invalid length, invalid enum, stale generation, and buffer overflow before candidate work. | 65,536 bytes |
-| Local-sink acknowledgement or failure | `json` | `diagnostic_record` and `sink_ack` reject malformed records and failed acknowledgements without blocking producers. | 65,536 bytes |
-| Candidate artifacts and evidence | `json` | `artifact_manifest`, provenance, and software-bill-of-materials parsers reject malformed JSON before qualification. | 65,536 bytes |
-| Independent verification result | `json` | `verification_result` rejects an incomplete, malformed, or artifact-mismatched result and keeps qualification open. | 65,536 bytes |
+| Application assets, fonts, and images | `image`, `font`, `json` | `asset_decode`, `font_registration`, and `asset_manifest_json` reject malformed or oversized input before allocation. | `image`: 1,048,576; `font`: 1,048,576; `json`: 65,536; `maxLenBytes`: 1,048,576 |
+| Pointer, touch, keyboard, window, display, and lifecycle events | `wpt-events` | `platform_event_normalization` rejects invalid shape, stale identity, invalid order, and cap breach. | `wpt-events`: 65,536; `maxLenBytes`: 65,536 |
+| Input method editor, clipboard, and platform-message content | `unicode-text`, `wpt-events` | `ime_transaction`, `clipboard_transaction`, and `platform_message` reject invalid range, index unit, sensitive-field, and payload size without recording content. | `unicode-text`: 8,388,608; `wpt-events`: 65,536; `maxLenBytes`: 8,388,608 |
+| Accessibility properties and actions | `unicode-text`, `wpt-events` | `semantics_update` and `semantics_action` reject invalid node, action, range, and private payload without retargeting. | `unicode-text`: 8,388,608; `wpt-events`: 65,536; `maxLenBytes`: 8,388,608 |
+| Candidate callbacks, resources, and errors | `json`, `wpt-events` | `abi_callback_decoder` and `abi_resource_validator` reject unknown status, invalid length, invalid enum, stale generation, and buffer overflow before candidate work. | `json`: 65,536; `wpt-events`: 65,536; `maxLenBytes`: 65,536 |
+| Local-sink acknowledgement or failure | `json` | `diagnostic_record` and `sink_ack` reject malformed records and failed acknowledgements without blocking producers. | `json`: 65,536; `maxLenBytes`: 65,536 |
+| Candidate artifacts and evidence | `json` | `artifact_manifest`, provenance, and software-bill-of-materials parsers reject malformed JSON before qualification. | `json`: 65,536; `maxLenBytes`: 65,536 |
+| Independent verification result | `json` | `verification_result` rejects an incomplete, malformed, or artifact-mismatched result and keeps qualification open. | `json`: 65,536; `maxLenBytes`: 65,536 |
 
-The corpus importer may derive target-specific encodings only from a listed source after preserving the source SHA-256, the importer revision, the derived-file SHA-256, the license notice, and the target cap. It must reject a derived input that contains raw private content. A source branch, a release tag without a resolved commit, or a digest-less file is not admissible.
+The corpus importer may derive target-specific encodings only from a listed source after preserving the source SHA-256, the importer revision, the derived-file SHA-256, the license notice, the source set, and the source set `capBytes`. It must reject each source or derived input larger than that set's `capBytes` and any derived input that contains raw private content. A target selects `-max_len` only from its ingress `maxLenBytes`, the maximum across its mapped sets. A source branch, a release tag without a resolved commit, or a digest-less file is not admissible.
 
 ## Downstream impact
 
@@ -296,8 +297,8 @@ The corpus importer may derive target-specific encodings only from a listed sour
 
 ### Spec edits required
 
-- `qualification/staged/fuzz-corpora.json`: create this file with the exact canonical bytes in the next section. `.constitution/tech-spec/contracts/qualification-lock.json`, `measurementPolicy.fuzzCorpora`: set the value to `a718aa48103e4cf7f4ab60cce371ae85997e03317cb6d88c329c8db121589748`.
-- `qualification/staged/security-patch-rehearsal.json`: create this file with the exact canonical bytes in the next section. `.constitution/tech-spec/contracts/qualification-lock.json`, `measurementPolicy.securityPatchRehearsal`: set the value to `0e4b1d49168c4948c805ff8f5b29fdddfbe05eb5a01e6fb14f7be5e3f37bf65b`.
+- `qualification/staged/fuzz-corpora.json`: create this file with the exact canonical bytes in the next section. In `admission`, set `requireLicenses` to `true` and `requiredLicenseEntryKeys` to `["licenseId", "licenseUrl", "licenseSha256"]`; don't use flat license fields. In every `corpusSets[*].licenses`, use objects with exactly those three keys. In every `ingressMapping[INGRESS]`, use `corpusSets` and `maxLenBytes`, where `maxLenBytes` is the maximum mapped `capBytes`; enforce `requireSizeAtMostCorpusSetCap` against each source set's `capBytes` at ingestion and pass only the ingress `maxLenBytes` to `-max_len`. `.constitution/tech-spec/contracts/qualification-lock.json`, `measurementPolicy.fuzzCorpora`: set the value to `59d3459130a585e335df491f464258f40b3708c48d237600df960722ffcda105`.
+- `qualification/staged/security-patch-rehearsal.json`: create this file with the exact canonical bytes in the next section. In `rehearsal[4]`, resolve `ingressMapping["application-assets"].maxLenBytes` from `qualification/staged/fuzz-corpora.json` and pass it to `-max_len`; this resolves to `1048576`. `.constitution/tech-spec/contracts/qualification-lock.json`, `measurementPolicy.securityPatchRehearsal`: set the value to `27b6e4525723e2501d08e72169f8194bb070d4a79b32825f3cc70fe9e66fc14c`.
 - `.constitution/tech-spec/data-models/qualification-lock.schema.json`, `$defs.tool.properties`: add exactly `"pathRoot": { "type": "string", "minLength": 1 }` as an optional property before using the existing `rustup-home` convention. `$defs.tool` has `additionalProperties: false`, so this schema edit is required for the three relative Rust-toolchain paths; don't add any other fields.
 - `.constitution/tech-spec/contracts/qualification-lock.json`, `resolvedTools`: transform, don't append. For each actual campaign host, select its `instrumentation.campaignToolchain.hostToolRecords` record by hostname and host triple, then flatten its five `tools` entries (`rustc`, `cargo`, `cargo-miri` when present, `cargo-fuzz`, and GNU `time`) into individual `$defs.tool` records. Each entry must retain exactly `name`, `version`, `sourceIdentity`, `hostTriple`, `licenseId`, `executablePath`, `sha256`, and optional `pathRoot`; never append the host record itself. The first captured NixOS record is non-reference and cannot stand in for an Ubuntu reference host. Require a complete selected record, including license ID, executable hashes, and CPU-accounting fields, for every campaign host. Retain `resolved-tool-digests` in both known-unknown arrays until that condition holds.
 - `qualification/staged/fuzz-corpora.json`, `instrumentation.campaignToolchain.hostToolRecords`: before each campaign, capture hostname, host triple, reference status, operating system, selector, Rust commit, CPU-accounting fields, and the seven `$defs.tool` fields plus optional `pathRoot` for every executable. Capture `licenseId` from the package's authoritative license metadata or notice; reject an absent or non-SPDX value.
@@ -305,15 +306,15 @@ The corpus importer may derive target-specific encodings only from a listed sour
 
 ### Canonical staged inputs
 
-Each displayed JSON block is UTF-8, uses the displayed 2-space indentation and key order, and ends with exactly one LF. The stable canonical-block anchor, `prettier-ignore` directive, and `text` fence protect each byte stream from Markdown formatting. P12 extracts both blocks after Prettier, JSON-reserializes each with Prettier's JSON parser, compares the byte streams, and SHA-256-checks the result.
+Each displayed JSON block is UTF-8, uses the displayed 2-space indentation and key order, and ends with exactly one LF. The stable canonical-block anchor, `prettier-ignore` directive, and `text` fence protect each byte stream from Markdown formatting. P13b extracts both blocks after Prettier, JSON-reserializes each with Prettier's JSON parser, compares the byte streams, and SHA-256-checks the result.
 
 The campaign policy is host-neutral except for `hostToolRecords`. Its first record captures this NixOS 26.05 host as non-reference. A campaign must select an exact hostname-and-triple match, resolve Rust through the selected dated Rustup toolchain, resolve `cargo-fuzz` and the selected GNU Time executable with `command -v`, and compare hashes against that record. `command -v time` alone yields a shell keyword on this host, so the selected record supplies the executable path to `command -v`; no Nix path or `/home/oscar` path appears in the generic procedure. P11 verifies the five records, their license IDs, and the shell-keyword result.
 
-The corrected current source bytes produce these declared digests:
+The corrected current source bytes produce these declared digests and byte counts:
 
 ```text
-a718aa48103e4cf7f4ab60cce371ae85997e03317cb6d88c329c8db121589748  fuzz-corpora.json
-0e4b1d49168c4948c805ff8f5b29fdddfbe05eb5a01e6fb14f7be5e3f37bf65b  security-patch-rehearsal.json
+59d3459130a585e335df491f464258f40b3708c48d237600df960722ffcda105  fuzz-corpora.json  15932 bytes
+27b6e4525723e2501d08e72169f8194bb070d4a79b32825f3cc70fe9e66fc14c  security-patch-rehearsal.json  1991 bytes
 ```
 
 <!-- canonical-block: fuzz-corpora -->
@@ -325,10 +326,9 @@ a718aa48103e4cf7f4ab60cce371ae85997e03317cb6d88c329c8db121589748  fuzz-corpora.j
   "admission": {
     "requireExactUrl": true,
     "requireSha256": true,
-    "requireLicenseId": true,
-    "requireLicenseUrl": true,
-    "requireLicenseSha256": true,
-    "requireSizeAtMostCap": true,
+    "requireLicenses": true,
+    "requiredLicenseEntryKeys": ["licenseId", "licenseUrl", "licenseSha256"],
+    "requireSizeAtMostCorpusSetCap": true,
     "rejectPrivateContent": true
   },
   "instrumentation": {
@@ -336,7 +336,7 @@ a718aa48103e4cf7f4ab60cce371ae85997e03317cb6d88c329c8db121589748  fuzz-corpora.j
     "concurrencyRequiredProcessCpuSeconds": 28800,
     "addressBuildCommand": "cargo +nightly-2026-08-12 fuzz build --sanitizer address --careful TARGET",
     "concurrencyBuildCommand": "cargo +nightly-2026-08-12 fuzz build --sanitizer thread --careful TARGET",
-    "runCommand": "\"$TIME_BIN\" -v -o CPU_LOG FUZZ_EXE CORPUS -max_total_time=28800 -timeout=5 -max_len=CAP",
+    "runCommand": "MAX_LEN_BYTES=\"$(jq -er --arg ingress \"$INGRESS\" '.ingressMapping[$ingress].maxLenBytes' qualification/staged/fuzz-corpora.json)\"; \"$TIME_BIN\" -v -o CPU_LOG FUZZ_EXE CORPUS -max_total_time=28800 -timeout=5 -max_len=$MAX_LEN_BYTES",
     "cpuAccounting": {
       "requiredFields": [
         "User time (seconds)",
@@ -435,16 +435,16 @@ a718aa48103e4cf7f4ab60cce371ae85997e03317cb6d88c329c8db121589748  fuzz-corpora.j
       "id": "image",
       "capBytes": 1048576,
       "licenses": [
-        [
-          "Apache-2.0",
-          "https://raw.githubusercontent.com/image-rs/image/76e57184f22772dad1138e96954e57945406b15e/LICENSE-APACHE",
-          "0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594"
-        ],
-        [
-          "MIT",
-          "https://raw.githubusercontent.com/image-rs/image/76e57184f22772dad1138e96954e57945406b15e/LICENSE-MIT",
-          "c77a4cf9da729987d0fe7ccd811e3bd27393914ddf3d23467c18cc22954513b3"
-        ]
+        {
+          "licenseId": "Apache-2.0",
+          "licenseUrl": "https://raw.githubusercontent.com/image-rs/image/76e57184f22772dad1138e96954e57945406b15e/LICENSE-APACHE",
+          "licenseSha256": "0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594"
+        },
+        {
+          "licenseId": "MIT",
+          "licenseUrl": "https://raw.githubusercontent.com/image-rs/image/76e57184f22772dad1138e96954e57945406b15e/LICENSE-MIT",
+          "licenseSha256": "c77a4cf9da729987d0fe7ccd811e3bd27393914ddf3d23467c18cc22954513b3"
+        }
       ],
       "sources": [
         [
@@ -472,9 +472,13 @@ a718aa48103e4cf7f4ab60cce371ae85997e03317cb6d88c329c8db121589748  fuzz-corpora.j
     {
       "id": "font",
       "capBytes": 1048576,
-      "licenseId": "OFL-1.1",
-      "licenseUrl": "https://raw.githubusercontent.com/notofonts/noto-fonts/ffebf8c1ee449e544955a7e813c54f9b73848eac/LICENSE",
-      "licenseSha256": "0dab92d0544f7b233403f14b84a663bdbfa746982eda629e7f4f9ffe1b036feb",
+      "licenses": [
+        {
+          "licenseId": "OFL-1.1",
+          "licenseUrl": "https://raw.githubusercontent.com/notofonts/noto-fonts/ffebf8c1ee449e544955a7e813c54f9b73848eac/LICENSE",
+          "licenseSha256": "0dab92d0544f7b233403f14b84a663bdbfa746982eda629e7f4f9ffe1b036feb"
+        }
+      ],
       "sources": [
         [
           "NotoSans-Regular.ttf",
@@ -491,9 +495,13 @@ a718aa48103e4cf7f4ab60cce371ae85997e03317cb6d88c329c8db121589748  fuzz-corpora.j
     {
       "id": "unicode-text",
       "capBytes": 8388608,
-      "licenseId": "Unicode-3.0",
-      "licenseUrl": "https://web.archive.org/web/20240825031908id_/https://www.unicode.org/license.txt",
-      "licenseSha256": "f5062c9a188d81dfe66b56db4182dcf9e4b17c0d9b0d311a8e20b3a1b075c443",
+      "licenses": [
+        {
+          "licenseId": "Unicode-3.0",
+          "licenseUrl": "https://web.archive.org/web/20240825031908id_/https://www.unicode.org/license.txt",
+          "licenseSha256": "f5062c9a188d81dfe66b56db4182dcf9e4b17c0d9b0d311a8e20b3a1b075c443"
+        }
+      ],
       "sources": [
         [
           "GraphemeBreakTest.txt",
@@ -510,9 +518,13 @@ a718aa48103e4cf7f4ab60cce371ae85997e03317cb6d88c329c8db121589748  fuzz-corpora.j
     {
       "id": "json",
       "capBytes": 65536,
-      "licenseId": "MIT",
-      "licenseUrl": "https://raw.githubusercontent.com/nst/JSONTestSuite/1ef36fa01286573e846ac449e8683f8833c5b26a/LICENSE",
-      "licenseSha256": "8bd0e0578be788c617ea01d18b2a8146e3746ae50bddadc65a5f9d3aad08ad49",
+      "licenses": [
+        {
+          "licenseId": "MIT",
+          "licenseUrl": "https://raw.githubusercontent.com/nst/JSONTestSuite/1ef36fa01286573e846ac449e8683f8833c5b26a/LICENSE",
+          "licenseSha256": "8bd0e0578be788c617ea01d18b2a8146e3746ae50bddadc65a5f9d3aad08ad49"
+        }
+      ],
       "sources": [
         [
           "valid",
@@ -534,9 +546,13 @@ a718aa48103e4cf7f4ab60cce371ae85997e03317cb6d88c329c8db121589748  fuzz-corpora.j
     {
       "id": "wpt-events",
       "capBytes": 65536,
-      "licenseId": "BSD-3-Clause",
-      "licenseUrl": "https://raw.githubusercontent.com/web-platform-tests/wpt/461f7e8515940598535c71ae334e188eadde27a3/LICENSE.md",
-      "licenseSha256": "5fac07febb0e2a97fb0d7b0def149ec08b642e1ba4b9c345283ab1cbd2af6570",
+      "licenses": [
+        {
+          "licenseId": "BSD-3-Clause",
+          "licenseUrl": "https://raw.githubusercontent.com/web-platform-tests/wpt/461f7e8515940598535c71ae334e188eadde27a3/LICENSE.md",
+          "licenseSha256": "5fac07febb0e2a97fb0d7b0def149ec08b642e1ba4b9c345283ab1cbd2af6570"
+        }
+      ],
       "sources": [
         [
           "clipboard-write",
@@ -577,14 +593,38 @@ a718aa48103e4cf7f4ab60cce371ae85997e03317cb6d88c329c8db121589748  fuzz-corpora.j
     }
   ],
   "ingressMapping": {
-    "application-assets": ["image", "font", "json"],
-    "operating-environment-events": ["wpt-events"],
-    "private-platform-content": ["unicode-text", "wpt-events"],
-    "accessibility": ["unicode-text", "wpt-events"],
-    "candidate-boundary": ["json", "wpt-events"],
-    "local-sink": ["json"],
-    "candidate-artifacts": ["json"],
-    "independent-verification": ["json"]
+    "application-assets": {
+      "corpusSets": ["image", "font", "json"],
+      "maxLenBytes": 1048576
+    },
+    "operating-environment-events": {
+      "corpusSets": ["wpt-events"],
+      "maxLenBytes": 65536
+    },
+    "private-platform-content": {
+      "corpusSets": ["unicode-text", "wpt-events"],
+      "maxLenBytes": 8388608
+    },
+    "accessibility": {
+      "corpusSets": ["unicode-text", "wpt-events"],
+      "maxLenBytes": 8388608
+    },
+    "candidate-boundary": {
+      "corpusSets": ["json", "wpt-events"],
+      "maxLenBytes": 65536
+    },
+    "local-sink": {
+      "corpusSets": ["json"],
+      "maxLenBytes": 65536
+    },
+    "candidate-artifacts": {
+      "corpusSets": ["json"],
+      "maxLenBytes": 65536
+    },
+    "independent-verification": {
+      "corpusSets": ["json"],
+      "maxLenBytes": 65536
+    }
   }
 }
 ```
@@ -610,7 +650,7 @@ a718aa48103e4cf7f4ab60cce371ae85997e03317cb6d88c329c8db121589748  fuzz-corpora.j
     "cargo test -p oxyflut-assets checked_rgba_bytes",
     "cargo test -p oxyflut-assets asset_decode_replays_image_registry",
     "cargo +nightly-2026-08-12 fuzz build --sanitizer address --careful asset_decode",
-    "\"$TIME_BIN\" -v -o CPU_LOG FUZZ_EXE CORPUS -max_total_time=28800 -timeout=5 -max_len=1048576",
+    "MAX_LEN_BYTES=\"$(jq -er '.ingressMapping[\"application-assets\"].maxLenBytes' qualification/staged/fuzz-corpora.json)\"; \"$TIME_BIN\" -v -o CPU_LOG FUZZ_EXE CORPUS -max_total_time=28800 -timeout=5 -max_len=$MAX_LEN_BYTES",
     "record User time (seconds) plus System time (seconds) for the successful address shard and resume timed shards with the same corpus until the cumulative process CPU seconds are at least 86400",
     "cargo +nightly-2026-08-12 miri test -p oxyflut-assets checked_rgba_bytes",
     "cargo +nightly-2026-08-12 miri test -p oxyflut-assets asset_decode_replays_image_registry"
@@ -626,32 +666,32 @@ a718aa48103e4cf7f4ab60cce371ae85997e03317cb6d88c329c8db121589748  fuzz-corpora.j
 }
 ```
 
-The output of P9 follows:
+The output of P13a follows:
 
 ```text
-$ perl /tmp/wf-epic-b/OXY-B006-pr-round2/verify-canonical-blocks.pl .constitution/spikes/SPK-B006.md /tmp/wf-epic-b/OXY-B006-pr-round2/p9
-fuzz-corpora|a718aa48103e4cf7f4ab60cce371ae85997e03317cb6d88c329c8db121589748|14983|ok
-security-patch-rehearsal|0e4b1d49168c4948c805ff8f5b29fdddfbe05eb5a01e6fb14f7be5e3f37bf65b|1862|ok
-$ jq -e . /tmp/wf-epic-b/OXY-B006-pr-round2/p9/fuzz-corpora.json >/dev/null
-$ jq -e . /tmp/wf-epic-b/OXY-B006-pr-round2/p9/security-patch-rehearsal.json >/dev/null
-$ sha256sum /tmp/wf-epic-b/OXY-B006-pr-round2/p9/fuzz-corpora.json /tmp/wf-epic-b/OXY-B006-pr-round2/p9/security-patch-rehearsal.json
-a718aa48103e4cf7f4ab60cce371ae85997e03317cb6d88c329c8db121589748  /tmp/wf-epic-b/OXY-B006-pr-round2/p9/fuzz-corpora.json
-0e4b1d49168c4948c805ff8f5b29fdddfbe05eb5a01e6fb14f7be5e3f37bf65b  /tmp/wf-epic-b/OXY-B006-pr-round2/p9/security-patch-rehearsal.json
+$ perl /tmp/wf-epic-b/OXY-B006-pr-round3/verify-canonical-blocks.pl .constitution/spikes/SPK-B006.md /tmp/wf-epic-b/OXY-B006-pr-round3/p13a
+fuzz-corpora|59d3459130a585e335df491f464258f40b3708c48d237600df960722ffcda105|15932|ok
+security-patch-rehearsal|27b6e4525723e2501d08e72169f8194bb070d4a79b32825f3cc70fe9e66fc14c|1991|ok
+$ jq -e . /tmp/wf-epic-b/OXY-B006-pr-round3/p13a/fuzz-corpora.json >/dev/null
+$ jq -e . /tmp/wf-epic-b/OXY-B006-pr-round3/p13a/security-patch-rehearsal.json >/dev/null
+$ sha256sum /tmp/wf-epic-b/OXY-B006-pr-round3/p13a/fuzz-corpora.json /tmp/wf-epic-b/OXY-B006-pr-round3/p13a/security-patch-rehearsal.json
+59d3459130a585e335df491f464258f40b3708c48d237600df960722ffcda105  /tmp/wf-epic-b/OXY-B006-pr-round3/p13a/fuzz-corpora.json
+27b6e4525723e2501d08e72169f8194bb070d4a79b32825f3cc70fe9e66fc14c  /tmp/wf-epic-b/OXY-B006-pr-round3/p13a/security-patch-rehearsal.json
 ```
 
-The output of P10 follows:
+The output of P13b follows:
 
 ```text
-$ perl /tmp/wf-epic-b/OXY-B006-pr-round2/verify-canonical-blocks.pl .constitution/spikes/SPK-B006.md /tmp/wf-epic-b/OXY-B006-pr-round2/p10
-fuzz-corpora|a718aa48103e4cf7f4ab60cce371ae85997e03317cb6d88c329c8db121589748|14983|ok
-security-patch-rehearsal|0e4b1d49168c4948c805ff8f5b29fdddfbe05eb5a01e6fb14f7be5e3f37bf65b|1862|ok
-$ prettier --parser json /tmp/wf-epic-b/OXY-B006-pr-round2/p10/fuzz-corpora.json > /tmp/wf-epic-b/OXY-B006-pr-round2/p10/fuzz-corpora.reserialized.json
-$ prettier --parser json /tmp/wf-epic-b/OXY-B006-pr-round2/p10/security-patch-rehearsal.json > /tmp/wf-epic-b/OXY-B006-pr-round2/p10/security-patch-rehearsal.reserialized.json
-$ cmp -s /tmp/wf-epic-b/OXY-B006-pr-round2/p10/fuzz-corpora.json /tmp/wf-epic-b/OXY-B006-pr-round2/p10/fuzz-corpora.reserialized.json && cmp -s /tmp/wf-epic-b/OXY-B006-pr-round2/p10/security-patch-rehearsal.json /tmp/wf-epic-b/OXY-B006-pr-round2/p10/security-patch-rehearsal.reserialized.json
+$ perl /tmp/wf-epic-b/OXY-B006-pr-round3/verify-canonical-blocks.pl .constitution/spikes/SPK-B006.md /tmp/wf-epic-b/OXY-B006-pr-round3/p13b
+fuzz-corpora|59d3459130a585e335df491f464258f40b3708c48d237600df960722ffcda105|15932|ok
+security-patch-rehearsal|27b6e4525723e2501d08e72169f8194bb070d4a79b32825f3cc70fe9e66fc14c|1991|ok
+$ prettier --parser json /tmp/wf-epic-b/OXY-B006-pr-round3/p13b/fuzz-corpora.json > /tmp/wf-epic-b/OXY-B006-pr-round3/p13b/fuzz-corpora.reserialized.json
+$ prettier --parser json /tmp/wf-epic-b/OXY-B006-pr-round3/p13b/security-patch-rehearsal.json > /tmp/wf-epic-b/OXY-B006-pr-round3/p13b/security-patch-rehearsal.reserialized.json
+$ cmp -s /tmp/wf-epic-b/OXY-B006-pr-round3/p13b/fuzz-corpora.json /tmp/wf-epic-b/OXY-B006-pr-round3/p13b/fuzz-corpora.reserialized.json && cmp -s /tmp/wf-epic-b/OXY-B006-pr-round3/p13b/security-patch-rehearsal.json /tmp/wf-epic-b/OXY-B006-pr-round3/p13b/security-patch-rehearsal.reserialized.json
 canonical_json_reserialization=passed
-$ sha256sum /tmp/wf-epic-b/OXY-B006-pr-round2/p10/fuzz-corpora.json /tmp/wf-epic-b/OXY-B006-pr-round2/p10/security-patch-rehearsal.json
-a718aa48103e4cf7f4ab60cce371ae85997e03317cb6d88c329c8db121589748  /tmp/wf-epic-b/OXY-B006-pr-round2/p10/fuzz-corpora.json
-0e4b1d49168c4948c805ff8f5b29fdddfbe05eb5a01e6fb14f7be5e3f37bf65b  /tmp/wf-epic-b/OXY-B006-pr-round2/p10/security-patch-rehearsal.json
+$ sha256sum /tmp/wf-epic-b/OXY-B006-pr-round3/p13b/fuzz-corpora.json /tmp/wf-epic-b/OXY-B006-pr-round3/p13b/security-patch-rehearsal.json
+59d3459130a585e335df491f464258f40b3708c48d237600df960722ffcda105  /tmp/wf-epic-b/OXY-B006-pr-round3/p13b/fuzz-corpora.json
+27b6e4525723e2501d08e72169f8194bb070d4a79b32825f3cc70fe9e66fc14c  /tmp/wf-epic-b/OXY-B006-pr-round3/p13b/security-patch-rehearsal.json
 ```
 
 ### Canonical fenced-block integrity proposal
@@ -660,8 +700,8 @@ Stage 3 must add an `xtask` or continuous-integration check that extracts the ex
 
 The check must cover these anchors and digests:
 
-- `fuzz-corpora`: `a718aa48103e4cf7f4ab60cce371ae85997e03317cb6d88c329c8db121589748`.
-- `security-patch-rehearsal`: `0e4b1d49168c4948c805ff8f5b29fdddfbe05eb5a01e6fb14f7be5e3f37bf65b`.
+- `fuzz-corpora`: `59d3459130a585e335df491f464258f40b3708c48d237600df960722ffcda105` (15,932 bytes).
+- `security-patch-rehearsal`: `27b6e4525723e2501d08e72169f8194bb070d4a79b32825f3cc70fe9e66fc14c` (1,991 bytes).
 
 ## Sources
 
