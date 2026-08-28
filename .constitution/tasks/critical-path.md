@@ -1,6 +1,6 @@
 # Qualification planning critical path
 
-- **Version:** v0.2.20
+- **Version:** v0.2.21
 - **Active story points:** 22
 - **Active phase:** Pre-implementation readiness research and Stage 3 reconciliation
 

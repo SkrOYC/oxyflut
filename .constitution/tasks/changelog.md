@@ -2,6 +2,16 @@
 
 All notable changes to the Stage 4 execution plan appear in this file.
 
+## [v0.2.21] - 2026-08-28
+
+### Fixed
+
+- Applied PR review round 9 corrections in `28d8c5e`: classified unverifiable staged hosts as valid-but-open, skipped unreachable readiness toolchains, retained per-receipt macOS failures, and added Windows and X11 collector coverage.
+
+### Noted
+
+- Template generation remains library-only until OXY-D001 defines the measurement-harness contract and assigns a command surface.
+
 ## [v0.2.20] - 2026-08-28
 
 ### Fixed
@@ -39,6 +49,7 @@ All notable changes to the Stage 4 execution plan appear in this file.
 ### Fixed
 
 - Applied PR review round 4 corrections in `5ee7b8c` for Windows release normalization, bounded Linux protocol collection, reference-environment pins, artifact-pair cleanup, readiness diagnostics, staged input verification, KU evidence paths, and PRD meter parsing.
+- Amended 2026-08-28: Recorded PR review round 5 commits `8d163ae`, `1234f60`, and `7e79086` for fail-closed protocol capture, immutable artifact-pair cleanup, and publication-result clarification.
 
 ### Noted
 

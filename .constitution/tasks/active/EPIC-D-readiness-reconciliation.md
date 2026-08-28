@@ -41,6 +41,7 @@ The reconciliation report must name these Stage 3 revisions:
 - Dependency advisory validation is deferred: `cargo deny --offline check advisories` and `cargo audit` can use a host-cached RustSec database, but the repository has no pinned vendored advisory database for CI. CI runs `cargo deny check licenses bans sources` until OXY-D001 records a pinned offline advisory database and its refresh policy.
 - The staged native toolchain supports only `x86_64-unknown-linux-gnu`; other Tier 1 hosts are an OXY-D001 lock input.
 - Platform and accessibility baselines are validated by `contracts validate`. Workload, scoring-anchor, corpus, and sample-validity baseline validation have no owning command; `measurement validate` covers sample-validity records only. Stage 3 and Stage 4 must assign owners for the remaining baseline validation.
+- Template generation command surface remains deferred until the measurement-harness contract exists. The `generate_templates` and `compute_comparison_bounds` library APIs remain the interim interface.
 
 - **Acceptance:**
   - **Mode:** invariant

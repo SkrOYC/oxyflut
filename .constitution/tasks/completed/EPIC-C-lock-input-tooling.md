@@ -38,6 +38,7 @@ Checker: cargo +1.98.0 test -p xtask external_contracts
 
 - **Touched Files:** `crates/oxyflut-qualification/src/schema.rs`
 - **Justification:** The shared offline validator must assert JSON Schema `format` values for the SLSA RFC 3339 timestamp contract.
+- **Format assertions:** Format assertions (`uri`, `date-time`) are enforced for all registry schemas, including `qualification-lock`, `external-contract-lock`, and `ci-invocation`.
 - **Touched Files:** `xtask/src/commands/external_contracts_tests.rs`
 - **Justification:** The focused external-contract test module keeps the command implementation below the repository file-size limit while exercising the required external fixtures.
 - **Touched Files:** `xtask/src/commands/external_contracts/dsse.rs`.
@@ -135,6 +136,7 @@ Command: cargo +1.98.0 run -p xtask -- measurement validate --input qualificatio
 - **Assumption for OXY-D001 Stage 3 revision:** no Stage 3 schema exists for `measurementPolicy.sampleValidityRules`; the staged schema's digest is the proposed binding value.
 - **Lead ruling for OXY-D001 Stage 3 revision:** the PRD launch and per-launch observation budgets belong to the measurement-harness contract. The staged sample-validity record deliberately doesn't bind them.
 - **Lead ruling for OXY-D001 Stage 3 revision:** `monotonicNs` is non-decreasing per `(constraintId, launch)` because each launch uses its own monotonic clock. The raw-measurement schema must state this scope.
+- **Lead ruling for OXY-D001 Stage 3 revision:** Template generation (`generate_templates`, `compute_comparison_bounds`) is intentionally library-only until the measurement-harness contract exists.
 - **Touched Files:** `crates/oxyflut-qualification/src/measurement_tests.rs`.
 - **Justification:** The measurement unit tests are split from the implementation module to keep the Rust library path below the repository's hard file-size limit.
 - **Touched Files:** `crates/oxyflut-qualification/src/schema.rs` and `xtask/src/contracts/schema.rs`.
@@ -265,6 +267,7 @@ Epic C completed its 21 story points without claiming that any staged input is c
 | PR review round 6 (CI fix) | `ac14a9e`, `57bdc88` | The full suite passed with the default and alternate Rustup roots. | Replaced developer-home Rustup paths with manifest-relative fixture paths, resolved them through `pathRoot` in test loaders, refreshed immutable fixture bindings, and recorded the host-independent correction. |
 | PR review round 7 | `df7a288` | Full final quality gate passed. | Preserved external snapshot bytes, rejected whitespace-only baseline fields, and reported oversized macOS and Windows observations as bounded missing values without changing qualification readiness. |
 | PR review round 8 | `e9adbbe` | Full final quality gate passed. | Accepted Debian package-version tildes, typed bounded capture failures, enforced staged-proposal KU and resolved-tool invariants, and retained the fail-closed protocol capture rule without changing qualification readiness. |
+| PR review round 9 | `28d8c5e` | Full final quality gate passed. | Classified unverifiable staged hosts as valid-but-open, skipped unreachable readiness toolchains, retained per-receipt macOS failures, documented all-schema format assertions, and added Windows and X11 collector polish without changing qualification readiness. |
 
 ### Stage 3 revisions required — routed to OXY-D001
 
