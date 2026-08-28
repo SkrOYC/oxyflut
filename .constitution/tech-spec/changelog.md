@@ -13,6 +13,7 @@ All notable changes to the technical specification appear in this file.
 - Amended 2026-08-28: Added the nonauthoritative staged `qualification/schemas/sample-validity.schema.json` proposal for `qualification-lock.schema.json#measurementPolicy.sampleValidityRules`.
 - Amended 2026-08-28: `environment inspect` writes a lock-compatible projection at `PATH` and a complete, digest-bound `PATH.inventory.json` companion inventory artifact. The companion artifact remains untyped by Stage 3.
 - Amended 2026-08-28: Narrowed the `baseline validate` command contract to one candidate-neutral capability baseline. Epic D owns the remaining baseline-validation ownership gap.
+- Amended 2026-08-28: Marked `cargo fmt`, `clippy`, `test`, and `contracts validate` as available; `cargo deny` runs `licenses bans sources`, while OXY-D001 owns advisory checks.
 - The specification remains v0.15.0 because `contracts/specification-phase.json` and committed baselines require exact `specificationVersion` equality. Updating only the specification version would invalidate those bindings, so this amendment doesn't change the version.
 - Advanced platform contracts to v5 with the active specification version and typed immutable absent-event entries keyed by gate, event, environment, and candidate.
 - Advanced qualification evidence to v5 so every `not-applicable-kk` gate names an exact absent-event entry through a versioned, digest-bound platform-baseline reference.
