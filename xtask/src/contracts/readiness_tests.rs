@@ -13,9 +13,6 @@ use super::{
 #[test]
 fn committed_phase_three_a_lock_is_valid_but_both_gates_remain_open() -> Result<(), Box<dyn Error>>
 {
-    if skip_on_unsupported_host() {
-        return Ok(());
-    }
     let root = workspace_root()?;
     let registry = schema::compile_workspace(&root)?;
     let report = validate_documents(
@@ -36,9 +33,6 @@ fn committed_phase_three_a_lock_is_valid_but_both_gates_remain_open() -> Result<
 #[test]
 fn readiness_fixtures_fail_closed_for_unresolved_inputs_and_baseline_bindings()
 -> Result<(), Box<dyn Error>> {
-    if skip_on_unsupported_host() {
-        return Ok(());
-    }
     let root = ready_fixture_root()?;
     let registry = schema::compile_workspace(&workspace_root()?)?;
     let phase = read_json(&root.join(super::PHASE_PATH))?;
@@ -83,9 +77,6 @@ fn readiness_fixtures_fail_closed_for_unresolved_inputs_and_baseline_bindings()
 
 #[test]
 fn staged_external_proposal_requires_its_gating_known_unknown() -> Result<(), Box<dyn Error>> {
-    if skip_on_unsupported_host() {
-        return Ok(());
-    }
     let root = workspace_root()?;
     let registry = schema::compile_workspace(&root)?;
     let mut lock = read_json(&root.join(super::LOCK_PATH))?;
@@ -113,9 +104,6 @@ fn staged_external_proposal_requires_its_gating_known_unknown() -> Result<(), Bo
 
 #[test]
 fn nested_kk_claim_without_digest_bound_evidence_fails_closed() -> Result<(), Box<dyn Error>> {
-    if skip_on_unsupported_host() {
-        return Ok(());
-    }
     let root = ready_fixture_root()?;
     let mut issues = Vec::new();
     let result = validate_platform_value(
@@ -135,9 +123,6 @@ fn nested_kk_claim_without_digest_bound_evidence_fails_closed() -> Result<(), Bo
 #[test]
 fn schema_valid_platform_containers_validate_their_nested_kk_claims() -> Result<(), Box<dyn Error>>
 {
-    if skip_on_unsupported_host() {
-        return Ok(());
-    }
     let root = ready_fixture_root()?;
     let registry = schema::compile_workspace(&workspace_root()?)?;
     let platform = read_json(&root.join(super::PLATFORM_CONTRACTS_PATH))?;
@@ -151,7 +136,7 @@ fn schema_valid_platform_containers_validate_their_nested_kk_claims() -> Result<
 
 #[test]
 fn ready_fixture_exercises_candidate_and_measurement_true_paths() -> Result<(), Box<dyn Error>> {
-    if skip_on_unsupported_host() {
+    if skip_on_unsupported_host()? {
         return Ok(());
     }
     let root = ready_fixture_root()?;
@@ -170,7 +155,7 @@ fn ready_fixture_exercises_candidate_and_measurement_true_paths() -> Result<(), 
 #[test]
 fn contracts_validate_readiness_family_rejects_all_relative_resolved_tools()
 -> Result<(), Box<dyn Error>> {
-    if skip_on_unsupported_host() {
+    if skip_on_unsupported_host()? {
         return Ok(());
     }
     let workspace = workspace_root()?;
@@ -224,7 +209,7 @@ fn contracts_validate_readiness_family_rejects_all_relative_resolved_tools()
 #[test]
 fn candidate_artifact_source_revisions_and_resolved_tools_fail_closed() -> Result<(), Box<dyn Error>>
 {
-    if skip_on_unsupported_host() {
+    if skip_on_unsupported_host()? {
         return Ok(());
     }
     let root = ready_fixture_root()?;
@@ -273,7 +258,7 @@ fn candidate_artifact_source_revisions_and_resolved_tools_fail_closed() -> Resul
 
 #[test]
 fn nonempty_resolved_tools_must_match_the_staged_manifest() -> Result<(), Box<dyn Error>> {
-    if skip_on_unsupported_host() {
+    if skip_on_unsupported_host()? {
         return Ok(());
     }
     let root = workspace_root()?;
@@ -303,9 +288,6 @@ fn nonempty_resolved_tools_must_match_the_staged_manifest() -> Result<(), Box<dy
 #[test]
 fn readiness_fixture_toolchain_manifests_match_the_canonical_manifest() -> Result<(), Box<dyn Error>>
 {
-    if skip_on_unsupported_host() {
-        return Ok(());
-    }
     let workspace = workspace_root()?;
     let canonical = fs::read(workspace.join(super::TOOLCHAIN_MANIFEST_PATH))?;
     for fixture in [ready_fixture_root()?, production_fixture_root()?] {
@@ -319,9 +301,6 @@ fn readiness_fixture_toolchain_manifests_match_the_canonical_manifest() -> Resul
 
 #[test]
 fn external_snapshots_and_platform_versions_fail_closed() -> Result<(), Box<dyn Error>> {
-    if skip_on_unsupported_host() {
-        return Ok(());
-    }
     let workspace = workspace_root()?;
     let registry = schema::compile_workspace(&workspace)?;
     let root = temporary_fixture_root("external-platform");
@@ -386,9 +365,6 @@ fn external_snapshots_and_platform_versions_fail_closed() -> Result<(), Box<dyn 
 
 #[test]
 fn measurement_rejects_missing_final_candidate_source_identities() -> Result<(), Box<dyn Error>> {
-    if skip_on_unsupported_host() {
-        return Ok(());
-    }
     let root = ready_fixture_root()?;
     let registry = schema::compile_workspace(&workspace_root()?)?;
     let result = validate_documents(
@@ -409,9 +385,6 @@ fn measurement_rejects_missing_final_candidate_source_identities() -> Result<(),
 #[test]
 fn production_fixture_resolves_typed_artifacts_then_rejects_untyped_promotion_artifacts()
 -> Result<(), Box<dyn Error>> {
-    if skip_on_unsupported_host() {
-        return Ok(());
-    }
     let root = production_fixture_root()?;
     let registry = schema::compile_workspace(&workspace_root()?)?;
     let result = validate_documents(
@@ -435,9 +408,6 @@ fn production_fixture_resolves_typed_artifacts_then_rejects_untyped_promotion_ar
 #[test]
 fn promotion_qualification_evidence_reuses_the_exact_semantic_validator()
 -> Result<(), Box<dyn Error>> {
-    if skip_on_unsupported_host() {
-        return Ok(());
-    }
     let root = production_fixture_root()?;
     let phase = read_json(&root.join("production-3b-phase.json"))?;
     let fabricated =
@@ -456,9 +426,6 @@ fn promotion_qualification_evidence_reuses_the_exact_semantic_validator()
 #[test]
 fn fabricated_promotion_fixtures_reject_lock_candidate_version_selection_and_missing_artifacts()
 -> Result<(), Box<dyn Error>> {
-    if skip_on_unsupported_host() {
-        return Ok(());
-    }
     let root = production_fixture_root()?;
     let registry = schema::compile_workspace(&workspace_root()?)?;
     for fixture in [
@@ -516,9 +483,6 @@ fn fabricated_promotion_fixtures_reject_lock_candidate_version_selection_and_mis
 
 #[test]
 fn tampered_canonical_adr_bytes_fail_closed() -> Result<(), Box<dyn Error>> {
-    if skip_on_unsupported_host() {
-        return Ok(());
-    }
     let workspace = workspace_root()?;
     let root = temporary_fixture_root("tampered-adr");
     copy_directory(&production_fixture_root()?, &root)?;
@@ -557,9 +521,6 @@ fn tampered_canonical_adr_bytes_fail_closed() -> Result<(), Box<dyn Error>> {
 
 #[test]
 fn selection_recomputes_score_margin_and_maintenance_tie_breaks() -> Result<(), Box<dyn Error>> {
-    if skip_on_unsupported_host() {
-        return Ok(());
-    }
     let root = temporary_fixture_root("selection-consistency");
     fs::create_dir_all(root.join("evidence"))?;
     let proof_path = root.join("evidence/proof.txt");
@@ -730,13 +691,12 @@ fn read_json(path: &Path) -> Result<Value, Box<dyn Error>> {
     Ok(value)
 }
 
-fn skip_on_unsupported_host() -> bool {
-    match crate::toolchain::is_staged_host() {
-        Ok(true) => false,
-        Ok(false) | Err(_) => {
-            eprintln!("skipped: staged toolchain host is x86_64-unknown-linux-gnu");
-            true
-        }
+fn skip_on_unsupported_host() -> Result<bool, Box<dyn Error>> {
+    if crate::toolchain::is_staged_host()? {
+        Ok(false)
+    } else {
+        eprintln!("skipped: staged toolchain host is x86_64-unknown-linux-gnu");
+        Ok(true)
     }
 }
 
