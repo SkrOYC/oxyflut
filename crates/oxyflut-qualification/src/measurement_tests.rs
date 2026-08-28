@@ -126,14 +126,20 @@ fn prd_meter_table_matches_the_constraints_document() -> Result<(), Box<dyn Erro
 #[test]
 fn prd_meter_parser_recognizes_percentile_and_maximum_phrasing_and_rejects_unknown_rows()
 -> Result<(), Box<dyn Error>> {
-    let recognized = parse_prd_meter_rules_source(
-        "| CON-PERF-001 | Scale | Maximum of nearest-rank p99 percentile observations. | At most 2.0 ms. | Stretch | Fail |",
+    let recognized = parse_prd_meter_row(
+        "CON-PERF-001",
+        "Maximum of nearest-rank p99 percentile observations.",
+        "At most 2.0 ms.",
     )?;
-    assert_eq!(recognized.comparison_rules.len(), 2);
-    assert!(recognized.non_scalar_meters.is_empty());
+    let ParsedMeterRow::Comparison(recognized) = recognized else {
+        return Err("recognized row must produce comparison rules".into());
+    };
+    assert_eq!(recognized.len(), 2);
 
-    let unrecognized = parse_prd_meter_rules_source(
-        "| CON-PERF-001 | Scale | Maximum of nearest-rank observations. | At most 2.0 ms. | Stretch | Fail |",
+    let unrecognized = parse_prd_meter_row(
+        "CON-PERF-001",
+        "Maximum of nearest-rank observations.",
+        "At most 2.0 ms.",
     );
     assert!(unrecognized.is_err());
     Ok(())
@@ -380,7 +386,7 @@ fn parse_prd_meter_rules_source(source: &str) -> Result<ParsedPrdMeterRules, Box
             }
         }
     }
-    if constraints.len() == 27 || constraints.len() == 1 {
+    if constraints.len() == 27 {
         Ok(ParsedPrdMeterRules {
             comparison_rules,
             non_scalar_meters,
