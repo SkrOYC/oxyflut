@@ -57,6 +57,12 @@ pub(crate) enum ToolchainError {
         /// The substituted stable tool name.
         name: String,
     },
+    /// A qualification-lock entry differs from the staged tool's immutable metadata.
+    #[error("qualification-lock tool entry is invalid: {name}")]
+    LockEntryMismatch {
+        /// The mismatched stable tool name.
+        name: String,
+    },
     /// A required tool wasn't supplied by the required immutable source.
     #[error("native tool source identity is invalid: {name}")]
     SourceIdentityMismatch {

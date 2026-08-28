@@ -213,3 +213,10 @@ Invariants:
 - The command never changes the lock or either readiness flag.
 Checker: cargo +1.98.0 run -p xtask -- lock status --gate candidate-implementation
 ```
+
+##### OXY-C005 Deviations & Justifications
+
+- **Touched Files:** `xtask/src/contracts/readiness.rs`, `xtask/src/toolchain/{lock,error}.rs`, `xtask/src/toolchain.rs`, `xtask/src/commands/lock_tests.rs`, and `.constitution/tasks/active/EPIC-C-lock-input-tooling.md`.
+- **Justification:** The command reuses the Foundation readiness validator and staged-toolchain verifier. The focused test module keeps the command implementation within the repository file-size guidance. This ticket records the required scope deviation and OXY-D001 input.
+- **OXY-D001 input:** `qualification-lock.schema.json` binds `measurementPolicy.{scoringAnchors,assessors,fuzzCorpora,securityPatchRehearsal}` as path-less digests; the repository convention `qualification/staged/<field>.json` is proposed as their referent and should be typed by Stage 3.
+- **External-lock decision:** The external lock has per-contract `epistemicStatus` values rather than one root status. When every active contract is `ku-gating`, readiness verifies the staged proposal. Otherwise, readiness verifies the active lock.

@@ -15,13 +15,15 @@ use serde_json::Value;
 
 #[path = "toolchain/error.rs"]
 mod error;
+#[path = "toolchain/lock.rs"]
+pub(crate) mod lock;
 #[path = "toolchain/specs.rs"]
 mod specs;
 #[cfg(test)]
 #[path = "toolchain_tests.rs"]
 mod tests;
-
 pub(crate) use error::ToolchainError;
+pub(crate) use lock::verify_lock_resolved_tools;
 use specs::{LINUX_LIBC_HEADERS_VERSION, TOOL_SPECS, ToolLocator, ToolSpec};
 pub(crate) const STAGED_HOST: &str = "x86_64-unknown-linux-gnu";
 const RUST_TOOLCHAIN_COMMIT: &str = "88d9e12ae178fab0fb5cc050a94da85685d449ea";

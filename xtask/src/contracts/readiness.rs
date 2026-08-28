@@ -20,6 +20,8 @@ const PHASE_PATH: &str = ".constitution/tech-spec/contracts/specification-phase.
 const PLATFORM_CONTRACTS_PATH: &str = ".constitution/tech-spec/contracts/platform-contracts.json";
 const EXTERNAL_CONTRACT_LOCK_PATH: &str =
     ".constitution/tech-spec/contracts/external-contract-lock.json";
+const EXTERNAL_CONTRACT_LOCK_PROPOSAL_PATH: &str =
+    "qualification/schemas/external/proposed-external-contract-lock.json";
 const RAW_MEASUREMENT_SCHEMA_PATH: &str =
     ".constitution/tech-spec/data-models/raw-measurement.schema.json";
 const LOCK_SCHEMA: &str = "urn:oxyflut:schema:qualification-lock:5";
@@ -362,7 +364,8 @@ fn candidate_input_issues(
         if let (Some(executable_path), Some(digest)) = (
             nonempty_string(tool, "executablePath")?,
             nonempty_string(tool, "sha256")?,
-        ) {
+        ) && !Path::new(executable_path).is_absolute()
+        {
             let _ = digests::verify_reference(root, executable_path, digest)?;
         }
     }
@@ -408,7 +411,8 @@ fn validate_external_contract_lock(
     let digest = value
         .as_str()
         .ok_or_else(|| invariant("external-contract-lock"))?;
-    let verified = digests::verify_reference(root, EXTERNAL_CONTRACT_LOCK_PATH, digest)?;
+    let path = external_contract_lock_input_path(root, registry)?;
+    let verified = digests::verify_reference(root, path, digest)?;
     let external_lock = read_json(&verified.resolved_path)?;
     validate_schema(
         registry,
@@ -446,6 +450,30 @@ fn validate_external_contract_lock(
         }
     }
     Ok(())
+}
+
+fn external_contract_lock_input_path(
+    root: &Path,
+    registry: &SchemaRegistry,
+) -> Result<&'static str, ReadinessError> {
+    let active = read_json(&root.join(EXTERNAL_CONTRACT_LOCK_PATH))?;
+    validate_schema(
+        registry,
+        EXTERNAL_LOCK_SCHEMA,
+        &active,
+        "external-contract-lock",
+    )?;
+    let active_contracts = object_field(&active, "contracts")?;
+    // The external-lock schema records status per contract. A wholly KU active lock has no active
+    // immutable snapshot to bind, so readiness uses the staged proposal until reconciliation.
+    let all_unresolved = active_contracts.values().all(|contract| {
+        contract.get("epistemicStatus").and_then(Value::as_str) == Some("ku-gating")
+    });
+    if all_unresolved {
+        Ok(EXTERNAL_CONTRACT_LOCK_PROPOSAL_PATH)
+    } else {
+        Ok(EXTERNAL_CONTRACT_LOCK_PATH)
+    }
 }
 
 fn validate_capability_baseline(
