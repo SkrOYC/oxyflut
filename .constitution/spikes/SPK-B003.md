@@ -11,6 +11,7 @@
 - **Round-8 correction clock start / stop:** 2026-08-28T19:41:57Z / 2026-08-28T19:49:17Z.
 - **Round-9 correction clock start / stop:** 2026-08-28T20:22:41Z / 2026-08-28T20:32:29Z.
 - **Round-10 correction clock start / stop:** 2026-08-28T20:55:09Z / 2026-08-28T20:57:09Z.
+- **Round-11 correction clock start / stop:** 2026-08-28T21:19:47Z / 2026-08-28T21:24:47Z.
 
 ## Question
 
@@ -1325,7 +1326,8 @@ exit=0
 
 Stage 3 can make the following exact edits without changing product capabilities or architecture boundaries:
 
-- `.constitution/tech-spec/contracts/platform-contracts.json` -> `environments.wayland.protocols`: OXY-D001 must apply this replacement only after the preservation step commits all 10 regular fixture files and replaces every exact `<to-be-computed-by-preservation-step>` token with the streamed SHA-256 of the associated fixture. The template is syntactically valid JSON, but it is deliberately not schema-valid or digest-validator-valid until that step completes. Each eventual `kk` entry has a non-null version and local evidence; P1 retains server advertisement and behavior as a separate gate.
+- `.constitution/tech-spec/contracts/platform-contracts.json` -> `environments.wayland.protocols`: OXY-D001 must apply this replacement only after the preservation step commits all 10 regular fixture files, their 10 adjacent source-record sidecars, and replaces every exact `<to-be-computed-by-preservation-step>` token with the streamed SHA-256 of the associated fixture. The template is syntactically valid JSON, but it is deliberately not schema-valid or digest-validator-valid until that step completes. Each eventual `kk` entry has a non-null version and local evidence; P1 retains server advertisement and behavior as a separate gate.
+- `qualification/fixtures/external-contracts/wayland/` -> preservation inputs: OXY-D001 must commit a `FIXTURE.source.json` sidecar for every capture-map fixture, using the source-record shape and source-family license values below; each sidecar's `sha256` must equal its sibling regular fixture's streamed SHA-256.
 
 The Wayland GTK row uses the same Ubuntu `libgtk-4-1` `4.22.2+ds-1ubuntu1` package identity as SPK-B004's X11 row because both reference sessions use that package. This is not a change to the `gtk4` crate `v4_20` API-binding ceiling in `stack.md`. OXY-D001 must reconcile both platform rows to that package identity while preserving their separately captured fixture paths.
 
@@ -1342,11 +1344,68 @@ The capture map covers all 29 evidence objects in the template, including the `w
 | `wp_fractional_scale_manager_v1`, `wp_fractional_scale_v1` (2) | `qualification/fixtures/external-contracts/wayland/s05-fractional-scale-v1.xml` | https://raw.githubusercontent.com/wayland-mirror/wayland-protocols/d5aed4e4903a77aefaef03359d1ffdc0d5093456/staging/fractional-scale/fractional-scale-v1.xml |
 | `zwp_text_input_manager_v3`, `zwp_text_input_v3` (2) | `qualification/fixtures/external-contracts/wayland/s06-text-input-unstable-v3.xml` | https://raw.githubusercontent.com/wayland-mirror/wayland-protocols/d5aed4e4903a77aefaef03359d1ffdc0d5093456/unstable/text-input/text-input-unstable-v3.xml |
 | `wp_presentation`, `wp_presentation_feedback` (2) | `qualification/fixtures/external-contracts/wayland/s07-presentation-time-v1.xml` | https://raw.githubusercontent.com/wayland-mirror/wayland-protocols/37a1560cf6981a11d44dd200d9409d09b4f0074e/stable/presentation-time/presentation-time.xml |
-| `AT-SPI` `Text.xml` (1) | `qualification/fixtures/external-contracts/wayland/s08-atspi-2.60.6-text.xml` | https://gitlab.gnome.org/GNOME/at-spi2-core/-/raw/2.60.6/xml/Text.xml |
-| `AT-SPI` `EditableText.xml` (1) | `qualification/fixtures/external-contracts/wayland/s09-atspi-2.60.6-editable-text.xml` | https://gitlab.gnome.org/GNOME/at-spi2-core/-/raw/2.60.6/xml/EditableText.xml |
+| `AT-SPI` `Text.xml` (1) | `qualification/fixtures/external-contracts/wayland/s08-atspi-2.60.6-text.xml` | https://gitlab.gnome.org/GNOME/at-spi2-core/-/raw/fff349553d16f99de3258bdeed7b8a663469b84b/xml/Text.xml |
+| `AT-SPI` `EditableText.xml` (1) | `qualification/fixtures/external-contracts/wayland/s09-atspi-2.60.6-editable-text.xml` | https://gitlab.gnome.org/GNOME/at-spi2-core/-/raw/fff349553d16f99de3258bdeed7b8a663469b84b/xml/EditableText.xml |
 | Ubuntu `at-spi2-core` package identity (1) | `qualification/fixtures/external-contracts/wayland/s10-ubuntu-at-spi2-core.html`; `sha256`: `<to-be-computed-by-preservation-step>` | https://packages.ubuntu.com/resolute/at-spi2-core |
 
-To preserve the fixtures, OXY-D001 must create `qualification/fixtures/external-contracts/wayland/`, fetch each canonical URL with `curl --fail --location --max-time 60 --output FIXTURE URL`, require `test -f FIXTURE` and `test ! -L FIXTURE`, calculate `sha256sum FIXTURE`, replace every matching token in the template with that output, commit the regular files, and run the contract digest validator. The validator then requires repository-relative paths, regular files, and streamed SHA-256 matches.
+### Round-11 correction: source-record sidecars and license attribution
+
+The external-contract convention records the upstream identity and terms in a sibling source record, not only in a contract evidence object. For every row in the existing capture map, OXY-D001 must write `FIXTURE.source.json` beside `FIXTURE`. This follows the existing `protocol.source.json` convention in `qualification/schemas/external/`; the source record is metadata, and the fixture remains the regular file that `platform-contracts.json` hashes. The sidecar is not an evidence object, so the capture map remains 29 objects and no existing row changes its number.
+
+Every sidecar must use this exact authoritative-record shape. Its `sha256` value must be the same 64-character streamed SHA-256 written for its sibling fixture in the contract template; it is not the hash of the sidecar.
+
+```json
+{
+  "kind": "authoritative",
+  "repository": "https://github.com/wayland-mirror/wayland",
+  "commit": "1ab6b693b16e1d9734496fe60c8a6ed277e4dec3",
+  "path": "protocol/wayland.xml",
+  "retrievalUrl": "https://raw.githubusercontent.com/wayland-mirror/wayland/1ab6b693b16e1d9734496fe60c8a6ed277e4dec3/protocol/wayland.xml",
+  "license": "MIT",
+  "licenseSource": {
+    "path": "COPYING",
+    "commit": "1ab6b693b16e1d9734496fe60c8a6ed277e4dec3"
+  },
+  "version": null,
+  "sha256": "7eb8569529235c85e16d15612fc367da4538b7d515b13e32ec48ba0742c42610"
+}
+```
+
+Table 4 supplies the exact non-digest values for every sidecar. `null` is intentional where the authoritative package-page publisher provides no source commit or where a commit-pinned source has no separately fetched release version. The two AT-SPI retrieval URLs use the immutable commit resolved from the fetched `2.60.6` tag; the preserved probe confirms that the tag and commit bytes are identical.
+
+| Fixture and required sidecar | `repository`; `commit`; `path`; `retrievalUrl`; `version` | `license`; `licenseSource.path`; `licenseSource.commit` |
+| :-- | :-- | :-- |
+| `s01-ubuntu-libgtk-4-1.html`; `s01-ubuntu-libgtk-4-1.html.source.json` | `https://packages.ubuntu.com`; `null`; `resolute/libgtk-4-1`; `https://packages.ubuntu.com/resolute/libgtk-4-1`; `4.22.2+ds-1ubuntu1` | `Page copyright notice (Canonical Ltd.; see Ubuntu legal terms)`; `https://www.ubuntu.com/legal`; `null` |
+| `s02-wayland-core.xml`; `s02-wayland-core.xml.source.json` | `https://github.com/wayland-mirror/wayland`; `1ab6b693b16e1d9734496fe60c8a6ed277e4dec3`; `protocol/wayland.xml`; `https://raw.githubusercontent.com/wayland-mirror/wayland/1ab6b693b16e1d9734496fe60c8a6ed277e4dec3/protocol/wayland.xml`; `null` | `MIT`; `COPYING`; `1ab6b693b16e1d9734496fe60c8a6ed277e4dec3` |
+| `s03-xdg-shell.xml`; `s03-xdg-shell.xml.source.json` | `https://github.com/wayland-mirror/wayland-protocols`; `d5aed4e4903a77aefaef03359d1ffdc0d5093456`; `stable/xdg-shell/xdg-shell.xml`; `https://raw.githubusercontent.com/wayland-mirror/wayland-protocols/d5aed4e4903a77aefaef03359d1ffdc0d5093456/stable/xdg-shell/xdg-shell.xml`; `null` | `MIT`; `COPYING`; `d5aed4e4903a77aefaef03359d1ffdc0d5093456` |
+| `s04-viewporter.xml`; `s04-viewporter.xml.source.json` | `https://github.com/wayland-mirror/wayland-protocols`; `d5aed4e4903a77aefaef03359d1ffdc0d5093456`; `stable/viewporter/viewporter.xml`; `https://raw.githubusercontent.com/wayland-mirror/wayland-protocols/d5aed4e4903a77aefaef03359d1ffdc0d5093456/stable/viewporter/viewporter.xml`; `null` | `MIT`; `COPYING`; `d5aed4e4903a77aefaef03359d1ffdc0d5093456` |
+| `s05-fractional-scale-v1.xml`; `s05-fractional-scale-v1.xml.source.json` | `https://github.com/wayland-mirror/wayland-protocols`; `d5aed4e4903a77aefaef03359d1ffdc0d5093456`; `staging/fractional-scale/fractional-scale-v1.xml`; `https://raw.githubusercontent.com/wayland-mirror/wayland-protocols/d5aed4e4903a77aefaef03359d1ffdc0d5093456/staging/fractional-scale/fractional-scale-v1.xml`; `null` | `MIT`; `COPYING`; `d5aed4e4903a77aefaef03359d1ffdc0d5093456` |
+| `s06-text-input-unstable-v3.xml`; `s06-text-input-unstable-v3.xml.source.json` | `https://github.com/wayland-mirror/wayland-protocols`; `d5aed4e4903a77aefaef03359d1ffdc0d5093456`; `unstable/text-input/text-input-unstable-v3.xml`; `https://raw.githubusercontent.com/wayland-mirror/wayland-protocols/d5aed4e4903a77aefaef03359d1ffdc0d5093456/unstable/text-input/text-input-unstable-v3.xml`; `null` | `MIT`; `COPYING`; `d5aed4e4903a77aefaef03359d1ffdc0d5093456` |
+| `s07-presentation-time-v1.xml`; `s07-presentation-time-v1.xml.source.json` | `https://github.com/wayland-mirror/wayland-protocols`; `37a1560cf6981a11d44dd200d9409d09b4f0074e`; `stable/presentation-time/presentation-time.xml`; `https://raw.githubusercontent.com/wayland-mirror/wayland-protocols/37a1560cf6981a11d44dd200d9409d09b4f0074e/stable/presentation-time/presentation-time.xml`; `null` | `MIT`; `COPYING`; `37a1560cf6981a11d44dd200d9409d09b4f0074e` |
+| `s08-atspi-2.60.6-text.xml`; `s08-atspi-2.60.6-text.xml.source.json` | `https://gitlab.gnome.org/GNOME/at-spi2-core`; `fff349553d16f99de3258bdeed7b8a663469b84b`; `xml/Text.xml`; `https://gitlab.gnome.org/GNOME/at-spi2-core/-/raw/fff349553d16f99de3258bdeed7b8a663469b84b/xml/Text.xml`; `2.60.6` | `LGPL-2.1-or-later`; `COPYING`; `fff349553d16f99de3258bdeed7b8a663469b84b` |
+| `s09-atspi-2.60.6-editable-text.xml`; `s09-atspi-2.60.6-editable-text.xml.source.json` | `https://gitlab.gnome.org/GNOME/at-spi2-core`; `fff349553d16f99de3258bdeed7b8a663469b84b`; `xml/EditableText.xml`; `https://gitlab.gnome.org/GNOME/at-spi2-core/-/raw/fff349553d16f99de3258bdeed7b8a663469b84b/xml/EditableText.xml`; `2.60.6` | `LGPL-2.1-or-later`; `COPYING`; `fff349553d16f99de3258bdeed7b8a663469b84b` |
+| `s10-ubuntu-at-spi2-core.html`; `s10-ubuntu-at-spi2-core.html.source.json` | `https://packages.ubuntu.com`; `null`; `resolute/at-spi2-core`; `https://packages.ubuntu.com/resolute/at-spi2-core`; `2.60.0-1` | `Page copyright notice (Canonical Ltd.; see Ubuntu legal terms)`; `https://www.ubuntu.com/legal`; `null` |
+
+The source-family license values are independently checked facts: GTK source captures use `LGPL-2.1-or-later`; Wayland source captures use `MIT`; AT-SPI source captures use `LGPL-2.1-or-later`; and Ubuntu package-page captures retain the page copyright notice and Ubuntu legal-terms reference, rather than claiming an open-source license for the HTML. The capture map has no X.Org fixture. If Stage 3 adds an X.Org XML or text capture, its sibling source record must use `MIT/X11` and cite the fetched [X.Org license](https://www.x.org/releases/X11R7.7/doc/xorg-docs/License.html). The relevant fetched license sources are [GTK 4.20.4 Meson metadata](https://gitlab.gnome.org/GNOME/gtk/-/raw/4.20.4/meson.build), [Wayland core COPYING](https://raw.githubusercontent.com/wayland-mirror/wayland/1ab6b693b16e1d9734496fe60c8a6ed277e4dec3/COPYING), [Wayland protocols COPYING at d5aed4e](https://raw.githubusercontent.com/wayland-mirror/wayland-protocols/d5aed4e4903a77aefaef03359d1ffdc0d5093456/COPYING), [Wayland protocols COPYING at 37a1560](https://raw.githubusercontent.com/wayland-mirror/wayland-protocols/37a1560cf6981a11d44dd200d9409d09b4f0074e/COPYING), [AT-SPI 2.60.6 COPYING](https://gitlab.gnome.org/GNOME/at-spi2-core/-/raw/2.60.6/COPYING), and [Ubuntu legal terms](https://www.ubuntu.com/legal).
+
+The direct-source license probe used only files under `/tmp/wf-epic-b/OXY-B003/round-11/`. The body digests below are direct-fetch probe results; no Jina-proxied body is hashed.
+
+```text
+$ license-source-probe
+GTK Meson metadata url=https://gitlab.gnome.org/GNOME/gtk/-/raw/4.20.4/meson.build bytes=36681 sha256=846f70529404fb90429e60d930795a644a38c824f1ec36c943957e5a35e026bf excerpt=license: 'LGPL-2.1-or-later'
+Wayland core COPYING url=https://raw.githubusercontent.com/wayland-mirror/wayland/1ab6b693b16e1d9734496fe60c8a6ed277e4dec3/COPYING bytes=1340 sha256=6eefcb023622a463168a5c20add95fd24a38c7482622a9254a23b99b7c153061 excerpt=Permission is hereby granted, free of charge, to any person obtaining a copy of this software
+Wayland protocols COPYING d5aed4e url=https://raw.githubusercontent.com/wayland-mirror/wayland-protocols/d5aed4e4903a77aefaef03359d1ffdc0d5093456/COPYING bytes=1502 sha256=f1a2b233e8a9a71c40f4aa885be08a0842ac85bb8588703c1dd7e6e6502e3124 excerpt=Permission is hereby granted, free of charge, to any person obtaining a copy of this software
+Wayland protocols COPYING 37a1560 url=https://raw.githubusercontent.com/wayland-mirror/wayland-protocols/37a1560cf6981a11d44dd200d9409d09b4f0074e/COPYING bytes=1502 sha256=f1a2b233e8a9a71c40f4aa885be08a0842ac85bb8588703c1dd7e6e6502e3124 excerpt=Permission is hereby granted, free of charge, to any person obtaining a copy of this software
+AT-SPI COPYING url=https://gitlab.gnome.org/GNOME/at-spi2-core/-/raw/2.60.6/COPYING bytes=26530 sha256=dc626520dcd53a22f727af3ee42c770e56c97a64fe3adb063799d8ab032fe551 excerpt=GNU LESSER GENERAL PUBLIC LICENSE
+X.Org license url=https://www.x.org/releases/X11R7.7/doc/xorg-docs/License.html bytes=35725 sha256=0a12f5da2ff694fb69b10024c7dc07ad969a41ea5a695ea24767836fb27bd948 excerpt=Permission is hereby granted, free of charge, to any person obtaining a copy of this software
+Ubuntu package footer url=https://packages.ubuntu.com/resolute/libgtk-4-1 bytes=23257 sha256=ff9a602bc4daff9f97460bd7032359579f4f7a990f6cc532792d38f445fa8d42 excerpt=Content Copyright 2026 Canonical Ltd.; see Ubuntu legal terms
+Ubuntu legal terms url=https://www.ubuntu.com/legal bytes=203395 sha256=ae5e61dff1cc32d8f76f2d460ad4e16a07fe3fa4737947edfc9cd2fdcfc3c7cd excerpt=Ubuntu legal terms and policies
+AT-SPI tag 2.60.6 resolved commit=fff349553d16f99de3258bdeed7b8a663469b84b
+AT-SPI tag and resolved-commit content identical=1
+exit=0
+```
+
+To preserve the fixtures, OXY-D001 must create `qualification/fixtures/external-contracts/wayland/`, fetch each canonical URL with `curl --fail --location --max-time 60 --output FIXTURE URL`, require `test -f FIXTURE` and `test ! -L FIXTURE`, calculate `sha256sum FIXTURE`, write the corresponding `FIXTURE.source.json` with the Table 4 values and that same digest, replace every matching token in the template with that output, commit the regular files and sidecars, and run the contract digest validator. The validator then requires repository-relative paths, regular files, and streamed SHA-256 matches; OXY-D001 must additionally reject a missing, non-regular, or digest-mismatched source-record sidecar before accepting the preservation step.
 
 The following trimmed Round-7 transport output records successful source fetches only. The Jina responses are not fixture bytes and their digests are intentionally absent. The source-package descriptor rechecks SPK-B004's package-audit input; it is not an additional object in this 29-object template. The round-9 Jina fetch of the new Ubuntu AT-SPI capture is preserved in the factory-propagation correction.
 
