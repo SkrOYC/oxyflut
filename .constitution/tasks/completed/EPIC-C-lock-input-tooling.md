@@ -192,6 +192,7 @@ Commands:
 - **Lead ruling:** The lead host cannot measure `wayland-info` or `xdpyinfo` output. Only those protocol sources use a provisional 256 KiB capture bound; every other command keeps `COMMAND_OUTPUT_LIMIT`. Truncated output remains fail-closed. OXY-D001 must confirm the bound against real Ubuntu 26.04 output sizes.
 - **Exact-version rule:** The macOS operating-system pin matches `sw_vers -productVersion` exactly. A `26.5.1` host fails closed rather than matching the `macos-26.5` pin by prefix.
 - **Session fail-closed rule:** Wayland and X11 collection rejects every missing session value before publishing either artifact.
+- **Investigate ruling:** Linux `driverVersion` emits a Mesa package pairing only for allowlisted Mesa-backed kernel drivers: `amdgpu`, `i915`, `xe`, `nouveau`, and `radeon`. Other drivers emit `missing { reason: unsupported-by-source }`.
 - **OXY-D001 input:** A partial Wayland interface observation remains in the companion inventory because lock v5 has no `protocolVersion` field. Stage 3 must define the required interface-set completeness rule before the lock can adopt this evidence.
 
 #### OXY-C005 Implement the pre-implementation readiness report
@@ -241,6 +242,8 @@ Checker: cargo +1.98.0 run -p xtask -- lock status --gate candidate-implementati
 - **Justification:** PR review required removal of obsolete command-outcome allowances, correction of the staged SLSA license record, explicit OXY-D001 ownership gaps, and complete Epic C review records.
 - **Touched Files:** `.constitution/tasks/{critical-path,changelog}.md`.
 - **Justification:** PR review round 3 aligned the active-plan version with its changelog and recorded the review corrections without changing qualification readiness.
+- **Touched Files:** `xtask/src/commands/contracts.rs`, `xtask/src/contracts/{readiness,readiness_tests}.rs`.
+- **Justification:** PR review round 10 restores fail-closed contract validation for an unverifiable tool host, while preserving the lock command's typed valid-but-open report and validating promotion before the final host check.
 - CI run for `63eafb2` was red (developer-host rustup paths in readiness fixtures); corrected in `ac14a9e`; gates re-verified on a clean checkout via CI before archive claims are relied upon.
 - A staged external-contract proposal may satisfy the typed `externalContractLock` reference only while the `external-distribution-schema-snapshots-and-verifiers` KU independently gates; OXY-D001 must adopt or replace the proposal before clearing that KU.
 
@@ -268,6 +271,7 @@ Epic C completed its 21 story points without claiming that any staged input is c
 | PR review round 7 | `df7a288` | Full final quality gate passed. | Preserved external snapshot bytes, rejected whitespace-only baseline fields, and reported oversized macOS and Windows observations as bounded missing values without changing qualification readiness. |
 | PR review round 8 | `e9adbbe` | Full final quality gate passed. | Accepted Debian package-version tildes, typed bounded capture failures, enforced staged-proposal KU and resolved-tool invariants, and retained the fail-closed protocol capture rule without changing qualification readiness. |
 | PR review round 9 | `28d8c5e` | Full final quality gate passed. | Classified unverifiable staged hosts as valid-but-open, skipped unreachable readiness toolchains, retained per-receipt macOS failures, documented all-schema format assertions, and added Windows and X11 collector polish without changing qualification readiness. |
+| PR review round 10 | `a6179d0` | Full final quality gate passed. | Restored fail-closed contract validation for unverifiable hosts, retained typed open-gate reporting, evaluated promotion before host verification, narrowed readiness skips, and allowlisted Mesa-backed Linux drivers. |
 
 ### Stage 3 revisions required — routed to OXY-D001
 
