@@ -226,8 +226,8 @@ Checker: cargo +1.98.0 run -p xtask -- lock status --gate candidate-implementati
 
 ##### OXY-C005 Deviations & Justifications
 
-- **Touched Files:** `xtask/src/contracts/{readiness,readiness_tests}.rs`, `xtask/src/toolchain/{lock,error}.rs`, `xtask/src/toolchain.rs`, `xtask/src/commands/lock_tests.rs`, and `.constitution/tasks/active/EPIC-C-lock-input-tooling.md`.
-- **Justification:** The command reuses the Foundation readiness validator and staged-toolchain verifier. The complete synthetic fixture commits the staged manifest's absolute Rustup paths, and its direct test compares those committed values before fixture setup stages policy digests. This ticket records the required scope deviation and OXY-D001 input.
+- **Touched Files:** `xtask/src/contracts/{readiness,readiness_tests}.rs`, `xtask/src/toolchain/{lock,error}.rs`, `xtask/src/toolchain.rs`, `xtask/src/commands/{contracts,lock_tests}.rs`, `qualification/fixtures/{readiness,contracts/readiness}/`, and `.constitution/tasks/{active,completed}/EPIC-C-lock-input-tooling.md`.
+- **Justification:** The command reuses the Foundation readiness validator and staged-toolchain verifier. Rustup-rooted fixture tools retain the manifest-relative path, while fixture loaders resolve only that path through the manifest `pathRoot` on the current host. Nix store paths remain byte-for-byte absolute. `qualification/fixtures/readiness/README.md` documents this choice, and affected immutable fixture references were refreshed. This ticket records the required scope deviation and OXY-D001 input.
 - **Touched Files:** `qualification/fixtures/contracts/readiness/{ready,production-3b}/`.
 - **Justification:** Each fixture lock with nonempty `resolvedTools` now stages the exact manifest and absolute entries. Dependent immutable fixture digests were refreshed after this input changed.
 - **Touched Files:** `.constitution/tech-spec/guidelines.md`, `.constitution/tasks/completed/EPIC-C-lock-input-tooling.md`.

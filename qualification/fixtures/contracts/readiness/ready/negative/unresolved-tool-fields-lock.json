@@ -216,7 +216,7 @@
       "sourceIdentity": "rustup-toolchain: 1.98.0-x86_64-unknown-linux-gnu; commit: 88d9e12ae178fab0fb5cc050a94da85685d449ea",
       "hostTriple": "x86_64-unknown-linux-gnu",
       "licenseId": "MIT OR Apache-2.0",
-      "executablePath": "/home/oscar/.rustup/toolchains/1.98.0-x86_64-unknown-linux-gnu/bin/rustfmt",
+      "executablePath": "toolchains/1.98.0-x86_64-unknown-linux-gnu/bin/rustfmt",
       "sha256": "5005cdcd39ded526dca8fa6ccd716d42fc7da54469034e055dbf54649bec7877"
     },
     {
@@ -225,7 +225,7 @@
       "sourceIdentity": "rustup-toolchain: 1.98.0-x86_64-unknown-linux-gnu; commit: 88d9e12ae178fab0fb5cc050a94da85685d449ea",
       "hostTriple": "x86_64-unknown-linux-gnu",
       "licenseId": "MIT OR Apache-2.0",
-      "executablePath": "/home/oscar/.rustup/toolchains/1.98.0-x86_64-unknown-linux-gnu/bin/rustc",
+      "executablePath": "toolchains/1.98.0-x86_64-unknown-linux-gnu/bin/rustc",
       "sha256": "3690cc576ede140504698405d5d8fa3826aaadbe71699c6c4ed0a565d6f493e2"
     }
   ],

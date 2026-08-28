@@ -8,4 +8,4 @@ Selected candidate: focused.
 
 ## Evidence
 
-- `evidence/selected-qualification.json` SHA-256: aeb2745597b13bce82a1bf60417e85d47afa43d71397cb44f1da09423c2d41d2
+- `evidence/selected-qualification.json` SHA-256: 160cb166868bf633de725ece2afec1b459098a40b4ee318924245266be27c8e8

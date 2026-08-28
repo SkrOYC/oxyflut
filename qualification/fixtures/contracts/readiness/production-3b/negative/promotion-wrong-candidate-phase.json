@@ -15,15 +15,15 @@
   },
   "requiredProductionVersion": ">=1.0.0",
   "promotionEvidence": {
-    "qualificationLockDigest": "8b86f7ee0b8f6a02605158969230d2621159512b1eef917a184618863287f582",
+    "qualificationLockDigest": "c54251416803b3cded73eb6041fa2d7890ac0f993347657157bb17dec417a156",
     "selectedCandidate": "integrated",
     "selectionDecision": {
       "path": "evidence/selection-decision.json",
-      "sha256": "a93dd1d089317d947a9826dcbcd663a8310e43ca508fcaebb99efd66434f7b1e"
+      "sha256": "1478e99c58dc6d9a5d1b680c229fcf3de555e3b5bffbadb294d07de2b36b6aac"
     },
     "selectedCandidateQualification": {
       "path": "evidence/selected-qualification.json",
-      "sha256": "aeb2745597b13bce82a1bf60417e85d47afa43d71397cb44f1da09423c2d41d2"
+      "sha256": "160cb166868bf633de725ece2afec1b459098a40b4ee318924245266be27c8e8"
     },
     "layoutQualification": {
       "path": "evidence/layoutQualification.txt",
@@ -31,7 +31,7 @@
     },
     "acceptedAdr0010": {
       "path": ".constitution/tech-spec/adrs/ADR-0010-production-substrate.md",
-      "sha256": "def9c6dc6c04476562b15fb7ff6e3cfcdc1486fa1e05c7df121db553ec10b136"
+      "sha256": "f84ece0b630eb570831cafbf149f9646908912f6f64aae3ccf2b83284a2a0820"
     },
     "finalContractSet": {
       "path": "evidence/finalContractSet.txt",
@@ -43,7 +43,7 @@
     },
     "allTier1Results": {
       "path": "evidence/all-tier1-results.json",
-      "sha256": "aeb2745597b13bce82a1bf60417e85d47afa43d71397cb44f1da09423c2d41d2"
+      "sha256": "160cb166868bf633de725ece2afec1b459098a40b4ee318924245266be27c8e8"
     },
     "losingCandidateRemoval": {
       "path": "evidence/losingCandidateRemoval.txt",
