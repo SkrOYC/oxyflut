@@ -25,6 +25,8 @@ static TEMPORARY_SEQUENCE: AtomicU64 = AtomicU64::new(0);
 
 /// Writes canonical JSON below one repository-relative directory at a content-addressed path.
 ///
+/// The returned publication reports the immutable reference and whether this invocation created it.
+///
 /// # Errors
 ///
 /// Returns an error when the output directory is outside the evidence root, canonical encoding fails, or publication fails.
@@ -50,7 +52,7 @@ pub fn write_canonical_json_to_directory(
 
 /// Writes canonical JSON at one repository-relative immutable evidence path.
 ///
-/// The returned reference contains the canonical bytes' SHA-256 even when the caller-selected file name binds another immutable record, such as a provenance sidecar.
+/// The returned publication reports the canonical bytes' SHA-256 and whether this invocation created the file, even when the caller-selected file name binds another immutable record, such as a provenance sidecar.
 ///
 /// # Errors
 ///
@@ -85,7 +87,7 @@ pub fn write_derived_json(
 
 /// Writes a content-addressed derived JSON record below one repository-relative evidence directory.
 ///
-/// The directory must itself be below `qualification/`. The returned reference is named by the canonical record digest and retains the verified source path and digest as derived provenance.
+/// The directory must itself be below `qualification/`. The reference name is the canonical record digest. The reference retains the verified source path and digest as derived provenance. The publication reports whether this invocation created the file.
 ///
 /// # Errors
 ///
