@@ -24,7 +24,7 @@
       "epistemicStatus": "kk-locked",
       "localPath": "qualification/schemas/external/slsa-provenance-v1/spec/provenance-v1.source",
       "sha256": "7639cd8644d5e3f6faec32cdb5891e9fe368c31976e1020fe639bd56639bd877",
-      "verifier": "jsonschema-0.51.0-draft-2020-12:derived-slsa-provenance-v1"
+      "verifier": "jsonschema-0.51.0-draft-2020-12:derived-slsa-provenance-v1-normative-prose"
     }
   }
 }

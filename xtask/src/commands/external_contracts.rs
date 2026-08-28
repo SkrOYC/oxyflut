@@ -943,11 +943,11 @@ const SNAPSHOTS: &[SnapshotSpec] = &[
     SnapshotSpec {
         artifact_path: "qualification/schemas/external/slsa-provenance-v1/derived/provenance.derived.json",
         metadata_path: "qualification/schemas/external/slsa-provenance-v1/derived/source.json",
-        sha256: "4679b0c1ed9958f9bcbf267c5859a5b945603b9b6601a7b17a4813126a228fb5",
+        sha256: "3cb9a71b4cb767ddf6ca32c09a0f3bb1e4df25a434725eea0aba9800b6ecca74",
         identity: SnapshotIdentity::Derived(DerivedIdentity {
-            local_path: "qualification/schemas/external/slsa-provenance-v1/cue/provenance.cue",
-            sha256: "0d68f4ce799a5152151e0efd0fc7ae3b3769b512810d8667eab2ce77e25de40f",
-            verifier: "jsonschema-0.51.0-draft-2020-12-format-assertions",
+            local_path: "qualification/schemas/external/slsa-provenance-v1/spec/provenance-v1.source",
+            sha256: "7639cd8644d5e3f6faec32cdb5891e9fe368c31976e1020fe639bd56639bd877",
+            verifier: "jsonschema-0.51.0-draft-2020-12-format-assertions-normative-prose",
         }),
     },
     SnapshotSpec {
@@ -1001,7 +1001,7 @@ const PROPOSED_CONTRACTS: &[ProposedContract] = &[
         source: "https://raw.githubusercontent.com/slsa-framework/slsa/4d7f142300264276bd3d45ab91d2b0eeb4227932/docs/provenance/v1.md",
         local_path: "qualification/schemas/external/slsa-provenance-v1/spec/provenance-v1.source",
         sha256: "7639cd8644d5e3f6faec32cdb5891e9fe368c31976e1020fe639bd56639bd877",
-        verifier: "jsonschema-0.51.0-draft-2020-12:derived-slsa-provenance-v1",
+        verifier: "jsonschema-0.51.0-draft-2020-12:derived-slsa-provenance-v1-normative-prose",
     },
     ProposedContract {
         name: "dsse-envelope-v1",
