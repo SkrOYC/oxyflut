@@ -2,8 +2,8 @@
 
 - Ticket: OXY-B007
 - Status: completed access register
-- Clock start: 2026-08-28T16:50:42Z
-- Clock stop: 2026-08-28T16:52:50Z
+- Clock start: 2026-08-28T17:06:35Z
+- Clock stop: 2026-08-28T17:24:54Z
 
 ## Purpose and scope
 
@@ -18,6 +18,8 @@ A `CONFIRMED` row confirms an accountable owner, usable access procedure, and re
 On 2026-08-28, Oscar Y. <oscar@ocmasesorias.com> confirmed during this session that they are the accountable owner of `thinkpadp14s`, have local interactive access and administrator rights, and consent to its use for the Wayland x86-64 and X11 x86-64 rows. The declared X11 access paths are Xwayland and Xvfb.
 
 On 2026-08-28, Oscar Y. <oscar@ocmasesorias.com> confirmed: "The owner operates the machine and can run qualification sessions at any time on request; there is no notice requirement; sessions are owner-operated and are not left unattended."
+
+On 2026-08-28, Oscar Y. <oscar@ocmasesorias.com> confirmed: "I confirm that thinkpadp14s is an x86_64 machine with an AMD Renoir (Radeon Vega) integrated GPU, running NixOS 26.05 with a Hyprland Wayland session and Xwayland/Xvfb for X11."
 
 No macOS arm64 or Windows x86-64 machine, accountable owner, or access procedure was supplied for this register. Those rows are blocked under the ticket STOP condition.
 
@@ -42,20 +44,59 @@ No macOS arm64 or Windows x86-64 machine, accountable owner, or access procedure
 
 | ID | Status | Answer | Citation | Next bounded probe for KU rows |
 | :-- | :-- | :-- | :-- | :-- |
-| B007-Q01 | KU (gating) | No macOS machine, accountable owner, or access procedure is recorded. STOP: this row is blocked. | Owner attestation | On an identified macOS machine, its owner must run `uname -m; sw_vers; system_profiler SPHardwareDataType SPDisplaysDataType; xcodebuild -version` and preserve the output in `/tmp/wf-epic-b/B007-macos/owner-confirmation.txt`. The owner must date and sign a confirmation of physical machine identity, GPU, CPU, RAM, interactive-session access, administrator requirements, repeatable access window, consent, and physical distinctness. Expected output identifies `arm64`, macOS release and build, hardware and display inventory, and Xcode and SDK versions. |
-| B007-Q02 | KU (gating) | No Windows machine, accountable owner, or access procedure is recorded. STOP: this row is blocked. | Owner attestation | On an identified Windows machine, its owner must run `hostname; Get-CimInstance Win32_OperatingSystem; Get-CimInstance Win32_ComputerSystem; Get-CimInstance Win32_Processor; Get-CimInstance Win32_VideoController` in PowerShell and preserve the output in `C:\Temp\wf-epic-b\B007-windows\owner-confirmation.txt`. The owner must date and sign a confirmation of x86-64 architecture, interactive desktop access, administrator requirements, repeatable access window, consent, and physical distinctness. Expected output identifies the Windows release and build, machine, CPU, RAM, GPU, and driver. |
-| B007-Q03 | KK | Oscar Y. owns `thinkpadp14s`; the owner attested to local interactive access, administrator rights, and consent for Wayland use. The owner confirmed scheduling constraints of "on request, any time, no notice requirement" and a repeatable access window of "owner-operated sessions on request; not unattended." The preserved probe identifies an x86-64 NixOS host in a Wayland Hyprland session. | Owner attestation; [host discovery probe](#host-discovery-probe) | - |
-| B007-Q04 | KK | Oscar Y. owns the same `thinkpadp14s`; the owner attested to local interactive access, administrator rights, and consent for the X11 compatibility path. The owner confirmed scheduling constraints of "on request, any time, no notice requirement" and a repeatable access window of "owner-operated sessions on request; not unattended." The preserved probe identifies active `Xwayland :0`, queries its server and extensions, and has `xwininfo` connect to its root window. A separately launched `Xvfb :99` also accepts an `xdpyinfo` connection and is then stopped. | Owner attestation; [X11 access probe](#x11-access-probe) | - |
-| B007-Q05 | KU (gating) | No macOS configuration exists in this register to compare with the required arm64 macOS 26.5 SDK reference. | [Stage 3 platform pins](../tech-spec/stack.md#platform-qualification-pins) | Complete B007-Q01's owner confirmation. Compare its `sw_vers` and `xcodebuild -version` output against the pinned macOS 26.5 SDK and Xcode 26.6 build `17F113`; expected output either matches both pins or records the exact gap. |
-| B007-Q06 | KU (gating) | No Windows configuration exists in this register to compare with the required Windows 11 25H2 x86-64 reference. | [Stage 3 platform pins](../tech-spec/stack.md#platform-qualification-pins) | Complete B007-Q02's owner confirmation. Compare its `Win32_OperatingSystem` output against Windows 11 25H2 and record the Visual Studio Build Tools and Windows SDK versions; expected output either matches every pin or records each exact gap. |
-| B007-Q07 | KK | No. The available host reports `PRETTY_NAME="NixOS 26.05 (Yarara)"`, not Ubuntu 26.04 LTS. This host is not the Ubuntu 26.04 LTS Wayland reference environment. | [Host discovery probe](#host-discovery-probe); [Stage 3 platform pins](../tech-spec/stack.md#platform-qualification-pins); [Ubuntu 26.04 LTS release notes](https://documentation.ubuntu.com/release-notes/26.04/) | - |
-| B007-Q08 | KK | No. The available host reports `PRETTY_NAME="NixOS 26.05 (Yarara)"`, not Ubuntu 26.04 LTS. The confirmed interactive X11 path is Xwayland, and the separate Xvfb path is headless; neither demonstrates a native X11 desktop session. This host is not the Ubuntu 26.04 LTS X11 reference environment. | [Host discovery probe](#host-discovery-probe); [X11 access probe](#x11-access-probe); [Stage 3 platform pins](../tech-spec/stack.md#platform-qualification-pins); [Ubuntu 26.04 LTS release notes](https://documentation.ubuntu.com/release-notes/26.04/) | - |
+| B007-Q01 | KU (gating) | No macOS machine, accountable owner, or access procedure is recorded. STOP: this row is blocked. | Owner attestation; [Apple Technical Note TN2339](https://developer.apple.com/library/archive/technotes/tn2339/_index.html) | Run the [macOS owner-confirmation probe](#macos-and-windows-owner-confirmation-probes) on an identified machine. Preserve output in `/tmp/wf-epic-b/B007-macos/owner-confirmation.txt`, then append the owner's dated and signed identity, access, consent, and distinctness confirmation. The expected fields are listed with the probe. |
+| B007-Q02 | KU (gating) | No Windows machine, accountable owner, or access procedure is recorded. STOP: this row is blocked. | Owner attestation; [Microsoft vswhere README](https://github.com/microsoft/vswhere) | Run the [Windows owner-confirmation probe](#macos-and-windows-owner-confirmation-probes) on an identified machine. Preserve output in `C:\Temp\wf-epic-b\B007-windows\owner-confirmation.txt`, then append the owner's dated and signed identity, access, consent, and distinctness confirmation. The expected fields are listed with the probe. |
+| B007-Q03 | KK | Oscar Y. owns `thinkpadp14s`. The owner confirms that it is an x86_64 NixOS 26.05 machine with an AMD Renoir (Radeon Vega) integrated GPU and a Hyprland Wayland session. The owner also attests to local interactive access, administrator rights, and consent for Wayland use. The owner confirms scheduling constraints of "on request, any time, no notice requirement" and a repeatable access window of "owner-operated sessions on request; not unattended." The host-discovery probe corroborates the owner-confirmed environment, architecture, GPU inventory, and Wayland session. | [Owner attestation](#owner-attestation) (HITL confirmation); [host discovery probe](#host-discovery-probe) (corroborating evidence) | - |
+| B007-Q04 | KK | Oscar Y. owns the same `thinkpadp14s`. The owner confirms that it is an x86_64 NixOS 26.05 machine with an AMD Renoir (Radeon Vega) integrated GPU, a Hyprland Wayland session, and Xwayland/Xvfb for X11. The owner also attests to local interactive access, administrator rights, and consent for the X11 compatibility path. The owner confirms scheduling constraints of "on request, any time, no notice requirement" and a repeatable access window of "owner-operated sessions on request; not unattended." The host-discovery and X11-access probes corroborate the owner-confirmed environment, architecture, GPU inventory, and session paths. The X11-access probe identifies active `Xwayland :0`, queries its server and extensions, has `xwininfo` connect to its root window, and establishes then stops `Xvfb :99`. | [Owner attestation](#owner-attestation) (HITL confirmation); [host discovery probe](#host-discovery-probe) and [X11 access probe](#x11-access-probe) (corroborating evidence) | - |
+| B007-Q05 | KU (gating) | No macOS configuration exists in this register to compare with the required arm64 macOS 26.5 SDK reference. | [Stage 3 platform pins](../tech-spec/stack.md#platform-qualification-pins) | Complete B007-Q01's owner confirmation. Compare `sw_vers`, `xcodebuild -version`, `xcrun --sdk macosx --show-sdk-version`, and `xcrun --sdk macosx --show-sdk-path` with the pinned macOS 26.5 SDK and Xcode 26.6 build `17F113`; preserve output that either matches both pins or records each exact gap. |
+| B007-Q06 | KU (gating) | No Windows configuration exists in this register to compare with the required Windows 11 25H2 x86-64 reference. | [Stage 3 platform pins](../tech-spec/stack.md#platform-qualification-pins) | Complete B007-Q02's owner confirmation. Compare the recorded operating-system build, `vswhere` `installationVersion`, Windows SDK include-directory name, and GPU driver version with the Windows 11 25H2, Visual Studio Build Tools 2022 17.14.39, and Windows SDK 10.0.26100.8876 pins; preserve output that either matches every pin or records each exact gap. |
+| B007-Q07 | KK | No. The owner confirms that `thinkpadp14s` runs NixOS 26.05 with a Hyprland Wayland session, not Ubuntu 26.04 LTS. The host-discovery probe corroborates this with `PRETTY_NAME="NixOS 26.05 (Yarara)"`. This host is not the Ubuntu 26.04 LTS Wayland reference environment. | [Owner attestation](#owner-attestation) (HITL confirmation); [host discovery probe](#host-discovery-probe) (corroborating evidence); [Stage 3 platform pins](../tech-spec/stack.md#platform-qualification-pins); [Ubuntu 26.04 LTS release notes](https://documentation.ubuntu.com/release-notes/26.04/) | - |
+| B007-Q08 | KK | No. The owner confirms that `thinkpadp14s` runs NixOS 26.05 and provides Xwayland/Xvfb for X11, not an Ubuntu 26.04 LTS X11 session. The host-discovery probe corroborates the NixOS environment with `PRETTY_NAME="NixOS 26.05 (Yarara)"`. The X11-access probe corroborates that the interactive path is Xwayland and the separate Xvfb path is headless; neither demonstrates a native X11 desktop session. This host is not the Ubuntu 26.04 LTS X11 reference environment. | [Owner attestation](#owner-attestation) (HITL confirmation); [host discovery probe](#host-discovery-probe) and [X11 access probe](#x11-access-probe) (corroborating evidence); [Stage 3 platform pins](../tech-spec/stack.md#platform-qualification-pins); [Ubuntu 26.04 LTS release notes](https://documentation.ubuntu.com/release-notes/26.04/) | - |
 | B007-Q09 | KU (gating) | No macOS configuration is available, so a distinct second configuration is not established. | Owner attestation | Complete B007-Q01, then have the owner state whether the proposed physical machine is distinct from every other configuration recorded for score-4 evidence. Expected output is a dated identity and distinctness declaration. |
 | B007-Q10 | KU (gating) | No Windows configuration is available, so a distinct second configuration is not established. | Owner attestation | Complete B007-Q02, then have the owner state whether the proposed physical machine is distinct from every other configuration recorded for score-4 evidence. Expected output is a dated identity and distinctness declaration. |
-| B007-Q11 | KK | No. The Wayland and X11 rows are the same physical `thinkpadp14s` machine. They count as one hardware configuration, so this register cannot provide second-configuration score-4 evidence. | Owner attestation; [host discovery probe](#host-discovery-probe) | - |
-| B007-Q12 | KK | No. The X11 row is an Xwayland/Xvfb access path on the same physical `thinkpadp14s` machine as the Wayland row. It counts as one hardware configuration, so this register cannot provide second-configuration score-4 evidence. | Owner attestation; [host discovery probe](#host-discovery-probe) | - |
+| B007-Q11 | KK | No. The owner confirms the Wayland and X11 paths are on `thinkpadp14s`, one physical machine. It counts as one hardware configuration, so this register cannot provide second-configuration score-4 evidence. | [Owner attestation](#owner-attestation) (HITL confirmation); [host discovery probe](#host-discovery-probe) (corroborating evidence) | - |
+| B007-Q12 | KK | No. The owner confirms that Xwayland/Xvfb are X11 paths on `thinkpadp14s`, the same physical machine as the Wayland row. It counts as one hardware configuration, so this register cannot provide second-configuration score-4 evidence. | [Owner attestation](#owner-attestation) (HITL confirmation); [host discovery probe](#host-discovery-probe) (corroborating evidence) | - |
 
 The answer rows contain six KK findings and six gating KUs. The owner attestation is a human-in-the-loop access input. The command transcript below is preserved probe evidence for host properties. Neither source qualifies an environment.
+
+### macOS and Windows owner-confirmation probes
+
+Apple documents `xcrun` as an Xcode command-line shim. Microsoft documents `vswhere` as the Visual Studio installation-discovery executable at the path used below. These are next probes, not evidence for the blocked rows. Do not infer a result if a command fails. Preserve its error output at the stated path.
+
+On an identified macOS machine, run this command block:
+
+```bash
+mkdir -p /tmp/wf-epic-b/B007-macos
+{
+  uname -m
+  sw_vers
+  system_profiler SPHardwareDataType SPDisplaysDataType
+  xcodebuild -version
+  xcrun --sdk macosx --show-sdk-version
+  xcrun --sdk macosx --show-sdk-path
+} > /tmp/wf-epic-b/B007-macos/owner-confirmation.txt 2>&1
+```
+
+The output in `/tmp/wf-epic-b/B007-macos/owner-confirmation.txt` must identify the architecture, macOS release and build, hardware model, CPU, RAM, display and GPU inventory, Xcode version and build, selected macOS SDK version, and selected SDK path. The owner must append a dated and signed confirmation of the physical machine identity, interactive-session access, administrator requirements, repeatable access window, consent, and physical distinctness.
+
+On an identified Windows machine, run this PowerShell block:
+
+```powershell
+New-Item -ItemType Directory -Force -Path 'C:\Temp\wf-epic-b\B007-windows' | Out-Null
+$evidencePath = 'C:\Temp\wf-epic-b\B007-windows\owner-confirmation.txt'
+& {
+  hostname
+  Get-CimInstance Win32_OperatingSystem | Select-Object Caption, Version, BuildNumber, OSArchitecture
+  Get-CimInstance Win32_ComputerSystem | Select-Object Name, Model, TotalPhysicalMemory
+  Get-CimInstance Win32_Processor | Select-Object Name, Architecture, AddressWidth
+  & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -products * -requires Microsoft.VisualStudio.Workload.VCTools -property installationVersion
+  Get-ChildItem "${env:ProgramFiles(x86)}\Windows Kits\10\Include" | Select-Object Name
+  (Get-CimInstance Win32_OperatingSystem).BuildNumber
+  Get-CimInstance Win32_VideoController | Select-Object Name, DriverVersion
+} *>&1 | Tee-Object -FilePath $evidencePath
+```
+
+The output in `C:\Temp\wf-epic-b\B007-windows\owner-confirmation.txt` must identify the machine, x86-64 status, Windows caption, version and build, CPU, RAM, Build Tools `installationVersion`, Windows SDK include-directory names, GPU name, and GPU driver version. The owner must append a dated and signed confirmation of the physical machine identity, interactive desktop access, administrator requirements, repeatable access window, consent, and physical distinctness.
 
 ## Access register
 
@@ -65,8 +106,8 @@ The answer rows contain six KK findings and six gating KUs. The owner attestatio
 | :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- |
 | macOS arm64 | Required: arm64; no machine recorded | None | None | None observed | None observed | None observed | None observed |
 | Windows x86-64 | Required: x86-64; no machine recorded | None | None | None observed | None observed | None observed | None observed |
-| Wayland x86-64 | x86_64 | `thinkpadp14s` | Oscar Y. <oscar@ocmasesorias.com> | NixOS 26.05 (Yarara), kernel 6.18.44 | AMD/ATI Renoir Radeon Vega Series / Radeon Vega Mobile Series, PCI `07:00.0` | AMD Ryzen 7 PRO 4750U with Radeon Graphics; 8 cores and 16 logical CPUs | 29 GiB total |
-| X11 x86-64 | x86_64 | `thinkpadp14s`; same physical machine as Wayland | Oscar Y. <oscar@ocmasesorias.com> | NixOS 26.05 (Yarara), kernel 6.18.44 | AMD/ATI Renoir Radeon Vega Series / Radeon Vega Mobile Series, PCI `07:00.0` | AMD Ryzen 7 PRO 4750U with Radeon Graphics; 8 cores and 16 logical CPUs | 29 GiB total |
+| Wayland x86-64 | x86_64 ([Owner attestation](#owner-attestation), HITL; [host discovery probe](#host-discovery-probe), corroborating) | `thinkpadp14s` ([Owner attestation](#owner-attestation), HITL) | Oscar Y. <oscar@ocmasesorias.com> ([Owner attestation](#owner-attestation), HITL) | NixOS 26.05 (Yarara), kernel 6.18.44 ([Owner attestation](#owner-attestation), HITL; [host discovery probe](#host-discovery-probe), corroborating) | AMD Renoir (Radeon Vega) integrated GPU ([Owner attestation](#owner-attestation), HITL); the probe reports AMD/ATI Renoir Radeon Vega Series / Radeon Vega Mobile Series at PCI `07:00.0` ([host discovery probe](#host-discovery-probe), corroborating) | AMD Ryzen 7 PRO 4750U with Radeon Graphics; 8 cores and 16 logical CPUs ([host discovery probe](#host-discovery-probe)) | 29 GiB total ([host discovery probe](#host-discovery-probe)) |
+| X11 x86-64 | x86_64 ([Owner attestation](#owner-attestation), HITL; [host discovery probe](#host-discovery-probe), corroborating) | `thinkpadp14s`, the same physical machine as Wayland ([Owner attestation](#owner-attestation), HITL) | Oscar Y. <oscar@ocmasesorias.com> ([Owner attestation](#owner-attestation), HITL) | NixOS 26.05 (Yarara), kernel 6.18.44 ([Owner attestation](#owner-attestation), HITL; [host discovery probe](#host-discovery-probe), corroborating) | AMD Renoir (Radeon Vega) integrated GPU ([Owner attestation](#owner-attestation), HITL); the probe reports AMD/ATI Renoir Radeon Vega Series / Radeon Vega Mobile Series at PCI `07:00.0` ([host discovery probe](#host-discovery-probe), corroborating) | AMD Ryzen 7 PRO 4750U with Radeon Graphics; 8 cores and 16 logical CPUs ([host discovery probe](#host-discovery-probe)) | 29 GiB total ([host discovery probe](#host-discovery-probe)) |
 
 ### Session and access procedure
 
@@ -94,23 +135,23 @@ The answer rows contain six KK findings and six gating KUs. The owner attestatio
 
 | Field | Value |
 | :-- | :-- |
-| Session type, compositor, or X server | Active `wayland` session with Hyprland, `WAYLAND_DISPLAY=wayland-1`, and `DISPLAY=:0` |
-| Interactive-session availability | Local interactive access confirmed by owner; `loginctl` lists seat session 2 for user `oscar` |
-| Administrator requirements | Owner attested to administrator rights; coordinate privileged changes with the owner |
-| Access procedure | Coordinate with Oscar Y., use the local interactive Wayland session, and re-run the host discovery probe before a session |
-| Scheduling constraints | on request, any time, no notice requirement |
-| Repeatable access window | owner-operated sessions on request; not unattended |
+| Session type, compositor, or X server | The owner confirms a Hyprland Wayland session ([Owner attestation](#owner-attestation), HITL); the probe corroborates active `wayland`, `WAYLAND_DISPLAY=wayland-1`, and `DISPLAY=:0` ([host discovery probe](#host-discovery-probe)). |
+| Interactive-session availability | The owner confirms local interactive access ([Owner attestation](#owner-attestation), HITL); `loginctl` corroborates seat session 2 for user `oscar` ([host discovery probe](#host-discovery-probe)). |
+| Administrator requirements | The owner attests to administrator rights ([Owner attestation](#owner-attestation), HITL); coordinate privileged changes with the owner. |
+| Access procedure | Coordinate with Oscar Y. and use the local interactive Wayland session ([Owner attestation](#owner-attestation), HITL); re-run the host-discovery probe before a session. |
+| Scheduling constraints | on request, any time, no notice requirement ([Owner attestation](#owner-attestation), HITL) |
+| Repeatable access window | owner-operated sessions on request; not unattended ([Owner attestation](#owner-attestation), HITL) |
 
 ### X11 x86-64 access
 
 | Field | Value |
 | :-- | :-- |
-| Session type, compositor, or X server | Active `Xwayland :0` provides the interactive X11 compatibility path inside the Wayland Hyprland session. `Xvfb :99` was separately launched and queried as a headless path. Neither is a native X11 desktop session. |
-| Interactive-session availability | Local interactive Xwayland access is confirmed: `xwininfo -root -display :0` connected and returned the root-window geometry. Xvfb is headless and provides no interactive desktop. |
-| Administrator requirements | Owner attested to administrator rights; coordinate privileged changes with the owner |
-| Access procedure | Follow the exact [X11 access procedure](#x11-access-procedure). |
-| Scheduling constraints | on request, any time, no notice requirement |
-| Repeatable access window | owner-operated sessions on request; not unattended |
+| Session type, compositor, or X server | The owner confirms Xwayland/Xvfb for X11 on the Hyprland Wayland host ([Owner attestation](#owner-attestation), HITL). The X11-access probe corroborates active `Xwayland :0` as the interactive compatibility path and a separately launched `Xvfb :99` as headless; neither is a native X11 desktop session. |
+| Interactive-session availability | The owner confirms local interactive access for the X11 compatibility path ([Owner attestation](#owner-attestation), HITL). The X11-access probe corroborates that `xwininfo -root -display :0` connected and returned the root-window geometry; Xvfb is headless and provides no interactive desktop. |
+| Administrator requirements | The owner attests to administrator rights ([Owner attestation](#owner-attestation), HITL); coordinate privileged changes with the owner. |
+| Access procedure | Coordinate with Oscar Y. before following the exact [X11 access procedure](#x11-access-procedure) ([Owner attestation](#owner-attestation), HITL). |
+| Scheduling constraints | on request, any time, no notice requirement ([Owner attestation](#owner-attestation), HITL) |
+| Repeatable access window | owner-operated sessions on request; not unattended ([Owner attestation](#owner-attestation), HITL) |
 
 ### Reference conformance and feasibility
 
@@ -220,9 +261,9 @@ For interactive Xwayland access:
 
 For headless Xvfb access:
 
-1. Create `/tmp/wf-epic-b/OXY-B007/` and run `Xvfb :99 -screen 0 1280x720x24 >/tmp/wf-epic-b/OXY-B007/xvfb-99.log 2>&1 &`; immediately store its process ID as `XVFB_PID=$!`.
-2. Run `nix shell nixpkgs#xorg.xdpyinfo -c xdpyinfo -display :99 | head -15`. Success includes `name of display: :99`, `vendor string: The X.Org Foundation`, and `X.Org version: 21.1.24`.
-3. Stop only the server started in step 1 with `kill "$XVFB_PID"; wait "$XVFB_PID"`, then run `pgrep -a Xvfb`. During this probe, `pgrep` exited 1 with no matching process after the stop.
+1. Run the exact script preserved in the [X11 access probe](#x11-access-probe). The script redirects the server log to `/tmp/wf-epic-b/OXY-B007-fix3/xvfb99.log` and records the server process ID in `XVFB_PID`.
+2. The script runs `nix shell nixpkgs#xorg.xdpyinfo -c xdpyinfo -display :99 | head -15`. Success includes `name of display: :99`, `vendor string: The X.Org Foundation`, and `X.Org version: 21.1.24`.
+3. The script stops only that process with `kill "$XVFB_PID"; wait "$XVFB_PID"`, prints the `wait` status, and runs `pgrep -a Xvfb || echo "no Xvfb running"`. The raw output reports `kill/wait exit: 0` and `no Xvfb running`.
 
 This evidence establishes that X11 clients can connect to active Xwayland on `:0` and to a temporary Xvfb server on `:99`. It does not establish native X11 desktop-session behavior, a native X server session, graphics or driver behavior, any P0 capability, or conformance to the Stage 3 Ubuntu 26.04 LTS X11 reference.
 
@@ -230,7 +271,7 @@ This evidence establishes that X11 clients can connect to active Xwayland on `:0
 
 The following raw output was captured on `thinkpadp14s` during this ticket. Long `xdpyinfo -ext` reports are trimmed to the relevant raw lines; the retained lines below are the outputs used by this register.
 
-```text
+````text
 $ pgrep -a Xwayland
 3128 Xwayland :0 -rootless -core -listenfd 45 -listenfd 46 -displayfd 94 -wm 91
 [pgrep exit: 0]
@@ -315,12 +356,25 @@ xwininfo: Window id: 0x350 (the root window) (has no name)
   Class: InputOutput
   Colormap: 0x3f (installed)
 [pipeline exit: 0 0]
+```
 
-$ Xvfb :99 -screen 0 1280x720x24 &
-[started PID: 1998478]
-[Xvfb startup check: running]
+The following Bash script was executed exactly. It preserves the server log, records the started process ID, stops that process, and verifies that no `Xvfb` process remains:
 
-$ nix shell nixpkgs#xorg.xdpyinfo -c xdpyinfo -display :99 | head -15
+```bash
+#!/usr/bin/env bash
+Xvfb :99 -screen 0 1280x720x24 > /tmp/wf-epic-b/OXY-B007-fix3/xvfb99.log 2>&1 &
+XVFB_PID=$!
+sleep 2
+nix shell nixpkgs#xorg.xdpyinfo -c xdpyinfo -display :99 | head -15
+kill "$XVFB_PID"; wait "$XVFB_PID"; echo "kill/wait exit: $?"
+pgrep -a Xvfb || echo "no Xvfb running"
+head -5 /tmp/wf-epic-b/OXY-B007-fix3/xvfb99.log
+```
+
+The following raw output came from that script. The `kill/wait` line prints the status of `wait`; this probe returned `0`, rather than `143`. The report makes no broader exit-status claim.
+
+```text
+evaluation warning: The xorg package set has been deprecated, 'xorg.xdpyinfo' has been renamed to 'xdpyinfo'
 name of display:    :99
 version number:    11.0
 vendor string:    The X.Org Foundation
@@ -336,25 +390,16 @@ supported pixmap formats:
     depth 4, bits_per_pixel 8, scanline_pad 32
     depth 8, bits_per_pixel 8, scanline_pad 32
     depth 16, bits_per_pixel 16, scanline_pad 32
-[pipeline exit: 141 0]
-
-$ kill Xvfb_PID; wait Xvfb_PID
-[kill and wait exit: 0]
-
-$ pgrep -a Xvfb
-[pgrep exit: 1; 1 means no Xvfb process matched]
-
-$ cat /tmp/wf-epic-b/OXY-B007/xvfb-99.log
+kill/wait exit: 0
+no Xvfb running
 The XKEYBOARD keymap compiler (xkbcomp) reports:
 > Warning:          Multiple symbols for level 1/group 1 on key <FK23>
 >                   Using F23, ignoring XF86TouchpadOff
 > Warning:          Symbol map for key <FK23> redefined
 >                   Using last definition for conflicting fields
-> Warning:          Symbol map for key <FK24> redefined
->                   Using last definition for conflicting fields
-Errors from xkbcomp are not fatal to the X server
-[Xvfb log exit: 0]
 ```
+
+The script's `pgrep` output proves the server that the script started was stopped before the probe ended.
 
 ## Recommendation
 
@@ -373,4 +418,7 @@ None. This access register does not justify a Stage 3 specification edit. In par
 
 ## Sources
 
-- [Ubuntu 26.04 LTS release notes](https://documentation.ubuntu.com/release-notes/26.04/) - fetched successfully through the Jina reader proxy on 2026-08-28; used only to identify the official Ubuntu 26.04 LTS release named by the Stage 3 reference pins.
+- [Apple Technical Note TN2339: Building from the command line with Xcode](https://developer.apple.com/library/archive/technotes/tn2339/_index.html) - fetched successfully through the Jina reader proxy on 2026-08-28; identifies `xcrun` as an Xcode command-line shim.
+- [Microsoft vswhere README](https://github.com/microsoft/vswhere) - fetched successfully through the Jina reader proxy on 2026-08-28; identifies the installer path for `vswhere.exe`.
+- [Ubuntu 26.04 LTS release notes](https://documentation.ubuntu.com/release-notes/26.04/) - fetched successfully through the Jina reader proxy on 2026-08-28; identifies the official Ubuntu 26.04 LTS release named by the Stage 3 reference pins.
+````
