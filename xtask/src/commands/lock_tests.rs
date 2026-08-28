@@ -137,6 +137,24 @@ fn missing_conventional_staged_input_returns_exit_one() -> Result<(), Box<dyn Er
 }
 
 #[test]
+fn committed_complete_synthetic_resolved_tools_match_the_staged_manifest()
+-> Result<(), Box<dyn Error>> {
+    if skip_on_unsupported_host()? {
+        return Ok(());
+    }
+    let source = source_root()?;
+    let lock = read_json(&source.join(COMPLETE_SYNTHETIC))?;
+    let manifest = toolchain::ToolchainManifest::from_json(&fs::read(
+        source.join("qualification/tools/native-contract-toolchain.json"),
+    )?)?;
+    let expected = Value::Array(toolchain::lock::lock_resolved_tools(&manifest)?);
+
+    // This reads the committed fixture before `complete_fixture_root` stages policy digests.
+    assert_eq!(lock.get("resolvedTools"), Some(&expected));
+    Ok(())
+}
+
+#[test]
 fn resolved_tools_require_the_exact_staged_manifest_set() -> Result<(), Box<dyn Error>> {
     if skip_on_unsupported_host()? {
         return Ok(());
@@ -502,14 +520,6 @@ fn complete_fixture_root() -> Result<PathBuf, Box<dyn Error>> {
             .ok_or("complete policy must contain every staged input")? =
             Value::String(hash_file(&root.join(path))?.to_string());
     }
-
-    let manifest = toolchain::ToolchainManifest::from_json(&fs::read(
-        root.join("qualification/tools/native-contract-toolchain.json"),
-    )?)?;
-    *lock
-        .get_mut("resolvedTools")
-        .ok_or("complete lock must contain resolved tools")? =
-        Value::Array(toolchain::lock::lock_resolved_tools(&manifest)?);
     write_json(&root.join(super::LOCK_PATH), &lock)?;
     Ok(root)
 }

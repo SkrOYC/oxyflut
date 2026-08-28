@@ -631,6 +631,26 @@ mod tests {
     }
 
     #[test]
+    fn missing_linux_session_fails_closed_without_writing_evidence() -> Result<(), Box<dyn Error>> {
+        let root = test_workspace_root()?;
+        let output = "qualification/fixtures/environments/missing-session-test.json"
+            .parse::<RepositoryPath>()?;
+        assert_no_evidence(&root, &output)?;
+        let source = FixturePlatformSource::with_fixture(
+            &root,
+            EnvironmentId::Wayland,
+            "wayland-no-session",
+        );
+        let result = inspect_with_source(&root, &source, &output);
+        assert!(matches!(
+            result,
+            Err(EnvironmentCommandError::EnvironmentMismatch)
+        ));
+        assert_no_evidence(&root, &output)?;
+        Ok(())
+    }
+
+    #[test]
     fn wrong_architecture_fails_closed_without_writing_evidence() -> Result<(), Box<dyn Error>> {
         let root = test_workspace_root()?;
         let output = "qualification/fixtures/environments/architecture-test.json"

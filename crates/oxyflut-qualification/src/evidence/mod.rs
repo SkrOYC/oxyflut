@@ -15,10 +15,7 @@ use std::path::{Path, PathBuf};
 use thiserror::Error;
 
 pub use canonical::canonical_json_bytes;
-pub use publish::{
-    write_canonical_json_to_directory, write_canonical_json_to_path, write_derived_json,
-    write_derived_json_to_directory,
-};
+pub use publish::{write_canonical_json_to_path, write_derived_json};
 pub use references::{
     DeclaredEvidenceReference, DeclaredReferenceError, ReferenceDeclaration, declared_references,
     reference_declaration,

@@ -124,6 +124,57 @@ fn ready_fixture_exercises_candidate_and_measurement_true_paths() -> Result<(), 
 }
 
 #[test]
+fn contracts_validate_readiness_family_rejects_all_relative_resolved_tools()
+-> Result<(), Box<dyn Error>> {
+    let workspace = workspace_root()?;
+    let root = temporary_fixture_root("all-relative-resolved-tools");
+    copy_directory(
+        &workspace.join(".constitution"),
+        &root.join(".constitution"),
+    )?;
+    copy_directory(
+        &workspace.join("qualification"),
+        &root.join("qualification"),
+    )?;
+
+    let relative_path = "qualification/fixtures/readiness/relative-tool";
+    let tool_path = root.join(relative_path);
+    let parent = tool_path
+        .parent()
+        .ok_or("relative tool fixture must have a parent")?;
+    fs::create_dir_all(parent)?;
+    fs::write(&tool_path, b"digest-valid relative tool")?;
+    let mut lock = read_json(&root.join(super::LOCK_PATH))?;
+    *lock
+        .get_mut("resolvedTools")
+        .ok_or("lock must contain resolved tools")? = json!([{
+        "name": "c-compiler",
+        "version": "fixture-version",
+        "sourceIdentity": "fixture-source",
+        "hostTriple": "x86_64-unknown-linux-gnu",
+        "licenseId": "MIT",
+        "executablePath": relative_path,
+        "sha256": hash_file(&tool_path)?.to_string(),
+    }]);
+    let registry = schema::compile_workspace(&workspace)?;
+    let result = validate_documents(
+        &root,
+        &lock,
+        &read_json(&root.join(super::PHASE_PATH))?,
+        &registry,
+    );
+    fs::remove_dir_all(&root)?;
+
+    assert!(matches!(
+        result,
+        Err(ReadinessError::Invariant {
+            code: "resolved-tool-manifest"
+        })
+    ));
+    Ok(())
+}
+
+#[test]
 fn candidate_artifact_source_revisions_and_resolved_tools_fail_closed() -> Result<(), Box<dyn Error>>
 {
     let root = ready_fixture_root()?;
@@ -180,7 +231,7 @@ fn candidate_artifact_source_revisions_and_resolved_tools_fail_closed() -> Resul
 }
 
 #[test]
-fn absolute_executable_paths_must_match_the_staged_manifest() -> Result<(), Box<dyn Error>> {
+fn nonempty_resolved_tools_must_match_the_staged_manifest() -> Result<(), Box<dyn Error>> {
     if !crate::toolchain::is_staged_host()? {
         return Ok(());
     }
@@ -189,7 +240,7 @@ fn absolute_executable_paths_must_match_the_staged_manifest() -> Result<(), Box<
         root.join("qualification/tools/native-contract-toolchain.json"),
     )?)?;
     let tools = crate::toolchain::lock::lock_resolved_tools(&manifest)?;
-    super::verify_absolute_resolved_tools(&root, &tools)?;
+    super::verify_resolved_tools(&root, &tools)?;
 
     let mut altered = tools;
     let tool = altered
@@ -200,7 +251,7 @@ fn absolute_executable_paths_must_match_the_staged_manifest() -> Result<(), Box<
         .get_mut("sha256")
         .ok_or("complete fixture must bind a tool digest")? = Value::String("0".repeat(64));
     assert!(matches!(
-        super::verify_absolute_resolved_tools(&root, &altered),
+        super::verify_resolved_tools(&root, &altered),
         Err(ReadinessError::Invariant {
             code: "resolved-tool-manifest"
         })
