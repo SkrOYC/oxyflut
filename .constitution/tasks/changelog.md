@@ -16,7 +16,7 @@ All notable changes to the Stage 4 execution plan appear in this file.
 - Archived Epic B with its completion record and deviations, including the `.constitution/tasks/active/EPIC-B-readiness-research.md` to `.constitution/tasks/completed/EPIC-B-readiness-research.md` rename in this release.
 - Routed every Epic B Stage 3 revision, retained gating KU, and blocked external input into the `OXY-D001 Inputs from Epic B` section of `.constitution/tasks/active/EPIC-D-readiness-reconciliation.md`.
 
-### Known limitations
+### Noted
 
 - macOS arm64 and Windows x86-64 reference-hardware access is blocked. Neither environment has a named accountable owner or a usable access procedure, so neither can be compared with its Stage 3 reference.
 - OXY-B008 is CLOSED AS BLOCKED. Only one confirmation is preserved, so its acceptance pass log remains unmet; the second-assessor confirmation is a named external input for OXY-D001, `measurementPolicy.assessors` stays `null`, and the assessor gate is not complete.
