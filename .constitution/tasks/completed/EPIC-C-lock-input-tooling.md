@@ -40,6 +40,8 @@ Checker: cargo +1.98.0 test -p xtask external_contracts
 - **Justification:** The shared offline validator must assert JSON Schema `format` values for the SLSA RFC 3339 timestamp contract.
 - **Touched Files:** `xtask/src/commands/external_contracts_tests.rs`
 - **Justification:** The focused external-contract test module keeps the command implementation below the repository file-size limit while exercising the required external fixtures.
+- **Touched Files:** `xtask/src/commands/external_contracts/dsse.rs`.
+- **Justification:** DSSE pre-authentication encoding and strict standard padded Base64 verification are isolated from snapshot validation to keep both Rust modules below the repository file-size limit.
 - **Touched Files:** `.gitattributes`
 - **Justification:** The authoritative SPDX schema preserves upstream CRLF bytes, so its path disables Git trailing-whitespace diagnostics without rewriting the snapshot.
 - **Touched Files:** `.constitution/tasks/active/EPIC-C-lock-input-tooling.md`
@@ -180,6 +182,7 @@ Commands:
 - **Justification:** Fixture-backed collectors deserialize bounded raw platform responses through the same collector parsers as live sources; the existing stack-pinned `serde` dependency supplies those derives and records xtask's direct use in the workspace lockfile.
 - **Touched Files:** `.constitution/tasks/active/EPIC-C-lock-input-tooling.md`.
 - **Justification:** The execution rules require this scope-deviation record.
+- **OXY-D001 input:** macOS `compositor`, `protocolVersion`, and `driverVersion`, plus Windows `compositor`, `session`, and `protocolVersion`, require a bounded manual capture because no authoritative content-free CLI provides them. The collectors emit `missing { reason: manual-capture }` rather than inferring a value.
 
 #### OXY-C005 Implement the pre-implementation readiness report
 
@@ -218,6 +221,8 @@ Checker: cargo +1.98.0 run -p xtask -- lock status --gate candidate-implementati
 
 - **Touched Files:** `xtask/src/contracts/readiness.rs`, `xtask/src/toolchain/{lock,error}.rs`, `xtask/src/toolchain.rs`, `xtask/src/commands/lock_tests.rs`, and `.constitution/tasks/active/EPIC-C-lock-input-tooling.md`.
 - **Justification:** The command reuses the Foundation readiness validator and staged-toolchain verifier. The focused test module keeps the command implementation within the repository file-size guidance. This ticket records the required scope deviation and OXY-D001 input.
+- **Touched Files:** `.constitution/tech-spec/guidelines.md`, `.constitution/tasks/completed/EPIC-C-lock-input-tooling.md`.
+- **Justification:** PR review required factual command descriptions and a durable record of the manual-capture lock input after Epic C moved to completed tasks.
 - **OXY-D001 input:** `qualification-lock.schema.json` binds `measurementPolicy.{scoringAnchors,assessors,fuzzCorpora,securityPatchRehearsal}` as path-less digests; the repository convention `qualification/staged/<field>.json` is proposed as their referent and should be typed by Stage 3.
 - **External-lock decision:** The external lock has per-contract `epistemicStatus` values rather than one root status. When every active contract is `ku-gating`, readiness verifies the staged proposal. Otherwise, readiness verifies the active lock.
 
