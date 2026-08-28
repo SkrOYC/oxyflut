@@ -2,6 +2,16 @@
 
 All notable changes to the Stage 4 execution plan appear in this file.
 
+## [v0.2.16] - 2026-08-28
+
+### Fixed
+
+- Applied PR review round 4 corrections for Windows release normalization, bounded Linux protocol collection, reference-environment pins, artifact-pair cleanup, readiness diagnostics, staged input verification, KU evidence paths, and PRD meter parsing.
+
+### Noted
+
+- OXY-D001 must type the PRD launch and per-launch observation budgets in the measurement-harness contract. The staged sample-validity record deliberately excludes them.
+
 ## [v0.2.15] - 2026-08-28
 
 ### Fixed
