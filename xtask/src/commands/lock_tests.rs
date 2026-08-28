@@ -25,6 +25,9 @@ static TEMP_SEQUENCE: AtomicU64 = AtomicU64::new(0);
 #[test]
 fn committed_candidate_gate_is_valid_but_open_with_the_exact_ku_set() -> Result<(), Box<dyn Error>>
 {
+    if skip_on_unsupported_host()? {
+        return Ok(());
+    }
     let root = source_root()?;
     let report = candidate_report_at(&root).map_err(|_| "committed report must parse")?;
     let known_unknowns = report
@@ -67,6 +70,9 @@ fn committed_candidate_gate_is_valid_but_open_with_the_exact_ku_set() -> Result<
 #[test]
 fn complete_synthetic_workspace_returns_exit_zero_through_the_command_path()
 -> Result<(), Box<dyn Error>> {
+    if skip_on_unsupported_host()? {
+        return Ok(());
+    }
     let root = complete_fixture_root()?;
     let outcome = run_at_root(&root, "candidate-implementation");
     fs::remove_dir_all(&root)?;
@@ -78,6 +84,9 @@ fn complete_synthetic_workspace_returns_exit_zero_through_the_command_path()
 
 #[test]
 fn mismatched_staged_input_digest_returns_exit_one() -> Result<(), Box<dyn Error>> {
+    if skip_on_unsupported_host()? {
+        return Ok(());
+    }
     let root = complete_fixture_root()?;
     let mut lock = read_json(&root.join(super::LOCK_PATH))?;
     *lock
@@ -95,6 +104,9 @@ fn mismatched_staged_input_digest_returns_exit_one() -> Result<(), Box<dyn Error
 
 #[test]
 fn missing_conventional_staged_input_returns_exit_one() -> Result<(), Box<dyn Error>> {
+    if skip_on_unsupported_host()? {
+        return Ok(());
+    }
     let root = complete_fixture_root()?;
     fs::remove_file(root.join("qualification/staged/fuzz-corpora.json"))?;
 
@@ -108,6 +120,9 @@ fn missing_conventional_staged_input_returns_exit_one() -> Result<(), Box<dyn Er
 
 #[test]
 fn resolved_tools_require_the_exact_staged_manifest_set() -> Result<(), Box<dyn Error>> {
+    if skip_on_unsupported_host()? {
+        return Ok(());
+    }
     for mutation in ["missing", "extra", "substituted"] {
         let root = complete_fixture_root()?;
         let mut lock = read_json(&root.join(super::LOCK_PATH))?;
@@ -158,6 +173,9 @@ fn resolved_tools_require_the_exact_staged_manifest_set() -> Result<(), Box<dyn 
 
 #[test]
 fn invalid_referenced_input_fixture_returns_exit_one() -> Result<(), Box<dyn Error>> {
+    if skip_on_unsupported_host()? {
+        return Ok(());
+    }
     let root = open_fixture_root("invalid")?;
     fs::copy(source_root()?.join(INVALID), root.join(super::LOCK_PATH))?;
     assert!(super::super::contracts::first_pre_implementation_input_failure(&root).is_none());
@@ -172,6 +190,9 @@ fn invalid_referenced_input_fixture_returns_exit_one() -> Result<(), Box<dyn Err
 #[test]
 fn cleared_ku_without_evidence_remains_open_with_the_exact_remaining_ku_set()
 -> Result<(), Box<dyn Error>> {
+    if skip_on_unsupported_host()? {
+        return Ok(());
+    }
     let root = open_fixture_root("cleared")?;
     let report = candidate_report_at(&root).map_err(|_| "candidate readiness report must parse")?;
     let known_unknowns = report
@@ -212,6 +233,9 @@ fn cleared_ku_without_evidence_remains_open_with_the_exact_remaining_ku_set()
 
 #[test]
 fn candidate_report_lines_are_stable_and_content_free() -> Result<(), Box<dyn Error>> {
+    if skip_on_unsupported_host()? {
+        return Ok(());
+    }
     let root = open_fixture_root("report-lines")?;
     let report = candidate_report_at(&root).map_err(|_| "candidate readiness report must parse")?;
     let lines = candidate_report_lines(&report);
@@ -232,6 +256,9 @@ fn candidate_report_lines_are_stable_and_content_free() -> Result<(), Box<dyn Er
 
 #[test]
 fn lock_status_never_mutates_constitution() -> Result<(), Box<dyn Error>> {
+    if skip_on_unsupported_host()? {
+        return Ok(());
+    }
     let root = source_root()?;
     let before = constitution_digest(&root)?;
     let outcome = run_at_root(&root, "candidate-implementation");
@@ -244,6 +271,9 @@ fn lock_status_never_mutates_constitution() -> Result<(), Box<dyn Error>> {
 
 #[test]
 fn corrupt_platform_baseline_fails_before_reporting_an_open_gate() -> Result<(), Box<dyn Error>> {
+    if skip_on_unsupported_host()? {
+        return Ok(());
+    }
     let source = workspace_root().map_err(|_| "xtask must remain below the workspace root")?;
     let root = temporary_directory("corrupt-platform-baseline");
     copy_directory(&source.join(".constitution"), &root.join(".constitution"))?;
@@ -273,7 +303,10 @@ fn corrupt_platform_baseline_fails_before_reporting_an_open_gate() -> Result<(),
 }
 
 #[test]
-fn reports_measurement_gate_and_rejects_invalid_arguments() {
+fn reports_measurement_gate_and_rejects_invalid_arguments() -> Result<(), Box<dyn Error>> {
+    if skip_on_unsupported_host()? {
+        return Ok(());
+    }
     assert_eq!(
         run(&["--gate".to_owned(), "measurement".to_owned()]),
         CommandOutcome::ValidButOpen
@@ -283,6 +316,7 @@ fn reports_measurement_gate_and_rejects_invalid_arguments() {
         run(&["--gate".to_owned(), "production".to_owned()]),
         CommandOutcome::Failed(_)
     ));
+    Ok(())
 }
 
 fn complete_fixture_root() -> Result<PathBuf, Box<dyn Error>> {
@@ -458,6 +492,15 @@ fn open_fixture_root(name: &str) -> Result<PathBuf, Box<dyn Error>> {
 
 fn source_root() -> Result<PathBuf, Box<dyn Error>> {
     workspace_root().map_err(|_| "xtask must remain directly below the workspace root".into())
+}
+
+fn skip_on_unsupported_host() -> Result<bool, Box<dyn Error>> {
+    if crate::toolchain::is_staged_host()? {
+        Ok(false)
+    } else {
+        eprintln!("skipped: staged toolchain host is x86_64-unknown-linux-gnu");
+        Ok(true)
+    }
 }
 
 fn read_json(path: &Path) -> Result<Value, Box<dyn Error>> {

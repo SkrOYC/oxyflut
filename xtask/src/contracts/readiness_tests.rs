@@ -180,6 +180,36 @@ fn candidate_artifact_source_revisions_and_resolved_tools_fail_closed() -> Resul
 }
 
 #[test]
+fn absolute_executable_paths_must_match_the_staged_manifest() -> Result<(), Box<dyn Error>> {
+    if !crate::toolchain::is_staged_host()? {
+        return Ok(());
+    }
+    let root = workspace_root()?;
+    let lock = read_json(&root.join("qualification/fixtures/readiness/complete.synthetic.json"))?;
+    let tools = lock
+        .get("resolvedTools")
+        .and_then(Value::as_array)
+        .ok_or("complete fixture must contain resolved tools")?;
+    super::verify_absolute_resolved_tools(&root, tools)?;
+
+    let mut altered = tools.to_vec();
+    let tool = altered
+        .first_mut()
+        .and_then(Value::as_object_mut)
+        .ok_or("complete fixture must contain a tool object")?;
+    *tool
+        .get_mut("sha256")
+        .ok_or("complete fixture must bind a tool digest")? = Value::String("0".repeat(64));
+    assert!(matches!(
+        super::verify_absolute_resolved_tools(&root, &altered),
+        Err(ReadinessError::Invariant {
+            code: "resolved-tool-manifest"
+        })
+    ));
+    Ok(())
+}
+
+#[test]
 fn external_snapshots_and_platform_versions_fail_closed() -> Result<(), Box<dyn Error>> {
     let workspace = workspace_root()?;
     let registry = schema::compile_workspace(&workspace)?;
