@@ -396,6 +396,37 @@ fn candidate_report_uses_distinct_codes_for_lock_and_ku_failures() -> Result<(),
 }
 
 #[test]
+fn staged_external_proposal_without_its_ku_returns_exit_one() -> Result<(), Box<dyn Error>> {
+    if skip_on_unsupported_host()? {
+        return Ok(());
+    }
+    let root = open_fixture_root("external-proposal-without-ku")?;
+    let mut lock = read_json(&root.join(super::LOCK_PATH))?;
+    lock.get_mut("preImplementationKnownUnknowns")
+        .and_then(Value::as_array_mut)
+        .ok_or("open lock must contain pre-implementation known unknowns")?
+        .retain(|known_unknown| {
+            known_unknown.as_str()
+                != Some(oxyflut_qualification::readiness::EXTERNAL_CONTRACT_LOCK_KNOWN_UNKNOWN)
+        });
+    write_json(&root.join(super::LOCK_PATH), &lock)?;
+
+    let error = candidate_report_at(&root)
+        .err()
+        .ok_or("staged external proposal without its KU must fail")?;
+    assert_eq!(
+        candidate_report_error_lines(&error),
+        vec!["lock status: invalid (external-lock-proposal-without-ku)"]
+    );
+    let outcome = run_at_root(&root, "candidate-implementation");
+    fs::remove_dir_all(&root)?;
+
+    assert!(matches!(outcome, CommandOutcome::Failed(_)));
+    assert_eq!(outcome.exit_code(), ExitCode::FAILURE);
+    Ok(())
+}
+
+#[test]
 fn lock_status_never_mutates_constitution() -> Result<(), Box<dyn Error>> {
     if skip_on_unsupported_host()? {
         return Ok(());
@@ -475,6 +506,10 @@ fn complete_fixture_root() -> Result<PathBuf, Box<dyn Error>> {
     copy_directory(
         &source.join(COMPLETE_STAGED_INPUTS),
         &root.join("qualification/staged"),
+    )?;
+    fs::copy(
+        source.join("qualification/schemas/external/proposed-external-contract-lock.json"),
+        root.join(".constitution/tech-spec/contracts/external-contract-lock.json"),
     )?;
 
     let platform_path = root.join(".constitution/tech-spec/contracts/platform-contracts.json");

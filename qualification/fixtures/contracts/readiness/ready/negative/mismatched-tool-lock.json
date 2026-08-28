@@ -132,7 +132,7 @@
     {
       "name": "c-compiler",
       "version": "clang version 21.1.8",
-      "sourceIdentity": "nix-store: /nix/store/p4p0xav61l9airp7fzr9b0d3l2hhd70g-oxyflut-clang-with-cc; derivation: oxyflut-clang-with-cc; version: 21.1.8",
+      "sourceIdentity": "substituted-source",
       "hostTriple": "x86_64-unknown-linux-gnu",
       "licenseId": "Apache-2.0 WITH LLVM-exception",
       "executablePath": "/nix/store/p4p0xav61l9airp7fzr9b0d3l2hhd70g-oxyflut-clang-with-cc/bin/cc",

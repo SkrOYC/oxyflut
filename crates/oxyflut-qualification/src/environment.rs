@@ -464,7 +464,7 @@ fn validate_observed_value(value: &str) -> Result<(), EnvironmentError> {
         || value.len() > MAXIMUM_OBSERVED_VALUE_BYTES
         || !value.bytes().all(|byte| {
             byte.is_ascii_alphanumeric()
-                || matches!(byte, b'.' | b'-' | b'_' | b':' | b'+' | b'=' | b'/')
+                || matches!(byte, b'.' | b'-' | b'_' | b':' | b'+' | b'=' | b'/' | b'~')
         })
     {
         return Err(EnvironmentError::ObservedValue);
@@ -501,5 +501,13 @@ fn validate_package_lock(lock: &SystemPackageLock) -> Result<(), EnvironmentErro
         (InventoryValue::Observed { .. }, true) | (InventoryValue::Missing { .. }, false) => {
             Err(EnvironmentError::SystemPackages)
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn observed_value_grammar_accepts_debian_version_tildes() {
+        assert!(super::validate_observed_value("1:21.1.8-1~exp1").is_ok());
     }
 }

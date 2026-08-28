@@ -141,7 +141,10 @@ mod tests {
     use std::error::Error;
     use std::path::{Path, PathBuf};
 
-    use super::{run, validate_at};
+    use oxyflut_qualification::identifiers::RepositoryPath;
+    use oxyflut_qualification::measurement::MeasurementError;
+
+    use super::{MeasurementCommandError, run, validate_at};
     use crate::CommandOutcome;
 
     const RAW_COMPLETE: &str = "qualification/fixtures/measurements/complete.synthetic.json";
@@ -168,8 +171,9 @@ mod tests {
     }
 
     #[test]
-    fn measurement_rejects_every_required_negative_fixture() {
-        let fixtures = [
+    fn measurement_rejects_every_required_negative_fixture() -> Result<(), Box<dyn Error>> {
+        let root = workspace_root()?;
+        for fixture in [
             "qualification/fixtures/measurements/unapproved-exclusion.json",
             "qualification/fixtures/measurements/missing-raw-sample.json",
             "qualification/fixtures/measurements/missing-harness-log.json",
@@ -182,13 +186,77 @@ mod tests {
             "qualification/fixtures/sample-validity/wrong-unit.json",
             "qualification/fixtures/sample-validity/missing-maximum-bound.json",
             "qualification/fixtures/sample-validity/unsupported-meter.json",
-        ];
-        for fixture in fixtures {
-            assert!(matches!(
-                run(&["--input".to_owned(), fixture.to_owned()]),
-                CommandOutcome::Failed(_)
-            ));
+        ] {
+            let input = fixture.parse::<RepositoryPath>()?;
+            let result = validate_at(&root, &input);
+            match fixture {
+                "qualification/fixtures/measurements/unapproved-exclusion.json"
+                | "qualification/fixtures/measurements/missing-raw-sample.json"
+                | "qualification/fixtures/measurements/valid-with-exclusion.json" => {
+                    assert!(matches!(result, Err(MeasurementCommandError::Schema(_))));
+                }
+                "qualification/fixtures/measurements/missing-harness-log.json" => {
+                    assert!(matches!(
+                        result,
+                        Err(MeasurementCommandError::Measurement(
+                            MeasurementError::Evidence(_)
+                        ))
+                    ));
+                }
+                "qualification/fixtures/measurements/altered-meter.json" => {
+                    assert!(matches!(
+                        result,
+                        Err(MeasurementCommandError::Measurement(
+                            MeasurementError::MeterVersion
+                        ))
+                    ));
+                }
+                "qualification/fixtures/measurements/duplicate-ordinal.json" => {
+                    assert!(matches!(
+                        result,
+                        Err(MeasurementCommandError::Measurement(
+                            MeasurementError::DuplicateSampleKey
+                        ))
+                    ));
+                }
+                "qualification/fixtures/measurements/non-monotonic-time.json" => {
+                    assert!(matches!(
+                        result,
+                        Err(MeasurementCommandError::Measurement(
+                            MeasurementError::NonMonotonicTime
+                        ))
+                    ));
+                }
+                "qualification/fixtures/measurements/wrong-lock-digest.json" => {
+                    assert!(matches!(
+                        result,
+                        Err(MeasurementCommandError::Measurement(
+                            MeasurementError::LockDigest
+                        ))
+                    ));
+                }
+                "qualification/fixtures/sample-validity/unstated-percentile.json"
+                | "qualification/fixtures/sample-validity/wrong-unit.json"
+                | "qualification/fixtures/sample-validity/missing-maximum-bound.json" => {
+                    assert!(matches!(
+                        result,
+                        Err(MeasurementCommandError::Measurement(
+                            MeasurementError::ComparisonRule
+                        ))
+                    ));
+                }
+                "qualification/fixtures/sample-validity/unsupported-meter.json" => {
+                    assert!(matches!(
+                        result,
+                        Err(MeasurementCommandError::Measurement(
+                            MeasurementError::UnsupportedComparisonMeter
+                        ))
+                    ));
+                }
+                _ => return Err("negative fixture must have an expected error variant".into()),
+            }
         }
+        Ok(())
     }
 
     #[test]

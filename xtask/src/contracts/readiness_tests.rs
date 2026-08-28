@@ -76,6 +76,33 @@ fn readiness_fixtures_fail_closed_for_unresolved_inputs_and_baseline_bindings()
 }
 
 #[test]
+fn staged_external_proposal_requires_its_gating_known_unknown() -> Result<(), Box<dyn Error>> {
+    let root = workspace_root()?;
+    let registry = schema::compile_workspace(&root)?;
+    let mut lock = read_json(&root.join(super::LOCK_PATH))?;
+    lock.get_mut("preImplementationKnownUnknowns")
+        .and_then(Value::as_array_mut)
+        .ok_or("committed lock must contain pre-implementation known unknowns")?
+        .retain(|known_unknown| {
+            known_unknown.as_str()
+                != Some(oxyflut_qualification::readiness::EXTERNAL_CONTRACT_LOCK_KNOWN_UNKNOWN)
+        });
+
+    assert!(matches!(
+        validate_documents(
+            &root,
+            &lock,
+            &read_json(&root.join(super::PHASE_PATH))?,
+            &registry,
+        ),
+        Err(ReadinessError::Invariant {
+            code: "external-lock-proposal-without-ku"
+        })
+    ));
+    Ok(())
+}
+
+#[test]
 fn nested_kk_claim_without_digest_bound_evidence_fails_closed() -> Result<(), Box<dyn Error>> {
     let root = ready_fixture_root()?;
     let mut issues = Vec::new();
@@ -167,7 +194,7 @@ fn contracts_validate_readiness_family_rejects_all_relative_resolved_tools()
     assert!(matches!(
         result,
         Err(ReadinessError::Invariant {
-            code: "resolved-tool-manifest"
+            code: "resolved-tool-mismatch"
         })
     ));
     Ok(())
@@ -180,16 +207,29 @@ fn candidate_artifact_source_revisions_and_resolved_tools_fail_closed() -> Resul
     let registry = schema::compile_workspace(&workspace_root()?)?;
     let phase = read_json(&root.join(super::PHASE_PATH))?;
 
-    let mut unresolved_tool_fields = read_json(&root.join(super::LOCK_PATH))?;
-    *unresolved_tool_fields
-        .pointer_mut("/resolvedTools/0/executablePath")
-        .ok_or("ready fixture must contain a resolved tool path")? = Value::Null;
-    assert!(matches!(
-        validate_documents(&root, &unresolved_tool_fields, &phase, &registry),
-        Err(ReadinessError::Invariant {
-            code: "resolved-tool-manifest"
-        })
-    ));
+    for (fixture, code) in [
+        ("negative/missing-tool-lock.json", "resolved-tool-missing"),
+        (
+            "negative/mismatched-tool-lock.json",
+            "resolved-tool-mismatch",
+        ),
+        (
+            "negative/unresolved-tool-fields-lock.json",
+            "resolved-tool-invalid",
+        ),
+    ] {
+        let fixture_path = root.join(fixture);
+        let lock = if fixture == "negative/unresolved-tool-fields-lock.json" {
+            serde_json::from_slice(&fs::read(&fixture_path)?)?
+        } else {
+            read_json(&fixture_path)?
+        };
+        let result = validate_documents(&root, &lock, &phase, &registry);
+        assert!(
+            matches!(result, Err(ReadinessError::Invariant { code: actual }) if actual == code),
+            "{fixture}: {result:?}"
+        );
+    }
 
     let wrong_engine = validate_documents(
         &root,
@@ -204,31 +244,6 @@ fn candidate_artifact_source_revisions_and_resolved_tools_fail_closed() -> Resul
         })
     ));
 
-    let mut missing_tool = read_json(&root.join(super::LOCK_PATH))?;
-    let _ = missing_tool
-        .get_mut("resolvedTools")
-        .and_then(Value::as_array_mut)
-        .ok_or("ready fixture must contain resolved tools")?
-        .pop()
-        .ok_or("ready fixture must contain a resolved tool")?;
-    assert!(matches!(
-        validate_documents(&root, &missing_tool, &phase, &registry),
-        Err(ReadinessError::Invariant {
-            code: "resolved-tool-manifest"
-        })
-    ));
-
-    let mut wrong_tool = read_json(&root.join(super::LOCK_PATH))?;
-    *wrong_tool
-        .pointer_mut("/resolvedTools/0/sourceIdentity")
-        .ok_or("ready fixture must contain a resolved tool source")? =
-        Value::String("substituted-source".to_owned());
-    assert!(matches!(
-        validate_documents(&root, &wrong_tool, &phase, &registry),
-        Err(ReadinessError::Invariant {
-            code: "resolved-tool-manifest"
-        })
-    ));
     Ok(())
 }
 
@@ -255,9 +270,23 @@ fn nonempty_resolved_tools_must_match_the_staged_manifest() -> Result<(), Box<dy
     assert!(matches!(
         super::verify_resolved_tools(&root, &altered),
         Err(ReadinessError::Invariant {
-            code: "resolved-tool-manifest"
+            code: "resolved-tool-mismatch"
         })
     ));
+    Ok(())
+}
+
+#[test]
+fn readiness_fixture_toolchain_manifests_match_the_canonical_manifest() -> Result<(), Box<dyn Error>>
+{
+    let workspace = workspace_root()?;
+    let canonical = fs::read(workspace.join(super::TOOLCHAIN_MANIFEST_PATH))?;
+    for fixture in [ready_fixture_root()?, production_fixture_root()?] {
+        assert_eq!(
+            fs::read(fixture.join(super::TOOLCHAIN_MANIFEST_PATH))?,
+            canonical
+        );
+    }
     Ok(())
 }
 

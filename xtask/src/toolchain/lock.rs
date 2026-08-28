@@ -12,6 +12,29 @@ use super::{
     verify,
 };
 
+/// Classifies a resolved-tool validation failure for stable readiness diagnostics.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) enum ResolvedToolValidationFailure {
+    /// A required staged tool is absent from the lock.
+    Missing,
+    /// A declared tool differs from the staged manifest.
+    Mismatch,
+    /// A manifest or lock entry is malformed or cannot be validated.
+    Invalid,
+}
+
+impl ResolvedToolValidationFailure {
+    /// Returns the stable content-free readiness failure code.
+    #[must_use]
+    pub(crate) const fn code(self) -> &'static str {
+        match self {
+            Self::Missing => "resolved-tool-missing",
+            Self::Mismatch => "resolved-tool-mismatch",
+            Self::Invalid => "resolved-tool-invalid",
+        }
+    }
+}
+
 /// Verifies that qualification-lock tool entries exactly reproduce the staged manifest.
 ///
 /// Lock entries carry resolved absolute executable paths because the durable lock schema has no
@@ -48,6 +71,41 @@ pub(crate) fn verify_lock_resolved_tools(
     }
 
     Ok(())
+}
+
+/// Verifies lock tools and classifies any failure for readiness reporting.
+pub(crate) fn verify_lock_resolved_tools_classified(
+    manifest: &ToolchainManifest,
+    lock_tools: &[Value],
+) -> Result<(), ResolvedToolValidationFailure> {
+    match verify_lock_resolved_tools(manifest, lock_tools) {
+        Ok(()) => Ok(()),
+        Err(
+            ToolchainError::ExecutableSubstitution { .. }
+            | ToolchainError::LockEntryMismatch { .. }
+            | ToolchainError::SourceIdentityMismatch { .. }
+            | ToolchainError::VersionMismatch { .. }
+            | ToolchainError::MetadataMismatch { .. }
+            | ToolchainError::DigestMismatch { .. }
+            | ToolchainError::HeaderCheckerMismatch,
+        ) => Err(ResolvedToolValidationFailure::Mismatch),
+        Err(ToolchainError::MissingTool { .. }) => Err(ResolvedToolValidationFailure::Missing),
+        Err(
+            ToolchainError::UnsupportedHost { .. }
+            | ToolchainError::ReadinessField { .. }
+            | ToolchainError::InvalidAuthority
+            | ToolchainError::InvalidNote
+            | ToolchainError::InvalidManifest { .. }
+            | ToolchainError::DuplicateTool { .. }
+            | ToolchainError::UnknownTool { .. }
+            | ToolchainError::MissingLibcHeaders
+            | ToolchainError::LibcHeadersMismatch
+            | ToolchainError::ToolExecution { .. }
+            | ToolchainError::ToolExecutionFailed { .. }
+            | ToolchainError::Io(_)
+            | ToolchainError::Json(_),
+        ) => Err(ResolvedToolValidationFailure::Invalid),
+    }
 }
 
 /// Returns the resolved absolute lock entries for a verified staged manifest.

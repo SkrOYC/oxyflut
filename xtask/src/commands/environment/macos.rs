@@ -2,7 +2,7 @@
 
 #![cfg_attr(not(any(target_os = "macos", test)), allow(dead_code))]
 
-#[cfg(target_os = "macos")]
+#[cfg(any(target_os = "macos", test))]
 use std::io::Read;
 #[cfg(target_os = "macos")]
 use std::process::{Command, Stdio};
@@ -19,7 +19,7 @@ use serde_json::Value;
 
 use super::{EnvironmentCommandError, PlatformSource};
 
-#[cfg(target_os = "macos")]
+#[cfg(any(target_os = "macos", test))]
 const OUTPUT_LIMIT: usize = 16 * 1024;
 
 // These receipts directly bind the Xcode 26.6 build, Command Line Tools executables, and macOS
@@ -74,33 +74,74 @@ struct MacosResponses {
     rust_toolchain: Option<String>,
     session: Option<String>,
     pkgutil_pkg_info: Option<BTreeMap<String, Option<String>>>,
+    #[serde(skip)]
+    source_failures: BTreeMap<&'static str, MissingReason>,
+}
+
+impl MacosResponses {
+    fn source_missing_reason(&self, source: &str) -> MissingReason {
+        self.source_failures
+            .get(source)
+            .copied()
+            .unwrap_or(MissingReason::SourceUnavailable)
+    }
 }
 
 fn collect_macos_responses(
     responses: &MacosResponses,
 ) -> Result<EnvironmentInventory, EnvironmentCommandError> {
     let fields = EnvironmentFields {
-        operating_system: command_identity(responses.sw_vers.as_deref(), "macos"),
+        operating_system: command_identity(
+            responses.sw_vers.as_deref(),
+            "macos",
+            responses.source_missing_reason("sw_vers"),
+        ),
         minimum_version: InventoryValue::missing(MissingReason::NotDeclaredByLock),
-        architecture: architecture(responses.uname.as_deref()),
-        hardware_id: command_identity(responses.sysctl_model.as_deref(), "hardware"),
-        gpu_id: gpu_identity(responses.system_profiler.as_deref()),
+        architecture: architecture(
+            responses.uname.as_deref(),
+            responses.source_missing_reason("uname"),
+        ),
+        hardware_id: command_identity(
+            responses.sysctl_model.as_deref(),
+            "hardware",
+            responses.source_missing_reason("sysctl_model"),
+        ),
+        gpu_id: gpu_identity(
+            responses.system_profiler.as_deref(),
+            responses.source_missing_reason("system_profiler"),
+        ),
         driver_version: InventoryValue::missing(MissingReason::ManualCapture),
-        compiler_identity: compiler_identity(responses.compiler.as_deref()),
-        sdk_identity: command_identity(responses.sdk.as_deref(), "macos-sdk"),
-        rust_toolchain: rust_toolchain_identity(responses.rust_toolchain.as_deref()),
+        compiler_identity: compiler_identity(
+            responses.compiler.as_deref(),
+            responses.source_missing_reason("compiler"),
+        ),
+        sdk_identity: command_identity(
+            responses.sdk.as_deref(),
+            "macos-sdk",
+            responses.source_missing_reason("sdk"),
+        ),
+        rust_toolchain: rust_toolchain_identity(
+            responses.rust_toolchain.as_deref(),
+            responses.source_missing_reason("rust_toolchain"),
+        ),
         compositor: InventoryValue::missing(MissingReason::ManualCapture),
-        session: raw_identity(responses.session.as_deref()),
+        session: raw_identity(
+            responses.session.as_deref(),
+            responses.source_missing_reason("session"),
+        ),
         protocol_version: InventoryValue::missing(MissingReason::ManualCapture),
-        system_package_lock: package_lock(responses.pkgutil_pkg_info.as_ref()),
+        system_package_lock: package_lock(
+            responses.pkgutil_pkg_info.as_ref(),
+            responses.source_missing_reason("pkgutil_pkg_info"),
+        ),
     };
     EnvironmentInventory::new(EnvironmentId::Macos, fields)
         .map_err(EnvironmentCommandError::Inventory)
 }
 
-fn architecture(raw: Option<&str>) -> InventoryValue {
+fn architecture(raw: Option<&str>, missing_reason: MissingReason) -> InventoryValue {
     let Some(value) = raw.and_then(first_line) else {
-        return InventoryValue::missing(MissingReason::SourceUnavailable);
+        return InventoryValue::missing(missing_reason);
     };
     let normalized = match value {
         "aarch64" | "arm64" => "aarch64",
@@ -110,9 +151,9 @@ fn architecture(raw: Option<&str>) -> InventoryValue {
     observed_or_missing(normalized.to_owned())
 }
 
-fn gpu_identity(raw: Option<&str>) -> InventoryValue {
+fn gpu_identity(raw: Option<&str>, missing_reason: MissingReason) -> InventoryValue {
     let Some(raw) = raw else {
-        return InventoryValue::missing(MissingReason::SourceUnavailable);
+        return InventoryValue::missing(missing_reason);
     };
     let Ok(profile) = serde_json::from_str::<Value>(raw) else {
         return InventoryValue::missing(MissingReason::UnsupportedBySource);
@@ -127,9 +168,9 @@ fn gpu_identity(raw: Option<&str>) -> InventoryValue {
     observed_or_missing(format!("apple:{}", slug(model)))
 }
 
-fn compiler_identity(raw: Option<&str>) -> InventoryValue {
+fn compiler_identity(raw: Option<&str>, missing_reason: MissingReason) -> InventoryValue {
     let Some(raw) = raw else {
-        return InventoryValue::missing(MissingReason::SourceUnavailable);
+        return InventoryValue::missing(missing_reason);
     };
     let Some(version) = raw
         .split_whitespace()
@@ -140,9 +181,9 @@ fn compiler_identity(raw: Option<&str>) -> InventoryValue {
     observed_or_missing(format!("apple-clang-{}", atomize(version)))
 }
 
-fn rust_toolchain_identity(raw: Option<&str>) -> InventoryValue {
+fn rust_toolchain_identity(raw: Option<&str>, missing_reason: MissingReason) -> InventoryValue {
     let Some(raw) = raw else {
-        return InventoryValue::missing(MissingReason::SourceUnavailable);
+        return InventoryValue::missing(missing_reason);
     };
     let Some(version) = raw.split_whitespace().nth(1) else {
         return InventoryValue::missing(MissingReason::UnsupportedBySource);
@@ -150,24 +191,34 @@ fn rust_toolchain_identity(raw: Option<&str>) -> InventoryValue {
     observed_or_missing(format!("rustc-{}", atomize(version)))
 }
 
-fn command_identity(raw: Option<&str>, prefix: &str) -> InventoryValue {
+fn command_identity(
+    raw: Option<&str>,
+    prefix: &str,
+    missing_reason: MissingReason,
+) -> InventoryValue {
     let Some(value) = raw.and_then(first_line) else {
-        return InventoryValue::missing(MissingReason::SourceUnavailable);
+        return InventoryValue::missing(missing_reason);
     };
     observed_or_missing(format!("{prefix}-{}", atomize(value)))
 }
 
-fn raw_identity(raw: Option<&str>) -> InventoryValue {
+fn raw_identity(raw: Option<&str>, missing_reason: MissingReason) -> InventoryValue {
     raw.and_then(first_line).map_or_else(
-        || InventoryValue::missing(MissingReason::SourceUnavailable),
+        || InventoryValue::missing(missing_reason),
         |value| observed_or_missing(atomize(value)),
     )
 }
 
-fn package_lock(package_info: Option<&BTreeMap<String, Option<String>>>) -> SystemPackageLock {
+fn package_lock(
+    package_info: Option<&BTreeMap<String, Option<String>>>,
+    missing_reason: MissingReason,
+) -> SystemPackageLock {
     let Some(package_info) = package_info else {
-        return missing_package_records(MissingReason::SourceUnavailable);
+        return missing_package_records(missing_reason);
     };
+    if missing_reason == MissingReason::InventoryExceedsBound {
+        return missing_package_records(missing_reason);
+    }
     let records = MACOS_PACKAGE_REQUIREMENTS
         .iter()
         .map(
@@ -245,60 +296,148 @@ fn observed_or_missing(value: String) -> InventoryValue {
 
 #[cfg(target_os = "macos")]
 fn live_responses() -> MacosResponses {
+    let mut source_failures = BTreeMap::new();
     MacosResponses {
-        sw_vers: command_stdout("sw_vers", &["-productVersion"]),
-        uname: command_stdout("uname", &["-m"]),
-        sysctl_model: command_stdout("sysctl", &["-n", "hw.model"]),
-        system_profiler: command_stdout("system_profiler", &["SPDisplaysDataType", "-json"]),
-        compiler: command_stdout("xcrun", &["--sdk", "macosx", "clang", "--version"]),
-        sdk: command_stdout("xcrun", &["--sdk", "macosx", "--show-sdk-version"]),
-        rust_toolchain: command_stdout("rustc", &["+1.98.0", "--version"]),
-        session: command_stdout("launchctl", &["managername"]),
-        pkgutil_pkg_info: Some(live_pkgutil_package_info()),
+        sw_vers: capture_response(
+            command_stdout("sw_vers", &["-productVersion"]),
+            "sw_vers",
+            &mut source_failures,
+        ),
+        uname: capture_response(
+            command_stdout("uname", &["-m"]),
+            "uname",
+            &mut source_failures,
+        ),
+        sysctl_model: capture_response(
+            command_stdout("sysctl", &["-n", "hw.model"]),
+            "sysctl_model",
+            &mut source_failures,
+        ),
+        system_profiler: capture_response(
+            command_stdout("system_profiler", &["SPDisplaysDataType", "-json"]),
+            "system_profiler",
+            &mut source_failures,
+        ),
+        compiler: capture_response(
+            command_stdout("xcrun", &["--sdk", "macosx", "clang", "--version"]),
+            "compiler",
+            &mut source_failures,
+        ),
+        sdk: capture_response(
+            command_stdout("xcrun", &["--sdk", "macosx", "--show-sdk-version"]),
+            "sdk",
+            &mut source_failures,
+        ),
+        rust_toolchain: capture_response(
+            command_stdout("rustc", &["+1.98.0", "--version"]),
+            "rust_toolchain",
+            &mut source_failures,
+        ),
+        session: capture_response(
+            command_stdout("launchctl", &["managername"]),
+            "session",
+            &mut source_failures,
+        ),
+        pkgutil_pkg_info: Some(live_pkgutil_package_info(&mut source_failures)),
+        source_failures,
     }
 }
 
 #[cfg(target_os = "macos")]
-fn live_pkgutil_package_info() -> BTreeMap<String, Option<String>> {
+fn capture_response<T>(
+    response: Result<Option<T>, MissingReason>,
+    source: &'static str,
+    failures: &mut BTreeMap<&'static str, MissingReason>,
+) -> Option<T> {
+    match response {
+        Ok(value) => value,
+        Err(reason) => {
+            failures.insert(source, reason);
+            None
+        }
+    }
+}
+
+#[cfg(target_os = "macos")]
+fn live_pkgutil_package_info(
+    source_failures: &mut BTreeMap<&'static str, MissingReason>,
+) -> BTreeMap<String, Option<String>> {
     MACOS_PACKAGE_REQUIREMENTS
         .iter()
         .map(|package| {
-            let info = command_stdout("pkgutil", &["--pkg-info", package]);
+            let info = capture_response(
+                command_stdout("pkgutil", &["--pkg-info", package]),
+                "pkgutil_pkg_info",
+                source_failures,
+            );
             ((*package).to_owned(), info)
         })
         .collect()
 }
 
 #[cfg(target_os = "macos")]
-fn command_stdout(program: &str, arguments: &[&str]) -> Option<String> {
-    let mut child = Command::new(program)
+fn command_stdout(program: &str, arguments: &[&str]) -> Result<Option<String>, MissingReason> {
+    let mut child = match Command::new(program)
         .args(arguments)
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::null())
         .spawn()
-        .ok()?;
-    let stdout = child.stdout.take()?;
-    let capture_limit = OUTPUT_LIMIT.checked_add(1)?;
+    {
+        Ok(child) => child,
+        Err(_) => return Ok(None),
+    };
+    let stdout = child
+        .stdout
+        .take()
+        .ok_or(MissingReason::SourceUnavailable)?;
+    let stdout = match read_bounded(stdout, OUTPUT_LIMIT) {
+        Ok(stdout) => stdout,
+        Err(reason) => {
+            let _ = child.kill();
+            let _ = child.wait();
+            return Err(reason);
+        }
+    };
+    let status = child.wait().map_err(|_| MissingReason::SourceUnavailable)?;
+    Ok(status.success().then_some(stdout))
+}
+
+#[cfg(any(target_os = "macos", test))]
+fn read_bounded(mut reader: impl Read, limit: usize) -> Result<String, MissingReason> {
+    let capture_limit = limit
+        .checked_add(1)
+        .ok_or(MissingReason::InventoryExceedsBound)?;
     let mut output = Vec::with_capacity(capture_limit);
-    let mut stdout = stdout.take(u64::try_from(capture_limit).ok()?);
-    stdout.read_to_end(&mut output).ok()?;
-    if output.len() > OUTPUT_LIMIT {
-        let _ = child.kill();
-        let _ = child.wait();
-        return None;
+    reader
+        .by_ref()
+        .take(u64::try_from(capture_limit).map_err(|_| MissingReason::InventoryExceedsBound)?)
+        .read_to_end(&mut output)
+        .map_err(|_| MissingReason::SourceUnavailable)?;
+    if output.len() > limit {
+        return Err(MissingReason::InventoryExceedsBound);
     }
-    if !child.wait().ok()?.success() {
-        return None;
-    }
-    String::from_utf8(output).ok()
+    String::from_utf8(output).map_err(|_| MissingReason::UnsupportedBySource)
 }
 
 #[cfg(test)]
 mod tests {
+    use std::io::Cursor;
+
     use oxyflut_qualification::environment::{
         InventoryValue, MAXIMUM_OBSERVED_VALUE_BYTES, MissingReason,
     };
+
+    #[test]
+    fn oversized_capture_reports_the_bound() {
+        assert!(matches!(
+            super::read_bounded(
+                Cursor::new(vec![b'x'; super::OUTPUT_LIMIT + 1]),
+                super::OUTPUT_LIMIT
+            ),
+            Err(MissingReason::InventoryExceedsBound)
+        ));
+    }
 
     #[test]
     fn oversized_observation_reports_the_bound() {
