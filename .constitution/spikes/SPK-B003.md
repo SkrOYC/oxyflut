@@ -3,11 +3,11 @@
 ## Time box
 
 - **Budget:** 1 focused day.
-- **Clock start / stop:** 2026-08-28T17:09:17Z / 2026-08-28T17:26:01Z.
+- **Clock start / stop:** 2026-08-28T17:34:55Z / 2026-08-28T17:45:57Z.
 
 ## Question
 
-- **Decision this spike produces:** Freeze source-level Wayland core, shell, scale, text-input, and presentation protocol floors from the pinned XML. Keep Ubuntu reference-session advertisement and behavior as a gating KU until P1 records the selected session's package lock, registry, and transcript. Freeze GTK 4.20.4 and AT-SPI 2.60.6 source API floors, but retain their reference-package and candidate-behavior gates. Use writable `GtkIMContext` input-purpose and input-hints properties, and convert its documented UTF-8 byte cursor positions explicitly. Use Orca with AT-SPI 2 as the Linux assistive-technology test client. Freeze documented AT-SPI text offsets as Unicode code-point (scalar) boundaries, but retain text, caret, selection, and editable-operation behavior as a gating KU until P3 observes it. Retain the complete-map, independent-meter, routing, and recovery gates until their bounded reference probes pass.
+- **Decision this spike produces:** Freeze source-level Wayland core, shell, scale, text-input, clipboard, and presentation protocol floors from the pinned XML. Keep Ubuntu reference-session advertisement and behavior as a gating KU until P1 records the selected session's package lock, registry, and complete P0-operation transcript. Freeze GTK 4.20.4 and AT-SPI 2.60.6 source API floors, but retain their reference-package and candidate-behavior gates. Use writable `GtkIMContext` input-purpose and input-hints properties, and convert documented UTF-8 byte cursor positions explicitly. Use Orca with AT-SPI 2 as the Linux assistive-technology test client. Freeze documented AT-SPI character offsets as Unicode scalar boundaries, but retain scalar-to-`TextIndex::Logical` conversion, text, caret, selection, and editable-operation behavior as gating KUs. Select the Linux DRM `drm:drm_vblank_event` tracepoint as P4's prospective independent trace, subject to source access, output attribution, and monotonic-clock calibration. Retain the complete-map, routing, and recovery gates until their bounded reference probes pass.
 
 Table 1 answers each Wayland baseline question. KK is a verified fact. KU (gating) is a named unresolved gate. No row is not applicable.
 
@@ -15,21 +15,22 @@ Table 1. Wayland baseline decisions
 
 | Row | Answer and evidence | Status | Next bounded probe |
 | :-- | :-- | :-- | :-- |
-| Reference compositor, session, and package lock | [Ubuntu 26.04 LTS release notes](https://documentation.ubuntu.com/release-notes/26.04/) establish Ubuntu 26.04 LTS, but the fetched release-note content names no compositor, session, package version, or package-lock digest. The non-reference host is NixOS 26.05 with Hyprland 0.55.4, so its registry cannot establish Ubuntu compositor behavior. | KU (gating) | P1: On the selected Ubuntu 26.04 x86-64 Wayland session, record `gnome-shell --version` or the selected compositor's version command, `dpkg-query -W` for the compositor, `gtk4`, `wayland-protocols`, and `at-spi2-core`, the package-manifest SHA-256, and a filtered `wayland-info` registry. Run a 120-frame visible-surface probe that binds every required global, creates every required non-global object, and records `wl_surface.frame`, `wp_presentation_feedback.presented` or `discarded`, and `sync_output` events. Expected output: one named compositor version, one package-lock digest, negotiated versions for every required interface, and a session-specific event transcript. |
-| Wayland core object protocol floors | The pinned [Wayland core XML](https://raw.githubusercontent.com/wayland-mirror/wayland/1ab6b693b16e1d9734496fe60c8a6ed277e4dec3/protocol/wayland.xml) establishes these operation-derived floors: `wl_compositor` 1, `wl_surface` 1, `wl_callback` 1, `wl_seat` 1, `wl_pointer` 5, `wl_keyboard` 4, `wl_touch` 1, `wl_output` 2, `wl_data_device_manager` 1, `wl_data_device` 1, and `wl_data_source` 1. The preserved XML parser output names every required request and event. `wl_pointer` 5 supplies `axis_source`, `axis_stop`, and `frame`; `wl_keyboard` 4 supplies `repeat_info`; and `wl_output` 2 supplies `done` and `scale`. | KK | Not required for the source-level floors. P1 must bind each required global and create every listed non-global object at the listed floor. |
-| Wayland shell, scale, IME, and presentation protocol floors | The pinned [xdg-shell](https://raw.githubusercontent.com/wayland-mirror/wayland-protocols/d5aed4e4903a77aefaef03359d1ffdc0d5093456/stable/xdg-shell/xdg-shell.xml), [viewporter](https://raw.githubusercontent.com/wayland-mirror/wayland-protocols/d5aed4e4903a77aefaef03359d1ffdc0d5093456/stable/viewporter/viewporter.xml), [fractional-scale](https://raw.githubusercontent.com/wayland-mirror/wayland-protocols/d5aed4e4903a77aefaef03359d1ffdc0d5093456/staging/fractional-scale/fractional-scale-v1.xml), [text-input-v3](https://raw.githubusercontent.com/wayland-mirror/wayland-protocols/d5aed4e4903a77aefaef03359d1ffdc0d5093456/unstable/text-input/text-input-unstable-v3.xml), and version-1 [presentation-time](https://raw.githubusercontent.com/wayland-mirror/wayland-protocols/37a1560cf6981a11d44dd200d9409d09b4f0074e/stable/presentation-time/presentation-time.xml) XML establish floor 1 for `xdg_wm_base`, `xdg_surface`, `xdg_toplevel`, `wp_viewporter`, `wp_viewport`, `wp_fractional_scale_manager_v1`, `wp_fractional_scale_v1`, `zwp_text_input_manager_v3`, `zwp_text_input_v3`, `wp_presentation`, and `wp_presentation_feedback`. The required operations cover toplevel configure acknowledgement, fractional-scale destination sizing, IME surrounding text and commits, and per-commit `feedback`, `sync_output`, `presented`, or `discarded`. Version 2 changes only the variable-refresh `refresh` contract, which the harness does not consume. | KK | Not required for the source-level floors. P1 must bind each required manager global, create its listed non-global objects, and verify the `wp_presentation` transcript. |
+| Reference compositor, session, and package lock | [Ubuntu 26.04 LTS release notes](https://documentation.ubuntu.com/release-notes/26.04/) establish Ubuntu 26.04 LTS, but the fetched release-note content names no compositor, session, package version, or package-lock digest. The non-reference host is NixOS 26.05 with Hyprland 0.55.4, so its registry cannot establish Ubuntu compositor behavior. | KU (gating) | P1: On the selected Ubuntu 26.04 x86-64 Wayland session, record `gnome-shell --version` or the selected compositor's version command, `dpkg-query -W` for the compositor, `gtk4`, `wayland-protocols`, and `at-spi2-core`, the package-manifest SHA-256, and a filtered `wayland-info` registry. Run a 120-frame visible-surface probe with `WAYLAND_DEBUG=client` that binds every required global, creates every required non-global object, and exercises every P0-driven operation: `wl_pointer.set_cursor`; `wl_keyboard.keymap` and `repeat_info`; `wl_touch.down`, `up`, `motion`, `frame`, and `cancel`; `wl_output.geometry`, `scale`, and `done`; `wl_data_device.data_offer`, `selection`, and `set_selection`; `wl_data_offer.offer`, `receive`, and `destroy`; `zwp_text_input_v3.set_cursor_rectangle`; and `wl_surface.frame`, `wp_presentation_feedback.sync_output`, `presented`, or `discarded`. The fixture uses `wl_pointer.set_cursor`, not `cursor-shape-v1`. Expected output: one named compositor version, one package-lock digest, negotiated versions for every required interface, and a session-specific transcript with each named request or event. |
+| Wayland core object protocol floors | The pinned [Wayland core XML](https://raw.githubusercontent.com/wayland-mirror/wayland/1ab6b693b16e1d9734496fe60c8a6ed277e4dec3/protocol/wayland.xml) establishes these operation-derived floors: `wl_compositor` 1, `wl_surface` 1, `wl_callback` 1, `wl_seat` 1, `wl_pointer` 5, `wl_keyboard` 4, `wl_touch` 1, `wl_output` 2, `wl_data_device_manager` 1, `wl_data_device` 1, `wl_data_offer` 1, and `wl_data_source` 1. The preserved XML parser output names every required request and event. The P0 completeness derivation includes `wl_pointer.set_cursor`, keyboard keymap and repeat, touch, output geometry and scale, clipboard selection and offers, and text-input candidate geometry. `wl_pointer` 5 supplies `axis_source`, `axis_stop`, and `frame`; `wl_keyboard` 4 supplies `repeat_info`; and `wl_output` 2 supplies `done` and `scale`. | KK | Not required for the source-level floors. P1 must bind each required global and create every listed non-global object at the listed floor. |
+| Wayland shell, scale, IME, and presentation protocol floors | The pinned [xdg-shell](https://raw.githubusercontent.com/wayland-mirror/wayland-protocols/d5aed4e4903a77aefaef03359d1ffdc0d5093456/stable/xdg-shell/xdg-shell.xml), [viewporter](https://raw.githubusercontent.com/wayland-mirror/wayland-protocols/d5aed4e4903a77aefaef03359d1ffdc0d5093456/stable/viewporter/viewporter.xml), [fractional-scale](https://raw.githubusercontent.com/wayland-mirror/wayland-protocols/d5aed4e4903a77aefaef03359d1ffdc0d5093456/staging/fractional-scale/fractional-scale-v1.xml), [text-input-v3](https://raw.githubusercontent.com/wayland-mirror/wayland-protocols/d5aed4e4903a77aefaef03359d1ffdc0d5093456/unstable/text-input/text-input-unstable-v3.xml), and version-1 [presentation-time](https://raw.githubusercontent.com/wayland-mirror/wayland-protocols/37a1560cf6981a11d44dd200d9409d09b4f0074e/stable/presentation-time/presentation-time.xml) XML establish floor 1 for `xdg_wm_base`, `xdg_surface`, `xdg_toplevel`, `wp_viewporter`, `wp_viewport`, `wp_fractional_scale_manager_v1`, `wp_fractional_scale_v1`, `zwp_text_input_manager_v3`, `zwp_text_input_v3`, `wp_presentation`, and `wp_presentation_feedback`. The required operations cover toplevel configure acknowledgement, fractional-scale destination sizing, IME surrounding text, candidate geometry through `zwp_text_input_v3.set_cursor_rectangle`, commits, and per-commit `feedback`, `sync_output`, `presented`, or `discarded`. Version 2 changes only the variable-refresh `refresh` contract, which the harness does not consume. | KK | Not required for the source-level floors. P1 must bind each required manager global, create its listed non-global objects, and verify the `wp_presentation` transcript. |
 | GTK 4.20.4 source API floor | The official [GTK 4.20 source index](https://download.gnome.org/sources/gtk/4.20/) publishes GTK 4.20.4. The immutable [GTK 4.20.4 `gtkenums.h`](https://gitlab.gnome.org/GNOME/gtk/-/raw/4.20.4/gtk/gtkenums.h) source defines `GTK_INPUT_HINT_PRIVATE` and describes it as a request not to update personalized data. The preserved source SHA-256 is `c2ef75dc175e7d8b6a28c1ace0e45898a0f2f4b14454b980fd310e545eb485c9`. | KK | Not required for the source API floor. P1 must lock the Ubuntu package that supplies it. |
 | GTK release floor on the reference | The GTK 4.20.4 source floor does not identify the Ubuntu package revision, package digest, or session backend. | KU (gating) | P1: Record the installed `gtk4` package version and immutable package-manifest digest on the Ubuntu reference. Accept this gate only when it is GTK 4.20.4 or a separately reviewed replacement that exposes the cited API set. Expected output: package version, package origin, and digest. |
 | `GtkIMContext` surrounding text and input-purpose mechanism | [`set_surrounding`](https://docs.gtk.org/gtk4/method.IMContext.set_surrounding.html) takes UTF-8 text and a byte index for the cursor. [`input-purpose`](https://docs.gtk.org/gtk4/property.IMContext.input-purpose.html) and [`input-hints`](https://docs.gtk.org/gtk4/property.IMContext.input-hints.html) are writable properties. [`GtkInputPurpose`](https://docs.gtk.org/gtk4/enum.InputPurpose.html) supplies typed purpose values, including `PASSWORD` and `PIN`; [`GtkInputHints.PRIVATE`](https://docs.gtk.org/gtk4/flags.InputHints.html) requests that an input method not update personalized data. These are properties, not a compositor numeric negotiation. | KK | Not required. P2 verifies the selected input method's behavior rather than the documented interface shape. |
 | Complete IME transcript and non-cursor operation units | GTK documents [`delete-surrounding`](https://docs.gtk.org/gtk4/signal.IMContext.delete-surrounding.html) arguments as character offsets and counts, but it does not state the scalar, grapheme, or another unit in the fetched API page. No selected Ubuntu IM module or candidate transcript exists. The report therefore does not infer a unit for deletion, preedit cursor position, or replacement behavior. | KU (gating) | P2: On the P1 session, use an instrumented noncandidate GTK 4.20.4 text widget and the ASCII, multibyte, combining, bidirectional, CJK-composition, replacement, candidate-geometry, and secure-field corpus. Log every `preedit-*`, `commit`, `retrieve-surrounding`, `delete-surrounding`, `focus-*`, and `reset` callback with typed indices. Expected output: a transcript that identifies every operation's unit and round trips each valid boundary. |
 | Linux assistive-technology selection | Select [Orca](https://help.gnome.org/users/orca/stable/) as the required screen-reader test client and AT-SPI 2 as its inspection and action transport. [GNOME's AT-SPI development documentation](https://gnome.pages.gitlab.gnome.org/at-spi2-core/devel-docs/atspi-python-stack.html) states that Orca builds a view of an application's accessible-object tree through `libatspi` and `pyatspi2`. | KK | Not required. P3 establishes the Ubuntu package lock and candidate behavior. |
-| AT-SPI API floor | The official [at-spi2-core 2.60.6 release notes](https://gitlab.gnome.org/GNOME/at-spi2-core/-/raw/2.60.6/NEWS) identify release 2.60.6. The immutable [AT-SPI 2.60.6 `Text.xml`](https://gitlab.gnome.org/GNOME/at-spi2-core/-/raw/2.60.6/xml/Text.xml) defines `CharacterCount`, `GetText`, `SetCaretOffset`, selections, and editable text. Freeze 2.60.6 as the AT-SPI source API floor. The preserved `Text.xml` SHA-256 is `5c2d5049d2e427d630ca1ae288d0abe321f39c683336cb8a1373f41c4414d614`. | KK | Not required for the source API floor. P3 must lock the Ubuntu package and run the behavior transcript. |
-| AT-SPI documented text-offset unit | The normative [AT-SPI 2.60.6 `Text.xml`](https://gitlab.gnome.org/GNOME/at-spi2-core/-/raw/2.60.6/xml/Text.xml) defines `CharacterCount` as a number of characters that can differ from fetched UTF-8 byte count. It defines `GetText` end offsets as the first character past the range, while the UTF-8 result bytes can exceed those offsets. It also states that `GetCharacterAtOffset` returns "the UCS-4 unicode code point of the given character." Therefore the documented AT-SPI text, caret, selection, and editable-position unit is a Unicode code-point (scalar) boundary, not a UTF-8 byte, UTF-16 unit, or grapheme boundary. The independent conversion fixture verifies conversion mechanics, not AT-SPI behavior. | KK | Not required for the documented unit or conversion mechanics. The next row retains the behavior gate. |
-| AT-SPI text, caret, selection, and editable behavior | The host has no `org.a11y.Bus`, and the fixture makes no AT-SPI calls. The AT-SPI source establishes the unit, not that a selected GTK exporter or either candidate applies it consistently to `GetText`, `CaretOffset`, selections, `SetCaretOffset`, and editable operations on the combining fixture. | KU (gating) | P3: On the P1 Ubuntu session, start a headless accessibility bus with `dbus-run-session` and `at-spi-bus-launcher`, then use a noncandidate GTK text widget and `pyatspi2` to record `CharacterCount`, `GetText`, `CaretOffset`, selection bounds, `SetCaretOffset`, and editable-operation results for every fixture. Expected output: for `e` plus combining acute plus `x`, `CharacterCount=3`; `GetCharacterAtOffset(1)` and `GetCharacterAtOffset(2)` return the distinct combining-mark and `x` code points; `GetText(0,1)` and `GetText(1,2)` distinguish the first two scalar ranges; and caret, selection, and editable operations round trip offsets 1 and 2. The separate typed conversion fixture must reject UTF-8, UTF-16, and grapheme-interior positions. |
+| AT-SPI API floor | The official [at-spi2-core 2.60.6 release notes](https://gitlab.gnome.org/GNOME/at-spi2-core/-/raw/2.60.6/NEWS) identify release 2.60.6. The immutable [AT-SPI 2.60.6 `Text.xml`](https://gitlab.gnome.org/GNOME/at-spi2-core/-/raw/2.60.6/xml/Text.xml) defines `CharacterCount`, `GetText`, `SetCaretOffset`, and selections. It does not define editable text. The immutable [AT-SPI 2.60.6 `EditableText.xml`](https://gitlab.gnome.org/GNOME/at-spi2-core/-/raw/2.60.6/xml/EditableText.xml) defines `SetTextContents`, `InsertText`, `CopyText`, `CutText`, `DeleteText`, and `PasteText`. Freeze 2.60.6 as the AT-SPI source API floor. The preserved `Text.xml` SHA-256 is `5c2d5049d2e427d630ca1ae288d0abe321f39c683336cb8a1373f41c4414d614`; the preserved `EditableText.xml` SHA-256 is `2ea1b94822f19b0b00c80b918b89833cfb67d1eeef99d69b8421d0e6f40920ff`. | KK | Not required for the source API floor. P3 must lock the Ubuntu package and run the behavior transcript. |
+| AT-SPI documented text-offset unit | The normative [AT-SPI 2.60.6 `Text.xml`](https://gitlab.gnome.org/GNOME/at-spi2-core/-/raw/2.60.6/xml/Text.xml) defines `CharacterCount` as a number of characters that can differ from fetched UTF-8 byte count. It defines `GetText` end offsets as the first character past the range, while the UTF-8 result bytes can exceed those offsets. It also states that `GetCharacterAtOffset` returns "the UCS-4 unicode code point of the given character." The [AT-SPI 2.60.6 `EditableText.xml`](https://gitlab.gnome.org/GNOME/at-spi2-core/-/raw/2.60.6/xml/EditableText.xml) defines edit positions as character offsets that can differ from UTF-8 byte offsets. Therefore the documented AT-SPI text, caret, selection, and editable-position unit is a Unicode scalar boundary, not a UTF-8 byte, UTF-16 unit, or grapheme boundary. The independent conversion fixture verifies scalar, UTF-8, UTF-16, and grapheme-boundary mechanics, not AT-SPI behavior or `TextIndex::Logical` conversion. | KK | Not required for the documented unit or scalar conversion mechanics. The next rows retain the representation and behavior gates. |
+| AT-SPI scalar-to-`TextIndex::Logical` conversion | [`ADR-0007`](../tech-spec/adrs/ADR-0007-text-indexing.md) and the preserved contract probe establish that `TextIndex::Logical(u32)` is a logical text position within an immutable layout generation. Neither source defines its representation or a scalar-to-logical mapping. The scalar fixture therefore makes no scalar-to-logical claim. | KU (gating) | P3B: Before candidate geometry qualification, freeze the `TextIndex::Logical` representation in the public contract and add four hand-listed scalar-to-logical and logical-to-scalar pair tables for ASCII, multibyte, combining, and bidirectional layouts. Bind each pair to one `TextLayoutId` and assert rejection after its generation changes. Expected output: the adopted representation, four bidirectional pair tables, and stale-generation failures. |
+| AT-SPI text, caret, selection, and editable behavior | The host has no `org.a11y.Bus`, and the fixture makes no AT-SPI calls. The AT-SPI source establishes the unit, not that a selected GTK exporter or either candidate applies it consistently to `GetText`, `CaretOffset`, selections, `SetCaretOffset`, and editable operations on the combining fixture. | KU (gating) | P3: On the P1 Ubuntu session, start a headless accessibility bus with `dbus-run-session` and `at-spi-bus-launcher`, then use a noncandidate GTK text widget and `pyatspi2` to record `CharacterCount`, `GetText`, `CaretOffset`, selection bounds, `SetCaretOffset`, and editable-operation results for every fixture. Expected output: for `e` plus combining acute plus `x`, `CharacterCount=3`; `GetCharacterAtOffset(1)` and `GetCharacterAtOffset(2)` return the distinct combining-mark and `x` code points; `GetText(0,1)` and `GetText(1,2)` distinguish the first two scalar ranges; and caret, selection, and editable operations round trip offsets 1 and 2. After P3B freezes the logical representation, the typed conversion fixture must assert the approved scalar-to-logical pairs and reject UTF-8, UTF-16, grapheme-interior, and stale-generation positions. |
 | Focused allocation accessibility map | [GTK defines an accessibility tree](https://docs.gtk.org/gtk4/iface.Accessible.html) with role, state, property, and relation attributes and a platform accessibility context. No focused candidate source identity, exported tree, forward map, reverse action map, artifact path, or digest exists. | KU (gating) | P3F: After the focused source identity is locked, launch its two-view AT-SPI fixture under Orca and `pyatspi2`. Enumerate every required `accessibility-map.schema.json` forward key and reverse action, including Unicode-scalar text payloads, view generation, acknowledgement, stale target, and secure-field redaction. Expected output: one complete map JSON file and SHA-256. |
 | Integrated allocation accessibility map | The [GTK accessibility interfaces](https://docs.gtk.org/gtk4/iface.Accessible.html) document a possible host mechanism, but they do not establish the pinned Flutter fork's inherited interfaces or its Oxyflut map. No fork commit, source tree, exported tree, forward map, reverse action map, artifact path, or digest exists. | KU (gating) | P3I: After the integrated fork and adapter commits are locked, run the same two-view Orca and `pyatspi2` fixture. First inventory inherited GTK and AT-SPI interfaces, then enumerate every forward key and reverse action. Expected output: the inventory, one complete map JSON file, and SHA-256. |
 | Host scheduling and presentation feedback roles | [`GdkFrameClock`](https://docs.gtk.org/gdk4/class.FrameClock.html) tells an application when to update and repaint, but GTK states that it can use a simple timer instead of hardware vertical sync. The [version-1 presentation-time XML](https://raw.githubusercontent.com/wayland-mirror/wayland-protocols/37a1560cf6981a11d44dd200d9409d09b4f0074e/stable/presentation-time/presentation-time.xml) creates feedback for a submitted `wl_surface.commit` and emits one terminal presented or discarded result for that content update. Therefore `GdkFrameClock` is only a host wakeup mechanism until P4 qualifies it, and `wp_presentation` feedback is acknowledgement only, never an independent opportunity meter. | KK | Not required for the interface-role decision. P4 qualifies the meter and scheduling behavior. |
-| Independent presentation-opportunity meter | No fetched compositor evidence or host probe proves an output-associated timing source that is independent of both candidate callback streams; the [version-1 presentation-time XML](https://raw.githubusercontent.com/wayland-mirror/wayland-protocols/37a1560cf6981a11d44dd200d9409d09b4f0074e/stable/presentation-time/presentation-time.xml) only describes per-submission feedback. The host exposes a DRM card node and a `wp_drm_lease_device_v1` global, but that does not prove KMS authority, active-output attribution, calibration, or reference-session behavior. | KU (gating) | P4: On the P1 session, run a separately launched, harness-owned visible Wayland client with its own `wl_surface.frame` callbacks and monotonic log beside each candidate. Bind the observer and candidate surfaces to each entered output set, prove no shared callback or IPC path, compare 10-second epochs against an independently captured display trace, and record calibration error. Expected output: observer source digest, process graph, per-output epoch log, and calibration result that meets `CON-FRM-001`. |
+| Independent presentation-opportunity meter | No compositor evidence or host probe proves a qualified meter. The selected independent trace is Linux DRM `drm:drm_vblank_event`, captured with `trace-cmd record -e drm:drm_vblank_event`. [Kernel event-tracing documentation](https://docs.kernel.org/trace/events.html) defines event discovery under `/sys/kernel/tracing/available_events`; [ftrace documentation](https://docs.kernel.org/trace/ftrace.html) defines the `mono` trace clock as `CLOCK_MONOTONIC`; and the [DRM UAPI documentation](https://docs.kernel.org/gpu/drm-uapi.html) documents vblank-event CRTC IDs and `CLOCK_MONOTONIC` timestamps. The local source-selection probe stopped because the tracepoint and `trace-cmd` are absent, so it establishes no usable trace. It also does not establish P1 hardware access, active-output attribution, or calibration. | KU (gating) | P4: On the P1 session, first verify `drm:drm_vblank_event` in `available_events`, permission to record it, and the ability to select `mono` in `trace_clock`. If any check fails, STOP P4 and retain this KU. Otherwise capture a 10-second trace with `trace-cmd record -e drm:drm_vblank_event`, record `CLOCK_MONOTONIC` immediately before and after capture, and record the observer and candidates on `CLOCK_MONOTONIC`. Map each trace CRTC to the candidate and observer output through a contemporaneous DRM connector-CRTC inventory and `wl_surface.enter` or `leave` log. Reject the epoch if the start or end clock offset differs from zero or if output association changes. Prove no candidate callback or IPC path feeds the trace. Expected output: trace command, selected trace clock, CRTC-output inventory, four monotonic calibration samples, per-output epoch log, process graph, and `CON-FRM-001` result. |
 | Output association mechanism | The [core protocol](https://raw.githubusercontent.com/wayland-mirror/wayland/1ab6b693b16e1d9734496fe60c8a6ed277e4dec3/protocol/wayland.xml) states that a surface can be displayed on zero or more outputs. It emits `wl_surface.enter` and `wl_surface.leave` when surface creation, movement, or resizing changes output membership. | KK | Not required for protocol mechanics. P4 and P5 apply the mechanism to each allocation. |
 | Focused allocation service routing | No focused candidate exists to prove that every GTK, Wayland, IME, accessibility, clipboard, timing, and recovery request carries its owning `GdkSurface` and view generation across the reentrancy barrier; the [core protocol](https://raw.githubusercontent.com/wayland-mirror/wayland/1ab6b693b16e1d9734496fe60c8a6ed277e4dec3/protocol/wayland.xml) only establishes surface identity mechanics. | KU (gating) | P5F: Use an instrumented two-window focused fixture. Interleave focus, IME, AT-SPI reverse action, clipboard, output move, close, and late-callback events. Expected output: normalized event log in which every request has the expected surface identity and live view generation, and stale events return the defined error. |
 | Integrated allocation service routing | No pinned Flutter fork or adapter exists to prove that every inherited callback carries its owning `GdkSurface` and view generation before the C ABI and reentrancy barrier; the [core protocol](https://raw.githubusercontent.com/wayland-mirror/wayland/1ab6b693b16e1d9734496fe60c8a6ed277e4dec3/protocol/wayland.xml) does not identify inherited Flutter callbacks. | KU (gating) | P5I: Run the P5F scenario through the locked integrated fork. Expected output: inherited-interface inventory and normalized C-ABI event log with the same ownership, generation, and stale-event results. |
@@ -41,7 +42,7 @@ Table 1. Wayland baseline decisions
 - **Triggering upstream file or section:** `.constitution/tech-spec/contracts/platform-contracts.json` -> `environments.wayland`.
 - **Target:** Resolve documented protocol mechanics and reduce every remaining Wayland item to a bounded gate without claiming reference-session or candidate behavior.
 - **Archetype / surface:** Library/SDK with system Wayland desktop integration.
-- **STOP-condition result:** Neither STOP condition triggered. This report does not infer compositor behavior from advertised globals, and it does not treat `wp_presentation` feedback as an independent presentation-opportunity source.
+- **STOP-condition result:** Neither ticket STOP condition triggered. This report does not infer compositor behavior from advertised globals, and it does not treat `wp_presentation` feedback as an independent presentation-opportunity source. The non-reference P4 source-selection subprobe stopped because `drm:drm_vblank_event`, `trace-cmd`, and `trace_clock` are unavailable; the independent-meter row retains its gating KU.
 
 ## Codebase baseline
 
@@ -143,17 +144,18 @@ The v1 source SHA-256 is `91e5e14481a13717fef8403203a2eaa052c85fd853c1c440ba081e
 The following XML parser reads the pinned source files and computes each floor as the highest `since` value among the required operations. XML members with no `since` attribute have version 1. This establishes source API floors only. It does not establish an Ubuntu compositor's advertisement or behavior.
 
 ```text
-$ nix shell nixpkgs#python3 -c python3 /tmp/wf-epic-b/OXY-B003/round-2/derive-wayland-floors.py
+$ nix shell nixpkgs#python3 -c python3 /tmp/wf-epic-b/OXY-B003/round-3/derive-wayland-floors.py
 wl_compositor declared=6 required=create_surface@1 floor=1
 wl_surface declared=6 required=attach@1,damage@1,frame@1,commit@1,enter@1,leave@1 floor=1
 wl_callback declared=1 required=done@1 floor=1
 wl_seat declared=10 required=capabilities@1,get_pointer@1,get_keyboard@1,get_touch@1 floor=1
-wl_pointer declared=10 required=enter@1,leave@1,motion@1,button@1,axis@1,axis_source@5,axis_stop@5,frame@5 floor=5
+wl_pointer declared=10 required=enter@1,leave@1,motion@1,button@1,axis@1,axis_source@5,axis_stop@5,frame@5,set_cursor@1 floor=5
 wl_keyboard declared=10 required=keymap@1,enter@1,leave@1,key@1,modifiers@1,repeat_info@4 floor=4
 wl_touch declared=10 required=down@1,up@1,motion@1,frame@1,cancel@1 floor=1
 wl_output declared=4 required=geometry@1,mode@1,done@2,scale@2 floor=2
 wl_data_device_manager declared=3 required=create_data_source@1,get_data_device@1 floor=1
-wl_data_device declared=3 required=data_offer@1,enter@1,leave@1,motion@1,drop@1,selection@1 floor=1
+wl_data_device declared=3 required=data_offer@1,enter@1,leave@1,motion@1,drop@1,selection@1,set_selection@1 floor=1
+wl_data_offer declared=3 required=offer@1,receive@1,destroy@1 floor=1
 wl_data_source declared=3 required=offer@1,send@1,cancelled@1 floor=1
 xdg_wm_base declared=6 required=get_xdg_surface@1,pong@1,ping@1 floor=1
 xdg_surface declared=6 required=get_toplevel@1,ack_configure@1,configure@1 floor=1
@@ -163,17 +165,50 @@ wp_viewport declared=1 required=set_destination@1 floor=1
 wp_fractional_scale_manager_v1 declared=1 required=get_fractional_scale@1 floor=1
 wp_fractional_scale_v1 declared=1 required=preferred_scale@1 floor=1
 zwp_text_input_manager_v3 declared=1 required=get_text_input@1 floor=1
-zwp_text_input_v3 declared=1 required=enable@1,set_surrounding_text@1,set_text_change_cause@1,set_content_type@1,commit@1,preedit_string@1,commit_string@1,delete_surrounding_text@1,done@1 floor=1
+zwp_text_input_v3 declared=1 required=enable@1,set_surrounding_text@1,set_text_change_cause@1,set_content_type@1,set_cursor_rectangle@1,commit@1,preedit_string@1,commit_string@1,delete_surrounding_text@1,done@1 floor=1
 wp_presentation declared=1 required=feedback@1 floor=1
 wp_presentation_feedback declared=1 required=sync_output@1,presented@1,discarded@1 floor=1
 exit=0
 ```
 
+### DRM trace source selection
+
+The fetched [kernel event-tracing documentation](https://docs.kernel.org/trace/events.html) defines discovery of traceable events in `/sys/kernel/tracing/available_events`. The fetched [ftrace documentation](https://docs.kernel.org/trace/ftrace.html) defines the `mono` trace clock as `CLOCK_MONOTONIC` and documents `trace_marker`. The fetched [DRM UAPI documentation](https://docs.kernel.org/gpu/drm-uapi.html) documents CRTC IDs in vblank events and the `CLOCK_MONOTONIC` timestamp capability. These sources define a bounded acquisition and calibration procedure; they do not prove the P1 system exposes the tracepoint or grants recording access.
+
+The local source-selection probe stopped before capture because the required tracepoint, `trace-cmd`, and trace clock are absent. It makes no timing claim:
+
+```text
+$ test -r /sys/kernel/tracing/events/drm/drm_vblank_event/format && sed -n "1,24p" /sys/kernel/tracing/events/drm/drm_vblank_event/format || echo drm_vblank_event_format=unavailable
+drm_vblank_event_format=unavailable
+$ command -v trace-cmd || echo trace-cmd=absent
+trace-cmd=absent
+$ test -r /sys/kernel/tracing/trace_clock && cat /sys/kernel/tracing/trace_clock || echo trace_clock=unavailable
+trace_clock=unavailable
+$ id
+uid=1000(oscar) gid=100(users) groups=100(users),1(wheel),20(lp),26(video),57(networkmanager),59(scanner),67(libvirtd),131(docker),174(input),302(kvm),984(davfs2)
+exit=0
+```
+
 ### Unicode-scalar offset fixture
 
-The pinned AT-SPI 2.60.6 `Text.xml` source is normative for the unit. It states that `CharacterCount` can differ from UTF-8 byte count, that `GetText` uses character range offsets while returning UTF-8, and that `GetCharacterAtOffset` returns "the UCS-4 unicode code point of the given character." The fixture tests conversions from that documented code-point unit. It does not declare Python string indexes to be AT-SPI boundaries and it does not substitute for an AT-SPI call.
+The pinned AT-SPI 2.60.6 `Text.xml` source is normative for the unit. It states that `CharacterCount` can differ from UTF-8 byte count, that `GetText` uses character range offsets while returning UTF-8, and that `GetCharacterAtOffset` returns "the UCS-4 unicode code point of the given character." `EditableText.xml` applies the same character-offset distinction to editable positions. The fixture tests conversions from that documented scalar unit. It does not declare Python string indexes to be AT-SPI boundaries, does not substitute for an AT-SPI call, and does not convert scalar offsets to `TextIndex::Logical`.
 
-The full fixture script at `/tmp/wf-epic-b/OXY-B003/round-2/offset-fixtures-uba.py` fixes the immutable paragraph's code-point order. It derives scalar-to-logical and logical-to-scalar positions through separate UTF-32 paths. It uses `python-bidi` to resolve the Unicode Bidirectional Algorithm (UBA) visual character order, then independently derives and round-trips logical-to-visual and visual-to-logical maps. The fixture asserts the UBA result against a separately declared expected visual-to-logical map. It rejects UTF-8, UTF-16, and grapheme-interior positions.
+The full fixture script at `/tmp/wf-epic-b/OXY-B003/round-3/atspi-scalar-fixtures-uba.py` has independently hand-listed scalar, UTF-8, UTF-16, grapheme, and bidirectional visual-order expectations for each fixture. It asserts scalar-to-UTF-8 and scalar-to-UTF-16 conversions in both directions, validates the hand-listed Unicode Bidirectional Algorithm (UBA) visual-to-scalar map in both directions, and rejects interior UTF-8, UTF-16, and grapheme positions. `TextIndex::Logical` has no specified representation, so the fixture deliberately performs no scalar-to-logical conversion.
+
+The contract probe reports `Logical(u32)` and its immutable-generation scope, but no representation or scalar conversion rule:
+
+```text
+$ grep -n -E "Logical|immutable text-layout generation|convert_index" .constitution/tech-spec/contracts/oxyflut-public.rs
+34:/// Identifies one immutable text-layout generation.
+299:    Logical(u32),
+311:    /// Logical positions within one immutable layout generation.
+312:    Logical,
+327:    /// Logical view size.
+409:    /// Logical-key identity.
+761:    /// Logical text direction.
+1072:    fn convert_index(
+exit=0
+```
 
 ```python
 from dataclasses import dataclass
@@ -189,7 +224,7 @@ class Fixture:
     utf8_bytes: tuple[int, ...]
     utf16_units: tuple[int, ...]
     grapheme_boundaries: tuple[int, ...]
-    expected_visual_to_logical: tuple[int, ...]
+    expected_visual_to_scalar: tuple[int, ...]
     rejected_utf8_bytes: tuple[int, ...]
     rejected_utf16_units: tuple[int, ...]
 
@@ -241,33 +276,20 @@ def utf16_unit_to_scalar(text: str, unit_offset: int) -> int:
     return len(prefix.encode("utf-32-le")) // 4
 
 
-def scalar_to_logical_position(paragraph: tuple[int, ...], scalar_offset: int) -> int:
-    require_boundary(len(paragraph), scalar_offset, "scalar")
-    prefix = text_from_code_points(paragraph[:scalar_offset]).encode("utf-32-le")
-    return len(prefix) // 4
-
-
-def logical_position_to_scalar(paragraph: tuple[int, ...], logical_position: int) -> int:
-    require_boundary(len(paragraph), logical_position, "logical")
-    encoded = text_from_code_points(paragraph).encode("utf-32-le")
-    decoded_prefix = encoded[: logical_position * 4].decode("utf-32-le")
-    return sum(1 for _ in decoded_prefix)
-
-
-def visual_to_logical_map(paragraph: tuple[int, ...]) -> tuple[int, ...]:
-    logical_text = text_from_code_points(paragraph)
-    visual_text = get_display(logical_text, base_dir="L")
+def visual_to_scalar_map(paragraph: tuple[int, ...]) -> tuple[int, ...]:
+    source_text = text_from_code_points(paragraph)
+    visual_text = get_display(source_text, base_dir="L")
     visual_code_points = tuple(ord(character) for character in visual_text)
     if len(set(paragraph)) != len(paragraph):
         raise ValueError("fixture code points must be unique for UBA map derivation")
     return tuple(paragraph.index(code_point) for code_point in visual_code_points)
 
 
-def inverse_map(visual_to_logical: tuple[int, ...]) -> tuple[int, ...]:
-    logical_to_visual = [0] * len(visual_to_logical)
-    for visual_position, logical_position in enumerate(visual_to_logical):
-        logical_to_visual[logical_position] = visual_position
-    return tuple(logical_to_visual)
+def inverse_map(visual_to_scalar: tuple[int, ...]) -> tuple[int, ...]:
+    scalar_to_visual = [0] * len(visual_to_scalar)
+    for visual_position, scalar_position in enumerate(visual_to_scalar):
+        scalar_to_visual[scalar_position] = visual_position
+    return tuple(scalar_to_visual)
 
 
 def grapheme_index(boundaries: tuple[int, ...], scalar_offset: int) -> int:
@@ -306,26 +328,24 @@ def rejected_utf16_offsets(text: str, boundaries: tuple[int, ...]) -> tuple[int,
 
 for fixture in FIXTURES:
     text = text_from_code_points(fixture.code_points)
-    visual_to_logical = visual_to_logical_map(fixture.code_points)
-    logical_to_visual = inverse_map(visual_to_logical)
-    assert visual_to_logical == fixture.expected_visual_to_logical
-    assert inverse_map(logical_to_visual) == visual_to_logical
+    visual_to_scalar = visual_to_scalar_map(fixture.code_points)
+    scalar_to_visual = inverse_map(visual_to_scalar)
+    assert visual_to_scalar == fixture.expected_visual_to_scalar
+    assert inverse_map(scalar_to_visual) == visual_to_scalar
     print(f"fixture={fixture.name} repr={text!r}")
-    print("scalar|logical|scalar_round_trip|visual_position")
-    for scalar_offset in fixture.scalar_boundaries:
-        logical_position = scalar_to_logical_position(fixture.code_points, scalar_offset)
-        scalar_round_trip = logical_position_to_scalar(fixture.code_points, logical_position)
-        assert scalar_round_trip == scalar_offset
-        visual_position = "boundary"
-        if scalar_offset < len(fixture.code_points):
-            visual_position = logical_to_visual[logical_position]
-            assert visual_to_logical[visual_position] == logical_position
-        print(f"{scalar_offset}|{logical_position}|{scalar_round_trip}|{visual_position}")
+    print("scalar|utf8_byte|utf16_unit|code_point|visual_position")
     for scalar_offset, expected_utf8, expected_utf16 in zip(fixture.scalar_boundaries, fixture.utf8_bytes, fixture.utf16_units):
         assert scalar_to_utf8_byte(text, scalar_offset) == expected_utf8
         assert utf8_byte_to_scalar(text, expected_utf8) == scalar_offset
         assert scalar_to_utf16_unit(text, scalar_offset) == expected_utf16
         assert utf16_unit_to_scalar(text, expected_utf16) == scalar_offset
+        visual_position = "boundary"
+        code_point = "end"
+        if scalar_offset < len(fixture.code_points):
+            visual_position = scalar_to_visual[scalar_offset]
+            assert visual_to_scalar[visual_position] == scalar_offset
+            code_point = hex(fixture.code_points[scalar_offset])
+        print(f"{scalar_offset}|{expected_utf8}|{expected_utf16}|{code_point}|{visual_position}")
     assert rejected_utf8_offsets(text, fixture.utf8_bytes) == fixture.rejected_utf8_bytes
     assert rejected_utf16_offsets(text, fixture.utf16_units) == fixture.rejected_utf16_units
     rejected_graphemes = tuple(
@@ -340,77 +360,65 @@ for fixture in FIXTURES:
             pass
         else:
             raise AssertionError(f"accepted grapheme interior scalar {scalar_offset}")
-    print(f"uba_visual_to_logical={visual_to_logical}")
+    print(f"uba_visual_to_scalar={visual_to_scalar}")
     print(f"utf8_interior_rejected={fixture.rejected_utf8_bytes}")
     print(f"utf16_interior_rejected={fixture.rejected_utf16_units}")
     print(f"grapheme_interior_rejected={rejected_graphemes}")
     print()
 
-print("result=all scalar and logical positions round-trip in immutable paragraph order; UBA character maps round-trip; UTF-8, UTF-16, and grapheme-interior positions are rejected")
+print("result=hand-listed scalar-to-UTF-8 and scalar-to-UTF-16 pairs round-trip; UBA scalar maps round-trip; logical-index conversion is not tested because TextIndex::Logical has no specified representation")
 ```
 
-The first two package-environment commands failed before the fixture ran. The module-only `nix shell` command had no interpreter. Adding a separate interpreter did not add the module to that interpreter's import path. These failures establish no conversion result:
+A `nix-shell` Python package environment ran the corrected fixture with the following exact captured output:
 
 ```text
-$ nix shell nixpkgs#python3Packages.python-bidi -c python3 /tmp/wf-epic-b/OXY-B003/round-2/offset-fixtures-uba.py
-error: unable to execute 'python3': No such file or directory
-exit=1
-
-$ nix shell nixpkgs#python3 nixpkgs#python3Packages.python-bidi -c python3 /tmp/wf-epic-b/OXY-B003/round-2/offset-fixtures-uba.py
-ModuleNotFoundError: No module named 'bidi'
-exit=1
-```
-
-A `nix-shell` Python package environment ran the full fixture with the following exact captured output:
-
-```text
-$ nix-shell -p python3Packages.python-bidi --run 'python3 /tmp/wf-epic-b/OXY-B003/round-2/offset-fixtures-uba.py'
+$ nix-shell -p python3Packages.python-bidi --run 'python3 /tmp/wf-epic-b/OXY-B003/round-3/atspi-scalar-fixtures-uba.py'
 fixture=ASCII repr='abZ'
-scalar|logical|scalar_round_trip|visual_position
-0|0|0|0
-1|1|1|1
-2|2|2|2
-3|3|3|boundary
-uba_visual_to_logical=(0, 1, 2)
+scalar|utf8_byte|utf16_unit|code_point|visual_position
+0|0|0|0x61|0
+1|1|1|0x62|1
+2|2|2|0x5a|2
+3|3|3|end|boundary
+uba_visual_to_scalar=(0, 1, 2)
 utf8_interior_rejected=()
 utf16_interior_rejected=()
 grapheme_interior_rejected=()
 
 fixture=multibyte repr='A界😀'
-scalar|logical|scalar_round_trip|visual_position
-0|0|0|0
-1|1|1|1
-2|2|2|2
-3|3|3|boundary
-uba_visual_to_logical=(0, 1, 2)
+scalar|utf8_byte|utf16_unit|code_point|visual_position
+0|0|0|0x41|0
+1|1|1|0x754c|1
+2|4|2|0x1f600|2
+3|8|4|end|boundary
+uba_visual_to_scalar=(0, 1, 2)
 utf8_interior_rejected=(2, 3, 5, 6, 7)
 utf16_interior_rejected=(3,)
 grapheme_interior_rejected=()
 
 fixture=combining repr='éx'
-scalar|logical|scalar_round_trip|visual_position
-0|0|0|0
-1|1|1|1
-2|2|2|2
-3|3|3|boundary
-uba_visual_to_logical=(0, 1, 2)
+scalar|utf8_byte|utf16_unit|code_point|visual_position
+0|0|0|0x65|0
+1|1|1|0x301|1
+2|3|2|0x78|2
+3|4|3|end|boundary
+uba_visual_to_scalar=(0, 1, 2)
 utf8_interior_rejected=(2,)
 utf16_interior_rejected=()
 grapheme_interior_rejected=(1,)
 
 fixture=bidirectional repr='AאבB'
-scalar|logical|scalar_round_trip|visual_position
-0|0|0|0
-1|1|1|2
-2|2|2|1
-3|3|3|3
-4|4|4|boundary
-uba_visual_to_logical=(0, 2, 1, 3)
+scalar|utf8_byte|utf16_unit|code_point|visual_position
+0|0|0|0x41|0
+1|1|1|0x5d0|2
+2|3|2|0x5d1|1
+3|5|3|0x42|3
+4|6|4|end|boundary
+uba_visual_to_scalar=(0, 2, 1, 3)
 utf8_interior_rejected=(2, 4)
 utf16_interior_rejected=()
 grapheme_interior_rejected=()
 
-result=all scalar and logical positions round-trip in immutable paragraph order; UBA character maps round-trip; UTF-8, UTF-16, and grapheme-interior positions are rejected
+result=hand-listed scalar-to-UTF-8 and scalar-to-UTF-16 pairs round-trip; UBA scalar maps round-trip; logical-index conversion is not tested because TextIndex::Logical has no specified representation
 exit=0
 ```
 
@@ -480,6 +488,7 @@ The report relies on the following fetched authoritative sources:
 - [GNOME AT-SPI documentation for Orca and `libatspi`](https://gnome.pages.gitlab.gnome.org/at-spi2-core/devel-docs/atspi-python-stack.html).
 - [AT-SPI 2.60.6 release notes](https://gitlab.gnome.org/GNOME/at-spi2-core/-/raw/2.60.6/NEWS).
 - [AT-SPI 2.60.6 `Text.xml`](https://gitlab.gnome.org/GNOME/at-spi2-core/-/raw/2.60.6/xml/Text.xml).
+- [AT-SPI 2.60.6 `EditableText.xml`](https://gitlab.gnome.org/GNOME/at-spi2-core/-/raw/2.60.6/xml/EditableText.xml).
 - [AT-SPI `Text.get_text` API](https://gnome.pages.gitlab.gnome.org/at-spi2-core/libatspi/method.Text.get_text.html).
 - [AT-SPI `Text.get_character_at_offset` API](https://gnome.pages.gitlab.gnome.org/at-spi2-core/libatspi/method.Text.get_character_at_offset.html).
 - [AT-SPI `EditableText` API](https://gnome.pages.gitlab.gnome.org/at-spi2-core/libatspi/iface.EditableText.html).
@@ -492,6 +501,9 @@ The report relies on the following fetched authoritative sources:
 - [Pinned text-input-v3 protocol XML](https://raw.githubusercontent.com/wayland-mirror/wayland-protocols/d5aed4e4903a77aefaef03359d1ffdc0d5093456/unstable/text-input/text-input-unstable-v3.xml).
 - [Pinned Wayland core protocol XML](https://raw.githubusercontent.com/wayland-mirror/wayland/1ab6b693b16e1d9734496fe60c8a6ed277e4dec3/protocol/wayland.xml).
 - [Pinned Vulkan registry XML](https://raw.githubusercontent.com/KhronosGroup/Vulkan-Docs/20a9e5892e2aab7b9776b16a238b10fc8133090a/xml/vk.xml).
+- [Linux kernel event-tracing documentation](https://docs.kernel.org/trace/events.html).
+- [Linux kernel ftrace documentation](https://docs.kernel.org/trace/ftrace.html).
+- [Linux DRM UAPI documentation](https://docs.kernel.org/gpu/drm-uapi.html).
 
 The pinned source probe produced these immutable content digests:
 
@@ -505,22 +517,39 @@ viewporter-pinned sha256=dcb12279a03746301fe490aaed4b38a403485a925abfce2ccfceb64
 fractional-scale-v1-pinned sha256=5941de5d28f427ecdadddc8623a6f6af0a30b0ab4726847236ba7a7652b81316
 text-input-unstable-v3-pinned sha256=49048087a67011a8840bca889cd2b0ba374382be1ed54ec98adf7837fdca1982
 atspi-text-2.60.6 sha256=5c2d5049d2e427d630ca1ae288d0abe321f39c683336cb8a1373f41c4414d614
+atspi-editable-text-2.60.6 sha256=2ea1b94822f19b0b00c80b918b89833cfb67d1eeef99d69b8421d0e6f40920ff
 gtk-4.20.4-gtkenums-h sha256=c2ef75dc175e7d8b6a28c1ace0e45898a0f2f4b14454b980fd310e545eb485c9
 vulkan-registry-pinned sha256=3ff4984b841932e04eeb4ce2a6613ebd37c00ffb2e96549785b2c5d7da9e1d
 gtk-4.20.4-official-sum=a21f825bd44afc4dd99ba4eea8ff57c8f2e51085cb402a68ed4cbb35299826a4
 ```
 
+The round-3 source-record recheck fetched the cited immutable URLs, recomputed the Vulkan digest, and verified every displayed digest has 64 hexadecimal characters:
+
+```text
+$ sha256sum /tmp/wf-epic-b/OXY-B003/round-3/sources/{wayland.xml,EditableText.xml,Text.xml,vk.xml}
+7eb8569529235c85e16d15612fc367da4538b7d515b13e32ec48ba0742c42610  /tmp/wf-epic-b/OXY-B003/round-3/sources/wayland.xml
+2ea1b94822f19b0b00c80b918b89833cfb67d1eeef99d69b8421d0e6f40920ff  /tmp/wf-epic-b/OXY-B003/round-3/sources/EditableText.xml
+5c2d5049d2e427d630ca1ae288d0abe321f39c683336cb8a1373f41c4414d614  /tmp/wf-epic-b/OXY-B003/round-3/sources/Text.xml
+3ff4984b841932e04eebeb4ce2a6613ebd37c00ffb2e96549785b2c5d7da9e1d  /tmp/wf-epic-b/OXY-B003/round-3/sources/vk.xml
+SOURCE_RECORD_CHECK
+ok /tmp/wf-epic-b/OXY-B003/round-3/sources/wayland.xml
+ok /tmp/wf-epic-b/OXY-B003/round-3/sources/EditableText.xml
+ok /tmp/wf-epic-b/OXY-B003/round-3/sources/Text.xml
+ok /tmp/wf-epic-b/OXY-B003/round-3/sources/vk.xml
+exit=0
+```
+
 ## Options and trade-offs
 
 - **Option A:** Freeze the selected Ubuntu compositor session, package manifest, and protocol registry only after P1 records compositor/version evidence and the visible-surface transcript. This is required for a reference baseline, but it is not complete in this spike.
-- **Option B:** Use a separately launched, harness-owned Wayland client with its own visible `wl_surface.frame` callback stream as the prospective opportunity observer. It has a separate process and callback path, but P4 must establish output attribution and timestamp calibration before it becomes a meter.
+- **Option B:** Use an independently captured Linux DRM `drm:drm_vblank_event` trace as the prospective opportunity meter. P4 must establish trace access, CRTC-to-output association, a `mono` trace clock, `CLOCK_MONOTONIC` calibration, and no candidate callback or IPC path before it becomes a meter.
 - **Option C:** Keep candidate behavior and environment-dependent rows as gating KUs. This prevents the reference distribution label, protocol advertisement, `GdkFrameClock`, or per-commit feedback from becoming unearned qualification evidence.
 
 ## Recommendation
 
-- **Chosen option:** Use a mix of A, B, and C. Freeze the source-level core, shell, scale, text-input, presentation, GTK, and AT-SPI floors from cited upstream sources. Use Orca and AT-SPI 2.60.6 with documented Unicode-scalar offsets for the common accessibility baseline. Require the Option B observer design for P4, and retain Option C for every unproven reference-session and candidate-specific row.
-- **Why it fits:** The source floors contain all required operations. Presentation version 1 has acknowledgement and output-association operations. Version 2 only changes the variable-refresh `refresh` obligation, which the harness does not use. Retaining KUs for server advertisement and behavior prevents source facts from becoming compositor claims. The recommendation gives both allocations documented IME and AT-SPI conversions without converting an interface description into candidate behavior. The observer design is structurally separate from either candidate, while P4 retains the required proof of independence and calibration.
-- **Rejected options:** Reject a nominal refresh-rate timer, `wp_presentation` feedback as an opportunity source, a protocol-global list as compositor behavior, an unspecified assistive technology, a global IME index unit for every operation, and a candidate map inferred from GTK documentation.
+- **Chosen option:** Use a mix of A, B, and C. Freeze the source-level core, shell, scale, text-input, clipboard, presentation, GTK, and AT-SPI floors from cited upstream sources. Use Orca and AT-SPI 2.60.6 with documented Unicode-scalar offsets for the common accessibility baseline. Require the Option B DRM trace design for P4, and retain Option C for every unproven reference-session and candidate-specific row.
+- **Why it fits:** The source floors contain every derived P0 operation, including cursor, keyboard, touch, output, candidate geometry, and clipboard offers and selection. Presentation version 1 has acknowledgement and output-association operations. Version 2 only changes the variable-refresh `refresh` obligation, which the harness does not consume. Retaining KUs for server advertisement, behavior, and logical-index representation prevents source facts from becoming compositor or candidate claims. The DRM trace is independent of candidate callback streams, while P4 retains the required proof of trace access, output attribution, and monotonic-clock calibration.
+- **Rejected options:** Reject a nominal refresh-rate timer, a harness-owned `wl_surface.frame` callback as an independent meter, `wp_presentation` feedback as an opportunity source, a protocol-global list as compositor behavior, an unspecified assistive technology, a scalar-to-logical equivalence assumption, a global IME index unit for every operation, and a candidate map inferred from GTK documentation.
 - **Sensitive-field rule:** Set `GtkInputPurpose` to `PASSWORD` or `PIN` as applicable and set `GtkInputHints.PRIVATE`. Continue to provide only protocol-required redacted surrounding context and never emit raw text to diagnostics. GTK describes the hint as a request, not a privacy guarantee; P2 and P3 must verify the redaction path.
 
 ### Spec edits required
@@ -643,6 +672,17 @@ Stage 3 can make the following exact edits without changing product capabilities
   },
   {
     "name": "wl_data_device",
+    "version": "1",
+    "status": "kk",
+    "evidence": [
+      {
+        "path": "https://raw.githubusercontent.com/wayland-mirror/wayland/1ab6b693b16e1d9734496fe60c8a6ed277e4dec3/protocol/wayland.xml",
+        "sha256": "7eb8569529235c85e16d15612fc367da4538b7d515b13e32ec48ba0742c42610"
+      }
+    ]
+  },
+  {
+    "name": "wl_data_offer",
     "version": "1",
     "status": "kk",
     "evidence": [
@@ -792,6 +832,10 @@ Stage 3 can make the following exact edits without changing product capabilities
       {
         "path": "https://gitlab.gnome.org/GNOME/at-spi2-core/-/raw/2.60.6/xml/Text.xml",
         "sha256": "5c2d5049d2e427d630ca1ae288d0abe321f39c683336cb8a1373f41c4414d614"
+      },
+      {
+        "path": "https://gitlab.gnome.org/GNOME/at-spi2-core/-/raw/2.60.6/xml/EditableText.xml",
+        "sha256": "2ea1b94822f19b0b00c80b918b89833cfb67d1eeef99d69b8421d0e6f40920ff"
       }
     ]
   }
@@ -809,24 +853,26 @@ Stage 3 can make the following exact edits without changing product capabilities
   "independent presentation-opportunity source",
   "injectable recovery mechanisms",
   "immutable evidence for every status-bearing platform claim",
-  "P1 must prove the selected Ubuntu session advertises every required global, creates every required non-global interface at its frozen floor, and emits the required wp_presentation acknowledgement and main-output transcript.",
-  "P3 must lock at-spi2-core 2.60.6 or a separately reviewed replacement and establish scalar text, caret, selection, and editable-operation behavior."
+  "P1 must prove the selected Ubuntu session advertises every required global, creates every required non-global interface at its frozen floor, and emits the complete P0 cursor, keyboard, touch, output, clipboard, text-input candidate-geometry, and wp_presentation transcript.",
+  "P3B must freeze the TextIndex::Logical representation and establish scalar-to-logical pairs bound to an immutable TextLayoutId.",
+  "P3 must lock at-spi2-core 2.60.6 or a separately reviewed replacement and establish scalar text, caret, selection, and EditableText-operation behavior.",
+  "P4 must establish DRM drm_vblank_event trace access, CRTC-to-output attribution, mono trace-clock calibration to CLOCK_MONOTONIC, and trace independence from each candidate."
 ]
 ```
 
 - `.constitution/tech-spec/contracts/platform-contracts.json` -> `environments.wayland.ime.numericNegotiation`: replace the value with `"Use the writable Gtk.InputPurpose and Gtk.InputHints properties for each focus generation; no project-defined numeric handshake exists. Surrounding cursor and anchor positions use UTF-8 bytes. P2 must establish every other GtkIMContext operation unit."`.
 - `.constitution/tech-spec/contracts/platform-contracts.json` -> `environments.wayland.timing.interactiveOpportunitySource`: replace the value with `"GdkFrameClock is a host wakeup only; each allocation must prove output-associated display-synchronized scheduling in P4."`.
-- `.constitution/tech-spec/contracts/platform-contracts.json` -> `environments.wayland.timing.independentMeterSource`: replace the value with `"A separately launched harness-owned visible Wayland client with its own wl_surface.frame callback and monotonic log; it is a meter only after P4 proves output association, timestamp calibration, and no shared candidate callback or IPC path."`.
+- `.constitution/tech-spec/contracts/platform-contracts.json` -> `environments.wayland.timing.independentMeterSource`: replace the value with `"Linux DRM drm_vblank_event captured by trace-cmd with the mono trace clock and calibrated to CLOCK_MONOTONIC; it is a meter only after P4 proves trace access, CRTC-to-output association, calibration, and no candidate callback or IPC path."`.
 - `.constitution/tech-spec/contracts/platform-contracts.json` -> `environments.wayland.timing.presentationFeedback`: replace the value with `"wp_presentation v1 feedback for per-commit acknowledgement and main-output association only; never an independent presentation-opportunity meter."`.
 - `.constitution/tech-spec/contracts/platform-contracts.json` -> `environments.wayland.timing.perDisplayAssociation`: replace the value with `"Track each wl_surface enter/leave output set and begin a display epoch on every set change. Use wp_presentation_feedback.sync_output only to label a submitted frame's main output."`.
 - `.constitution/tech-spec/contracts/platform-contracts.json` -> `environments.wayland.accessibilityMaps`, `recoveryBaseline`, `allocations.focused`, and `allocations.integrated`: retain every `"ku-gating"` status and `null` path/digest until P3F, P3I, P5F, P5I, P6F, and P6I produce the named immutable artifacts.
 - `.constitution/tech-spec/stack.md` -> `Platform qualification pins` -> `Wayland` row: replace `"minimum compositor and protocol versions are gating KUs"` with `"the Ubuntu compositor/session package manifest and selected-session advertisement of the frozen Wayland floors remain gating KUs; P1 must record package versions, manifest digest, registry, and visible-surface transcript"`.
-- `.constitution/tech-spec/contracts/qualification-lock.json` -> `preImplementationKnownUnknowns` and `gatingKnownUnknowns`: add `"wayland-ubuntu-compositor-session-package-lock"`, `"wayland-frozen-protocol-reference-session-transcript"`, `"wayland-ime-operation-unit-transcript"`, `"wayland-atspi-text-caret-selection-editable-transcript"`, `"wayland-orca-atspi-maps-for-both-allocations"`, `"wayland-independent-observer-calibration"`, `"wayland-service-routing-for-both-allocations"`, and `"wayland-recovery-injection-for-both-allocations"`.
-- `.constitution/tech-spec/adrs/ADR-0005-platform-hosts.md` -> `Consequences`: add `"Wayland qualification freezes source-level core, shell, scale, text-input, and wp_presentation floors. P1 must prove the selected session advertises them. wp_presentation v1 supplies per-commit acknowledgement and output association only, not the independent presentation-opportunity meter."`.
+- `.constitution/tech-spec/contracts/qualification-lock.json` -> `preImplementationKnownUnknowns` and `gatingKnownUnknowns`: add `"wayland-ubuntu-compositor-session-package-lock"`, `"wayland-frozen-protocol-reference-session-transcript"`, `"wayland-ime-operation-unit-transcript"`, `"wayland-atspi-scalar-logical-representation"`, `"wayland-atspi-text-caret-selection-editable-transcript"`, `"wayland-orca-atspi-maps-for-both-allocations"`, `"wayland-drm-vblank-trace-access-attribution-calibration"`, `"wayland-service-routing-for-both-allocations"`, and `"wayland-recovery-injection-for-both-allocations"`.
+- `.constitution/tech-spec/adrs/ADR-0005-platform-hosts.md` -> `Consequences`: add `"Wayland qualification freezes source-level core, shell, scale, text-input, clipboard, and wp_presentation floors. P1 must prove the selected session advertises them and records the complete P0-operation transcript. wp_presentation v1 supplies per-commit acknowledgement and output association only, not the independent presentation-opportunity meter. P4 evaluates a Linux DRM drm_vblank_event trace only after access, CRTC-to-output attribution, and CLOCK_MONOTONIC calibration pass."`.
 
 ## Downstream impact
 
 - **ADRs to write or update:** Stage 3 updates `ADR-0005-platform-hosts.md` with the `wp_presentation` boundary. `ADR-0006-execution-domains.md` requires no change because the report does not alter its queue or ownership boundary.
 - **Tickets unblocked in `tasks/active/`:** `OXY-D001` can consume the documented protocol and conversion mechanics, but it remains blocked from qualification measurements by P1 through P6.
 - **Tickets to add or split:** Add P1 through P6 as bounded Wayland evidence tasks if the Stage 4 plan does not already schedule equivalent probes.
-- **Remaining gates:** The 11 KU (gating) rows retain the Wayland environment as `ku-gating`. Neither allocation is eligible for scoring until they close.
+- **Remaining gates:** The 12 KU (gating) rows retain the Wayland environment as `ku-gating`. Neither allocation is eligible for scoring until they close.
