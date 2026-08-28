@@ -3,7 +3,8 @@
 ## Time box
 
 - **Budget:** 1 focused day.
-- **Clock start / stop:** 2026-08-28T16:58:55Z / 2026-08-28T17:14:31Z.
+- **Status:** Completed.
+- **Clock start / stop:** 2026-08-28T17:49:09Z / 2026-08-28T18:03:29Z.
 
 ## Question
 
@@ -18,7 +19,7 @@ Table 1. Decision questions and evidence
 | 3 | Do the ordinary policy families have finite bounds under the classifier? | Yes. The [preserved topology probe](#probe-record) admits and replays single-pass box, definite-basis weighted, virtualized lazy, and custom multi-pass families. It verifies at most one completed visit per realized child for the first three and at most two for the custom family. The third custom request fails before invocation. | KK | Not applicable. |
 | 4 | Can intrinsic or dry measurement consume an ordinary-policy visit? | No. The [pinned Flutter `getDryLayout` source](https://raw.githubusercontent.com/flutter/flutter/4cf24164269a5ebf0c16a028a00727d0e77bbb05/packages/flutter/lib/src/rendering/box.dart) defines dry layout as distinct from wet layout and states that it doesn't change internal state. The probe records one `intrinsic_queries` event and zero ordinary attempts for `intrinsic-separation`. | KK (not applicable) | Not applicable. |
 | 5 | Can text shaping or text layout consume an ordinary-policy visit? | No. The [pinned Yoga source](https://raw.githubusercontent.com/facebook/yoga/bd8fe0d6d243cc7e0334d4cc68864a994f63beae/website/docs/advanced/external-layout-systems.mdx) identifies text as content delegated through a measure function to another layout system. The probe records the ordinary parent-to-realized-text-leaf request separately from one `text_operations` event. | KK (not applicable) | Not applicable. |
-| 6 | Can `2` freeze as `measurementPolicy.layoutVisitCap` while establishing compatibility with the 2.0 ms aggregate goal? | No. The [preserved topology probe](#probe-record) establishes count semantics, not application-owned layout or paint-submission duration. The current lock has no frozen prequalification-probe binding for the corpus, record schema, counting rules, candidate source and artifact, hardware and driver, or release flags. | KU (gating) | After Stage 3 adds the companion record contract, counting-rules binding, and prequalification-lock validator, run the bounded timing procedure in "Next bounded probe" on each locked reference configuration. |
+| 6 | Can `2` freeze as `measurementPolicy.layoutVisitCap` while establishing compatibility with the 2.0 ms aggregate goal? | No. The [preserved topology probe](#probe-record) establishes count semantics, not application-owned layout or paint-submission duration. The current lock has no frozen prequalification-probe binding for a complete run, record schema, counting rules, candidate source and artifact, hardware and driver, or release flags. It also permits an unbound sample-validity policy that could exclude measured frames. | KU (gating) | After Stage 3 adds the record and run contracts, counting-rules binding, fixed-frame no-exclusion policy, and whole-run validator, run the bounded timing procedure in "Next bounded probe" on each locked reference configuration. |
 
 ## Context and objective
 
@@ -30,6 +31,21 @@ Table 1. Decision questions and evidence
 
 - **Status at probe start:** `LayoutResult.node_visits` reports a policy counter, CAP-LAY-001 requires bounded constraint propagation, and CON-PERF-001 limits aggregate application-owned layout plus paint submission to 2.0 ms.
 - **Discovered constraints:** The public contract has no `attempted_ordinary_visits` field. The qualification contract has only generic `RawSample`, and `raw-measurement.schema.json` rejects extra counter, identity, fixture, and timing fields because its root and sample objects set `additionalProperties` to `false`.
+- **Round-4 correction:** The staged `sample-validity.schema.json` declares `authority: "staged-proposal"` and provides only generic exclusion categories and rules. It contains no layout-frame partition, 20-launch, 300-warmup, or 500-measured-frame contract. The probe therefore uses Option B in "Sample-validity policy": no record can self-assert an exclusion.
+
+The following read-only host inspection produced the correction inputs. The digest identifies the staged proposal only; it isn't a prequalification-lock binding.
+
+```text
+53462bd5023dfec25fdedfa3737300e587bea0ba118248d91e488430fed2ef59  qualification/schemas/sample-validity.schema.json
+sample_validity_relevant_lines
+5:  "authority": "staged-proposal",
+15:    "exclusionCategories",
+16:    "rules"
+25:    "exclusionCategories": {
+36:    "rules": {
+active_version_dependent_paths=56
+```
+
 - **Boundary:** This report defines qualification evidence. It doesn't select a substrate, implement layout, change a capability, or relax CAP-LAY-001 or CON-PERF-001.
 
 ## Reference corpus
@@ -566,17 +582,23 @@ It is typical for applications to have content whose size may be dependent on fa
 - **Why it fits:** The result preserves CAP-LAY-001's bounded propagation, keeps intrinsic and text work explicit, and doesn't weaken CON-PERF-001. The wide passing fixture has 1,024 ordinary visits, yielding an all-layout arithmetic ceiling of 1.953125 microseconds per visit under 2.0 ms. That ceiling doesn't reserve paint time and isn't performance evidence.
 - **Rejected options:** Reject a timing-only rule, an average-count rule, unbounded intrinsic recursion, a hidden text-work exemption, and a numeric cap selected from shallow scenes.
 
+### Sample-validity policy
+
+- **Option A:** Bind a complete sample-validity contract to the prequalification lock and have the validator apply it before aggregation.
+- **Option B (chosen):** Forbid exclusions: each run includes all 500 measured frames from each launch, `valid` is always `true`, and `exclusionReason` is disallowed.
+- **Reason:** The staged sample-validity schema is a generic, nonauthoritative proposal. The preserved host inspection shows no layout-frame, launch, or ordinal rule. It therefore can't establish a digest-bound rule for this timing procedure. Option B leaves no self-asserted exclusion path and doesn't claim that the staged proposal covers layout frames.
+
 ### Next bounded probe
 
-After Stage 3 makes the exact contract edits below and authorizes unscored candidate probes, run both instrumented candidates with `CAP_CANDIDATE=2` on the six passing fixtures in table 2. On each frozen prequalification-probe lock configuration, run 20 launches, discard 300 warmup frames, and record 500 valid measured frames per launch.
+After Stage 3 makes the exact contract edits below and authorizes unscored candidate probes, run both instrumented candidates with `CAP_CANDIDATE=2` on the six passing fixtures in table 2. On each frozen prequalification-probe lock configuration, run 20 launches, execute 300 warmup frames, and record all 500 fixed measured frames per launch. The probe forbids exclusions.
 
 For this probe, `lockDigest` is the SHA-256 digest of the frozen canonical UTF-8 bytes of one `qualification-lock` v6.0.0 prequalification-probe instance. That instance must set `candidateImplementationReady` and `measurementReady` to `false`; it doesn't claim either readiness state.
 
-Before the probe, the prequalification-probe lock must resolve `measurementPolicy.layoutVisitCorpus`, `measurementPolicy.layoutQualificationRecordSchema`, and `measurementPolicy.layoutVisitCountingRules`; `measurementPolicy.layoutPrequalificationIdentities` for both candidates and all four environments; every `sourcePins` value, including `integratedFork.commit` and `oxyflutAdapter.commit` with `status: "kk"`; every `candidateArtifacts` `sourceRevision`, `httpVerified`, `sha256`, and `sizeBytes`; every `referenceEnvironments` `minimumVersion`, `hardwareId`, `gpuId`, `driverVersion`, and `systemPackageLockDigest`; and `workload.releaseFlags`. The matching `layoutPrequalificationIdentities.<candidate>.<environment>` pair must equal `candidateSource.revision` and `candidateSource.artifactSha256` in each record. The record's `countingRulesDigest` must equal `measurementPolicy.layoutVisitCountingRules`, and its `corpusDigest` must equal `measurementPolicy.layoutVisitCorpus`.
+Before the probe, the prequalification-probe lock must resolve `measurementPolicy.layoutVisitCorpus`, `measurementPolicy.layoutQualificationRecordSchema`, `measurementPolicy.layoutPrequalificationRunSchema`, and `measurementPolicy.layoutVisitCountingRules`; `measurementPolicy.layoutPrequalificationIdentities` for both candidates and all four environments; every `sourcePins` value, including `integratedFork.commit` and `oxyflutAdapter.commit` with `status: "kk"`; every `candidateArtifacts` `sourceRevision`, `httpVerified`, `sha256`, and `sizeBytes`; every `referenceEnvironments` `minimumVersion`, `hardwareId`, `gpuId`, `driverVersion`, and `systemPackageLockDigest`; and `workload.releaseFlags`. The matching `layoutPrequalificationIdentities.<candidate>.<environment>` pair must equal `candidateSource.revision` and `candidateSource.artifactSha256` in each record. The record's `countingRulesDigest` must equal `measurementPolicy.layoutVisitCountingRules`, and its `corpusDigest` must equal `measurementPolicy.layoutVisitCorpus`.
 
-Only `workload.referenceApplication`, `scenes`, `interactionScripts`, `fonts`, `assets`, `windowMatrix`, and `cacheStates`; and `measurementPolicy.rawMeasurementSchema`, `sampleValidityRules`, `capabilityBaseline`, `platformContracts`, `scoringAnchors`, `assessors`, `fuzzCorpora`, `securityPatchRehearsal`, and `externalContractLock` may remain `null`. `resolvedTools` may remain an empty array. `measurementPolicy.layoutVisitCap` must remain `null`, and the known-unknown arrays must retain `layout-visit-cap`. No record can claim readiness, contribute a comparative score, select a candidate, or set the numeric cap.
+Only `workload.referenceApplication`, `scenes`, `interactionScripts`, `fonts`, `assets`, `windowMatrix`, and `cacheStates`; and `measurementPolicy.rawMeasurementSchema`, `capabilityBaseline`, `platformContracts`, `scoringAnchors`, `assessors`, `fuzzCorpora`, `securityPatchRehearsal`, and `externalContractLock` may remain `null`. `measurementPolicy.sampleValidityRules` must be exactly `null` for this probe, and `resolvedTools` may remain an empty array. `measurementPolicy.layoutVisitCap` must remain `null`, and the known-unknown arrays must retain `layout-visit-cap`. No record can claim readiness, contribute a comparative score, select a candidate, or set the numeric cap.
 
-For every root layout transaction, emit one schema-valid `layout-qualification-record` with the corpus, counting-rules, fixture, candidate source and artifact, hardware, GPU, driver, release-flag, and lock identities; separate counters; application-owned layout nanoseconds; paint-submission nanoseconds; and aggregate nanoseconds. The harness must calculate `aggregateNs` as layout plus paint submission, sum transactions by frame, calculate a nearest-rank 99th percentile per launch, then take the maximum of 20 launch percentiles. A passing fixture has table 2 counters, no cap rejection, and an aggregate no greater than 2.0 ms. A failing value retains the KU and rejects the candidate. It doesn't increase the cap or alter the corpus.
+For every root layout transaction in every warmup and measured frame, emit one schema-valid `layout-qualification-record` with the corpus, counting-rules, fixture, candidate source and artifact, hardware, GPU, driver, release-flag, and lock identities; frame partition; separate counters; application-owned layout nanoseconds; paint-submission nanoseconds; and aggregate nanoseconds. `valid` is always `true`, and `exclusionReason` is disallowed. `RECORD_SET_PATH` is one canonical UTF-8 JSON array of the 16,000 records for one run, ordered by `(launch, framePhase, frameOrdinal, transactionOrdinal)`, with lexicographic object keys, 2-space indentation, LF line endings, and one trailing LF. The harness must calculate `aggregateNs` as layout plus paint submission, sum transactions by frame, calculate a nearest-rank 99th percentile per launch from exactly 500 measured frame totals, then take the maximum of 20 launch percentiles. A passing fixture has table 2 counters, no cap rejection, and an aggregate no greater than 2.0 ms. A failing value retains the KU. It doesn't increase the cap, alter the corpus, emit a score, select a candidate, or claim readiness.
 
 The frozen prequalification-probe lock breaks the evidence-order problem without claiming readiness: the hashing-bound counting rules supply `CAP_CANDIDATE=2` only for the unscored probe, while `measurementPolicy.layoutVisitCap` remains `null`. The host-only topology model can't close the timing gate.
 
@@ -586,14 +608,14 @@ The frozen prequalification-probe lock breaks the evidence-order problem without
 - **Tickets unblocked in `tasks/active/`:** None. `OXY-D001` remains blocked by `layout-visit-cap`.
 - **Tickets to add or split:** Add one bounded prequalification layout-cost prototype ticket only after Stage 3 authorizes the probe in "Next bounded probe".
 - **Spec edits required:** Stage 3 must apply all of the following edits without setting a numeric cap.
-  - Create `.constitution/tech-spec/data-models/layout-qualification-record.schema.json` with the exact bytes in the following code block. Its SHA-256 is `d732ac69f14a09f248e5525cf0d6e1eebb90d7039c5b5981b068ba61885f33e1`.
+  - Create `.constitution/tech-spec/data-models/layout-qualification-record.schema.json` with the exact bytes in the following code block. Its SHA-256 is `b24230d235daf35aef5a363600fb85feb7e846ba594578d49434110bd016750c`.
 
 ```json
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "urn:oxyflut:schema:layout-qualification-record:1",
   "title": "Oxyflut layout qualification record",
-  "description": "One raw, harness-emitted layout transaction. All counters and timings describe one transaction in one measured frame.",
+  "description": "One raw, harness-emitted layout transaction. All counters and timings describe one transaction in one declared warmup or measured frame.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -608,6 +630,7 @@ The frozen prequalification-probe lock breaks the evidence-order problem without
     "countingRulesDigest",
     "fixtureId",
     "launch",
+    "framePhase",
     "frameOrdinal",
     "transactionOrdinal",
     "monotonicNs",
@@ -704,17 +727,22 @@ The frozen prequalification-probe lock breaks the evidence-order problem without
       ],
       "description": "Canonical corpus fixture identity; aggregate timing only within one fixture."
     },
+    "framePhase": {
+      "enum": ["warmup", "measured"],
+      "description": "Frame partition within a launch; only measured frames contribute to CON-PERF-001 aggregation."
+    },
     "launch": {
       "type": "integer",
       "minimum": 1,
-      "description": "One-based process launch; group 500 valid measured frames by this value before calculating a per-launch percentile."
+      "description": "One-based process launch; group exactly 500 measured frames by this value before calculating a per-launch percentile."
     },
     "frameOrdinal": {
       "type": "integer",
       "minimum": 1,
-      "description": "One-based measured-frame ordinal after warmup; no unit or aggregation."
+      "description": "One-based ordinal within framePhase; warmup requires 1 through 300 and measured requires 1 through 500 in the whole-run validator."
     },
     "transactionOrdinal": {
+      "const": 1,
       "type": "integer",
       "minimum": 1,
       "description": "One-based layout transaction within frameOrdinal; no unit or aggregation."
@@ -757,27 +785,19 @@ The frozen prequalification-probe lock breaks the evidence-order problem without
     "aggregateNs": {
       "type": "integer",
       "minimum": 0,
-      "description": "applicationOwnedLayoutNs plus paintSubmissionNs for this transaction; unit: nanoseconds; sum within a frame, calculate each launch's nearest-rank 99th percentile from 500 valid measured frame totals, then take the maximum across 20 launches."
+      "description": "applicationOwnedLayoutNs plus paintSubmissionNs for this transaction; unit: nanoseconds; sum within a frame, calculate each launch's nearest-rank 99th percentile from 500 measured frame totals, then take the maximum across 20 launches."
     },
     "capOutcome": {
-      "enum": ["completed", "rejected-before-invocation"],
+      "enum": ["completed", "rejected-before-invocation", "not-reached"],
       "description": "Outcome of the transaction's ordinary-visit cap check; identity only, and any rejected-before-invocation record fails the passing corpus expectation."
     },
     "aggregation": {
       "const": "sum-transactions-per-frame;-nearest-rank-p99-per-launch;maximum-20-launches",
-      "description": "Fixed CON-PERF-001 aggregation order for valid records with identical candidate, environment, source, hardware, driver, flags, lock, corpus, counting-rules, and fixture identities."
+      "description": "Fixed CON-PERF-001 aggregation order for measured records with identical candidate, environment, source, hardware, driver, flags, lock, corpus, counting-rules, and fixture identities."
     },
     "valid": {
-      "type": "boolean",
-      "description": "Whether the predeclared sample-validity rules admit the record; only valid records enter timing aggregation."
-    },
-    "exclusionReason": {
-      "enum": [
-        "measurement-tool-failure",
-        "unrelated-os-interruption",
-        "physical-disconnect"
-      ],
-      "description": "Required only when valid is false; no unit or aggregation."
+      "const": true,
+      "description": "This prequalification probe admits every fixed frame; the record cannot self-assert exclusion."
     },
     "harnessLog": {
       "$ref": "#/$defs/evidence",
@@ -787,20 +807,152 @@ The frozen prequalification-probe lock breaks the evidence-order problem without
   "allOf": [
     {
       "if": {
-        "properties": { "valid": { "const": false } },
-        "required": ["valid"]
+        "properties": { "fixtureId": { "const": "deep-box-064" } },
+        "required": ["fixtureId"]
       },
       "then": {
-        "required": ["exclusionReason"]
+        "properties": {
+          "ordinaryVisits": { "const": 63 },
+          "attemptedOrdinaryVisits": { "const": 63 },
+          "intrinsicQueries": { "const": 0 },
+          "textOperations": { "const": 0 },
+          "capOutcome": { "const": "completed" }
+        }
       }
     },
     {
       "if": {
-        "properties": { "valid": { "const": true } },
-        "required": ["valid"]
+        "properties": { "fixtureId": { "const": "wide-box-1024" } },
+        "required": ["fixtureId"]
       },
       "then": {
-        "properties": { "exclusionReason": false }
+        "properties": {
+          "ordinaryVisits": { "const": 1024 },
+          "attemptedOrdinaryVisits": { "const": 1024 },
+          "intrinsicQueries": { "const": 0 },
+          "textOperations": { "const": 0 },
+          "capOutcome": { "const": "completed" }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "fixtureId": { "const": "nested-weighted-8x8x8" } },
+        "required": ["fixtureId"]
+      },
+      "then": {
+        "properties": {
+          "ordinaryVisits": { "const": 584 },
+          "attemptedOrdinaryVisits": { "const": 584 },
+          "intrinsicQueries": { "const": 0 },
+          "textOperations": { "const": 0 },
+          "capOutcome": { "const": "completed" }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "fixtureId": { "const": "lazy-10000-realized-64" } },
+        "required": ["fixtureId"]
+      },
+      "then": {
+        "properties": {
+          "ordinaryVisits": { "const": 64 },
+          "attemptedOrdinaryVisits": { "const": 64 },
+          "intrinsicQueries": { "const": 0 },
+          "textOperations": { "const": 0 },
+          "capOutcome": { "const": "completed" }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "fixtureId": { "const": "reordered-keyed-128" } },
+        "required": ["fixtureId"]
+      },
+      "then": {
+        "properties": {
+          "ordinaryVisits": { "const": 128 },
+          "attemptedOrdinaryVisits": { "const": 128 },
+          "intrinsicQueries": { "const": 0 },
+          "textOperations": { "const": 0 },
+          "capOutcome": { "const": "completed" }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "fixtureId": { "const": "custom-two-pass-256" } },
+        "required": ["fixtureId"]
+      },
+      "then": {
+        "properties": {
+          "ordinaryVisits": { "const": 512 },
+          "attemptedOrdinaryVisits": { "const": 512 },
+          "intrinsicQueries": { "const": 0 },
+          "textOperations": { "const": 0 },
+          "capOutcome": { "const": "completed" }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "fixtureId": { "const": "three-pass-cap-failure" } },
+        "required": ["fixtureId"]
+      },
+      "then": {
+        "properties": {
+          "ordinaryVisits": { "const": 32 },
+          "attemptedOrdinaryVisits": { "const": 33 },
+          "intrinsicQueries": { "const": 0 },
+          "textOperations": { "const": 0 },
+          "capOutcome": { "const": "rejected-before-invocation" }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "fixtureId": { "const": "invalid-constraints" } },
+        "required": ["fixtureId"]
+      },
+      "then": {
+        "properties": {
+          "ordinaryVisits": { "const": 0 },
+          "attemptedOrdinaryVisits": { "const": 0 },
+          "intrinsicQueries": { "const": 0 },
+          "textOperations": { "const": 0 },
+          "capOutcome": { "const": "not-reached" }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "fixtureId": { "const": "intrinsic-separation" } },
+        "required": ["fixtureId"]
+      },
+      "then": {
+        "properties": {
+          "ordinaryVisits": { "const": 0 },
+          "attemptedOrdinaryVisits": { "const": 0 },
+          "intrinsicQueries": { "const": 1 },
+          "textOperations": { "const": 0 },
+          "capOutcome": { "const": "not-reached" }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "fixtureId": { "const": "text-separation" } },
+        "required": ["fixtureId"]
+      },
+      "then": {
+        "properties": {
+          "ordinaryVisits": { "const": 1 },
+          "attemptedOrdinaryVisits": { "const": 1 },
+          "intrinsicQueries": { "const": 0 },
+          "textOperations": { "const": 1 },
+          "capOutcome": { "const": "completed" }
+        }
       }
     }
   ],
@@ -829,6 +981,265 @@ The frozen prequalification-probe lock breaks the evidence-order problem without
     }
   }
 }
+```
+
+- The `allOf` fixture branches use JSON Schema `if` and `then` to bind each `fixtureId` to its canonical counters and `capOutcome`. The [JSON Schema conditional-validation guide](https://json-schema.org/understanding-json-schema/reference/conditionals) establishes those keywords. JSON Schema can't compare instance values or recompute sums, so the whole-run validator must enforce the semantic rules that follow.
+- Create `.constitution/tech-spec/data-models/layout-prequalification-run.schema.json` with the exact bytes in the following code block. Its SHA-256 is `76dfee7dfcdfdd49e2d67afdf83ab43c29dbb6513652a8023b0869a7d59293e2`.
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:oxyflut:schema:layout-prequalification-run:1",
+  "title": "Oxyflut layout prequalification run",
+  "description": "One complete, unscored CON-PERF-001 layout-cap probe for one candidate, environment, and passing corpus fixture.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "runId",
+    "candidate",
+    "environment",
+    "candidateSource",
+    "hardware",
+    "releaseFlagsDigest",
+    "lockDigest",
+    "corpusDigest",
+    "countingRulesDigest",
+    "recordSchemaDigest",
+    "fixtureId",
+    "capCandidate",
+    "recordSet",
+    "aggregation",
+    "launches",
+    "maximumLaunchP99Ns",
+    "conPerf001LimitNs",
+    "pass",
+    "harnessLog"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0.0"
+    },
+    "runId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "candidate": {
+      "enum": ["focused", "integrated"]
+    },
+    "environment": {
+      "enum": ["macos", "windows", "wayland", "x11"]
+    },
+    "candidateSource": {
+      "$ref": "#/$defs/candidateSource"
+    },
+    "hardware": {
+      "$ref": "#/$defs/hardware"
+    },
+    "releaseFlagsDigest": {
+      "$ref": "#/$defs/sha256"
+    },
+    "lockDigest": {
+      "$ref": "#/$defs/sha256"
+    },
+    "corpusDigest": {
+      "$ref": "#/$defs/sha256"
+    },
+    "countingRulesDigest": {
+      "$ref": "#/$defs/sha256"
+    },
+    "recordSchemaDigest": {
+      "$ref": "#/$defs/sha256"
+    },
+    "fixtureId": {
+      "enum": [
+        "deep-box-064",
+        "wide-box-1024",
+        "nested-weighted-8x8x8",
+        "lazy-10000-realized-64",
+        "reordered-keyed-128",
+        "custom-two-pass-256"
+      ]
+    },
+    "capCandidate": {
+      "const": 2
+    },
+    "recordSet": {
+      "$ref": "#/$defs/evidence"
+    },
+    "aggregation": {
+      "const": "sum-transactions-per-frame;-nearest-rank-p99-per-launch;maximum-20-launches"
+    },
+    "launches": {
+      "type": "array",
+      "minItems": 20,
+      "maxItems": 20,
+      "items": {
+        "$ref": "#/$defs/launch"
+      }
+    },
+    "maximumLaunchP99Ns": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "conPerf001LimitNs": {
+      "const": 2000000
+    },
+    "pass": {
+      "type": "boolean"
+    },
+    "harnessLog": {
+      "$ref": "#/$defs/evidence"
+    }
+  },
+  "$defs": {
+    "sha40": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "candidateSource": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["revision", "artifactSha256"],
+      "properties": {
+        "revision": {
+          "$ref": "#/$defs/sha40"
+        },
+        "artifactSha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "hardware": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["hardwareId", "gpuId", "driverVersion"],
+      "properties": {
+        "hardwareId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "gpuId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "driverVersion": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "frame": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ordinal",
+        "ordinaryVisits",
+        "attemptedOrdinaryVisits",
+        "intrinsicQueries",
+        "textOperations",
+        "applicationOwnedLayoutNs",
+        "paintSubmissionNs",
+        "aggregateNs"
+      ],
+      "properties": {
+        "ordinal": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "ordinaryVisits": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "attemptedOrdinaryVisits": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "intrinsicQueries": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "textOperations": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "applicationOwnedLayoutNs": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "paintSubmissionNs": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "aggregateNs": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "launch": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "launch",
+        "warmupFrames",
+        "measuredFrames",
+        "nearestRankP99Ns"
+      ],
+      "properties": {
+        "launch": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "warmupFrames": {
+          "type": "array",
+          "minItems": 300,
+          "maxItems": 300,
+          "items": {
+            "$ref": "#/$defs/frame"
+          }
+        },
+        "measuredFrames": {
+          "type": "array",
+          "minItems": 500,
+          "maxItems": 500,
+          "items": {
+            "$ref": "#/$defs/frame"
+          }
+        },
+        "nearestRankP99Ns": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    }
+  }
+}
+```
+
+The following local schema-byte check parsed both proposed schemas and hashed the exact fenced bytes after Markdown formatting.
+
+```text
+b24230d235daf35aef5a363600fb85feb7e846ba594578d49434110bd016750c  layout-qualification-record.schema.json
+76dfee7dfcdfdd49e2d67afdf83ab43c29dbb6513652a8023b0869a7d59293e2  layout-prequalification-run.schema.json
 ```
 
 - Create `qualification/staged/layout-visit-counting-rules.json` with the exact canonical UTF-8 bytes below. Its SHA-256 is `b7174960bdf4e860886c559da7e2e38d0d87252964edecfa8560f90509f28a83`. `CAP_CANDIDATE=2` is a probe input in this document, not the value of `measurementPolicy.layoutVisitCap`.
@@ -860,12 +1271,12 @@ The frozen prequalification-probe lock breaks the evidence-order problem without
 ```
 
 - `.constitution/tech-spec/data-models/qualification-lock.schema.json`: apply the schema-semver rule that a new required field on an existing durable document is breaking and therefore needs a major bump. Replace `$id` with `urn:oxyflut:schema:qualification-lock:6` and the `schemaVersion` `const` with `"6.0.0"`.
-- `.constitution/tech-spec/data-models/qualification-lock.schema.json` in `$defs.measurementPolicy.required`: add `layoutVisitCorpus`, `layoutQualificationRecordSchema`, `layoutVisitCountingRules`, and `layoutPrequalificationIdentities`.
-- `.constitution/tech-spec/data-models/qualification-lock.schema.json` in `$defs.measurementPolicy.properties`: add exactly `"layoutVisitCorpus": { "$ref": "#/$defs/digestOrNull" }`, `"layoutQualificationRecordSchema": { "$ref": "#/$defs/digestOrNull" }`, `"layoutVisitCountingRules": { "$ref": "#/$defs/digestOrNull" }`, and `"layoutPrequalificationIdentities": { "$ref": "#/$defs/layoutPrequalificationIdentitiesOrNull" }`.
-- `.constitution/tech-spec/data-models/qualification-lock.schema.json` in `$defs.resolvedMeasurementPolicy.properties`: add exactly `"layoutVisitCorpus": { "$ref": "#/$defs/sha256" }`, `"layoutQualificationRecordSchema": { "$ref": "#/$defs/sha256" }`, `"layoutVisitCountingRules": { "$ref": "#/$defs/sha256" }`, and `"layoutPrequalificationIdentities": { "$ref": "#/$defs/layoutPrequalificationIdentities" }`.
+- `.constitution/tech-spec/data-models/qualification-lock.schema.json` in `$defs.measurementPolicy.required`: add `layoutVisitCorpus`, `layoutQualificationRecordSchema`, `layoutPrequalificationRunSchema`, `layoutVisitCountingRules`, and `layoutPrequalificationIdentities`.
+- `.constitution/tech-spec/data-models/qualification-lock.schema.json` in `$defs.measurementPolicy.properties`: add exactly `"layoutVisitCorpus": { "$ref": "#/$defs/digestOrNull" }`, `"layoutQualificationRecordSchema": { "$ref": "#/$defs/digestOrNull" }`, `"layoutPrequalificationRunSchema": { "$ref": "#/$defs/digestOrNull" }`, `"layoutVisitCountingRules": { "$ref": "#/$defs/digestOrNull" }`, and `"layoutPrequalificationIdentities": { "$ref": "#/$defs/layoutPrequalificationIdentitiesOrNull" }`.
+- `.constitution/tech-spec/data-models/qualification-lock.schema.json` in `$defs.resolvedMeasurementPolicy.properties`: add exactly `"layoutVisitCorpus": { "$ref": "#/$defs/sha256" }`, `"layoutQualificationRecordSchema": { "$ref": "#/$defs/sha256" }`, `"layoutPrequalificationRunSchema": { "$ref": "#/$defs/sha256" }`, `"layoutVisitCountingRules": { "$ref": "#/$defs/sha256" }`, and `"layoutPrequalificationIdentities": { "$ref": "#/$defs/layoutPrequalificationIdentities" }`.
 - `.constitution/tech-spec/data-models/qualification-lock.schema.json` in `$defs`: add `layoutPrequalificationIdentitiesOrNull` as `{"oneOf":[{"type":"null"},{"$ref":"#/$defs/layoutPrequalificationIdentities"}]}`; add `layoutPrequalificationIdentities` as an object with `additionalProperties: false`, required `focused` and `integrated` properties, and each property referencing `candidateEnvironmentIdentities`; add `candidateEnvironmentIdentities` as an object with `additionalProperties: false`, required `macos`, `windows`, `wayland`, and `x11` properties, and each property referencing `layoutPrequalificationIdentity`; add `layoutPrequalificationIdentity` as an object with `additionalProperties: false`, required `revision` and `artifactSha256` properties, and exactly `"revision": { "$ref": "#/$defs/sha40" }` and `"artifactSha256": { "$ref": "#/$defs/sha256" }`.
-- `.constitution/tech-spec/contracts/qualification-lock.json`: migrate `schemaVersion` from `"5.0.0"` to `"6.0.0"`; add to `measurementPolicy` exactly `"layoutVisitCorpus": "4972e43333984047b5a1d84200d5b89a29c5b59e47c5aca8773379320f2c6c84"`, `"layoutQualificationRecordSchema": "d732ac69f14a09f248e5525cf0d6e1eebb90d7039c5b5981b068ba61885f33e1"`, `"layoutVisitCountingRules": "b7174960bdf4e860886c559da7e2e38d0d87252964edecfa8560f90509f28a83"`, and `"layoutPrequalificationIdentities": null`; retain exactly `"layoutVisitCap": null`, `"candidateImplementationReady": false`, and `"measurementReady": false`.
-- Create `.constitution/tech-spec/migrations/qualification-lock-v5-to-v6.md` with the title `# Qualification lock v5 to v6` and these required statements: preserve the byte-for-byte v5 input and its computed SHA-256 before writing the derived v6 instance; add the four `measurementPolicy` fields above; don't add migration metadata to the lock because its root rejects additional properties; preserve `layoutVisitCap: null`, both readiness flags as `false`, and `layout-visit-cap` in both known-unknown arrays; and validate the source and derived documents with their respective schemas. The note must name the preserved v5 path and computed source digest after Stage 3 performs the migration; this report cannot supply an unfetched digest.
+- `.constitution/tech-spec/contracts/qualification-lock.json`: migrate `schemaVersion` from `"5.0.0"` to `"6.0.0"`; add to `measurementPolicy` exactly `"layoutVisitCorpus": "4972e43333984047b5a1d84200d5b89a29c5b59e47c5aca8773379320f2c6c84"`, `"layoutQualificationRecordSchema": "b24230d235daf35aef5a363600fb85feb7e846ba594578d49434110bd016750c"`, `"layoutPrequalificationRunSchema": "76dfee7dfcdfdd49e2d67afdf83ab43c29dbb6513652a8023b0869a7d59293e2"`, `"layoutVisitCountingRules": "b7174960bdf4e860886c559da7e2e38d0d87252964edecfa8560f90509f28a83"`, and `"layoutPrequalificationIdentities": null`; retain exactly `"sampleValidityRules": null`, `"layoutVisitCap": null`, `"candidateImplementationReady": false`, and `"measurementReady": false`.
+- Create `.constitution/tech-spec/migrations/qualification-lock-v5-to-v6.md` with the title `# Qualification lock v5 to v6` and these required statements: preserve the byte-for-byte v5 input and its computed SHA-256 before writing the derived v6 instance; add the five `measurementPolicy` fields above; don't add migration metadata to the lock because its root rejects additional properties; preserve `sampleValidityRules: null`, `layoutVisitCap: null`, both readiness flags as `false`, and `layout-visit-cap` in both known-unknown arrays; and validate the source and derived documents with their respective schemas. The note must name the preserved v5 path and computed source digest after Stage 3 performs the migration; this report cannot supply an unfetched digest.
 - `.constitution/tech-spec/stack.md`: set `Version` to `v0.16.0` and replace both active `v0.15.0` references in the Scope guard with `v0.16.0`. `.constitution/tech-spec/contracts/specification-phase.json`, `.constitution/tech-spec/contracts/platform-contracts.json`, and `.constitution/tech-spec/contracts/capability-traceability.json`: set each `specificationVersion` to exactly `"0.16.0"` in the same change so active cross-document equality remains valid.
 - `.constitution/tech-spec/changelog.md`: prepend this exact entry before `## [v0.15.0] - 2026-08-26`.
 
@@ -874,7 +1285,7 @@ The frozen prequalification-probe lock breaks the evidence-order problem without
 
 ### Added
 
-- Added the versioned layout-qualification record, canonical counting-rules binding, and frozen prequalification-probe lock profile for the unscored layout-cap timing probe.
+- Added the versioned layout-qualification record and whole-run manifest, canonical counting-rules binding, and frozen prequalification-probe lock profile for the unscored layout-cap timing probe.
 
 ### Changed
 
@@ -888,11 +1299,87 @@ The frozen prequalification-probe lock breaks the evidence-order problem without
 - `.constitution/tech-spec/contracts/oxyflut-public.rs` immediately before `LayoutResult`: add exactly `/// Migration note for v0.15.0 consumers: constructing or destructuring LayoutResult now requires attempted_ordinary_visits. Set it to the number of ordinary direct-child requests issued before the cap check; it can exceed node_visits only when a request is rejected before invocation.` This is the ADR-0003 pre-v1 public-contract migration note and the changelog entry above is its release note.
 - `.constitution/tech-spec/contracts/oxyflut-qualification.rs` after `RawSample`: add a public `LayoutTransactionCounters` structure with `ordinary_visits: u64`, `attempted_ordinary_visits: u64`, `intrinsic_queries: u64`, and `text_operations: u64`. Its exact semantics are per root transaction: the harness observes every policy-local `LayoutResult` once as it is emitted, sums the two local ordinary counters without recursively summing child results, increments attempted before the cap check, and records rejected attempts only in attempted. Add `CandidateProbe::run_layout_fixture(&mut self, candidate: Candidate, environment: Environment, fixture_id: &str) -> Result<(GateResult<CapabilityId>, Vec<LayoutTransactionCounters>), Self::Error>;`. The schema writer attaches the required identities and timings to each emitted transaction counter record.
 - `xtask/src/contracts/readiness.rs` and `xtask/src/commands/environment/mod.rs`: replace `urn:oxyflut:schema:qualification-lock:5` with `urn:oxyflut:schema:qualification-lock:6`. Extend `xtask/src/commands/contracts.rs` so `validate_rust_contracts` compiles an external-client assertion that constructs `LayoutResult` with `attempted_ordinary_visits` and type-checks `CandidateProbe::run_layout_fixture`.
-- Add `cargo +1.98.0 run -p xtask -- layout-prequalification validate --lock LOCK_PATH --input RECORD_PATH`. Its validator must validate the v6 lock and the companion record, SHA-256-bind `lockDigest` to the supplied canonical lock bytes, require both readiness flags to be `false`, enforce the resolved and nullable field sets in "Next bounded probe", keep `layoutVisitCap` null, and compare the record corpus, counting-rules, candidate source and artifact, hardware, driver, and release-flag identities with the lock. It must reject score emission and candidate-selection output.
-- `xtask/src/contracts/schema.rs` automatically requires fixture directories for every schema. Add `qualification/fixtures/contracts/layout-qualification-record/valid/minimal.json`, plus `invalid/additional-properties.json`, `invalid/conditional.json`, `invalid/enum.json`, `invalid/required.json`, and `invalid/type.json` with a matching `.expected.json` sidecar for every invalid file. The valid fixture must bind all required record identities; the invalid fixtures must separately reject a missing `countingRulesDigest`, a nonmatching cap outcome, an invalid candidate or environment, an extra property, and an invalid counter type.
-- Update these existing qualification-lock schema fixtures and their necessary sidecars to v6 and the four new required `measurementPolicy` fields: `qualification/fixtures/contracts/qualification-lock/valid/minimal.json`; `qualification/fixtures/contracts/qualification-lock/invalid/additional-properties.json`; `qualification/fixtures/contracts/qualification-lock/invalid/additional-properties.expected.json`; `qualification/fixtures/contracts/qualification-lock/invalid/conditional.json`; `qualification/fixtures/contracts/qualification-lock/invalid/conditional.expected.json`; `qualification/fixtures/contracts/qualification-lock/invalid/enum.json`; `qualification/fixtures/contracts/qualification-lock/invalid/enum.expected.json`; `qualification/fixtures/contracts/qualification-lock/invalid/required.json`; `qualification/fixtures/contracts/qualification-lock/invalid/required.expected.json`; `qualification/fixtures/contracts/qualification-lock/invalid/type.json`; and `qualification/fixtures/contracts/qualification-lock/invalid/type.expected.json`. Keep `qualification/fixtures/contracts/qualification-lock/invalid/superseded-identity.json` at the v4 identity, but change `qualification/fixtures/contracts/qualification-lock/invalid/superseded-identity.expected.json` to `"supersededBy": "urn:oxyflut:schema:qualification-lock:6"` and change the qualification-lock entry in `qualification/fixtures/contracts/supersession.json` to `"superseded": "urn:oxyflut:schema:qualification-lock:5"` and `"current": "urn:oxyflut:schema:qualification-lock:6"`.
-- Migrate the lock-bearing readiness fixtures so `xtask contracts validate` reaches their intended assertions: `qualification/fixtures/contracts/readiness/ready/.constitution/tech-spec/contracts/qualification-lock.json`; `qualification/fixtures/contracts/readiness/production-3b/.constitution/tech-spec/contracts/qualification-lock.json`; `qualification/fixtures/contracts/readiness/ready/negative/missing-candidate-identities-lock.json`; `qualification/fixtures/contracts/readiness/ready/negative/unresolved-readiness-lock.json`; `qualification/fixtures/contracts/readiness/ready/negative/mismatched-typed-reference-lock.json`; `qualification/fixtures/contracts/readiness/ready/negative/synthetic-baseline-lock.json`; `qualification/fixtures/contracts/readiness/ready/negative/mismatched-engine-revision-lock.json`; `qualification/fixtures/contracts/readiness/ready/negative/unresolved-tool-fields-lock.json`; `qualification/fixtures/contracts/readiness/ready/negative/mismatched-tool-lock.json`; and `qualification/fixtures/contracts/readiness/ready/negative/missing-tool-lock.json`. Update their copied active `specificationVersion` values to `"0.16.0"` and regenerate only the digest-bound fixture artifacts that change because of this migration.
+- Add `cargo +1.98.0 run -p xtask -- layout-prequalification validate --lock LOCK_PATH --records RECORD_SET_PATH --run RUN_PATH --output RESULT_PATH`. The command must validate the v6 lock, every companion record, and the run manifest; SHA-256-bind `lockDigest` to the supplied canonical lock bytes; verify the record-set digest against the exact canonical UTF-8 record-set bytes; and write the canonical validated result to `RESULT_PATH`, print its SHA-256, and retain its `lockDigest`, record-set digest, and harness-log digest. It must require both readiness flags to be `false`, `sampleValidityRules` and `layoutVisitCap` to be `null`, and the resolved and nullable field sets in "Next bounded probe". It must compare each record and the run identity, corpus, counting rules, record-schema digest, candidate source and artifact, hardware, driver, and release-flag identities with the lock. It must reject score emission and candidate-selection output.
+- `xtask/src/commands/layout_prequalification.rs` must apply these custom rules after schema validation: reject a record when `attemptedOrdinaryVisits < ordinaryVisits`; reject it when `aggregateNs != applicationOwnedLayoutNs + paintSubmissionNs`; recover the canonical expectation for `fixtureId` from the digest-bound corpus and require its four counters and `capOutcome`; require a passing-fixture run to use one of the six table 2 fixtures and `capOutcome: "completed"`; require `transactionOrdinal: 1`, `valid: true`, and no `exclusionReason`; require exactly launches 1 through 20; require exactly once each warmup ordinal 1 through 300 and measured ordinal 1 through 500 for every launch; reject duplicate or missing record keys; recompute every run-manifest frame sum from the complete record set; sort each launch's 500 measured frame totals, take element 495 as the nearest-rank p99, take the maximum of the 20 p99 values, and require `pass` to equal whether that maximum is at most 2,000,000 ns. The command must reject a declared frame sum, percentile, maximum, pass value, cap outcome, counter, identity, or record-set digest that differs from the recomputation.
+
+The following pseudocode defines the zero-based rank used after sorting 500 measured frame totals.
+
+```python
+def nearest_rank_p99_ns(frame_totals):
+    assert len(frame_totals) == 500
+    return sorted(frame_totals)[494]
+```
+
+- Add validator fixtures, outside the JSON Schema fixture directories, at `qualification/fixtures/layout-prequalification/valid/complete-run.json` and `qualification/fixtures/layout-prequalification/invalid/attempted-less-than-ordinary.json`, `aggregate-arithmetic-mismatch.json`, `duplicate-frame-ordinal.json`, `missing-warmup-frame-ordinal.json`, `missing-measured-frame-ordinal.json`, `frame-summary-mismatch.json`, `nearest-rank-p99-mismatch.json`, `maximum-launch-p99-mismatch.json`, `pass-threshold-mismatch.json`, `record-set-digest-mismatch.json`, and `identity-mismatch.json`. Each invalid fixture must name the stable custom-validator error code in a matching `.expected.json` sidecar. Keep fixture-counter and cap-outcome mismatches in the `layout-qualification-record` schema fixture matrix because the `if` and `then` branches express them.
+- `xtask/src/contracts/schema.rs` automatically requires fixture directories for every schema. Add `qualification/fixtures/contracts/layout-qualification-record/valid/minimal.json`, plus `invalid/additional-properties.json`, `invalid/conditional.json`, `invalid/enum.json`, `invalid/required.json`, `invalid/type.json`, and `invalid/sample-exclusion.json` with a matching `.expected.json` sidecar for every invalid file. The valid fixture must bind all required record identities with `valid: true`; the invalid fixtures must separately reject a missing `countingRulesDigest`, a nonmatching fixture `capOutcome`, an invalid candidate or environment, an extra property, an invalid counter type, `valid: false`, and an `exclusionReason`. Add the same valid and schema-invalid fixture matrix for `qualification/fixtures/contracts/layout-prequalification-run/`; its valid fixture has 20 launches, 300 warmup frames, and 500 measured frames per launch.
+- Update these existing qualification-lock schema fixtures and their necessary sidecars to v6 and the five new required `measurementPolicy` fields: `qualification/fixtures/contracts/qualification-lock/valid/minimal.json`; `qualification/fixtures/contracts/qualification-lock/invalid/additional-properties.json`; `qualification/fixtures/contracts/qualification-lock/invalid/additional-properties.expected.json`; `qualification/fixtures/contracts/qualification-lock/invalid/conditional.json`; `qualification/fixtures/contracts/qualification-lock/invalid/conditional.expected.json`; `qualification/fixtures/contracts/qualification-lock/invalid/enum.json`; `qualification/fixtures/contracts/qualification-lock/invalid/enum.expected.json`; `qualification/fixtures/contracts/qualification-lock/invalid/required.json`; `qualification/fixtures/contracts/qualification-lock/invalid/required.expected.json`; `qualification/fixtures/contracts/qualification-lock/invalid/type.json`; and `qualification/fixtures/contracts/qualification-lock/invalid/type.expected.json`. Keep `qualification/fixtures/contracts/qualification-lock/invalid/superseded-identity.json` at the v4 identity, but change `qualification/fixtures/contracts/qualification-lock/invalid/superseded-identity.expected.json` to `"supersededBy": "urn:oxyflut:schema:qualification-lock:6"` and change the qualification-lock entry in `qualification/fixtures/contracts/supersession.json` to `"superseded": "urn:oxyflut:schema:qualification-lock:5"` and `"current": "urn:oxyflut:schema:qualification-lock:6"`.
+- Migrate the lock-bearing readiness fixtures so `xtask contracts validate` reaches their intended assertions with the five new `measurementPolicy` fields: `qualification/fixtures/contracts/readiness/ready/.constitution/tech-spec/contracts/qualification-lock.json`; `qualification/fixtures/contracts/readiness/production-3b/.constitution/tech-spec/contracts/qualification-lock.json`; `qualification/fixtures/contracts/readiness/ready/negative/missing-candidate-identities-lock.json`; `qualification/fixtures/contracts/readiness/ready/negative/unresolved-readiness-lock.json`; `qualification/fixtures/contracts/readiness/ready/negative/mismatched-typed-reference-lock.json`; `qualification/fixtures/contracts/readiness/ready/negative/synthetic-baseline-lock.json`; `qualification/fixtures/contracts/readiness/ready/negative/mismatched-engine-revision-lock.json`; `qualification/fixtures/contracts/readiness/ready/negative/unresolved-tool-fields-lock.json`; `qualification/fixtures/contracts/readiness/ready/negative/mismatched-tool-lock.json`; and `qualification/fixtures/contracts/readiness/ready/negative/missing-tool-lock.json`. Update their copied active `specificationVersion` values to `"0.16.0"` and regenerate only the digest-bound fixture artifacts that change because of this migration.
 - `.constitution/tech-spec/stack.md` in the Scope guard paragraph beginning `The current qualification lock`: append exactly `Before candidateImplementationReady becomes true, Stage 4 may run unscored nonproduction candidate probes only to resolve a pre-implementation gating KU; each probe must use the frozen evidence contract and can't produce comparative scores or select a candidate.`
+
+### Version migration inventory
+
+The preserved `grep` found 56 active-version-dependent paths under `xtask/` and `qualification/`. For every `R` entry, replace the active literal `"0.15.0"` with exactly `"0.16.0"`. For every `R+D` entry, also regenerate every valid digest-bound parent, reference, fixture sidecar, and test assertion affected by the changed bytes. For every `R+N` entry, preserve the intentionally invalid digest or value after updating the active-version literal and revalidate its intended failure.
+
+| File | Required Stage 3 change |
+| :-- | :-- |
+| `xtask/src/commands/lock_tests.rs` | R: update the corrupted platform-baseline source version and its expected validation path. |
+| `xtask/src/contracts/readiness_tests.rs` | R: update both `candidate_input_issues` active-version arguments. |
+| `xtask/src/contracts/traceability/fixtures.rs` | R+D: update the synthetic platform-baseline version and regenerate its hard-coded digest references. |
+| `xtask/src/contracts/traceability/tests.rs` | R: update the three synthetic and absence-binding version literals. |
+| `qualification/fixtures/baselines/approved-without-approval-evidence.json` | R. |
+| `qualification/fixtures/baselines/complete.synthetic.json` | R. |
+| `qualification/fixtures/baselines/duplicate-key.json` | R. |
+| `qualification/fixtures/baselines/empty-evidence.json` | R. |
+| `qualification/fixtures/baselines/extra-key.json` | R. |
+| `qualification/fixtures/baselines/mismatched-flow.json` | R. |
+| `qualification/fixtures/baselines/missing-key.json` | R. |
+| `qualification/fixtures/baselines/synthetic-with-approval.json` | R. |
+| `qualification/fixtures/contracts/capability-baseline/invalid/additional-properties.json` | R. |
+| `qualification/fixtures/contracts/capability-baseline/invalid/conditional.json` | R. |
+| `qualification/fixtures/contracts/capability-baseline/invalid/enum.json` | R. |
+| `qualification/fixtures/contracts/capability-baseline/invalid/required.json` | R. |
+| `qualification/fixtures/contracts/capability-baseline/invalid/type.json` | R. |
+| `qualification/fixtures/contracts/capability-baseline/valid/minimal.json` | R. |
+| `qualification/fixtures/contracts/capability-traceability/invalid/additional-properties.json` | R. |
+| `qualification/fixtures/contracts/capability-traceability/invalid/enum.json` | R. |
+| `qualification/fixtures/contracts/capability-traceability/invalid/required.json` | R. |
+| `qualification/fixtures/contracts/capability-traceability/invalid/type.json` | R. |
+| `qualification/fixtures/contracts/capability-traceability/valid/minimal.json` | R. |
+| `qualification/fixtures/contracts/platform-contracts/invalid/additional-properties.json` | R. |
+| `qualification/fixtures/contracts/platform-contracts/invalid/conditional.json` | R. |
+| `qualification/fixtures/contracts/platform-contracts/invalid/enum.json` | R. |
+| `qualification/fixtures/contracts/platform-contracts/invalid/required.json` | R. |
+| `qualification/fixtures/contracts/platform-contracts/invalid/type.json` | R. |
+| `qualification/fixtures/contracts/platform-contracts/valid/minimal.json` | R. |
+| `qualification/fixtures/contracts/qualification-evidence/invalid/contradictory-pass-binding.json` | R. |
+| `qualification/fixtures/contracts/qualification-evidence/valid/not-applicable-kk-binding.json` | R. |
+| `qualification/fixtures/contracts/readiness/ready/.constitution/tech-spec/contracts/platform-contracts.json` | R+D: update the copied active specification and regenerate the ready-fixture lock/reference bindings. |
+| `qualification/fixtures/contracts/readiness/ready/.constitution/tech-spec/contracts/specification-phase.json` | R+D: update the copied active specification and regenerate the ready-fixture lock/reference bindings. |
+| `qualification/fixtures/contracts/readiness/ready/baselines/capability.json` | R+D: update the baseline and its valid lock/reference digest. |
+| `qualification/fixtures/contracts/readiness/ready/baselines/synthetic.json` | R+D: update the baseline and its valid lock/reference digest. |
+| `qualification/fixtures/contracts/readiness/ready/negative/missing-nested-kk-platform.json` | R+N: update the active version while preserving the fixture's intended rejection. |
+| `qualification/fixtures/contracts/selection-decision/invalid/additional-properties.json` | R. |
+| `qualification/fixtures/contracts/selection-decision/invalid/conditional.json` | R. |
+| `qualification/fixtures/contracts/selection-decision/invalid/enum.json` | R. |
+| `qualification/fixtures/contracts/selection-decision/invalid/required.json` | R. |
+| `qualification/fixtures/contracts/selection-decision/invalid/type.json` | R. |
+| `qualification/fixtures/contracts/selection-decision/valid/minimal.json` | R. |
+| `qualification/fixtures/contracts/specification-phase/invalid/additional-properties.json` | R. |
+| `qualification/fixtures/contracts/specification-phase/invalid/conditional.json` | R. |
+| `qualification/fixtures/contracts/specification-phase/invalid/enum.json` | R. |
+| `qualification/fixtures/contracts/specification-phase/invalid/required.json` | R. |
+| `qualification/fixtures/contracts/specification-phase/invalid/type.json` | R. |
+| `qualification/fixtures/contracts/specification-phase/valid/minimal.json` | R. |
+| `qualification/fixtures/contracts/traceability/synthetic-capability-baseline-approved.json` | R+D: update the source fixture and every hard-coded digest that binds it. |
+| `qualification/fixtures/contracts/traceability/synthetic-capability-baseline-malformed-entry.json` | R. |
+| `qualification/fixtures/contracts/traceability/synthetic-capability-baseline-missing-approval-evidence.json` | R. |
+| `qualification/fixtures/contracts/traceability/synthetic-capability-baseline-missing-schema-version.json` | R. |
+| `qualification/fixtures/contracts/traceability/synthetic-capability-baseline-synthetic.json` | R. |
+| `qualification/fixtures/contracts/traceability/synthetic-platform-baseline.json` | R+D: update the source fixture and every hard-coded digest that binds it. |
+| `qualification/fixtures/evidence/bad-platform-baseline-reference.json` | R+N: update the embedded active version and retain the deliberately wrong all-zero digest. |
+| `qualification/fixtures/evidence/schema-valid.json` | R+D: update the active version and regenerate every valid envelope or reference that hashes these bytes. |
+
+After the migration and digest regeneration, `cargo +1.98.0 run -p xtask -- contracts validate` and `cargo +1.98.0 test --workspace --all-features` must both pass.
 
 ## Sources
 
@@ -900,3 +1387,4 @@ The frozen prequalification-probe lock breaks the evidence-order problem without
 - https://raw.githubusercontent.com/flutter/flutter/4cf24164269a5ebf0c16a028a00727d0e77bbb05/packages/flutter/lib/src/rendering/box.dart
 - https://www.w3.org/TR/2018/CR-css-flexbox-1-20181119/
 - https://raw.githubusercontent.com/facebook/yoga/bd8fe0d6d243cc7e0334d4cc68864a994f63beae/website/docs/advanced/external-layout-systems.mdx
+- https://json-schema.org/understanding-json-schema/reference/conditionals
