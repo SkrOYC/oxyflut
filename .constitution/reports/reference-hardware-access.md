@@ -2,8 +2,8 @@
 
 - Ticket: OXY-B007
 - Status: completed access register
-- Clock start: 2026-08-28T17:06:35Z
-- Clock stop: 2026-08-28T17:24:54Z
+- Clock start: 2026-08-28T17:40:52Z
+- Clock stop: 2026-08-28T17:43:37Z
 
 ## Purpose and scope
 
@@ -261,9 +261,9 @@ For interactive Xwayland access:
 
 For headless Xvfb access:
 
-1. Run the exact script preserved in the [X11 access probe](#x11-access-probe). The script redirects the server log to `/tmp/wf-epic-b/OXY-B007-fix3/xvfb99.log` and records the server process ID in `XVFB_PID`.
+1. Run the exact script preserved in the [X11 access probe](#x11-access-probe). It creates a unique log directory below `/tmp/wf-epic-b/OXY-B007` with `mktemp -d`, writes the server log to `$LOGDIR/xvfb99.log`, and records the server process ID in `XVFB_PID`.
 2. The script runs `nix shell nixpkgs#xorg.xdpyinfo -c xdpyinfo -display :99 | head -15`. Success includes `name of display: :99`, `vendor string: The X.Org Foundation`, and `X.Org version: 21.1.24`.
-3. The script stops only that process with `kill "$XVFB_PID"; wait "$XVFB_PID"`, prints the `wait` status, and runs `pgrep -a Xvfb || echo "no Xvfb running"`. The raw output reports `kill/wait exit: 0` and `no Xvfb running`.
+3. The script signals only its recorded process with `kill "$XVFB_PID"`, then waits for that exact process with `wait "$XVFB_PID"`. The recorded `wait exit: 0` establishes that the child process terminated successfully. The script then runs `pgrep -a Xvfb` and prints its status. [pgrep(1)](https://man7.org/linux/man-pages/man1/pgrep.1.html) defines exit 1 as no matching processes and exits 2 and 3 as command-line and fatal errors. The recorded `pgrep exit: 1` therefore establishes that no host process matched `Xvfb` when the probe ended.
 
 This evidence establishes that X11 clients can connect to active Xwayland on `:0` and to a temporary Xvfb server on `:99`. It does not establish native X11 desktop-session behavior, a native X server session, graphics or driver behavior, any P0 capability, or conformance to the Stage 3 Ubuntu 26.04 LTS X11 reference.
 
@@ -271,7 +271,7 @@ This evidence establishes that X11 clients can connect to active Xwayland on `:0
 
 The following raw output was captured on `thinkpadp14s` during this ticket. Long `xdpyinfo -ext` reports are trimmed to the relevant raw lines; the retained lines below are the outputs used by this register.
 
-````text
+```text
 $ pgrep -a Xwayland
 3128 Xwayland :0 -rootless -core -listenfd 45 -listenfd 46 -displayfd 94 -wm 91
 [pgrep exit: 0]
@@ -358,22 +358,37 @@ xwininfo: Window id: 0x350 (the root window) (has no name)
 [pipeline exit: 0 0]
 ```
 
-The following Bash script was executed exactly. It preserves the server log, records the started process ID, stops that process, and verifies that no `Xvfb` process remains:
+The following Bash script was executed exactly. It creates its log directory, preserves the server log, records the started process ID, signals and waits for that exact process, and separately records the process-wide `pgrep` status:
 
 ```bash
 #!/usr/bin/env bash
-Xvfb :99 -screen 0 1280x720x24 > /tmp/wf-epic-b/OXY-B007-fix3/xvfb99.log 2>&1 &
+set -u
+
+LOGDIR=$(mktemp -d /tmp/wf-epic-b/OXY-B007/xvfb.XXXXXX)
+LOGFILE="$LOGDIR/xvfb99.log"
+echo "log directory: $LOGDIR"
+Xvfb :99 -screen 0 1280x720x24 >"$LOGFILE" 2>&1 &
 XVFB_PID=$!
+echo "Xvfb PID: $XVFB_PID"
 sleep 2
 nix shell nixpkgs#xorg.xdpyinfo -c xdpyinfo -display :99 | head -15
-kill "$XVFB_PID"; wait "$XVFB_PID"; echo "kill/wait exit: $?"
-pgrep -a Xvfb || echo "no Xvfb running"
-head -5 /tmp/wf-epic-b/OXY-B007-fix3/xvfb99.log
+kill "$XVFB_PID"
+KILL_STATUS=$?
+wait "$XVFB_PID"
+WAIT_STATUS=$?
+echo "kill exit: $KILL_STATUS"
+echo "wait exit: $WAIT_STATUS"
+pgrep -a Xvfb
+PGREP_STATUS=$?
+echo "pgrep exit: $PGREP_STATUS"
+head -5 "$LOGFILE"
 ```
 
-The following raw output came from that script. The `kill/wait` line prints the status of `wait`; this probe returned `0`, rather than `143`. The report makes no broader exit-status claim.
+The script was invoked as `bash /tmp/wf-epic-b/OXY-B007/xvfb-rerun.sh > /tmp/wf-epic-b/OXY-B007/xvfb-rerun.raw 2>&1`, which preserves both standard output and standard error in the raw transcript below.
 
 ```text
+log directory: /tmp/wf-epic-b/OXY-B007/xvfb.YwaR7c
+Xvfb PID: 2579846
 evaluation warning: The xorg package set has been deprecated, 'xorg.xdpyinfo' has been renamed to 'xdpyinfo'
 name of display:    :99
 version number:    11.0
@@ -390,8 +405,9 @@ supported pixmap formats:
     depth 4, bits_per_pixel 8, scanline_pad 32
     depth 8, bits_per_pixel 8, scanline_pad 32
     depth 16, bits_per_pixel 16, scanline_pad 32
-kill/wait exit: 0
-no Xvfb running
+kill exit: 0
+wait exit: 0
+pgrep exit: 1
 The XKEYBOARD keymap compiler (xkbcomp) reports:
 > Warning:          Multiple symbols for level 1/group 1 on key <FK23>
 >                   Using F23, ignoring XF86TouchpadOff
@@ -399,7 +415,7 @@ The XKEYBOARD keymap compiler (xkbcomp) reports:
 >                   Using last definition for conflicting fields
 ```
 
-The script's `pgrep` output proves the server that the script started was stopped before the probe ended.
+`wait "$XVFB_PID"` completed with status 0 after `kill "$XVFB_PID"` returned 0, so the probe terminated and reaped the exact server process that it started. [pgrep(1)](https://man7.org/linux/man-pages/man1/pgrep.1.html) defines status 1 as no matching processes, status 2 as a command-line error, and status 3 as a fatal error. The separate `pgrep exit: 1` result establishes process-wide absence of a process matching `Xvfb` at the end of the probe.
 
 ## Recommendation
 
@@ -421,4 +437,4 @@ None. This access register does not justify a Stage 3 specification edit. In par
 - [Apple Technical Note TN2339: Building from the command line with Xcode](https://developer.apple.com/library/archive/technotes/tn2339/_index.html) - fetched successfully through the Jina reader proxy on 2026-08-28; identifies `xcrun` as an Xcode command-line shim.
 - [Microsoft vswhere README](https://github.com/microsoft/vswhere) - fetched successfully through the Jina reader proxy on 2026-08-28; identifies the installer path for `vswhere.exe`.
 - [Ubuntu 26.04 LTS release notes](https://documentation.ubuntu.com/release-notes/26.04/) - fetched successfully through the Jina reader proxy on 2026-08-28; identifies the official Ubuntu 26.04 LTS release named by the Stage 3 reference pins.
-````
+- [pgrep(1) Linux manual page](https://man7.org/linux/man-pages/man1/pgrep.1.html) - fetched successfully through the Jina reader proxy on 2026-08-28; defines pgrep exit statuses 1, 2, and 3.
