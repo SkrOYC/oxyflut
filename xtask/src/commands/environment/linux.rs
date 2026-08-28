@@ -12,8 +12,8 @@ use std::path::Path;
 use std::process::{Command, Stdio};
 
 use oxyflut_qualification::environment::{
-    EnvironmentFields, EnvironmentInventory, InventoryValue, MissingReason, SystemPackage,
-    SystemPackageLock,
+    EnvironmentFields, EnvironmentInventory, InventoryValue, MAXIMUM_OBSERVED_VALUE_BYTES,
+    MissingReason, SystemPackage, SystemPackageLock,
 };
 use oxyflut_qualification::identifiers::EnvironmentId;
 use serde::Deserialize;
@@ -24,6 +24,16 @@ const COMMAND_OUTPUT_LIMIT: usize = 4096;
 const SOURCE_FILE_LIMIT: usize = 4096;
 const PACKAGE_OUTPUT_LIMIT: usize = 512;
 const MESA_DRIVER_PACKAGES: &[&str] = &["libgl1-mesa-dri", "mesa-vulkan-drivers"];
+const WAYLAND_PROTOCOL_INTERFACES: &[&str] = &[
+    "wl_compositor",
+    "wl_shm",
+    "wl_seat",
+    "wl_output",
+    "xdg_wm_base",
+    "zwp_linux_dmabuf_v1",
+    "wp_viewporter",
+    "wp_fractional_scale_manager_v1",
+];
 
 // Verification source (OXY-C004): packages.ubuntu.com name searches over all suites returned
 // HTTP 200 for each exact binary package name: libglib2.0-0t64, libglib2.0-0, libgtk-4-1,
@@ -87,6 +97,10 @@ struct LinuxResponses {
     wayland_info: Option<String>,
     xdpyinfo: Option<String>,
     dpkg_query: Option<BTreeMap<String, Option<String>>>,
+    #[serde(skip)]
+    wayland_info_truncated: bool,
+    #[serde(skip)]
+    xdpyinfo_truncated: bool,
     #[serde(skip)]
     source_failures: BTreeMap<&'static str, MissingReason>,
     #[serde(skip)]
@@ -154,10 +168,12 @@ fn collect_linux_responses(
         EnvironmentId::Wayland => wayland_protocol_version(
             responses.wayland_info.as_deref(),
             responses.protocol_missing_reason("wayland_info"),
+            responses.wayland_info_truncated,
         ),
         EnvironmentId::X11 => x11_protocol_version(
             responses.xdpyinfo.as_deref(),
             responses.protocol_missing_reason("xdpyinfo"),
+            responses.xdpyinfo_truncated,
         ),
         EnvironmentId::Macos | EnvironmentId::Windows => {
             InventoryValue::missing(MissingReason::ManualCapture)
@@ -356,7 +372,11 @@ fn compositor_value(raw: Option<&str>, missing_reason: MissingReason) -> Invento
     observed_or_missing(atomize(compositor))
 }
 
-fn wayland_protocol_version(raw: Option<&str>, missing_reason: MissingReason) -> InventoryValue {
+fn wayland_protocol_version(
+    raw: Option<&str>,
+    missing_reason: MissingReason,
+    truncated: bool,
+) -> InventoryValue {
     let Some(raw) = raw else {
         return InventoryValue::missing(missing_reason);
     };
@@ -381,18 +401,25 @@ fn wayland_protocol_version(raw: Option<&str>, missing_reason: MissingReason) ->
         };
         globals.insert(interface, version);
     }
-    if globals.is_empty() {
-        return InventoryValue::missing(MissingReason::ManualCapture);
+    let version = WAYLAND_PROTOCOL_INTERFACES
+        .iter()
+        .filter_map(|interface| {
+            globals
+                .get(interface)
+                .map(|version| format!("{interface}-{version}"))
+        })
+        .collect::<Vec<_>>();
+    if version.is_empty() {
+        return InventoryValue::missing(protocol_prefix_missing_reason(truncated));
     }
-    let version = globals
-        .into_iter()
-        .map(|(interface, version)| format!("{interface}-{version}"))
-        .collect::<Vec<_>>()
-        .join("-");
-    observed_or_missing(format!("wayland-{version}"))
+    observed_or_missing(format!("wayland-{}", version.join("-")))
 }
 
-fn x11_protocol_version(raw: Option<&str>, missing_reason: MissingReason) -> InventoryValue {
+fn x11_protocol_version(
+    raw: Option<&str>,
+    missing_reason: MissingReason,
+    truncated: bool,
+) -> InventoryValue {
     let Some(raw) = raw else {
         return InventoryValue::missing(missing_reason);
     };
@@ -407,9 +434,17 @@ fn x11_protocol_version(raw: Option<&str>, missing_reason: MissingReason) -> Inv
                     .all(|byte| byte.is_ascii_digit() || byte == b'.')
         })
     else {
-        return InventoryValue::missing(MissingReason::ManualCapture);
+        return InventoryValue::missing(protocol_prefix_missing_reason(truncated));
     };
     observed_or_missing(format!("x11-{version}"))
+}
+
+const fn protocol_prefix_missing_reason(truncated: bool) -> MissingReason {
+    if truncated {
+        MissingReason::InventoryExceedsBound
+    } else {
+        MissingReason::ManualCapture
+    }
 }
 
 fn driver_version(
@@ -570,8 +605,12 @@ fn atomize(value: &str) -> String {
 }
 
 fn observed_or_missing(value: String) -> InventoryValue {
+    let exceeds_observation_bound = value.len() > MAXIMUM_OBSERVED_VALUE_BYTES;
     match InventoryValue::observed(value) {
         Ok(value) => value,
+        Err(_) if exceeds_observation_bound => {
+            InventoryValue::missing(MissingReason::InventoryExceedsBound)
+        }
         Err(_) => InventoryValue::missing(MissingReason::UnsupportedBySource),
     }
 }
@@ -593,24 +632,24 @@ fn live_responses(environment: EnvironmentId) -> LinuxResponses {
         )
     })
     .collect();
-    let (wayland_info, xdpyinfo) = match environment {
-        EnvironmentId::Wayland => (
-            capture_response(
-                command_stdout("wayland-info", &[], COMMAND_OUTPUT_LIMIT),
+    let (wayland_info, wayland_info_truncated, xdpyinfo, xdpyinfo_truncated) = match environment {
+        EnvironmentId::Wayland => {
+            let (response, truncated) = capture_protocol_response(
+                command_stdout_prefix("wayland-info", &[], COMMAND_OUTPUT_LIMIT),
                 "wayland_info",
                 &mut source_failures,
-            ),
-            None,
-        ),
-        EnvironmentId::X11 => (
-            None,
-            capture_response(
-                command_stdout("xdpyinfo", &[], COMMAND_OUTPUT_LIMIT),
+            );
+            (response, truncated, None, false)
+        }
+        EnvironmentId::X11 => {
+            let (response, truncated) = capture_protocol_response(
+                command_stdout_prefix("xdpyinfo", &[], COMMAND_OUTPUT_LIMIT),
                 "xdpyinfo",
                 &mut source_failures,
-            ),
-        ),
-        EnvironmentId::Macos | EnvironmentId::Windows => (None, None),
+            );
+            (None, false, response, truncated)
+        }
+        EnvironmentId::Macos | EnvironmentId::Windows => (None, false, None, false),
     };
     let dpkg_query = Path::new("/usr/bin/dpkg-query")
         .is_file()
@@ -644,6 +683,8 @@ fn live_responses(environment: EnvironmentId) -> LinuxResponses {
         wayland_info,
         xdpyinfo,
         dpkg_query,
+        wayland_info_truncated,
+        xdpyinfo_truncated,
         source_failures,
         package_failures,
     }
@@ -660,6 +701,22 @@ fn capture_response(
         Err(reason) => {
             failures.insert(source, reason);
             None
+        }
+    }
+}
+
+#[cfg(target_os = "linux")]
+fn capture_protocol_response(
+    response: Result<Option<BoundedOutput>, MissingReason>,
+    source: &'static str,
+    failures: &mut BTreeMap<&'static str, MissingReason>,
+) -> (Option<String>, bool) {
+    match response {
+        Ok(Some(output)) => (Some(output.contents), output.truncated),
+        Ok(None) => (None, false),
+        Err(reason) => {
+            failures.insert(source, reason);
+            (None, false)
         }
     }
 }
@@ -848,7 +905,56 @@ fn command_stdout(
 }
 
 #[cfg(target_os = "linux")]
+fn command_stdout_prefix(
+    program: &str,
+    arguments: &[&str],
+    limit: usize,
+) -> Result<Option<BoundedOutput>, MissingReason> {
+    let mut child = match Command::new(program)
+        .args(arguments)
+        .stdin(Stdio::null())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::null())
+        .spawn()
+    {
+        Ok(child) => child,
+        Err(_) => return Ok(None),
+    };
+    let stdout = child
+        .stdout
+        .take()
+        .ok_or(MissingReason::SourceUnavailable)?;
+    let output = read_bounded_prefix(stdout, limit)?;
+    if output.truncated {
+        let _ = child.kill();
+        let _ = child.wait();
+        return Ok(Some(output));
+    }
+    let status = child.wait().map_err(|_| MissingReason::SourceUnavailable)?;
+    Ok(status.success().then_some(output))
+}
+
+#[cfg(target_os = "linux")]
+struct BoundedOutput {
+    contents: String,
+    truncated: bool,
+}
+
+#[cfg(target_os = "linux")]
 fn read_bounded(mut reader: impl Read, limit: usize) -> Result<String, MissingReason> {
+    let output = read_bounded_prefix(&mut reader, limit)?;
+    if output.truncated {
+        Err(MissingReason::InventoryExceedsBound)
+    } else {
+        Ok(output.contents)
+    }
+}
+
+#[cfg(target_os = "linux")]
+fn read_bounded_prefix(
+    mut reader: impl Read,
+    limit: usize,
+) -> Result<BoundedOutput, MissingReason> {
     let capture_limit = limit
         .checked_add(1)
         .ok_or(MissingReason::InventoryExceedsBound)?;
@@ -858,34 +964,17 @@ fn read_bounded(mut reader: impl Read, limit: usize) -> Result<String, MissingRe
         .take(u64::try_from(capture_limit).map_err(|_| MissingReason::InventoryExceedsBound)?)
         .read_to_end(&mut output)
         .map_err(|_| MissingReason::SourceUnavailable)?;
-    if output.len() > limit {
-        return Err(MissingReason::InventoryExceedsBound);
+    let truncated = output.len() > limit;
+    if truncated {
+        let _ = output.pop();
     }
-    String::from_utf8(output).map_err(|_| MissingReason::UnsupportedBySource)
+    let contents = String::from_utf8(output).map_err(|_| MissingReason::UnsupportedBySource)?;
+    Ok(BoundedOutput {
+        contents,
+        truncated,
+    })
 }
 
 #[cfg(all(test, target_os = "linux"))]
-mod tests {
-    use std::collections::BTreeMap;
-    use std::io::Cursor;
-
-    use oxyflut_qualification::environment::MissingReason;
-
-    use super::{capture_response, read_bounded};
-
-    #[test]
-    fn bounded_source_failures_remain_explicit_for_live_response_callers() {
-        let mut failures = BTreeMap::new();
-        let captured = capture_response(
-            read_bounded(Cursor::new(b"12345"), 4).map(Some),
-            "wayland_info",
-            &mut failures,
-        );
-
-        assert!(captured.is_none());
-        assert_eq!(
-            failures.get("wayland_info"),
-            Some(&MissingReason::InventoryExceedsBound)
-        );
-    }
-}
+#[path = "linux_tests.rs"]
+mod tests;

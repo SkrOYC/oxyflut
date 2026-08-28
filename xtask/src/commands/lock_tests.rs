@@ -6,11 +6,12 @@ use std::process::ExitCode;
 use std::sync::atomic::{AtomicU64, Ordering};
 
 use oxyflut_qualification::hash::hash_file;
+use oxyflut_qualification::readiness::StagedInputRegistry;
 use serde_json::Value;
 
 use super::{
-    candidate_report_at, candidate_report_lines, invalid_status_line, run, run_at_root,
-    workspace_root,
+    candidate_report_at, candidate_report_error_lines, candidate_report_lines, invalid_status_line,
+    run, run_at_root, workspace_root,
 };
 use crate::{CommandOutcome, toolchain};
 
@@ -94,6 +95,16 @@ fn mismatched_staged_input_digest_returns_exit_one() -> Result<(), Box<dyn Error
         .ok_or("complete lock must bind sample-validity rules")? = Value::String("0".repeat(64));
     write_json(&root.join(super::LOCK_PATH), &lock)?;
 
+    let error = candidate_report_at(&root)
+        .err()
+        .ok_or("digest mismatch must fail")?;
+    assert_eq!(
+        candidate_report_error_lines(&error),
+        vec![
+            "lock status: invalid (staged-input-digest-mismatch)",
+            "blocking: field-path=measurementPolicy.sampleValidityRules kind=digest-mismatch evidence-path=qualification/schemas/sample-validity.schema.json upstream-owner=OXY-C003",
+        ]
+    );
     let outcome = run_at_root(&root, "candidate-implementation");
     fs::remove_dir_all(&root)?;
 
@@ -110,6 +121,13 @@ fn missing_conventional_staged_input_returns_exit_one() -> Result<(), Box<dyn Er
     let root = complete_fixture_root()?;
     fs::remove_file(root.join("qualification/staged/fuzz-corpora.json"))?;
 
+    let error = candidate_report_at(&root)
+        .err()
+        .ok_or("missing staged input must fail")?;
+    assert_eq!(
+        candidate_report_error_lines(&error),
+        vec!["lock status: invalid (staged-input-missing)"]
+    );
     let outcome = run_at_root(&root, "candidate-implementation");
     fs::remove_dir_all(&root)?;
 
@@ -163,6 +181,15 @@ fn resolved_tools_require_the_exact_staged_manifest_set() -> Result<(), Box<dyn 
         }
         write_json(&root.join(super::LOCK_PATH), &lock)?;
 
+        if mutation == "substituted" {
+            let error = candidate_report_at(&root)
+                .err()
+                .ok_or("substituted resolved tool must fail")?;
+            assert_eq!(
+                candidate_report_error_lines(&error),
+                vec!["lock status: invalid (resolved-tool-mismatch)"]
+            );
+        }
         let outcome = run_at_root(&root, "candidate-implementation");
         fs::remove_dir_all(&root)?;
         assert!(matches!(outcome, CommandOutcome::Failed(_)), "{mutation}");
@@ -254,6 +281,91 @@ fn candidate_report_lines_are_stable_and_content_free() -> Result<(), Box<dyn Er
     assert!(lines.iter().any(|line| {
         line == "blocking: field-path=measurementPolicy.externalContractLock kind=null evidence-path=qualification/schemas/external/proposed-external-contract-lock.json referent=proposal upstream-owner=OXY-C001"
     }));
+    for line in [
+        "blocking: field-path=preImplementationKnownUnknowns.capability-and-platform-baselines kind=ku evidence-path=.constitution/tech-spec/contracts/platform-contracts.json upstream-owner=OXY-C002,OXY-C004",
+        "blocking: field-path=preImplementationKnownUnknowns.scoring-anchors-and-two-assessors kind=ku evidence-path=qualification/staged/scoring-anchors.json upstream-owner=OXY-D001",
+        "blocking: field-path=preImplementationKnownUnknowns.fuzz-corpora kind=ku evidence-path=qualification/staged/fuzz-corpora.json upstream-owner=OXY-D001",
+        "blocking: field-path=preImplementationKnownUnknowns.security-patch-rehearsal kind=ku evidence-path=qualification/staged/security-patch-rehearsal.json upstream-owner=OXY-D001",
+    ] {
+        assert!(lines.iter().any(|actual| actual == line), "{line}");
+    }
+    Ok(())
+}
+
+#[test]
+fn candidate_status_verifies_every_nonvalidator_policy_evidence_path() -> Result<(), Box<dyn Error>>
+{
+    if skip_on_unsupported_host()? {
+        return Ok(());
+    }
+    let expected = StagedInputRegistry::measurement_policy_evidence_bindings()
+        .filter(|(field, _, _)| !matches!(*field, "rawMeasurementSchema" | "platformContracts"))
+        .collect::<Vec<_>>();
+    assert_eq!(
+        StagedInputRegistry::candidate_status_input_bindings().collect::<Vec<_>>(),
+        expected
+    );
+
+    for (field, path, _) in expected {
+        let root = complete_fixture_root()?;
+        fs::remove_file(root.join(path))?;
+        let error = candidate_report_at(&root)
+            .err()
+            .ok_or("each staged policy path must be verified")?;
+        assert_eq!(
+            candidate_report_error_lines(&error),
+            vec!["lock status: invalid (staged-input-missing)"],
+            "{field}"
+        );
+        fs::remove_dir_all(&root)?;
+    }
+    Ok(())
+}
+
+#[test]
+fn candidate_report_uses_distinct_codes_for_lock_and_ku_failures() -> Result<(), Box<dyn Error>> {
+    if skip_on_unsupported_host()? {
+        return Ok(());
+    }
+    let unreadable = complete_fixture_root()?;
+    fs::remove_file(unreadable.join(super::LOCK_PATH))?;
+    let unreadable_error = candidate_report_at(&unreadable)
+        .err()
+        .ok_or("unreadable lock must fail")?;
+    assert_eq!(
+        candidate_report_error_lines(&unreadable_error),
+        vec!["lock status: invalid (lock-read)"]
+    );
+    fs::remove_dir_all(&unreadable)?;
+
+    let malformed = complete_fixture_root()?;
+    fs::write(malformed.join(super::LOCK_PATH), b"{")?;
+    let malformed_error = candidate_report_at(&malformed)
+        .err()
+        .ok_or("malformed lock must fail")?;
+    assert_eq!(
+        candidate_report_error_lines(&malformed_error),
+        vec!["lock status: invalid (lock-json)"]
+    );
+    fs::remove_dir_all(&malformed)?;
+
+    let unmapped = complete_fixture_root()?;
+    let mut lock = read_json(&unmapped.join(super::LOCK_PATH))?;
+    lock.get_mut("preImplementationKnownUnknowns")
+        .and_then(Value::as_array_mut)
+        .ok_or("complete lock must contain known unknowns")?
+        .push(Value::String("unmapped-known-unknown".to_owned()));
+    write_json(&unmapped.join(super::LOCK_PATH), &lock)?;
+    let unmapped_error = candidate_report_at(&unmapped)
+        .err()
+        .ok_or("unmapped known unknown must fail")?;
+    assert_eq!(
+        candidate_report_error_lines(&unmapped_error),
+        vec!["lock status: invalid (unmapped-known-unknown)"]
+    );
+    let outcome = run_at_root(&unmapped, "candidate-implementation");
+    fs::remove_dir_all(&unmapped)?;
+    assert!(matches!(outcome, CommandOutcome::Failed(_)));
     Ok(())
 }
 

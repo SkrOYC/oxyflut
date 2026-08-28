@@ -110,13 +110,50 @@ fn inspect_with_source(
     let inventory_path = companion_inventory_path(output)?;
     validate_artifact_pair(root, output, &inventory_path)?;
 
-    let projection_reference = write_canonical_json_to_path(root, output, &projection)
-        .map_err(EnvironmentCommandError::Evidence)?;
+    publish_artifact_pair(root, output, &inventory_path, &projection, &inventory)
+}
+
+fn publish_artifact_pair(
+    root: &Path,
+    output: &RepositoryPath,
+    inventory_path: &RepositoryPath,
+    projection: &serde_json::Value,
+    inventory: &EnvironmentInventory,
+) -> Result<EnvironmentEvidence, EnvironmentCommandError> {
+    publish_artifact_pair_with(
+        output,
+        inventory_path,
+        projection,
+        inventory,
+        |path, value| write_canonical_json_to_path(root, path, value),
+        |path| fs::remove_file(root.join(path.as_str())),
+    )
+}
+
+fn publish_artifact_pair_with(
+    output: &RepositoryPath,
+    inventory_path: &RepositoryPath,
+    projection: &serde_json::Value,
+    inventory: &EnvironmentInventory,
+    mut write: impl FnMut(&RepositoryPath, &serde_json::Value) -> Result<EvidenceRef, EvidenceError>,
+    mut remove_projection: impl FnMut(&RepositoryPath) -> io::Result<()>,
+) -> Result<EnvironmentEvidence, EnvironmentCommandError> {
+    let projection_reference =
+        write(output, projection).map_err(EnvironmentCommandError::Evidence)?;
     let complete_inventory =
         inventory.inventory_value(&projection_reference.path, &projection_reference.sha256);
-    let inventory_reference =
-        write_canonical_json_to_path(root, &inventory_path, &complete_inventory)
-            .map_err(EnvironmentCommandError::Evidence)?;
+    let inventory_reference = match write(inventory_path, &complete_inventory) {
+        Ok(reference) => reference,
+        Err(error) => {
+            remove_projection(&projection_reference.path).map_err(|source| {
+                EnvironmentCommandError::ProjectionCleanup {
+                    path: projection_reference.path.clone(),
+                    source,
+                }
+            })?;
+            return Err(EnvironmentCommandError::Evidence(error));
+        }
+    };
     Ok(EnvironmentEvidence {
         projection: projection_reference,
         inventory: inventory_reference,
@@ -142,14 +179,37 @@ fn validate_reference_environment(
     validate_operating_system(environment, inventory)
 }
 
+struct ReferenceEnvironmentPin {
+    architecture: &'static str,
+    operating_system: &'static str,
+}
+
+/// Returns the hard-coded Tier 1 lock pin for one environment.
+///
+/// The macOS product version is an exact pin: `26.5.1` fails closed by design rather than
+/// satisfying the `macos-26.5` qualification host.
+const fn reference_environment_pin(environment: EnvironmentId) -> ReferenceEnvironmentPin {
+    match environment {
+        EnvironmentId::Macos => ReferenceEnvironmentPin {
+            architecture: "aarch64",
+            operating_system: "macos-26.5",
+        },
+        EnvironmentId::Windows => ReferenceEnvironmentPin {
+            architecture: "x86_64",
+            operating_system: "windows-11-25H2",
+        },
+        EnvironmentId::Wayland | EnvironmentId::X11 => ReferenceEnvironmentPin {
+            architecture: "x86_64",
+            operating_system: "ubuntu-26.04",
+        },
+    }
+}
+
 fn validate_architecture(
     environment: EnvironmentId,
     inventory: &EnvironmentInventory,
 ) -> Result<(), EnvironmentCommandError> {
-    let expected = match environment {
-        EnvironmentId::Macos => "aarch64",
-        EnvironmentId::Windows | EnvironmentId::Wayland | EnvironmentId::X11 => "x86_64",
-    };
+    let expected = reference_environment_pin(environment).architecture;
     match inventory.fields().architecture.observed_value() {
         Some(actual) if actual == expected => Ok(()),
         Some(_) | None => Err(EnvironmentCommandError::EnvironmentMismatch),
@@ -160,11 +220,7 @@ fn validate_operating_system(
     environment: EnvironmentId,
     inventory: &EnvironmentInventory,
 ) -> Result<(), EnvironmentCommandError> {
-    let expected = match environment {
-        EnvironmentId::Macos => "macos-26.5",
-        EnvironmentId::Windows => "windows-11-25H2",
-        EnvironmentId::Wayland | EnvironmentId::X11 => "ubuntu-26.04",
-    };
+    let expected = reference_environment_pin(environment).operating_system;
     match inventory.operating_system().observed_value() {
         Some(actual) if actual == expected => Ok(()),
         Some(_) | None => Err(EnvironmentCommandError::EnvironmentMismatch),
@@ -295,6 +351,15 @@ pub(crate) enum EnvironmentCommandError {
     /// The lock-compatible environment projection failed schema validation.
     #[error("environment lock projection failed schema validation")]
     Schema(#[from] SchemaError),
+    /// The just-published projection could not be removed after its companion failed to publish.
+    #[error("environment projection cleanup failed")]
+    ProjectionCleanup {
+        /// The projection path that remains without its companion.
+        path: RepositoryPath,
+        /// The local filesystem failure that prevented cleanup.
+        #[source]
+        source: io::Error,
+    },
     /// The immutable evidence writer could not publish the validated projection or inventory.
     #[error("environment evidence publication failed")]
     Evidence(#[source] EvidenceError),
@@ -318,6 +383,7 @@ impl EnvironmentCommandError {
             Self::LockShape => "environment-lock-shape",
             Self::SchemaRegistry(_) => "environment-schema-registry",
             Self::Schema(_) => "environment-lock-schema",
+            Self::ProjectionCleanup { .. } => "environment-projection-cleanup",
             Self::Evidence(error) if error.code() == "content-address-collision" => {
                 "evidence-destination-exists"
             }
@@ -328,19 +394,22 @@ impl EnvironmentCommandError {
 
 #[cfg(test)]
 mod tests {
-    use std::collections::BTreeSet;
+    use std::collections::{BTreeMap, BTreeSet};
     use std::error::Error;
     use std::fs;
     use std::path::{Path, PathBuf};
     use std::sync::atomic::{AtomicU64, Ordering};
 
     use oxyflut_qualification::environment::{EnvironmentInventory, InventoryValue, MissingReason};
-    use oxyflut_qualification::evidence::{MediaType, canonical_json_bytes, verify_file};
+    use oxyflut_qualification::evidence::{
+        EvidenceError, MediaType, canonical_json_bytes, verify_file, write_canonical_json_to_path,
+    };
     use oxyflut_qualification::identifiers::{EnvironmentId, RepositoryPath};
 
     use super::{
         EnvironmentCommandError, PlatformSource, companion_inventory_path, inspect_with_source,
-        parse_arguments, validate_reference_environment, workspace_root,
+        parse_arguments, publish_artifact_pair_with, reference_environment_pin,
+        validate_reference_environment, workspace_root,
     };
     use crate::CommandOutcome;
     use crate::commands::environment::fixtures::FixturePlatformSource;
@@ -384,7 +453,9 @@ mod tests {
             match environment {
                 EnvironmentId::Wayland => assert_eq!(
                     inventory.fields().protocol_version.observed_value(),
-                    Some("wayland-wl_compositor-6-xdg_wm_base-6")
+                    Some(
+                        "wayland-wl_compositor-6-wl_shm-1-wl_seat-9-wl_output-4-xdg_wm_base-6-zwp_linux_dmabuf_v1-5-wp_viewporter-1-wp_fractional_scale_manager_v1-1"
+                    )
                 ),
                 EnvironmentId::X11 => assert_eq!(
                     inventory.fields().protocol_version.observed_value(),
@@ -585,6 +656,65 @@ mod tests {
             Err(EnvironmentCommandError::EnvironmentMismatch)
         ));
         assert_no_evidence(&root, &output)?;
+        Ok(())
+    }
+
+    #[test]
+    fn companion_publication_failure_removes_the_just_written_projection()
+    -> Result<(), Box<dyn Error>> {
+        let workspace = temporary_directory("companion-failure")?;
+        let root = workspace.path();
+        let output = "qualification/evidence/environment.json".parse::<RepositoryPath>()?;
+        let inventory_path = companion_inventory_path(&output)?;
+        let inventory = FixturePlatformSource::new(root, EnvironmentId::Wayland).collect()?;
+        let projection = inventory.lock_environment_value();
+        let mut write_count = 0;
+
+        let result = publish_artifact_pair_with(
+            &output,
+            &inventory_path,
+            &projection,
+            &inventory,
+            |path, value| {
+                write_count += 1;
+                if write_count == 1 {
+                    write_canonical_json_to_path(root, path, value)
+                } else {
+                    Err(EvidenceError::WriteInProgress {
+                        path: root.join(path.as_str()),
+                    })
+                }
+            },
+            |path| fs::remove_file(root.join(path.as_str())),
+        );
+
+        assert!(matches!(
+            result,
+            Err(EnvironmentCommandError::Evidence(
+                EvidenceError::WriteInProgress { .. }
+            ))
+        ));
+        assert!(!root.join(output.as_str()).exists());
+        assert!(!root.join(inventory_path.as_str()).exists());
+        Ok(())
+    }
+
+    #[test]
+    fn tier_one_reference_pins_match_stack_rows() -> Result<(), Box<dyn Error>> {
+        let root = test_workspace_root()?;
+        let rows = parse_tier_one_stack_rows(&fs::read_to_string(
+            root.join(".constitution/tech-spec/stack.md"),
+        )?)?;
+
+        assert_eq!(rows.len(), EnvironmentId::tier_one().len());
+        for environment in EnvironmentId::tier_one() {
+            let (architecture, operating_system) = rows
+                .get(&environment)
+                .ok_or("stack.md must contain every Tier 1 environment")?;
+            let pin = reference_environment_pin(environment);
+            assert_eq!(architecture, pin.architecture, "{environment:?}");
+            assert_eq!(operating_system, pin.operating_system, "{environment:?}");
+        }
         Ok(())
     }
 
@@ -920,6 +1050,59 @@ mod tests {
             Err(EnvironmentCommandError::SourceEnvironment)
         ));
         Ok(())
+    }
+
+    fn parse_tier_one_stack_rows(
+        source: &str,
+    ) -> Result<BTreeMap<EnvironmentId, (String, String)>, &'static str> {
+        let mut rows = BTreeMap::new();
+        for line in source.lines() {
+            let columns = line.split('|').map(str::trim).collect::<Vec<_>>();
+            let environment = match columns.get(1).copied() {
+                Some("macOS") => EnvironmentId::Macos,
+                Some("Windows") => EnvironmentId::Windows,
+                Some("Wayland") => EnvironmentId::Wayland,
+                Some("X11") => EnvironmentId::X11,
+                _ => continue,
+            };
+            let configuration = *columns
+                .get(2)
+                .ok_or("Tier 1 stack row must contain a reference configuration")?;
+            let mut words = configuration.split_whitespace();
+            let architecture = match words.next() {
+                Some("arm64") => "aarch64",
+                Some("x86-64") => "x86_64",
+                _ => return Err("Tier 1 stack row must start with a pinned architecture"),
+            };
+            let operating_system = match environment {
+                EnvironmentId::Macos => match (words.next(), words.next()) {
+                    (Some("macOS"), Some(version)) => format!("macos-{version}"),
+                    _ => return Err("macOS stack row must name an exact version"),
+                },
+                EnvironmentId::Windows => match (words.next(), words.next(), words.next()) {
+                    (Some("Windows"), Some(generation), Some(display_version)) => {
+                        format!(
+                            "windows-{generation}-{}",
+                            display_version.trim_end_matches(';')
+                        )
+                    }
+                    _ => {
+                        return Err("Windows stack row must name a generation and display version");
+                    }
+                },
+                EnvironmentId::Wayland | EnvironmentId::X11 => match (words.next(), words.next()) {
+                    (Some("Ubuntu"), Some(version)) => format!("ubuntu-{version}"),
+                    _ => return Err("Linux stack row must name an Ubuntu version"),
+                },
+            };
+            if rows
+                .insert(environment, (architecture.to_owned(), operating_system))
+                .is_some()
+            {
+                return Err("stack.md must contain each Tier 1 environment only once");
+            }
+        }
+        Ok(rows)
     }
 
     fn test_workspace_root() -> Result<PathBuf, Box<dyn Error>> {

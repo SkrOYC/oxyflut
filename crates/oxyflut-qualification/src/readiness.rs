@@ -107,6 +107,27 @@ impl StagedInputRegistry {
             .find(|policy_field| policy_field.name == field)
             .and_then(|policy_field| policy_field.evidence_path)
     }
+
+    /// Iterates every measurement-policy binding that names an immutable evidence path.
+    pub fn measurement_policy_evidence_bindings()
+    -> impl Iterator<Item = (&'static str, &'static str, &'static str)> {
+        POLICY_FIELDS.iter().filter_map(|field| {
+            field
+                .evidence_path
+                .map(|path| (field.name, path, field.upstream_owner))
+        })
+    }
+
+    /// Iterates the staged bindings that `lock status` must verify directly.
+    ///
+    /// The contract readiness validator already verifies the raw-measurement schema and platform
+    /// contracts. This iterator excludes those two bindings while deriving all remaining staged
+    /// paths from [`POLICY_FIELDS`].
+    pub fn candidate_status_input_bindings()
+    -> impl Iterator<Item = (&'static str, &'static str, &'static str)> {
+        Self::measurement_policy_evidence_bindings()
+            .filter(|(field, _, _)| !matches!(*field, "rawMeasurementSchema" | "platformContracts"))
+    }
 }
 
 const KNOWN_UNKNOWN_BINDINGS: &[KnownUnknownBinding] = &[
@@ -137,7 +158,7 @@ const KNOWN_UNKNOWN_BINDINGS: &[KnownUnknownBinding] = &[
     KnownUnknownBinding {
         known_unknown: "capability-and-platform-baselines",
         required_field: "measurementPolicy.capabilityBaseline",
-        evidence_path: None,
+        evidence_path: Some(".constitution/tech-spec/contracts/platform-contracts.json"),
         upstream_owner: "OXY-C002,OXY-C004",
     },
     KnownUnknownBinding {
@@ -155,19 +176,19 @@ const KNOWN_UNKNOWN_BINDINGS: &[KnownUnknownBinding] = &[
     KnownUnknownBinding {
         known_unknown: "scoring-anchors-and-two-assessors",
         required_field: "measurementPolicy.scoringAnchors",
-        evidence_path: None,
+        evidence_path: Some("qualification/staged/scoring-anchors.json"),
         upstream_owner: "OXY-D001",
     },
     KnownUnknownBinding {
         known_unknown: "fuzz-corpora",
         required_field: "measurementPolicy.fuzzCorpora",
-        evidence_path: None,
+        evidence_path: Some("qualification/staged/fuzz-corpora.json"),
         upstream_owner: "OXY-D001",
     },
     KnownUnknownBinding {
         known_unknown: "security-patch-rehearsal",
         required_field: "measurementPolicy.securityPatchRehearsal",
-        evidence_path: None,
+        evidence_path: Some("qualification/staged/security-patch-rehearsal.json"),
         upstream_owner: "OXY-D001",
     },
     KnownUnknownBinding {
@@ -805,6 +826,36 @@ mod tests {
             StagedInputRegistry::measurement_policy_path("layoutVisitCap"),
             None
         );
+        assert_eq!(
+            StagedInputRegistry::candidate_status_input_bindings().collect::<Vec<_>>(),
+            vec![
+                (
+                    "sampleValidityRules",
+                    "qualification/schemas/sample-validity.schema.json",
+                    "OXY-C003",
+                ),
+                (
+                    "scoringAnchors",
+                    "qualification/staged/scoring-anchors.json",
+                    "OXY-D001",
+                ),
+                (
+                    "assessors",
+                    "qualification/staged/assessors.json",
+                    "OXY-D001",
+                ),
+                (
+                    "fuzzCorpora",
+                    "qualification/staged/fuzz-corpora.json",
+                    "OXY-D001",
+                ),
+                (
+                    "securityPatchRehearsal",
+                    "qualification/staged/security-patch-rehearsal.json",
+                    "OXY-D001",
+                ),
+            ]
+        );
     }
 
     #[test]
@@ -874,6 +925,26 @@ mod tests {
         assert!(report.blocking.iter().any(|blocking| {
             blocking.field_path == "resolvedTools" && blocking.kind == BlockingKind::Missing
         }));
+        for (known_unknown, evidence_path) in [
+            (
+                "capability-and-platform-baselines",
+                ".constitution/tech-spec/contracts/platform-contracts.json",
+            ),
+            (
+                "scoring-anchors-and-two-assessors",
+                "qualification/staged/scoring-anchors.json",
+            ),
+            ("fuzz-corpora", "qualification/staged/fuzz-corpora.json"),
+            (
+                "security-patch-rehearsal",
+                "qualification/staged/security-patch-rehearsal.json",
+            ),
+        ] {
+            assert!(report.blocking.iter().any(|blocking| {
+                blocking.field_path == format!("preImplementationKnownUnknowns.{known_unknown}")
+                    && blocking.evidence_path.as_deref() == Some(evidence_path)
+            }));
+        }
         Ok(())
     }
 
