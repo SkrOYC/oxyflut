@@ -38,6 +38,9 @@ pub const EXTERNAL_CONTRACT_LOCK_PATH: &str =
 /// The staged external-contract lock proposal path.
 pub const EXTERNAL_CONTRACT_LOCK_PROPOSAL_PATH: &str =
     "qualification/schemas/external/proposed-external-contract-lock.json";
+/// The known unknown that independently gates use of the staged external-contract proposal.
+pub const EXTERNAL_CONTRACT_LOCK_KNOWN_UNKNOWN: &str =
+    "external-distribution-schema-snapshots-and-verifiers";
 
 const POLICY_FIELDS: &[PolicyField] = &[
     PolicyField {
@@ -198,7 +201,7 @@ const KNOWN_UNKNOWN_BINDINGS: &[KnownUnknownBinding] = &[
         upstream_owner: "OXY-D001",
     },
     KnownUnknownBinding {
-        known_unknown: "external-distribution-schema-snapshots-and-verifiers",
+        known_unknown: EXTERNAL_CONTRACT_LOCK_KNOWN_UNKNOWN,
         required_field: "measurementPolicy.externalContractLock",
         evidence_path: None,
         upstream_owner: "OXY-C001",
@@ -251,6 +254,17 @@ pub enum ExternalContractLockReferentError {
     EmptyContracts,
 }
 
+/// Reports why readiness could not select an external-contract lock referent.
+#[derive(Debug, Error, Eq, PartialEq)]
+pub enum ExternalContractLockReadinessError {
+    /// The active external-contract lock could not select a referent.
+    #[error("external-contract lock referent is invalid")]
+    Referent(#[from] ExternalContractLockReferentError),
+    /// The staged proposal was selected without its independent gating known unknown.
+    #[error("external-contract proposal lacks its gating known unknown")]
+    ProposalWithoutKnownUnknown,
+}
+
 /// Selects the external-contract lock referent from the active per-contract statuses.
 ///
 /// # Errors
@@ -274,6 +288,32 @@ pub fn external_contract_lock_referent(
     } else {
         ExternalContractLockReferent::Active
     })
+}
+
+/// Selects the external-contract referent and validates its staged-proposal gate.
+///
+/// # Errors
+///
+/// Returns an error when the active lock cannot select a referent or when it selects the staged
+/// proposal without `external-distribution-schema-snapshots-and-verifiers` in the qualification
+/// lock's pre-implementation known-unknown list.
+pub fn external_contract_lock_referent_for_readiness(
+    qualification_lock: &Value,
+    active_external_lock: &Value,
+) -> Result<ExternalContractLockReferent, ExternalContractLockReadinessError> {
+    let referent = external_contract_lock_referent(active_external_lock)?;
+    let has_known_unknown = qualification_lock
+        .get("preImplementationKnownUnknowns")
+        .and_then(Value::as_array)
+        .is_some_and(|known_unknowns| {
+            known_unknowns.iter().any(|known_unknown| {
+                known_unknown.as_str() == Some(EXTERNAL_CONTRACT_LOCK_KNOWN_UNKNOWN)
+            })
+        });
+    if referent == ExternalContractLockReferent::Proposal && !has_known_unknown {
+        return Err(ExternalContractLockReadinessError::ProposalWithoutKnownUnknown);
+    }
+    Ok(referent)
 }
 
 /// The readiness gate represented by a [`ReadinessReport`].
@@ -399,6 +439,17 @@ pub fn candidate_implementation_report(
     lock: &Value,
     active_external_lock: &Value,
 ) -> Result<ReadinessReport, ReadinessError> {
+    match external_contract_lock_referent_for_readiness(lock, active_external_lock) {
+        Ok(_) => {}
+        Err(ExternalContractLockReadinessError::Referent(error)) => {
+            return Err(ReadinessError::ExternalContractReferent(error));
+        }
+        Err(ExternalContractLockReadinessError::ProposalWithoutKnownUnknown) => {
+            return Err(ReadinessError::InvalidLock {
+                code: "external-lock-proposal-without-ku",
+            });
+        }
+    }
     let lock = lock.as_object().ok_or(ReadinessError::InvalidLock {
         code: "lock-object",
     })?;
@@ -862,7 +913,12 @@ mod tests {
     fn complete_synthetic_lock_reports_a_ready_candidate_gate()
     -> Result<(), Box<dyn std::error::Error>> {
         let lock: Value = serde_json::from_slice(COMPLETE)?;
-        let report = candidate_implementation_report(&lock, &active_external_contract_lock()?)?;
+        let mut active_external_lock = active_external_contract_lock()?;
+        *active_external_lock
+            .pointer_mut("/contracts/spdx-3.0.1/epistemicStatus")
+            .ok_or("active external lock must contain SPDX status")? =
+            Value::String("kk-locked".to_owned());
+        let report = candidate_implementation_report(&lock, &active_external_lock)?;
 
         assert_eq!(report.gate, ReadinessGate::CandidateImplementation);
         assert_eq!(report.status, ReadinessStatus::Ready);
@@ -879,7 +935,12 @@ mod tests {
             .ok_or("complete lock must contain the macOS minimum version")? =
             Value::String(" \t".to_owned());
 
-        let report = candidate_implementation_report(&lock, &active_external_contract_lock()?)?;
+        let mut active_external_lock = active_external_contract_lock()?;
+        *active_external_lock
+            .pointer_mut("/contracts/spdx-3.0.1/epistemicStatus")
+            .ok_or("active external lock must contain SPDX status")? =
+            Value::String("kk-locked".to_owned());
+        let report = candidate_implementation_report(&lock, &active_external_lock)?;
         assert!(report.blocking.iter().any(|blocking| {
             blocking.field_path == "referenceEnvironments.macos-arm64.minimumVersion"
                 && blocking.kind == BlockingKind::Unresolved
@@ -977,6 +1038,26 @@ mod tests {
         assert!(matches!(
             super::external_contract_lock_referent(&empty),
             Err(super::ExternalContractLockReferentError::EmptyContracts)
+        ));
+        Ok(())
+    }
+
+    #[test]
+    fn staged_external_proposal_requires_its_gating_known_unknown()
+    -> Result<(), Box<dyn std::error::Error>> {
+        let mut lock: Value = serde_json::from_slice(CLEARED_WITHOUT_EVIDENCE)?;
+        lock.get_mut("preImplementationKnownUnknowns")
+            .and_then(Value::as_array_mut)
+            .ok_or("lock must contain pre-implementation known unknowns")?
+            .retain(|known_unknown| {
+                known_unknown.as_str() != Some(super::EXTERNAL_CONTRACT_LOCK_KNOWN_UNKNOWN)
+            });
+
+        assert!(matches!(
+            candidate_implementation_report(&lock, &active_external_contract_lock()?),
+            Err(super::ReadinessError::InvalidLock {
+                code: "external-lock-proposal-without-ku"
+            })
         ));
         Ok(())
     }

@@ -6,7 +6,8 @@ use std::path::{Path, PathBuf};
 
 use oxyflut_qualification::hash::Sha256Digest;
 use oxyflut_qualification::readiness::{
-    EXTERNAL_CONTRACT_LOCK_PATH, external_contract_lock_referent,
+    EXTERNAL_CONTRACT_LOCK_PATH, ExternalContractLockReadinessError,
+    external_contract_lock_referent_for_readiness,
 };
 use oxyflut_qualification::schema::{SchemaError, SchemaRegistry};
 use serde_json::{Map, Value};
@@ -363,7 +364,7 @@ fn candidate_input_issues(
         "platform-contracts",
         &mut issues,
     )?;
-    validate_external_contract_lock(root, policy, registry, &mut issues)?;
+    validate_external_contract_lock(root, lock, policy, registry, &mut issues)?;
     for field in [
         "sampleValidityRules",
         "scoringAnchors",
@@ -412,8 +413,8 @@ fn verify_resolved_tools(root: &Path, tools: &[Value]) -> Result<(), ReadinessEr
         })?,
     )
     .map_err(|_| invariant("resolved-tool-manifest"))?;
-    crate::toolchain::verify_lock_resolved_tools(&manifest, tools)
-        .map_err(|_| invariant("resolved-tool-manifest"))
+    crate::toolchain::lock::verify_lock_resolved_tools_classified(&manifest, tools)
+        .map_err(|failure| invariant(failure.code()))
 }
 
 fn measurement_input_issues(
@@ -439,10 +440,12 @@ fn measurement_input_issues(
 
 fn validate_external_contract_lock(
     root: &Path,
+    lock: &Value,
     policy: &Map<String, Value>,
     registry: &SchemaRegistry,
     issues: &mut Vec<String>,
 ) -> Result<(), ReadinessError> {
+    let path = external_contract_lock_input_path(root, lock, registry)?;
     let Some(value) = policy.get("externalContractLock") else {
         return fail("external-contract-lock");
     };
@@ -453,7 +456,6 @@ fn validate_external_contract_lock(
     let digest = value
         .as_str()
         .ok_or_else(|| invariant("external-contract-lock"))?;
-    let path = external_contract_lock_input_path(root, registry)?;
     let verified = digests::verify_reference(root, path, digest)?;
     let external_lock = read_json(&verified.resolved_path)?;
     validate_schema(
@@ -496,6 +498,7 @@ fn validate_external_contract_lock(
 
 fn external_contract_lock_input_path(
     root: &Path,
+    lock: &Value,
     registry: &SchemaRegistry,
 ) -> Result<&'static str, ReadinessError> {
     let active = read_json(&root.join(EXTERNAL_CONTRACT_LOCK_PATH))?;
@@ -507,8 +510,16 @@ fn external_contract_lock_input_path(
     )?;
     // The external-lock schema records status per contract. A wholly KU active lock has no active
     // immutable snapshot to bind, so readiness uses the staged proposal until reconciliation.
-    let referent = external_contract_lock_referent(&active)
-        .map_err(|_| invariant("external-contract-lock-referent"))?;
+    let referent = external_contract_lock_referent_for_readiness(lock, &active).map_err(
+        |error| match error {
+            ExternalContractLockReadinessError::Referent(_) => {
+                invariant("external-contract-lock-referent")
+            }
+            ExternalContractLockReadinessError::ProposalWithoutKnownUnknown => {
+                invariant("external-lock-proposal-without-ku")
+            }
+        },
+    )?;
     Ok(referent.evidence_path())
 }
 

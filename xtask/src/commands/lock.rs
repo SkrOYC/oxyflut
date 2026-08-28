@@ -11,7 +11,7 @@ use serde_json::{Map, Value};
 
 use super::super::{CommandError, CommandOutcome};
 use crate::contracts as validators;
-use crate::toolchain::{self, ToolchainError, ToolchainManifest};
+use crate::toolchain::{self, ToolchainManifest};
 use validators::readiness::GateStatus;
 
 const LOCK_PATH: &str = ".constitution/tech-spec/contracts/qualification-lock.json";
@@ -187,35 +187,17 @@ fn verify_resolved_tools(root: &Path, lock: &Value) -> Result<(), StagedCandidat
         .map_err(|_| StagedCandidateInputError::ToolManifestRead)?;
     let manifest = ToolchainManifest::from_json(&manifest_bytes)
         .map_err(|_| StagedCandidateInputError::ToolManifest)?;
-    match toolchain::verify_lock_resolved_tools(&manifest, tools) {
+    match toolchain::lock::verify_lock_resolved_tools_classified(&manifest, tools) {
         Ok(()) => Ok(()),
-        Err(
-            ToolchainError::ExecutableSubstitution { .. }
-            | ToolchainError::LockEntryMismatch { .. }
-            | ToolchainError::SourceIdentityMismatch { .. }
-            | ToolchainError::VersionMismatch { .. }
-            | ToolchainError::MetadataMismatch { .. }
-            | ToolchainError::DigestMismatch { .. }
-            | ToolchainError::HeaderCheckerMismatch,
-        ) => Err(StagedCandidateInputError::ResolvedToolMismatch),
-        Err(ToolchainError::MissingTool { .. }) => {
+        Err(toolchain::lock::ResolvedToolValidationFailure::Missing) => {
             Err(StagedCandidateInputError::ResolvedToolMissing)
         }
-        Err(
-            ToolchainError::UnsupportedHost { .. }
-            | ToolchainError::ReadinessField { .. }
-            | ToolchainError::InvalidAuthority
-            | ToolchainError::InvalidNote
-            | ToolchainError::InvalidManifest { .. }
-            | ToolchainError::DuplicateTool { .. }
-            | ToolchainError::UnknownTool { .. }
-            | ToolchainError::MissingLibcHeaders
-            | ToolchainError::LibcHeadersMismatch
-            | ToolchainError::ToolExecution { .. }
-            | ToolchainError::ToolExecutionFailed { .. }
-            | ToolchainError::Io(_)
-            | ToolchainError::Json(_),
-        ) => Err(StagedCandidateInputError::ResolvedToolsInvalid),
+        Err(toolchain::lock::ResolvedToolValidationFailure::Mismatch) => {
+            Err(StagedCandidateInputError::ResolvedToolMismatch)
+        }
+        Err(toolchain::lock::ResolvedToolValidationFailure::Invalid) => {
+            Err(StagedCandidateInputError::ResolvedToolsInvalid)
+        }
     }
 }
 
@@ -237,7 +219,7 @@ impl CandidateReportError {
             Self::ExternalLockRead => "external-lock-read",
             Self::ExternalLockJson => "external-lock-json",
             Self::StagedInput(error) => error.code(),
-            Self::Readiness(ReadinessError::InvalidLock { .. }) => "readiness-lock-shape",
+            Self::Readiness(ReadinessError::InvalidLock { code }) => code,
             Self::Readiness(ReadinessError::UnmappedKnownUnknown) => "unmapped-known-unknown",
             Self::Readiness(ReadinessError::ExternalContractReferent(_)) => {
                 "external-lock-referent"

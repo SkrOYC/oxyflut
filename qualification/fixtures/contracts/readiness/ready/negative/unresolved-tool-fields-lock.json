@@ -135,7 +135,7 @@
       "sourceIdentity": "nix-store: /nix/store/p4p0xav61l9airp7fzr9b0d3l2hhd70g-oxyflut-clang-with-cc; derivation: oxyflut-clang-with-cc; version: 21.1.8",
       "hostTriple": "x86_64-unknown-linux-gnu",
       "licenseId": "Apache-2.0 WITH LLVM-exception",
-      "executablePath": "/nix/store/p4p0xav61l9airp7fzr9b0d3l2hhd70g-oxyflut-clang-with-cc/bin/cc",
+      "executablePath": null,
       "sha256": "9da8f78a013efc3b01ddb285e7b37cff0e33c2eebd0d1b68226726c6af9c065b"
     },
     {

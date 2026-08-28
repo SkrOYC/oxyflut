@@ -522,6 +522,9 @@ mod tests {
     use std::error::Error;
     use std::fs;
     use std::path::Path;
+    use std::process::ExitCode;
+
+    use serde_json::Value;
 
     use super::{
         ContractTemporaryDirectory, FAMILY_COUNT, RustContractError,
@@ -617,6 +620,49 @@ mod tests {
                 .to_owned()
         )));
         assert!(matches!(report.outcome(), CommandOutcome::Failed(_)));
+        Ok(())
+    }
+
+    #[test]
+    fn contracts_validate_rejects_staged_external_proposals_without_their_ku()
+    -> Result<(), Box<dyn Error>> {
+        let source = workspace_root()
+            .map_err(|_| std::io::Error::other("xtask must remain below the workspace root"))?;
+        let temporary = ContractTemporaryDirectory::new()?;
+        copy_directory(
+            &source.join(".constitution"),
+            &temporary.path().join(".constitution"),
+        )?;
+        copy_directory(
+            &source.join("qualification"),
+            &temporary.path().join("qualification"),
+        )?;
+        let lock_path = temporary
+            .path()
+            .join(".constitution/tech-spec/contracts/qualification-lock.json");
+        let mut lock: Value = serde_json::from_slice(&fs::read(&lock_path)?)?;
+        lock.get_mut("preImplementationKnownUnknowns")
+            .and_then(Value::as_array_mut)
+            .ok_or("committed lock must contain pre-implementation known unknowns")?
+            .retain(|known_unknown| {
+                known_unknown.as_str()
+                    != Some(oxyflut_qualification::readiness::EXTERNAL_CONTRACT_LOCK_KNOWN_UNKNOWN)
+            });
+        fs::write(
+            &lock_path,
+            format!("{}\n", serde_json::to_string_pretty(&lock)?),
+        )?;
+
+        let report = validate_workspace(temporary.path());
+        assert!(
+            report.summary_lines().contains(
+                &("readiness: failed (.constitution/tech-spec/contracts/qualification-lock.json)"
+                    .to_owned())
+            )
+        );
+        let outcome = report.outcome();
+        assert!(matches!(outcome, CommandOutcome::Failed(_)));
+        assert_eq!(outcome.exit_code(), ExitCode::FAILURE);
         Ok(())
     }
 

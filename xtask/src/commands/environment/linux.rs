@@ -21,6 +21,7 @@ use serde::Deserialize;
 use super::EnvironmentCommandError;
 
 const COMMAND_OUTPUT_LIMIT: usize = 4096;
+const PROTOCOL_COMMAND_OUTPUT_LIMIT: usize = 256 * 1024;
 const SOURCE_FILE_LIMIT: usize = 4096;
 const PACKAGE_OUTPUT_LIMIT: usize = 512;
 const MESA_DRIVER_PACKAGES: &[&str] = &["libgl1-mesa-dri", "mesa-vulkan-drivers"];
@@ -632,7 +633,7 @@ fn live_responses(environment: EnvironmentId) -> LinuxResponses {
     let (wayland_info, wayland_info_truncated, xdpyinfo, xdpyinfo_truncated) = match environment {
         EnvironmentId::Wayland => {
             let (response, truncated) = capture_protocol_response(
-                command_stdout_prefix("wayland-info", &[], COMMAND_OUTPUT_LIMIT),
+                command_stdout_prefix("wayland-info", &[], PROTOCOL_COMMAND_OUTPUT_LIMIT),
                 "wayland_info",
                 &mut source_failures,
             );
@@ -640,7 +641,7 @@ fn live_responses(environment: EnvironmentId) -> LinuxResponses {
         }
         EnvironmentId::X11 => {
             let (response, truncated) = capture_protocol_response(
-                command_stdout_prefix("xdpyinfo", &[], COMMAND_OUTPUT_LIMIT),
+                command_stdout_prefix("xdpyinfo", &[], PROTOCOL_COMMAND_OUTPUT_LIMIT),
                 "xdpyinfo",
                 &mut source_failures,
             );

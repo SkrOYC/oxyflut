@@ -864,6 +864,29 @@ mod tests {
     }
 
     #[test]
+    fn debian_tilde_versions_keep_the_wayland_package_lock_observed() -> Result<(), Box<dyn Error>>
+    {
+        let root = test_workspace_root()?;
+        let inventory = FixturePlatformSource::new(&root, EnvironmentId::Wayland).collect()?;
+        let clang = inventory
+            .system_package_lock()
+            .packages()
+            .iter()
+            .find(|package| package.name() == "clang")
+            .ok_or("Wayland fixture must retain the clang package")?;
+
+        assert_eq!(clang.version().observed_value(), Some("1:21.1.8-1~exp1"));
+        assert!(
+            inventory
+                .system_package_lock()
+                .digest()
+                .observed_value()
+                .is_some()
+        );
+        Ok(())
+    }
+
+    #[test]
     fn linux_driver_identity_binds_the_kernel_driver_and_userspace_package()
     -> Result<(), Box<dyn Error>> {
         let root = test_workspace_root()?;

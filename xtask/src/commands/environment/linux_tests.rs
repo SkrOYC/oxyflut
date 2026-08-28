@@ -4,7 +4,7 @@ use std::io::Cursor;
 use oxyflut_qualification::environment::{InventoryValue, MissingReason};
 
 use super::{
-    COMMAND_OUTPUT_LIMIT, WAYLAND_PROTOCOL_INTERFACES, capture_response, read_bounded,
+    PROTOCOL_COMMAND_OUTPUT_LIMIT, WAYLAND_PROTOCOL_INTERFACES, capture_response, read_bounded,
     read_bounded_prefix, wayland_protocol_version,
 };
 
@@ -28,15 +28,10 @@ fn bounded_source_failures_remain_explicit_for_live_response_callers() {
 fn oversized_wayland_response_reports_inventory_exceeds_bound()
 -> Result<(), Box<dyn std::error::Error>> {
     let mut response = wayland_protocol_fixture();
-    for index in 0..256 {
-        response.push_str(&format!(
-            "interface: 'unrelated_interface_{index}', version: 1, name: {}\n  detail: bounded fixture data\n",
-            index + 32
-        ));
-    }
+    response.push_str(&"x".repeat(PROTOCOL_COMMAND_OUTPUT_LIMIT));
 
-    let captured =
-        read_bounded_prefix(Cursor::new(response), COMMAND_OUTPUT_LIMIT).map_err(|reason| {
+    let captured = read_bounded_prefix(Cursor::new(response), PROTOCOL_COMMAND_OUTPUT_LIMIT)
+        .map_err(|reason| {
             std::io::Error::other(format!("could not capture protocol prefix: {reason:?}"))
         })?;
     assert!(captured.truncated);
@@ -72,7 +67,7 @@ fn fixture_sized_wayland_response_keeps_its_protocol_value()
 -> Result<(), Box<dyn std::error::Error>> {
     let captured = read_bounded_prefix(
         Cursor::new(wayland_protocol_fixture()),
-        COMMAND_OUTPUT_LIMIT,
+        PROTOCOL_COMMAND_OUTPUT_LIMIT,
     )
     .map_err(|reason| std::io::Error::other(format!("could not capture fixture: {reason:?}")))?;
     assert!(!captured.truncated);

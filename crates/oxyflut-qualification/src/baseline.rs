@@ -231,7 +231,7 @@ fn validate_provenance(provenance: &Provenance) -> Result<(), BaselineError> {
     match (provenance.kind, provenance.approval_evidence.as_ref()) {
         (ProvenanceKind::Synthetic, None) => Ok(()),
         (ProvenanceKind::Approved, Some(evidence))
-            if !evidence.path.is_empty() && !evidence.sha256.is_empty() =>
+            if !evidence.path.trim().is_empty() && !evidence.sha256.trim().is_empty() =>
         {
             Ok(())
         }
@@ -254,7 +254,10 @@ fn validate_unique_nonempty(values: &[String], error: BaselineError) -> Result<(
 
 #[cfg(test)]
 mod tests {
-    use super::{BaselineError, validate_unique_nonempty};
+    use super::{
+        ApprovalEvidence, BaselineError, Provenance, ProvenanceKind, validate_provenance,
+        validate_unique_nonempty,
+    };
 
     #[test]
     fn rejects_whitespace_only_entries() {
@@ -263,6 +266,22 @@ mod tests {
         assert!(matches!(
             validate_unique_nonempty(&values, BaselineError::TestVectors),
             Err(BaselineError::TestVectors)
+        ));
+    }
+
+    #[test]
+    fn approved_provenance_rejects_whitespace_only_reference_fields() {
+        let provenance = Provenance {
+            kind: ProvenanceKind::Approved,
+            approval_evidence: Some(ApprovalEvidence {
+                path: " \t".to_owned(),
+                sha256: "digest".to_owned(),
+            }),
+        };
+
+        assert!(matches!(
+            validate_provenance(&provenance),
+            Err(BaselineError::Provenance)
         ));
     }
 }
