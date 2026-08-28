@@ -103,11 +103,7 @@ fn collect_windows_responses(
     responses: &WindowsResponses,
 ) -> Result<EnvironmentInventory, EnvironmentCommandError> {
     let fields = EnvironmentFields {
-        operating_system: json_identity(
-            responses.operating_system.as_deref(),
-            "Version",
-            "windows",
-        ),
+        operating_system: operating_system_identity(responses.operating_system.as_deref()),
         minimum_version: InventoryValue::missing(MissingReason::NotDeclaredByLock),
         architecture: architecture(responses.processor.as_deref()),
         hardware_id: json_identity(responses.computer_system.as_deref(), "Model", "hardware"),
@@ -172,6 +168,49 @@ fn gpu_identity(raw: Option<&str>) -> InventoryValue {
         }
         _ => InventoryValue::missing(MissingReason::UnsupportedBySource),
     }
+}
+
+fn operating_system_identity(raw: Option<&str>) -> InventoryValue {
+    let Some(raw) = raw else {
+        return InventoryValue::missing(MissingReason::SourceUnavailable);
+    };
+    let Ok(value) = serde_json::from_str::<Value>(raw) else {
+        return InventoryValue::missing(MissingReason::UnsupportedBySource);
+    };
+    let Some(object) = first_json_object(&value) else {
+        return InventoryValue::missing(MissingReason::UnsupportedBySource);
+    };
+    let Some(product_name) = object.get("ProductName").and_then(Value::as_str) else {
+        return InventoryValue::missing(MissingReason::UnsupportedBySource);
+    };
+    let Some(display_version) = object.get("DisplayVersion").and_then(Value::as_str) else {
+        return InventoryValue::missing(MissingReason::UnsupportedBySource);
+    };
+    windows_operating_system_token(product_name, display_version).map_or_else(
+        || InventoryValue::missing(MissingReason::UnsupportedBySource),
+        observed_or_missing,
+    )
+}
+
+fn windows_operating_system_token(product_name: &str, display_version: &str) -> Option<String> {
+    let mut product_tokens = product_name.split_ascii_whitespace();
+    if !product_tokens.next()?.eq_ignore_ascii_case("Windows") {
+        return None;
+    }
+    let generation = match product_tokens.next()? {
+        "10" => "10",
+        "11" => "11",
+        _ => return None,
+    };
+    let (release, half) = display_version.split_once('H')?;
+    if release.is_empty()
+        || half.is_empty()
+        || !release.bytes().all(|byte| byte.is_ascii_digit())
+        || !half.bytes().all(|byte| byte.is_ascii_digit())
+    {
+        return None;
+    }
+    Some(format!("windows-{generation}-{release}H{half}"))
 }
 
 fn json_identity(raw: Option<&str>, field: &str, prefix: &str) -> InventoryValue {
@@ -366,7 +405,7 @@ fn observed_or_missing(value: String) -> InventoryValue {
 fn live_responses() -> WindowsResponses {
     WindowsResponses {
         operating_system: powershell_json(
-            "Get-ComputerInfo | Select-Object @{Name='Version';Expression={$_.OsVersion}} | ConvertTo-Json -Compress",
+            "Get-ComputerInfo | Select-Object @{Name='ProductName';Expression={$_.WindowsProductName}},@{Name='DisplayVersion';Expression={$_.OsDisplayVersion}} | ConvertTo-Json -Compress",
         ),
         processor: powershell_json(
             "Get-CimInstance Win32_Processor | Select-Object -First 1 Architecture | ConvertTo-Json -Compress",
@@ -460,4 +499,69 @@ fn command_output(program: &str, arguments: &[&str]) -> Option<CommandOutput> {
         exit_code: status.code(),
         success: status.success(),
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use std::error::Error;
+
+    use oxyflut_qualification::environment::MissingReason;
+    use oxyflut_qualification::identifiers::EnvironmentId;
+
+    use super::collect_fixture_windows;
+
+    #[test]
+    fn windows_operating_system_normalizer_accepts_windows_11_25h2_editions()
+    -> Result<(), Box<dyn Error>> {
+        for product_name in ["Windows 11 Pro", "Windows 11 Enterprise"] {
+            let inventory = inventory_with_operating_system(product_name, "25H2")?;
+            assert_eq!(
+                inventory.operating_system().observed_value(),
+                Some("windows-11-25H2")
+            );
+            super::super::validate_operating_system(EnvironmentId::Windows, &inventory)?;
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn windows_operating_system_normalizer_rejects_unpinned_releases() -> Result<(), Box<dyn Error>>
+    {
+        for (product_name, display_version) in [
+            ("Windows 10 Pro", "22H2"),
+            ("Windows 11 Enterprise", "24H2"),
+        ] {
+            let inventory = inventory_with_operating_system(product_name, display_version)?;
+            assert!(matches!(
+                super::super::validate_operating_system(EnvironmentId::Windows, &inventory),
+                Err(super::super::EnvironmentCommandError::EnvironmentMismatch)
+            ));
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn windows_operating_system_normalizer_keeps_unparseable_product_fields_missing()
+    -> Result<(), Box<dyn Error>> {
+        let inventory = inventory_with_operating_system("Windows Server 2025", "25H2")?;
+        assert_eq!(
+            inventory.operating_system().missing_reason(),
+            Some(MissingReason::UnsupportedBySource)
+        );
+        Ok(())
+    }
+
+    fn inventory_with_operating_system(
+        product_name: &str,
+        display_version: &str,
+    ) -> Result<oxyflut_qualification::environment::EnvironmentInventory, Box<dyn Error>> {
+        let operating_system = serde_json::to_string(&serde_json::json!({
+            "ProductName": product_name,
+            "DisplayVersion": display_version,
+        }))?;
+        let responses = serde_json::to_vec(&serde_json::json!({
+            "operatingSystem": operating_system,
+        }))?;
+        Ok(collect_fixture_windows(&responses)?)
+    }
 }
