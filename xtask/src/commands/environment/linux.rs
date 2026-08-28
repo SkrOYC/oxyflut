@@ -25,6 +25,7 @@ const PROTOCOL_COMMAND_OUTPUT_LIMIT: usize = 256 * 1024;
 const SOURCE_FILE_LIMIT: usize = 4096;
 const PACKAGE_OUTPUT_LIMIT: usize = 512;
 const MESA_DRIVER_PACKAGES: &[&str] = &["libgl1-mesa-dri", "mesa-vulkan-drivers"];
+const MESA_KERNEL_DRIVERS: &[&str] = &["amdgpu", "i915", "xe", "nouveau", "radeon"];
 /// Lists the Wayland interfaces retained in the companion inventory `protocolVersion` value.
 ///
 /// An incomplete observed list remains recorded because lock v5 doesn't include `protocolVersion`.
@@ -475,13 +476,18 @@ fn driver_version(
             }
             [_, _, ..] => return InventoryValue::missing(MissingReason::AmbiguousSource),
         }
-    } else {
+    } else if MESA_KERNEL_DRIVERS
+        .iter()
+        .any(|allowed| driver.eq_ignore_ascii_case(allowed))
+    {
         MESA_DRIVER_PACKAGES.iter().find_map(|name| {
             packages
                 .get(*name)
                 .and_then(Option::as_deref)
                 .and_then(package_fields)
         })
+    } else {
+        return InventoryValue::missing(MissingReason::UnsupportedBySource);
     };
     match package {
         Some((package, version)) => observed_or_missing(format!(

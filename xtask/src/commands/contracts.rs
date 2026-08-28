@@ -288,8 +288,11 @@ fn readiness_summaries(
                 code: "resolved-tool-unverifiable-host",
             },
         )) => [
-            FamilySummary::deferred("readiness", "resolved-tool-unverifiable-host", LOCK_PATH),
-            FamilySummary::deferred("promotion", "resolved-tool-unverifiable-host", PHASE_PATH),
+            FamilySummary::failed_path(
+                "readiness",
+                format!("resolved-tool-unverifiable-host; {LOCK_PATH}"),
+            ),
+            FamilySummary::failed("promotion", PHASE_PATH),
         ],
         Err(_) => [
             FamilySummary::failed("readiness", LOCK_PATH),
@@ -535,7 +538,7 @@ mod tests {
     use serde_json::Value;
 
     use super::{
-        ContractTemporaryDirectory, FAMILY_COUNT, RustContractError,
+        ContractTemporaryDirectory, ContractValidationReport, FAMILY_COUNT, RustContractError,
         accessibility_generation_summary, contract_test_summary, readiness_summaries,
         rust_contract_summary, validate_workspace, validators, workspace_root,
     };
@@ -583,21 +586,26 @@ mod tests {
     }
 
     #[test]
-    fn readiness_unverifiable_host_is_deferred_with_its_typed_code() {
-        let summaries = readiness_summaries(Err(
-            validators::readiness::ReadinessValidationError::Readiness(
-                validators::readiness::ReadinessError::Invariant {
-                    code: "resolved-tool-unverifiable-host",
-                },
-            ),
-        ));
+    fn readiness_unverifiable_host_fails_with_its_typed_code() {
+        let report = ContractValidationReport {
+            summaries: readiness_summaries(Err(
+                validators::readiness::ReadinessValidationError::Readiness(
+                    validators::readiness::ReadinessError::Invariant {
+                        code: "resolved-tool-unverifiable-host",
+                    },
+                ),
+            ))
+            .into(),
+        };
         assert_eq!(
-            summaries.map(|summary| summary.line()),
-            [
-                "readiness: deferred (resolved-tool-unverifiable-host; .constitution/tech-spec/contracts/qualification-lock.json)".to_owned(),
-                "promotion: deferred (resolved-tool-unverifiable-host; .constitution/tech-spec/contracts/specification-phase.json)".to_owned(),
+            report.summary_lines(),
+            vec![
+                "readiness: failed (resolved-tool-unverifiable-host; .constitution/tech-spec/contracts/qualification-lock.json)".to_owned(),
+                "promotion: failed (.constitution/tech-spec/contracts/specification-phase.json)"
+                    .to_owned(),
             ]
         );
+        assert_eq!(report.outcome().exit_code(), ExitCode::FAILURE);
     }
 
     #[test]

@@ -4,8 +4,8 @@ use std::io::Cursor;
 use oxyflut_qualification::environment::{InventoryValue, MissingReason};
 
 use super::{
-    PROTOCOL_COMMAND_OUTPUT_LIMIT, WAYLAND_PROTOCOL_INTERFACES, capture_response, read_bounded,
-    read_bounded_prefix, wayland_protocol_version, x11_protocol_version,
+    PROTOCOL_COMMAND_OUTPUT_LIMIT, WAYLAND_PROTOCOL_INTERFACES, capture_response, driver_version,
+    read_bounded, read_bounded_prefix, wayland_protocol_version, x11_protocol_version,
 };
 
 #[test]
@@ -70,6 +70,40 @@ fn oversized_x11_response_reports_inventory_exceeds_bound() -> Result<(), Box<dy
         }
     ));
     Ok(())
+}
+
+#[test]
+fn mesa_driver_versions_require_an_allowlisted_kernel_driver() {
+    let packages = BTreeMap::from([(
+        "libgl1-mesa-dri".to_owned(),
+        Some("libgl1-mesa-dri\t25.0.0-1ubuntu1\n".to_owned()),
+    )]);
+    let failures = BTreeMap::new();
+
+    for driver in ["amdgpu", "i915", "xe", "nouveau", "radeon"] {
+        let expected = format!("{driver}/libgl1-mesa-dri=25.0.0-1ubuntu1");
+        assert_eq!(
+            driver_version(
+                Some(driver),
+                Some(&packages),
+                &failures,
+                MissingReason::NotInstalled
+            )
+            .observed_value(),
+            Some(expected.as_str())
+        );
+    }
+    assert!(matches!(
+        driver_version(
+            Some("virtio_gpu"),
+            Some(&packages),
+            &failures,
+            MissingReason::NotInstalled
+        ),
+        InventoryValue::Missing {
+            reason: MissingReason::UnsupportedBySource
+        }
+    ));
 }
 
 #[test]

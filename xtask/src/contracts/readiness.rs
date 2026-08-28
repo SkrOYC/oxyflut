@@ -265,11 +265,17 @@ fn validate_documents_with_attribution(
         _ => return Err(invariant("specification-phase").into()),
     };
 
-    Ok(ReadinessReport {
+    let report = ReadinessReport {
         candidate_implementation,
         measurement,
         promotion,
-    })
+    };
+    // Verify resolved tools last so invalid claims and promotion errors remain actionable.
+    let tools = array_field(lock, "resolvedTools")?;
+    if !tools.is_empty() {
+        verify_resolved_tools(root, tools)?;
+    }
+    Ok(report)
 }
 
 fn candidate_input_issues(
@@ -396,10 +402,6 @@ fn candidate_input_issues(
         }
         require_digest_or_issue(tool, "sha256", "resolved-tool-digests", &mut issues)?;
     }
-    if !tools.is_empty() {
-        verify_resolved_tools(root, tools)?;
-    }
-
     sort_and_deduplicate(&mut issues);
     Ok(issues)
 }
