@@ -145,14 +145,19 @@ mod tests {
     use crate::CommandOutcome;
 
     const RAW_COMPLETE: &str = "qualification/fixtures/measurements/complete.synthetic.json";
+    const RAW_ALL_EXCLUDED: &str = "qualification/fixtures/measurements/all-excluded.json";
     const SAMPLE_VALIDITY_COMPLETE: &str =
         "qualification/fixtures/sample-validity/complete.synthetic.json";
 
     #[test]
-    fn measurement_validates_complete_raw_and_sample_validity_templates()
-    -> Result<(), Box<dyn Error>> {
+    fn measurement_validates_complete_and_all_excluded_raw_templates() -> Result<(), Box<dyn Error>>
+    {
         assert_eq!(
             run(&["--input".to_owned(), RAW_COMPLETE.to_owned()]),
+            CommandOutcome::Success
+        );
+        assert_eq!(
+            run(&["--input".to_owned(), RAW_ALL_EXCLUDED.to_owned()]),
             CommandOutcome::Success
         );
         assert_eq!(
@@ -173,6 +178,10 @@ mod tests {
             "qualification/fixtures/measurements/valid-with-exclusion.json",
             "qualification/fixtures/measurements/non-monotonic-time.json",
             "qualification/fixtures/measurements/wrong-lock-digest.json",
+            "qualification/fixtures/sample-validity/unstated-percentile.json",
+            "qualification/fixtures/sample-validity/wrong-unit.json",
+            "qualification/fixtures/sample-validity/missing-maximum-bound.json",
+            "qualification/fixtures/sample-validity/unsupported-meter.json",
         ];
         for fixture in fixtures {
             assert!(matches!(
