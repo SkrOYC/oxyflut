@@ -184,11 +184,50 @@ fn dsse_pae_matches_the_pinned_protocol_example() -> Result<(), Box<dyn Error>> 
 }
 
 #[test]
-fn base64_decoder_accepts_dsse_standard_and_url_safe_forms() {
+fn base64_decoder_requires_the_dsse_standard_padded_alphabet() {
     assert_eq!(decode_base64("AA=="), Some(vec![0]));
-    assert_eq!(decode_base64("-_8="), Some(vec![251, 255]));
+    assert_eq!(decode_base64("+/8="), Some(vec![251, 255]));
+    assert_eq!(decode_base64("-_8="), None);
+    assert_eq!(decode_base64("AA"), None);
     assert_eq!(decode_base64("A"), None);
     assert_eq!(decode_base64("A=AA"), None);
+}
+
+#[test]
+fn published_spdx_schema_rejects_a_fabricated_commit_pin() -> Result<(), Box<dyn Error>> {
+    let temporary = staged_root()?;
+    let path = temporary
+        .path()
+        .join("qualification/schemas/external/spdx-3.0.1/schema/source.json");
+    let mut metadata = read_json(&path)?;
+    let object = metadata
+        .as_object_mut()
+        .ok_or("SPDX source metadata must be an object")?;
+    object.insert(
+        "repository".to_owned(),
+        serde_json::Value::String("https://github.com/spdx/spdx-spec".to_owned()),
+    );
+    object.insert(
+        "commit".to_owned(),
+        serde_json::Value::String("61a649da8ca27924ac1ca8d2a061cb228839b24c".to_owned()),
+    );
+    object.insert(
+        "path".to_owned(),
+        serde_json::Value::String("schema/3.0.1/spdx-json-schema.json".to_owned()),
+    );
+    fs::write(
+        path,
+        format!("{}\n", serde_json::to_string_pretty(&metadata)?),
+    )?;
+
+    let error = verify_at(temporary.path())
+        .err()
+        .ok_or("a fabricated SPDX pin must fail")?;
+    assert!(matches!(
+        error,
+        ExternalContractsError::SourceIdentity { .. }
+    ));
+    Ok(())
 }
 
 fn staged_root() -> Result<TemporaryDirectory, Box<dyn Error>> {

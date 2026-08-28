@@ -137,6 +137,8 @@ impl SchemaRegistry {
         let mut validators = BTreeMap::new();
         let mut identities_by_path = BTreeMap::new();
         for source in &sources {
+            // The repository validates every local schema with asserted formats so RFC 3339 and
+            // URI contracts have the same fail-closed behavior in every command.
             let validator = jsonschema::draft202012::options()
                 .should_validate_formats(true)
                 .with_registry(&registry)
