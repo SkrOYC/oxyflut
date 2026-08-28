@@ -10,7 +10,7 @@ One path remains, and it is 2 story points:
 
 1. `OXY-D001`
 
-Every Epic B dependency of `OXY-D001` is satisfied. `OXY-B001` through `OXY-B006` delivered their spike reports, `OXY-B007` delivered the reference-hardware access register, and `OXY-B008` delivered the assessor coordination record as an explicitly blocked external input. Epics A and C were already archived, so `OXY-D001` has no unsatisfied prerequisite.
+Every Epic B dependency of `OXY-D001` is satisfied for dependency sequencing. `OXY-B001` through `OXY-B006` delivered their spike reports, `OXY-B007` delivered the reference-hardware access register, and `OXY-B008` is satisfied as a blocked external input whose acceptance pass log remains unmet. Its assessor coordination record does not complete the two-assessor gate; the second-assessor confirmation remains a named external input for `OXY-D001`, and Stage 1 owns approval and application of the authorship-independence policy. Epics A and C were already archived, so `OXY-D001` has no unsatisfied prerequisite.
 
 The critical path now runs through `OXY-D001` alone. The next critical epic is Epic D, Readiness reconciliation.
 

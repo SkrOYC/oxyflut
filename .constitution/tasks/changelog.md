@@ -12,14 +12,14 @@ All notable changes to the Stage 4 execution plan appear in this file.
 
 ### Changed
 
-- Recomputed the critical path: `OXY-D001` is the single remaining active ticket at 2 story points, and every Epic B dependency is satisfied.
-- Archived Epic B with a completion record and its deviations; the lead moves `.constitution/tasks/active/EPIC-B-readiness-research.md` to `.constitution/tasks/completed/` outside this entry.
+- Recomputed the critical path: `OXY-D001` is the single remaining active ticket at 2 story points, and every Epic B dependency is available to it; OXY-B008 is CLOSED AS BLOCKED as a named external input whose acceptance pass log remains unmet.
+- Archived Epic B with its completion record and deviations, including the `.constitution/tasks/active/EPIC-B-readiness-research.md` to `.constitution/tasks/completed/EPIC-B-readiness-research.md` rename in this release.
 - Routed every Epic B Stage 3 revision, retained gating KU, and blocked external input into the `OXY-D001 Inputs from Epic B` section of `.constitution/tasks/active/EPIC-D-readiness-reconciliation.md`.
 
 ### Known limitations
 
 - macOS arm64 and Windows x86-64 reference-hardware access is blocked. Neither environment has a named accountable owner or a usable access procedure, so neither can be compared with its Stage 3 reference.
-- The second assessor is missing. Only one confirmation is preserved, so OXY-B008 stays open and `measurementPolicy.assessors` stays `null`.
+- OXY-B008 is CLOSED AS BLOCKED. Only one confirmation is preserved, so its acceptance pass log remains unmet; the second-assessor confirmation is a named external input for OXY-D001, `measurementPolicy.assessors` stays `null`, and the assessor gate is not complete.
 - The authorship-independence rule is unresolved. Stage 1 must approve and apply the PRD amendment before Stage 3 can update the conforming qualification contracts, and until then a disclosed candidate-code or qualification-evidence authorship remains a gating conflict.
 - The numeric layout visit cap, the Tier 1 platform and protocol floors, and the independent presentation-opportunity meters remain gating known unknowns. This Stage 4 iteration cannot set `candidateImplementationReady`.
 
