@@ -213,7 +213,9 @@ enum BaselineCommandError {
 mod tests {
     use std::error::Error;
     use std::fs;
+    use std::ops::Deref;
     use std::path::{Path, PathBuf};
+    use std::sync::atomic::{AtomicU64, Ordering};
 
     use oxyflut_qualification::evidence::{
         MediaType, canonical_json_bytes, verify_file, verify_path_digest,
@@ -233,14 +235,11 @@ mod tests {
 
     #[test]
     fn validates_the_complete_synthetic_baseline_without_writing() -> Result<(), Box<dyn Error>> {
-        let root = workspace_root()?;
+        let root = temporary_directory("validate-without-output")?;
         let output = root.join("qualification/fixtures/baselines/no-output-test");
-        if output.exists() {
-            fs::remove_dir_all(&output)?;
-        }
 
         assert_eq!(
-            run(&["--input".to_owned(), COMPLETE_FIXTURE.to_owned()]),
+            run_at_root(&root, &["--input".to_owned(), COMPLETE_FIXTURE.to_owned()],),
             CommandOutcome::Success
         );
         assert!(!output.exists());
@@ -270,11 +269,8 @@ mod tests {
 
     #[test]
     fn approved_provenance_requires_digest_bound_approval_evidence() -> Result<(), Box<dyn Error>> {
-        let root = workspace_root()?;
-        let input = root.join(format!(
-            "qualification/fixtures/baselines/approved-test-{}.json",
-            std::process::id()
-        ));
+        let root = temporary_directory("approved-provenance")?;
+        let input = root.join("qualification/fixtures/baselines/approved-test.json");
         let approval = root.join("qualification/fixtures/evidence/preserved-source.json");
         let mut baseline: Value = serde_json::from_slice(&fs::read(root.join(COMPLETE_FIXTURE))?)?;
         let provenance = baseline
@@ -298,7 +294,7 @@ mod tests {
             .to_str()
             .ok_or("approved baseline input must be UTF-8")?
             .to_owned();
-        let valid = run(&["--input".to_owned(), input_argument.clone()]);
+        let valid = run_at_root(&root, &["--input".to_owned(), input_argument.clone()]);
 
         let approval_evidence = baseline
             .pointer_mut("/provenance/approvalEvidence/sha256")
@@ -308,8 +304,7 @@ mod tests {
             &input,
             format!("{}\n", serde_json::to_string_pretty(&baseline)?),
         )?;
-        let invalid = run(&["--input".to_owned(), input_argument]);
-        fs::remove_file(input)?;
+        let invalid = run_at_root(&root, &["--input".to_owned(), input_argument]);
 
         assert_eq!(valid, CommandOutcome::Success);
         assert!(matches!(invalid, CommandOutcome::Failed(_)));
@@ -319,12 +314,9 @@ mod tests {
     #[test]
     fn writes_deterministic_schema_valid_canonical_output_with_sidecar_provenance()
     -> Result<(), Box<dyn Error>> {
-        let root = workspace_root()?;
+        let root = temporary_directory("canonical-output")?;
         let output = "qualification/fixtures/baselines/output-test";
         let output_path = root.join(output);
-        if output_path.exists() {
-            fs::remove_dir_all(&output_path)?;
-        }
 
         let arguments = [
             "--input".to_owned(),
@@ -426,29 +418,19 @@ mod tests {
             })
         );
 
-        fs::remove_dir_all(output_path)?;
         Ok(())
     }
 
     #[test]
     fn rejects_publication_when_the_source_changes_after_validation() -> Result<(), Box<dyn Error>>
     {
-        let root = workspace_root()?;
-        let input_text = format!(
-            "qualification/fixtures/baselines/snapshot-source-test-{}.json",
-            std::process::id()
-        );
+        let root = temporary_directory("snapshot-source")?;
+        let input_text = "qualification/fixtures/baselines/snapshot-source-test.json";
         let input = input_text.parse::<RepositoryPath>()?;
-        let input_path = root.join(&input_text);
-        let output_text = format!(
-            "qualification/fixtures/baselines/snapshot-output-test-{}",
-            std::process::id()
-        );
+        let input_path = root.join(input_text);
+        let output_text = "qualification/fixtures/baselines/snapshot-output-test";
         let output = output_text.parse::<RepositoryPath>()?;
-        let output_path = root.join(&output_text);
-        if output_path.exists() {
-            fs::remove_dir_all(&output_path)?;
-        }
+        let output_path = root.join(output_text);
         fs::copy(root.join(COMPLETE_FIXTURE), &input_path)?;
 
         let changed_input = input_path.clone();
@@ -459,10 +441,6 @@ mod tests {
             })
         });
         let output_exists = output_path.exists();
-        fs::remove_file(input_path)?;
-        if output_exists {
-            fs::remove_dir_all(&output_path)?;
-        }
 
         assert!(matches!(
             result,
@@ -476,7 +454,7 @@ mod tests {
     fn synthetic_baseline_cannot_satisfy_an_approved_lock_reference() -> Result<(), Box<dyn Error>>
     {
         let source = workspace_root()?;
-        let root = temporary_directory("synthetic-lock-reference");
+        let root = temporary_directory("synthetic-lock-reference")?;
         copy_directory(
             &source.join("qualification/fixtures/contracts/readiness/ready"),
             &root,
@@ -516,7 +494,6 @@ mod tests {
         )?;
 
         let result = validate_workspace(&root);
-        fs::remove_dir_all(&root)?;
         assert!(matches!(
             result,
             Err(ReadinessValidationError::Readiness(
@@ -548,8 +525,51 @@ mod tests {
             .ok_or_else(|| "xtask must remain directly below the workspace root".into())
     }
 
-    fn temporary_directory(name: &str) -> PathBuf {
-        std::env::temp_dir().join(format!("oxyflut-baseline-{name}-{}", std::process::id()))
+    static TEMP_SEQUENCE: AtomicU64 = AtomicU64::new(0);
+
+    struct TemporaryDirectory {
+        path: PathBuf,
+    }
+
+    impl Deref for TemporaryDirectory {
+        type Target = Path;
+
+        fn deref(&self) -> &Self::Target {
+            &self.path
+        }
+    }
+
+    impl AsRef<Path> for TemporaryDirectory {
+        fn as_ref(&self) -> &Path {
+            &self.path
+        }
+    }
+
+    impl Drop for TemporaryDirectory {
+        fn drop(&mut self) {
+            let _ = fs::remove_dir_all(&self.path);
+        }
+    }
+
+    fn temporary_directory(name: &str) -> Result<TemporaryDirectory, Box<dyn Error>> {
+        let source = workspace_root()?;
+        for _ in 0..128 {
+            let sequence = TEMP_SEQUENCE.fetch_add(1, Ordering::Relaxed);
+            let path = std::env::temp_dir().join(format!(
+                "oxyflut-baseline-{name}-{}-{sequence}",
+                std::process::id()
+            ));
+            match fs::create_dir(&path) {
+                Ok(()) => {
+                    copy_directory(&source.join(".constitution"), &path.join(".constitution"))?;
+                    copy_directory(&source.join("qualification"), &path.join("qualification"))?;
+                    return Ok(TemporaryDirectory { path });
+                }
+                Err(error) if error.kind() == std::io::ErrorKind::AlreadyExists => continue,
+                Err(error) => return Err(error.into()),
+            }
+        }
+        Err("could not create a temporary baseline workspace".into())
     }
 
     fn copy_directory(source: &Path, destination: &Path) -> Result<(), Box<dyn Error>> {
