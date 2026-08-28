@@ -110,7 +110,7 @@ Use Conventional Commits. A commit that changes a public contract, ABI, schema, 
 
 ## Verification commands
 
-The following commands are the Stage 4 command contract. Only the documentation formatter exists in the repository at v0.15.0. Stage 4 can schedule implementation of the missing commands for qualification work only.
+The following commands are the Stage 4 command contract. The documentation formatter and the qualification commands marked Available exist in the repository at v0.15.0; Stage 4 can schedule implementation of the remaining missing commands for qualification work only.
 
 The staged native toolchain supports only `x86_64-unknown-linux-gnu`; other Tier 1 hosts are an OXY-D001 lock input.
 
@@ -123,12 +123,12 @@ Qualification planning has three states. While `contracts/qualification-lock.jso
 | `cargo +1.98.0 clippy --workspace --all-targets --all-features -- -D warnings` | Check Rust code and all feature combinations. | Missing until the workspace exists. |
 | `cargo +1.98.0 test --workspace --all-features` | Run unit, integration, contract, and documentation tests. | Missing until the workspace exists. |
 | `cargo +1.98.0 run -p xtask -- contracts validate` | Validate local schemas, instances, exact upstream sets, digests, Rust contracts, the authoritative C header and generated bindings, platform and accessibility baselines, score arithmetic, the selection decision, and Phase 3B promotion references. | Missing until `xtask` exists. |
-| `cargo +1.98.0 run -p xtask -- evidence verify PATH` | Verify one repository-relative evidence file, its schema or media type, canonical derived form when applicable, and every declared digest without rewriting preserved source bytes. Replace `PATH` with the evidence path. | Missing until the evidence writer exists. |
-| `cargo +1.98.0 run -p xtask -- external-contracts verify` | Verify every locally snapshotted SPDX, in-toto, SLSA, and DSSE contract and its pinned verifier against `contracts/external-contract-lock.json` without network resolution. | Missing until the snapshots and verifier adapters exist. |
-| `cargo +1.98.0 run -p xtask -- baseline validate --input PATH` | Validate one candidate-neutral capability, platform, accessibility, workload, scoring-anchor, corpus, or sample-validity baseline. Replace `PATH` with the baseline path. | Missing until baseline tooling exists. |
-| `cargo +1.98.0 run -p xtask -- measurement validate --input PATH` | Validate one raw-measurement or sample-validity record without executing a candidate measurement. Replace `PATH` with the record path. | Missing until measurement tooling exists. |
-| `cargo +1.98.0 run -p xtask -- environment inspect --environment ENVIRONMENT --output PATH` | Capture one content-bounded reference-environment inventory for `macos`, `windows`, `wayland`, or `x11`. Replace `ENVIRONMENT` and `PATH` with locked values. | Missing until environment collectors exist. |
-| `cargo +1.98.0 run -p xtask -- lock status --gate candidate-implementation` | Validate all pre-implementation inputs and report remaining KUs without changing either readiness flag. | Missing until readiness validation exists. |
+| `cargo +1.98.0 run -p xtask -- evidence verify PATH` | Verify one repository-relative evidence file, its schema or media type, canonical derived form when applicable, and every declared digest without rewriting preserved source bytes. Replace `PATH` with the evidence path. | Available. |
+| `cargo +1.98.0 run -p xtask -- external-contracts verify` | Verify every locally snapshotted SPDX, in-toto, SLSA, and DSSE contract and its pinned verifier against `contracts/external-contract-lock.json` without network resolution. | Available. |
+| `cargo +1.98.0 run -p xtask -- baseline validate --input PATH` | Validate one candidate-neutral capability, platform, accessibility, workload, scoring-anchor, corpus, or sample-validity baseline. Replace `PATH` with the baseline path. | Available. |
+| `cargo +1.98.0 run -p xtask -- measurement validate --input PATH` | Validate one raw-measurement or sample-validity record without executing a candidate measurement. Replace `PATH` with the record path. | Available. |
+| `cargo +1.98.0 run -p xtask -- environment inspect --environment ENVIRONMENT --output PATH` | Capture one content-bounded reference-environment inventory for `macos`, `windows`, `wayland`, or `x11`. Replace `ENVIRONMENT` and `PATH` with locked values. | Available. |
+| `cargo +1.98.0 run -p xtask -- lock status --gate candidate-implementation` | Validate all pre-implementation inputs and report remaining KUs without changing either readiness flag. | Available. |
 | `cargo +1.98.0 run -p xtask -- candidate build --candidate focused --locked` | Build the focused candidate from the qualification lock. | Missing until the adapter exists. |
 | `cargo +1.98.0 run -p xtask -- candidate build --candidate integrated --locked --dart-disabled` | Build the integrated candidate without the secondary runtime. | Missing until the fork and adapter exist. |
 | `cargo +1.98.0 run -p xtask -- probe --candidate CANDIDATE --environment ENVIRONMENT` | Run one frozen Tier 1 capability matrix. Replace `CANDIDATE` and `ENVIRONMENT` with locked identifiers. | Missing until the harness exists. |
