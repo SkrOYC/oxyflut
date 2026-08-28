@@ -54,6 +54,20 @@ fn oversized_wayland_response_reports_inventory_exceeds_bound()
 }
 
 #[test]
+fn partial_wayland_interface_observation_is_preserved() -> Result<(), Box<dyn std::error::Error>> {
+    assert_eq!(
+        wayland_protocol_version(
+            Some("interface: 'wl_compositor', version: 1, name: 1\n"),
+            MissingReason::ManualCapture,
+            false,
+        )
+        .observed_value(),
+        Some("wayland-wl_compositor-1")
+    );
+    Ok(())
+}
+
+#[test]
 fn fixture_sized_wayland_response_keeps_its_protocol_value()
 -> Result<(), Box<dyn std::error::Error>> {
     let captured = read_bounded_prefix(

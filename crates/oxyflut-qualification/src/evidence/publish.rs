@@ -23,33 +23,6 @@ const LOCK_RECOVERY_ATTEMPTS: u8 = 2;
 const STALE_LOCK_AGE: Duration = Duration::from_secs(5 * 60);
 static TEMPORARY_SEQUENCE: AtomicU64 = AtomicU64::new(0);
 
-/// Writes canonical JSON below one repository-relative directory at a content-addressed path.
-///
-/// The returned publication reports the immutable reference and whether this invocation created it.
-///
-/// # Errors
-///
-/// Returns an error when the output directory is outside the evidence root, canonical encoding fails, or publication fails.
-pub fn write_canonical_json_to_directory(
-    root: &Path,
-    directory: &RepositoryPath,
-    record: &Value,
-) -> Result<EvidencePublication, EvidenceError> {
-    super::ensure_evidence_path(directory)?;
-    let bytes = canonical_json_bytes(record)?;
-    let digest = hash_reader(Cursor::new(&bytes)).map_err(|source| EvidenceError::Io {
-        path: root.join(directory.as_str()),
-        source,
-    })?;
-    let path = RepositoryPath::parse(&format!("{}/{digest}.json", directory.as_str())).map_err(
-        |source| EvidenceError::InvalidPath {
-            path: directory.as_str().to_owned(),
-            source,
-        },
-    )?;
-    write_canonical_json_bytes_to_path(root, &path, &bytes, |writer, bytes| writer.write_all(bytes))
-}
-
 /// Writes canonical JSON at one repository-relative immutable evidence path.
 ///
 /// The returned publication reports the canonical bytes' SHA-256 and whether this invocation created the file, even when the caller-selected file name binds another immutable record, such as a provenance sidecar.
@@ -85,14 +58,7 @@ pub fn write_derived_json(
     write_derived_json_to_directory(root, &directory, record, source)
 }
 
-/// Writes a content-addressed derived JSON record below one repository-relative evidence directory.
-///
-/// The directory must itself be below `qualification/`. The reference name is the canonical record digest. The reference retains the verified source path and digest as derived provenance. The publication reports whether this invocation created the file.
-///
-/// # Errors
-///
-/// Returns an error when the output directory is outside the evidence root, provenance is invalid, the record isn't an object, or publication fails.
-pub fn write_derived_json_to_directory(
+fn write_derived_json_to_directory(
     root: &Path,
     directory: &RepositoryPath,
     record: &Value,

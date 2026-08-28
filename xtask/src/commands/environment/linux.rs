@@ -24,6 +24,10 @@ const COMMAND_OUTPUT_LIMIT: usize = 4096;
 const SOURCE_FILE_LIMIT: usize = 4096;
 const PACKAGE_OUTPUT_LIMIT: usize = 512;
 const MESA_DRIVER_PACKAGES: &[&str] = &["libgl1-mesa-dri", "mesa-vulkan-drivers"];
+/// Lists the Wayland interfaces retained in the companion inventory `protocolVersion` value.
+///
+/// An incomplete observed list remains recorded because lock v5 doesn't include `protocolVersion`.
+/// OXY-D001 must define the required interface-set completeness rule before lock adoption.
 const WAYLAND_PROTOCOL_INTERFACES: &[&str] = &[
     "wl_compositor",
     "wl_shm",
@@ -149,12 +153,7 @@ fn collect_linux_responses(
         responses.session_type.as_deref(),
         responses.source_missing_reason("session_type"),
     );
-    if matches!(
-        session,
-        InventoryValue::Missing {
-            reason: MissingReason::NotActiveSession
-        }
-    ) {
+    if matches!(environment, EnvironmentId::Wayland | EnvironmentId::X11) && session.is_missing() {
         return Err(EnvironmentCommandError::EnvironmentMismatch);
     }
     let (gpu_id, driver_version) = gpu_and_driver(

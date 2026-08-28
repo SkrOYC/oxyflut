@@ -16,6 +16,7 @@ const LOCK_PATH: &str = ".constitution/tech-spec/contracts/qualification-lock.js
 const CONSTRAINTS_PATH: &str = ".constitution/prd/constraints.md";
 const LOG_PATH: &str = "qualification/fixtures/measurements/harness/perf-001-launch-1.log";
 const SAMPLE_VALIDITY_PATH: &str = "qualification/fixtures/sample-validity/complete.synthetic.json";
+const RAW_MEASUREMENT_PATH: &str = "qualification/fixtures/measurements/complete.synthetic.json";
 
 #[test]
 fn templates_bind_one_identity_and_preserve_all_valid_observations() -> Result<(), Box<dyn Error>> {
@@ -295,6 +296,43 @@ fn raw_records_preserve_all_excluded_samples_until_bound_calculation() -> Result
     assert!(matches!(
         compute_comparison_bounds(&raw, templates.sample_validity()),
         Err(MeasurementError::NoValidObservations)
+    ));
+    Ok(())
+}
+
+#[test]
+fn monotonic_timestamps_are_checked_per_constraint_and_launch() -> Result<(), Box<dyn Error>> {
+    let root = workspace_root()?;
+    let lock_digest = hash_file(&root.join(LOCK_PATH))?;
+    let fixture =
+        serde_json::from_slice::<serde_json::Value>(&fs::read(root.join(RAW_MEASUREMENT_PATH))?)?;
+
+    let mut different_launch = fixture.clone();
+    *different_launch
+        .pointer_mut("/samples/3/monotonicNs")
+        .ok_or("raw fixture must contain a second launch")? = serde_json::Value::from(1);
+    super::RawMeasurement::parse_value(different_launch)?.validate(&root, lock_digest)?;
+
+    let mut different_constraint = fixture.clone();
+    *different_constraint
+        .pointer_mut("/samples/3/constraintId")
+        .ok_or("raw fixture must contain a second launch")? =
+        serde_json::Value::String("CON-MEM-001".to_owned());
+    *different_constraint
+        .pointer_mut("/samples/3/launch")
+        .ok_or("raw fixture must contain a second launch")? = serde_json::Value::from(1);
+    *different_constraint
+        .pointer_mut("/samples/3/monotonicNs")
+        .ok_or("raw fixture must contain a second launch")? = serde_json::Value::from(1);
+    super::RawMeasurement::parse_value(different_constraint)?.validate(&root, lock_digest)?;
+
+    let mut decreasing_same_group = fixture;
+    *decreasing_same_group
+        .pointer_mut("/samples/1/monotonicNs")
+        .ok_or("raw fixture must contain a second sample")? = serde_json::Value::from(99);
+    assert!(matches!(
+        super::RawMeasurement::parse_value(decreasing_same_group)?.validate(&root, lock_digest),
+        Err(MeasurementError::NonMonotonicTime)
     ));
     Ok(())
 }

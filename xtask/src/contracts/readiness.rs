@@ -348,7 +348,6 @@ fn candidate_input_issues(
     if tools.is_empty() {
         issues.push("resolved-tools".to_owned());
     }
-    let mut contains_absolute_executable = false;
     for tool in tools {
         let tool = tool.as_object().ok_or_else(|| invariant("resolved-tool"))?;
         for field in [
@@ -362,26 +361,16 @@ fn candidate_input_issues(
             require_nonempty_string_or_issue(tool, field, "resolved-tool", &mut issues)?;
         }
         require_digest_or_issue(tool, "sha256", "resolved-tool-digests", &mut issues)?;
-        if let (Some(executable_path), Some(digest)) = (
-            nonempty_string(tool, "executablePath")?,
-            nonempty_string(tool, "sha256")?,
-        ) {
-            if Path::new(executable_path).is_absolute() {
-                contains_absolute_executable = true;
-            } else {
-                let _ = digests::verify_reference(root, executable_path, digest)?;
-            }
-        }
     }
-    if contains_absolute_executable {
-        verify_absolute_resolved_tools(root, tools)?;
+    if !tools.is_empty() {
+        verify_resolved_tools(root, tools)?;
     }
 
     sort_and_deduplicate(&mut issues);
     Ok(issues)
 }
 
-fn verify_absolute_resolved_tools(root: &Path, tools: &[Value]) -> Result<(), ReadinessError> {
+fn verify_resolved_tools(root: &Path, tools: &[Value]) -> Result<(), ReadinessError> {
     let manifest_path = root.join(TOOLCHAIN_MANIFEST_PATH);
     let manifest = crate::toolchain::ToolchainManifest::from_json(
         &fs::read(&manifest_path).map_err(|source| ReadinessError::Io {

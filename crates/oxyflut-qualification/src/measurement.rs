@@ -103,7 +103,7 @@ pub struct RawSampleInput {
     pub launch: u64,
     /// The one-based observation number within the launch.
     pub ordinal: u64,
-    /// The monotonic observation time in nanoseconds.
+    /// The observation time in nanoseconds from a clock that is monotonic for this launch.
     pub monotonic_ns: u64,
     /// The directly observed scalar value.
     pub value: f64,
@@ -248,20 +248,24 @@ impl RawMeasurement {
         }
 
         let mut keys = BTreeSet::new();
-        let mut previous_time = None;
+        let mut previous_times = BTreeMap::new();
         for sample in &self.samples {
             let constraint = ConstraintId::parse(&sample.constraint_id)
                 .map_err(|_| MeasurementError::Constraint)?;
             if sample.launch == 0 || sample.ordinal == 0 {
                 return Err(MeasurementError::SampleOrdinal);
             }
-            if !keys.insert((constraint, sample.launch, sample.ordinal)) {
+            if !keys.insert((constraint.clone(), sample.launch, sample.ordinal)) {
                 return Err(MeasurementError::DuplicateSampleKey);
             }
-            if previous_time.is_some_and(|time| sample.monotonic_ns < time) {
+            let key = (constraint, sample.launch);
+            if previous_times
+                .get(&key)
+                .is_some_and(|time| sample.monotonic_ns < *time)
+            {
                 return Err(MeasurementError::NonMonotonicTime);
             }
-            previous_time = Some(sample.monotonic_ns);
+            previous_times.insert(key, sample.monotonic_ns);
             if sample.unit.trim().is_empty() {
                 return Err(MeasurementError::Unit);
             }
