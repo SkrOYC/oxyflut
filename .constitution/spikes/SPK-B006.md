@@ -4,7 +4,7 @@
 
 - Status: Completed.
 - Budget: 1 focused day.
-- Clock start / stop: 2026-08-28T17:35:11Z / 2026-08-28T17:44:06Z.
+- Clock start / stop: 2026-08-28T19:42:20Z / 2026-08-28T19:59:33Z.
 
 ## Question
 
@@ -95,26 +95,31 @@ $ sha256sum source contract
 
 Use one physical core for each parser campaign. Require at least `86_400` process CPU seconds per implemented untrusted parser ingress and `28_800` process CPU seconds for each supported thread-instrumented callback or teardown target. Require a 5-second libFuzzer timeout, the ingress cap as `-max_len`, and a zero unresolved-report result. In the commands, `TARGET` is the implemented ingress fuzz target, `CORPUS` is its admitted persistent corpus directory, `CAP` is the row's byte cap, `FUZZ_EXE` is the built target executable, `CPU_LOG` is the GNU Time output, `PACKAGE` owns the replay test, and `TEST_FILTER` selects that replay.
 
-[`-max_total_time`](https://llvm.org/docs/LibFuzzer.html) is an elapsed-time maximum for one fuzzer invocation. It is only an operational bound. It cannot establish CON-SEC-001 or CON-SEC-002 process-CPU coverage. The [cargo-fuzz README](https://raw.githubusercontent.com/rust-fuzz/cargo-fuzz/0.13.2/README.md) directs users to command help, and P8 verifies that `--careful` is a `cargo fuzz build` option. Before a campaign, select `nightly-2026-08-12`, then run this preflight; a mismatch fails before build or execution:
+[`-max_total_time`](https://llvm.org/docs/LibFuzzer.html) is an elapsed-time maximum for one fuzzer invocation. It is only an operational bound. It cannot establish CON-SEC-001 or CON-SEC-002 process-CPU coverage. The [cargo-fuzz README](https://raw.githubusercontent.com/rust-fuzz/cargo-fuzz/0.13.2/README.md) directs users to command help, and P8 verifies that `--careful` is a `cargo fuzz build` option. Before a campaign, select `nightly-2026-08-12`, select exactly one `hostToolRecords` entry by both `hostname` and Rust host triple, then run this preflight. It resolves Rust tools through `rustup which --toolchain`, resolves non-Rust tools through `command -v`, compares every resolved executable hash with that selected record, and fails before build or execution on no match or any mismatch.
 
 ```sh
+POLICY=qualification/staged/fuzz-corpora.json
 TOOLCHAIN=nightly-2026-08-12
+HOST_NAME="$(hostname)"
+HOST_TRIPLE="$(rustc +"$TOOLCHAIN" -vV | awk '/^host:/ {print $2}')"
+HOST_RECORD="$(jq -cer --arg hostname "$HOST_NAME" --arg triple "$HOST_TRIPLE" '[.instrumentation.campaignToolchain.hostToolRecords[] | select(.hostname == $hostname and .hostTriple == $triple)] | if length == 1 then .[0] else error("expected exactly one host record") end' "$POLICY")"
 RUSTC_BIN="$(rustup which --toolchain "$TOOLCHAIN" rustc)"
 CARGO_BIN="$(rustup which --toolchain "$TOOLCHAIN" cargo)"
 CARGO_MIRI_BIN="$(rustup which --toolchain "$TOOLCHAIN" cargo-miri)"
 CARGO_FUZZ_BIN="$(command -v cargo-fuzz)"
-TIME_BIN="$(command -v /run/current-system/sw/bin/time)"
-test "$(rustc +"$TOOLCHAIN" -vV | awk '/^commit-hash:/ {print $2}')" = "3d6c19bb9ab4798ecfb2ee943df01a811720fc27"
+TIME_BIN="$(command -v "$(printf '%s' "$HOST_RECORD" | jq -er '.tools[] | select(.name == "time") | .executablePath')")"
 printf '%s  %s\n' \
-  '7de94a5c099c8d7ee4cafb905e36d882325faa480d8cff6513dd8c0887fac0c5' "$RUSTC_BIN" \
-  '1cf1cd7feded113706026c5f04fad33e45364546e3c0d92ddee0c1a4c8277296' "$CARGO_BIN" \
-  '40a69668c9ff4e5df3e6a87531f2b87dcc5c84e705ee5b06f915fb76383c94af' "$CARGO_MIRI_BIN" \
-  'db150590a2f9fa003fb167bc0eec3f90ba5574fcdd01f78110e6f397dda56582' "$CARGO_FUZZ_BIN" \
-  'e8b9f5440e01a81e0692e68d07dfacb8059c434cae100c1fbb60b7ec52848480' "$TIME_BIN" | sha256sum -c -
-test "$(cargo +"$TOOLCHAIN" fuzz --version)" = 'cargo-fuzz 0.13.2'
+  "$(printf '%s' "$HOST_RECORD" | jq -er '.tools[] | select(.name == "rustc") | .sha256')" "$RUSTC_BIN" \
+  "$(printf '%s' "$HOST_RECORD" | jq -er '.tools[] | select(.name == "cargo") | .sha256')" "$CARGO_BIN" \
+  "$(printf '%s' "$HOST_RECORD" | jq -er '.tools[] | select(.name == "cargo-miri") | .sha256')" "$CARGO_MIRI_BIN" \
+  "$(printf '%s' "$HOST_RECORD" | jq -er '.tools[] | select(.name == "cargo-fuzz") | .sha256')" "$CARGO_FUZZ_BIN" \
+  "$(printf '%s' "$HOST_RECORD" | jq -er '.tools[] | select(.name == "time") | .sha256')" "$TIME_BIN" | sha256sum -c -
+test "$(rustc +"$TOOLCHAIN" -vV | awk '/^commit-hash:/ {print $2}')" = "$(printf '%s' "$HOST_RECORD" | jq -er '.rustcCommit')"
+test "$(cargo +"$TOOLCHAIN" fuzz --version)" = "$(printf '%s' "$HOST_RECORD" | jq -er '.tools[] | select(.name == "cargo-fuzz") | .version')"
+test "$("$TIME_BIN" --version | head -n 1)" = "$(printf '%s' "$HOST_RECORD" | jq -er '.tools[] | select(.name == "time") | .version')"
 ```
 
-Build every AddressSanitizer target with `cargo +nightly-2026-08-12 fuzz build --sanitizer address --careful TARGET`, and build every ThreadSanitizer target with `cargo +nightly-2026-08-12 fuzz build --sanitizer thread --careful TARGET`. For every successful shard, run the built executable as `command time -v -o CPU_LOG FUZZ_EXE CORPUS -max_total_time=28800 -timeout=5 -max_len=CAP`, preserve `User time (seconds)`, `System time (seconds)`, and elapsed wall time from `CPU_LOG`, and record user plus system seconds in the shard ledger. Add only successful shards with the same target, sanitizer, and persistent `CORPUS`; resume until the applicable threshold is reached. `-max_total_time=28800` bounds one operational invocation only. Keep `CORPUS` as the first libFuzzer corpus directory. Before admitting another input directory, use `FUZZ_EXE -merge=1 CORPUS NEW_INPUTS`, then resume the timed target. The LLVM documentation states that the first corpus directory receives new inputs and describes `-merge=1` and resumable merge control files. Replay every minimized crash and retained seed with `cargo +nightly-2026-08-12 miri test -p PACKAGE TEST_FILTER`.
+Build every AddressSanitizer target with `cargo +nightly-2026-08-12 fuzz build --sanitizer address --careful TARGET`, and build every ThreadSanitizer target with `cargo +nightly-2026-08-12 fuzz build --sanitizer thread --careful TARGET`. For every successful shard, run the built executable as `"$TIME_BIN" -v -o CPU_LOG FUZZ_EXE CORPUS -max_total_time=28800 -timeout=5 -max_len=CAP`, preserve `User time (seconds)`, `System time (seconds)`, and elapsed wall time from `CPU_LOG`, and record user plus system seconds in the shard ledger. Add only successful shards with the same target, sanitizer, and persistent `CORPUS`; resume until the applicable threshold is reached. `-max_total_time=28800` bounds one operational invocation only. Keep `CORPUS` as the first libFuzzer corpus directory. Before admitting another input directory, use `FUZZ_EXE -merge=1 CORPUS NEW_INPUTS`, then resume the timed target. The LLVM documentation states that the first corpus directory receives new inputs and describes `-merge=1` and resumable merge control files. Replay every minimized crash and retained seed with `cargo +nightly-2026-08-12 miri test -p PACKAGE TEST_FILTER`.
 
 P6 proves this host's `command time -v -o CPU_LOG` records the required three fields. P7 confirms the four post-patch test functions do not yet exist in the qualification scaffold, so OXY-SYN-SEC-001 must add them before rehearsal. P8 proves `nightly-2026-08-11` resolves commit `12c36e2539c54397c51d6ea4401defd8768a4f5b`, while `nightly-2026-08-12` resolves the required `3d6c19bb9ab4798ecfb2ee943df01a811720fc27`. P8 also re-hashes the executables from the dated selector. The captured host record uses only `nightly-2026-08-12`; the previous rolling-`nightly` record is inadmissible. This host records SHA-256 values for `rustc` `7de94a5c099c8d7ee4cafb905e36d882325faa480d8cff6513dd8c0887fac0c5`, `cargo` `1cf1cd7feded113706026c5f04fad33e45364546e3c0d92ddee0c1a4c8277296`, `cargo-miri` `40a69668c9ff4e5df3e6a87531f2b87dcc5c84e705ee5b06f915fb76383c94af`, `cargo-fuzz` 0.13.2 `db150590a2f9fa003fb167bc0eec3f90ba5574fcdd01f78110e6f397dda56582`, and GNU Time 1.10 `e8b9f5440e01a81e0692e68d07dfacb8059c434cae100c1fbb60b7ec52848480`. Stage 3 must stage an equivalent complete record for every campaign host and retain `resolved-tool-digests` as a gate until it does.
 
@@ -160,6 +165,58 @@ System time (seconds): 0.00
 Elapsed (wall clock) time (h:mm:ss or m:ss): 0:00.00
 $ grep -rn "fn asset_decode_replays_image_registry\\|fn checked_rgba_bytes" crates/oxyflut-assets/src
 NO_MATCH: the qualification scaffold does not yet contain the post-patch tests.
+```
+
+P11 rechecked the first host record. The [Rust COPYRIGHT notice](https://raw.githubusercontent.com/rust-lang/rust/3d6c19bb9ab4798ecfb2ee943df01a811720fc27/COPYRIGHT) licenses Rust under Apache-2.0 or MIT at the recipient's option; it supports `MIT OR Apache-2.0` for `rustc`, `cargo`, and `cargo-miri`. The [cargo-fuzz 0.13.2 package metadata](https://raw.githubusercontent.com/rust-fuzz/cargo-fuzz/0.13.2/Cargo.toml) declares `MIT OR Apache-2.0`, and its fetched Apache and MIT notices match that declaration. The fetched [GNU Time 1.10 source distribution](https://ftp.gnu.org/gnu/time/time-1.10.tar.gz) contains the GPLv3 `COPYING` notice and a source header permitting version 3 or any later version, establishing `GPL-3.0-or-later` for GNU `time`.
+
+The output of P11 follows:
+
+```text
+$ hostname; . /etc/os-release; printf 'os=%s %s\n' "$ID" "$VERSION_ID"; rustc -vV | awk '/^host:/ {print $2}'
+thinkpadp14s
+os=nixos 26.05
+x86_64-unknown-linux-gnu
+$ rustc +nightly-2026-08-12 -vV | grep -E '^(rustc|commit-hash:|host:)'
+rustc 1.99.0-nightly (3d6c19bb9 2026-08-11)
+commit-hash: 3d6c19bb9ab4798ecfb2ee943df01a811720fc27
+host: x86_64-unknown-linux-gnu
+$ cargo +nightly-2026-08-12 --version; cargo +nightly-2026-08-12 miri --version; cargo +nightly-2026-08-12 fuzz --version
+cargo 1.99.0-nightly (b07e5a086 2026-08-07)
+miri 0.1.0 (3d6c19bb9a 2026-08-11)
+cargo-fuzz 0.13.2
+$ command -v time; command -V time; command -v /run/current-system/sw/bin/time; /run/current-system/sw/bin/time --version | head -n 1
+time
+time is a shell keyword
+/run/current-system/sw/bin/time
+time (GNU Time) 1.10
+$ sha256sum "$(rustup which --toolchain nightly-2026-08-12 rustc)" "$(rustup which --toolchain nightly-2026-08-12 cargo)" "$(rustup which --toolchain nightly-2026-08-12 cargo-miri)" "$(command -v cargo-fuzz)" /run/current-system/sw/bin/time
+7de94a5c099c8d7ee4cafb905e36d882325faa480d8cff6513dd8c0887fac0c5  /home/oscar/.rustup/toolchains/nightly-2026-08-12-x86_64-unknown-linux-gnu/bin/rustc
+1cf1cd7feded113706026c5f04fad33e45364546e3c0d92ddee0c1a4c8277296  /home/oscar/.rustup/toolchains/nightly-2026-08-12-x86_64-unknown-linux-gnu/bin/cargo
+40a69668c9ff4e5df3e6a87531f2b87dcc5c84e705ee5b06f915fb76383c94af  /home/oscar/.rustup/toolchains/nightly-2026-08-12-x86_64-unknown-linux-gnu/bin/cargo-miri
+db150590a2f9fa003fb167bc0eec3f90ba5574fcdd01f78110e6f397dda56582  /nix/store/w6g92cm021l24m5815ry1qf57n00k5j2-cargo-fuzz-0.13.2/bin/cargo-fuzz
+e8b9f5440e01a81e0692e68d07dfacb8059c434cae100c1fbb60b7ec52848480  /run/current-system/sw/bin/time
+$ fetch Rust, cargo-fuzz, and GNU Time license metadata to /tmp/wf-epic-b/OXY-B006-pr-round2/licenses
+rust COPYRIGHT sha256=172020dbfd5b53a226dfde77616190a48dcff519b0bc0e6deb91a8450782c4af: Apache License, Version 2.0 or MIT license, at your option
+cargo-fuzz Cargo.toml sha256=26132b1acda063cc70364cee6fbefc4dbc7bad80f99e43d550dfd0a0534e6174: license = "MIT OR Apache-2.0"
+rust LICENSE-APACHE sha256=62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a; LICENSE-MIT sha256=b71bd43a069ca0641a9ecfe585ca7b3c53b5cc1608f8b68321168698e28b5ea1
+cargo-fuzz LICENSE-APACHE sha256=a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2; LICENSE-MIT sha256=0621878e61f0d0fda054bcbe02df75192c28bde1ecc8289cbd86aeba2dd72720
+GNU time 1.10 tarball sha256=e8c29fb4ab599d8478e41e8618f50db8aede9c90af27d0d2ef28ae50d5de09c3; COPYING sha256=8ceb4b9ee5adedde47b31e975c1d90c73ad27b6b165a1dcd80c7c545eb65b903
+src/time.c: GNU Time is free software under GPL version 3 or (at your option) any later version.
+```
+
+P12 ran the host-neutral preflight against a temporary copy of the canonical policy. The record selector returned exactly the non-reference NixOS record, and every resolved executable matched its recorded SHA-256. This confirms the procedure's behavior on this host only; it doesn't create an Ubuntu reference-host record.
+
+The output of P12 follows:
+
+```text
+$ POLICY=/tmp/wf-epic-b/OXY-B006-pr-round2/p12/fuzz-corpora.json /tmp/wf-epic-b/OXY-B006-pr-round2/run-preflight.sh
+selected hostname=thinkpadp14s hostTriple=x86_64-unknown-linux-gnu reference=false
+rustc: OK
+cargo: OK
+cargo-miri: OK
+cargo-fuzz: OK
+time: OK
+preflight=passed
 ```
 
 ### Frozen corpus sources
@@ -236,26 +293,32 @@ The corpus importer may derive target-specific encodings only from a listed sour
 - ADRs to write or update: None.
 - Tickets unblocked in `tasks/active/`: `OXY-D001` can materialize the two staged policy records. Candidate fuzz targets remain contingent on candidate implementation.
 - Tickets to add or split: Create one implementation ticket for each actual parser ingress that the implementation inventory adds beyond table 3. Each ticket must inherit the same registry admission and campaign rules.
-- Spec edits required:
-  - `qualification/staged/fuzz-corpora.json`: create this file with the exact canonical bytes in the next section. `.constitution/tech-spec/contracts/qualification-lock.json`, `measurementPolicy.fuzzCorpora`: set the value to `ca622a22acef4394e81856de37b8ca3d15e8ffa2f49daaea483278a85306ee11`.
-  - `qualification/staged/security-patch-rehearsal.json`: create this file with the exact canonical bytes in the next section. `.constitution/tech-spec/contracts/qualification-lock.json`, `measurementPolicy.securityPatchRehearsal`: set the value to `fa8d4fe18ec459f3525490c093043755186dfc7e1ebcef5c9157045161fbcce1`.
-  - `.constitution/tech-spec/contracts/qualification-lock.json`, `resolvedTools`: append the exact `instrumentation.campaignToolchain.hostToolRecords[0]` record from `qualification/staged/fuzz-corpora.json`; require an equivalent complete record, including executable hashes and CPU-accounting fields, for every campaign host. Retain `resolved-tool-digests` in both known-unknown arrays until that condition holds.
-  - `.constitution/tech-spec/contracts/qualification-lock.json`, `preImplementationKnownUnknowns` and `gatingKnownUnknowns`: after both staged records and every listed source and license byte pass admission, remove only `fuzz-corpora` and `security-patch-rehearsal`. Leave all unrelated readiness gates unchanged.
+
+### Spec edits required
+
+- `qualification/staged/fuzz-corpora.json`: create this file with the exact canonical bytes in the next section. `.constitution/tech-spec/contracts/qualification-lock.json`, `measurementPolicy.fuzzCorpora`: set the value to `a718aa48103e4cf7f4ab60cce371ae85997e03317cb6d88c329c8db121589748`.
+- `qualification/staged/security-patch-rehearsal.json`: create this file with the exact canonical bytes in the next section. `.constitution/tech-spec/contracts/qualification-lock.json`, `measurementPolicy.securityPatchRehearsal`: set the value to `0e4b1d49168c4948c805ff8f5b29fdddfbe05eb5a01e6fb14f7be5e3f37bf65b`.
+- `.constitution/tech-spec/data-models/qualification-lock.schema.json`, `$defs.tool.properties`: add exactly `"pathRoot": { "type": "string", "minLength": 1 }` as an optional property before using the existing `rustup-home` convention. `$defs.tool` has `additionalProperties: false`, so this schema edit is required for the three relative Rust-toolchain paths; don't add any other fields.
+- `.constitution/tech-spec/contracts/qualification-lock.json`, `resolvedTools`: transform, don't append. For each actual campaign host, select its `instrumentation.campaignToolchain.hostToolRecords` record by hostname and host triple, then flatten its five `tools` entries (`rustc`, `cargo`, `cargo-miri` when present, `cargo-fuzz`, and GNU `time`) into individual `$defs.tool` records. Each entry must retain exactly `name`, `version`, `sourceIdentity`, `hostTriple`, `licenseId`, `executablePath`, `sha256`, and optional `pathRoot`; never append the host record itself. The first captured NixOS record is non-reference and cannot stand in for an Ubuntu reference host. Require a complete selected record, including license ID, executable hashes, and CPU-accounting fields, for every campaign host. Retain `resolved-tool-digests` in both known-unknown arrays until that condition holds.
+- `qualification/staged/fuzz-corpora.json`, `instrumentation.campaignToolchain.hostToolRecords`: before each campaign, capture hostname, host triple, reference status, operating system, selector, Rust commit, CPU-accounting fields, and the seven `$defs.tool` fields plus optional `pathRoot` for every executable. Capture `licenseId` from the package's authoritative license metadata or notice; reject an absent or non-SPDX value.
+- `.constitution/tech-spec/contracts/qualification-lock.json`, `preImplementationKnownUnknowns` and `gatingKnownUnknowns`: after both staged records and every listed source and license byte pass admission, remove only `fuzz-corpora` and `security-patch-rehearsal`. Leave all unrelated readiness gates unchanged.
 
 ### Canonical staged inputs
 
-Each displayed JSON block is UTF-8, uses the displayed 2-space indentation and key order, and ends with exactly one LF. P9 extracted the original displayed blocks byte-for-byte to their named files and hashed those files with `sha256sum`; P10 re-verifies the corrected current blocks.
+Each displayed JSON block is UTF-8, uses the displayed 2-space indentation and key order, and ends with exactly one LF. The stable canonical-block anchor, `prettier-ignore` directive, and `text` fence protect each byte stream from Markdown formatting. P12 extracts both blocks after Prettier, JSON-reserializes each with Prettier's JSON parser, compares the byte streams, and SHA-256-checks the result.
 
-The preflight now resolves the explicit host GNU Time executable with `command -v /run/current-system/sw/bin/time`, rather than non-POSIX `which`; this avoids resolving the shell `time` keyword while retaining the host executable that P8 hashed. The `fuzz-corpora.json` canonical digest changed from `0f349f9b42fcb1dd295d0c577f2866eb70605153ad0dde68f2b486c4b71148df` to `ca622a22acef4394e81856de37b8ca3d15e8ffa2f49daaea483278a85306ee11`. The `security-patch-rehearsal.json` digest remains `fa8d4fe18ec459f3525490c093043755186dfc7e1ebcef5c9157045161fbcce1`.
+The campaign policy is host-neutral except for `hostToolRecords`. Its first record captures this NixOS 26.05 host as non-reference. A campaign must select an exact hostname-and-triple match, resolve Rust through the selected dated Rustup toolchain, resolve `cargo-fuzz` and the selected GNU Time executable with `command -v`, and compare hashes against that record. `command -v time` alone yields a shell keyword on this host, so the selected record supplies the executable path to `command -v`; no Nix path or `/home/oscar` path appears in the generic procedure. P11 verifies the five records, their license IDs, and the shell-keyword result.
 
 The corrected current source bytes produce these declared digests:
 
 ```text
-ca622a22acef4394e81856de37b8ca3d15e8ffa2f49daaea483278a85306ee11  fuzz-corpora.json
-fa8d4fe18ec459f3525490c093043755186dfc7e1ebcef5c9157045161fbcce1  security-patch-rehearsal.json
+a718aa48103e4cf7f4ab60cce371ae85997e03317cb6d88c329c8db121589748  fuzz-corpora.json
+0e4b1d49168c4948c805ff8f5b29fdddfbe05eb5a01e6fb14f7be5e3f37bf65b  security-patch-rehearsal.json
 ```
 
-```json
+<!-- canonical-block: fuzz-corpora -->
+<!-- prettier-ignore -->
+```text
 {
   "schemaVersion": "1.0.0",
   "policyId": "OXY-B006-fuzz-corpora-v1",
@@ -273,7 +336,7 @@ fa8d4fe18ec459f3525490c093043755186dfc7e1ebcef5c9157045161fbcce1  security-patch
     "concurrencyRequiredProcessCpuSeconds": 28800,
     "addressBuildCommand": "cargo +nightly-2026-08-12 fuzz build --sanitizer address --careful TARGET",
     "concurrencyBuildCommand": "cargo +nightly-2026-08-12 fuzz build --sanitizer thread --careful TARGET",
-    "runCommand": "command time -v -o CPU_LOG FUZZ_EXE CORPUS -max_total_time=28800 -timeout=5 -max_len=CAP",
+    "runCommand": "\"$TIME_BIN\" -v -o CPU_LOG FUZZ_EXE CORPUS -max_total_time=28800 -timeout=5 -max_len=CAP",
     "cpuAccounting": {
       "requiredFields": [
         "User time (seconds)",
@@ -293,45 +356,69 @@ fa8d4fe18ec459f3525490c093043755186dfc7e1ebcef5c9157045161fbcce1  security-patch
       "requiredCargoFuzzVersion": "0.13.2",
       "requireHostToolRecordForEveryCampaign": true,
       "preflight": [
-        "TOOLCHAIN=nightly-2026-08-12",
-        "test \"$(rustc +$TOOLCHAIN -vV | awk '/^commit-hash:/ {print $2}')\" = \"3d6c19bb9ab4798ecfb2ee943df01a811720fc27\"",
-        "RUSTC_BIN=\"$(rustup which --toolchain $TOOLCHAIN rustc)\"; CARGO_BIN=\"$(rustup which --toolchain $TOOLCHAIN cargo)\"; CARGO_MIRI_BIN=\"$(rustup which --toolchain $TOOLCHAIN cargo-miri)\"; CARGO_FUZZ_BIN=\"$(command -v cargo-fuzz)\"; TIME_BIN=\"$(command -v /run/current-system/sw/bin/time)\"",
-        "printf \"%s  %s\\n\" \"7de94a5c099c8d7ee4cafb905e36d882325faa480d8cff6513dd8c0887fac0c5\" \"$RUSTC_BIN\" \"1cf1cd7feded113706026c5f04fad33e45364546e3c0d92ddee0c1a4c8277296\" \"$CARGO_BIN\" \"40a69668c9ff4e5df3e6a87531f2b87dcc5c84e705ee5b06f915fb76383c94af\" \"$CARGO_MIRI_BIN\" \"db150590a2f9fa003fb167bc0eec3f90ba5574fcdd01f78110e6f397dda56582\" \"$CARGO_FUZZ_BIN\" \"e8b9f5440e01a81e0692e68d07dfacb8059c434cae100c1fbb60b7ec52848480\" \"$TIME_BIN\" | sha256sum -c -",
-        "test \"$(cargo +$TOOLCHAIN fuzz --version)\" = \"cargo-fuzz 0.13.2\""
+        "TOOLCHAIN=nightly-2026-08-12; HOST_NAME=\"$(hostname)\"; HOST_TRIPLE=\"$(rustc +$TOOLCHAIN -vV | awk '/^host:/ {print $2}')\"",
+        "HOST_RECORD=\"$(jq -cer --arg hostname \"$HOST_NAME\" --arg triple \"$HOST_TRIPLE\" '[.instrumentation.campaignToolchain.hostToolRecords[] | select(.hostname == $hostname and .hostTriple == $triple)] | if length == 1 then .[0] else error(\"expected exactly one host record\") end' qualification/staged/fuzz-corpora.json)\"; test -n \"$HOST_RECORD\"",
+        "RUSTC_BIN=\"$(rustup which --toolchain $TOOLCHAIN rustc)\"; CARGO_BIN=\"$(rustup which --toolchain $TOOLCHAIN cargo)\"; CARGO_MIRI_BIN=\"$(rustup which --toolchain $TOOLCHAIN cargo-miri)\"; CARGO_FUZZ_BIN=\"$(command -v cargo-fuzz)\"; TIME_BIN=\"$(command -v \"$(printf '%s' \"$HOST_RECORD\" | jq -er '.tools[] | select(.name == \"time\") | .executablePath')\")\"",
+        "printf '%s  %s\\n' \"$(printf '%s' \"$HOST_RECORD\" | jq -er '.tools[] | select(.name == \"rustc\") | .sha256')\" \"$RUSTC_BIN\" \"$(printf '%s' \"$HOST_RECORD\" | jq -er '.tools[] | select(.name == \"cargo\") | .sha256')\" \"$CARGO_BIN\" \"$(printf '%s' \"$HOST_RECORD\" | jq -er '.tools[] | select(.name == \"cargo-miri\") | .sha256')\" \"$CARGO_MIRI_BIN\" \"$(printf '%s' \"$HOST_RECORD\" | jq -er '.tools[] | select(.name == \"cargo-fuzz\") | .sha256')\" \"$CARGO_FUZZ_BIN\" \"$(printf '%s' \"$HOST_RECORD\" | jq -er '.tools[] | select(.name == \"time\") | .sha256')\" \"$TIME_BIN\" | sha256sum -c -",
+        "test \"$(rustc +$TOOLCHAIN -vV | awk '/^commit-hash:/ {print $2}')\" = \"$(printf '%s' \"$HOST_RECORD\" | jq -er '.rustcCommit')\"; test \"$(cargo +$TOOLCHAIN fuzz --version)\" = \"$(printf '%s' \"$HOST_RECORD\" | jq -er '.tools[] | select(.name == \"cargo-fuzz\") | .version')\"; test \"$(\"$TIME_BIN\" --version | head -n 1)\" = \"$(printf '%s' \"$HOST_RECORD\" | jq -er '.tools[] | select(.name == \"time\") | .version')\""
       ],
       "hostToolRecords": [
         {
-          "host": "x86_64-unknown-linux-gnu",
-          "observedToolchainSelector": "nightly-2026-08-12",
-          "observedRustcRelease": "1.99.0-nightly",
+          "hostname": "thinkpadp14s",
+          "hostTriple": "x86_64-unknown-linux-gnu",
+          "reference": false,
+          "operatingSystem": "NixOS 26.05",
+          "toolchainSelector": "nightly-2026-08-12",
           "rustcCommit": "3d6c19bb9ab4798ecfb2ee943df01a811720fc27",
-          "rustcCommitDate": "2026-08-11",
-          "executables": [
-            [
-              "rustc",
-              "/home/oscar/.rustup/toolchains/nightly-2026-08-12-x86_64-unknown-linux-gnu/bin/rustc",
-              "7de94a5c099c8d7ee4cafb905e36d882325faa480d8cff6513dd8c0887fac0c5"
-            ],
-            [
-              "cargo",
-              "/home/oscar/.rustup/toolchains/nightly-2026-08-12-x86_64-unknown-linux-gnu/bin/cargo",
-              "1cf1cd7feded113706026c5f04fad33e45364546e3c0d92ddee0c1a4c8277296"
-            ],
-            [
-              "cargo-miri",
-              "/home/oscar/.rustup/toolchains/nightly-2026-08-12-x86_64-unknown-linux-gnu/bin/cargo-miri",
-              "40a69668c9ff4e5df3e6a87531f2b87dcc5c84e705ee5b06f915fb76383c94af"
-            ],
-            [
-              "cargo-fuzz",
-              "/nix/store/w6g92cm021l24m5815ry1qf57n00k5j2-cargo-fuzz-0.13.2/bin/cargo-fuzz",
-              "db150590a2f9fa003fb167bc0eec3f90ba5574fcdd01f78110e6f397dda56582"
-            ],
-            [
-              "time",
-              "/run/current-system/sw/bin/time",
-              "e8b9f5440e01a81e0692e68d07dfacb8059c434cae100c1fbb60b7ec52848480"
-            ]
+          "tools": [
+            {
+              "name": "rustc",
+              "version": "rustc 1.99.0-nightly (3d6c19bb9 2026-08-11)",
+              "sourceIdentity": "rustup-toolchain: nightly-2026-08-12-x86_64-unknown-linux-gnu; rust-lang/rust commit: 3d6c19bb9ab4798ecfb2ee943df01a811720fc27",
+              "hostTriple": "x86_64-unknown-linux-gnu",
+              "licenseId": "MIT OR Apache-2.0",
+              "executablePath": "toolchains/nightly-2026-08-12-x86_64-unknown-linux-gnu/bin/rustc",
+              "pathRoot": "rustup-home",
+              "sha256": "7de94a5c099c8d7ee4cafb905e36d882325faa480d8cff6513dd8c0887fac0c5"
+            },
+            {
+              "name": "cargo",
+              "version": "cargo 1.99.0-nightly (b07e5a086 2026-08-07)",
+              "sourceIdentity": "rustup-toolchain: nightly-2026-08-12-x86_64-unknown-linux-gnu; rust-lang/rust commit: 3d6c19bb9ab4798ecfb2ee943df01a811720fc27",
+              "hostTriple": "x86_64-unknown-linux-gnu",
+              "licenseId": "MIT OR Apache-2.0",
+              "executablePath": "toolchains/nightly-2026-08-12-x86_64-unknown-linux-gnu/bin/cargo",
+              "pathRoot": "rustup-home",
+              "sha256": "1cf1cd7feded113706026c5f04fad33e45364546e3c0d92ddee0c1a4c8277296"
+            },
+            {
+              "name": "cargo-miri",
+              "version": "miri 0.1.0 (3d6c19bb9a 2026-08-11)",
+              "sourceIdentity": "rustup component: miri; nightly-2026-08-12-x86_64-unknown-linux-gnu; rust-lang/rust commit: 3d6c19bb9ab4798ecfb2ee943df01a811720fc27",
+              "hostTriple": "x86_64-unknown-linux-gnu",
+              "licenseId": "MIT OR Apache-2.0",
+              "executablePath": "toolchains/nightly-2026-08-12-x86_64-unknown-linux-gnu/bin/cargo-miri",
+              "pathRoot": "rustup-home",
+              "sha256": "40a69668c9ff4e5df3e6a87531f2b87dcc5c84e705ee5b06f915fb76383c94af"
+            },
+            {
+              "name": "cargo-fuzz",
+              "version": "cargo-fuzz 0.13.2",
+              "sourceIdentity": "cargo-fuzz package 0.13.2; tag: 0.13.2; Cargo.toml SHA-256: 26132b1acda063cc70364cee6fbefc4dbc7bad80f99e43d550dfd0a0534e6174",
+              "hostTriple": "x86_64-unknown-linux-gnu",
+              "licenseId": "MIT OR Apache-2.0",
+              "executablePath": "/nix/store/w6g92cm021l24m5815ry1qf57n00k5j2-cargo-fuzz-0.13.2/bin/cargo-fuzz",
+              "sha256": "db150590a2f9fa003fb167bc0eec3f90ba5574fcdd01f78110e6f397dda56582"
+            },
+            {
+              "name": "time",
+              "version": "time (GNU Time) 1.10",
+              "sourceIdentity": "GNU time package 1.10; https://ftp.gnu.org/gnu/time/time-1.10.tar.gz; tarball SHA-256: e8c29fb4ab599d8478e41e8618f50db8aede9c90af27d0d2ef28ae50d5de09c3",
+              "hostTriple": "x86_64-unknown-linux-gnu",
+              "licenseId": "GPL-3.0-or-later",
+              "executablePath": "/run/current-system/sw/bin/time",
+              "sha256": "e8b9f5440e01a81e0692e68d07dfacb8059c434cae100c1fbb60b7ec52848480"
+            }
           ],
           "cpuAccounting": [
             "GNU Time 1.10",
@@ -502,7 +589,9 @@ fa8d4fe18ec459f3525490c093043755186dfc7e1ebcef5c9157045161fbcce1  security-patch
 }
 ```
 
-```json
+<!-- canonical-block: security-patch-rehearsal -->
+<!-- prettier-ignore -->
+```text
 {
   "schemaVersion": "1.0.0",
   "policyId": "OXY-SYN-SEC-001",
@@ -521,7 +610,7 @@ fa8d4fe18ec459f3525490c093043755186dfc7e1ebcef5c9157045161fbcce1  security-patch
     "cargo test -p oxyflut-assets checked_rgba_bytes",
     "cargo test -p oxyflut-assets asset_decode_replays_image_registry",
     "cargo +nightly-2026-08-12 fuzz build --sanitizer address --careful asset_decode",
-    "command time -v -o CPU_LOG FUZZ_EXE CORPUS -max_total_time=28800 -timeout=5 -max_len=1048576",
+    "\"$TIME_BIN\" -v -o CPU_LOG FUZZ_EXE CORPUS -max_total_time=28800 -timeout=5 -max_len=1048576",
     "record User time (seconds) plus System time (seconds) for the successful address shard and resume timed shards with the same corpus until the cumulative process CPU seconds are at least 86400",
     "cargo +nightly-2026-08-12 miri test -p oxyflut-assets checked_rgba_bytes",
     "cargo +nightly-2026-08-12 miri test -p oxyflut-assets asset_decode_replays_image_registry"
@@ -540,31 +629,39 @@ fa8d4fe18ec459f3525490c093043755186dfc7e1ebcef5c9157045161fbcce1  security-patch
 The output of P9 follows:
 
 ```text
-$ perl /tmp/wf-epic-b/OXY-B006/extract-staged-json.pl .constitution/spikes/SPK-B006.md /tmp/wf-epic-b/OXY-B006
-WROTE /tmp/wf-epic-b/OXY-B006/fuzz-corpora.json bytes=12144
-WROTE /tmp/wf-epic-b/OXY-B006/security-patch-rehearsal.json bytes=1861
-$ jq -e . /tmp/wf-epic-b/OXY-B006/fuzz-corpora.json >/dev/null
-$ jq -e . /tmp/wf-epic-b/OXY-B006/security-patch-rehearsal.json >/dev/null
-$ sha256sum /tmp/wf-epic-b/OXY-B006/fuzz-corpora.json /tmp/wf-epic-b/OXY-B006/security-patch-rehearsal.json
-0f349f9b42fcb1dd295d0c577f2866eb70605153ad0dde68f2b486c4b71148df  /tmp/wf-epic-b/OXY-B006/fuzz-corpora.json
-fa8d4fe18ec459f3525490c093043755186dfc7e1ebcef5c9157045161fbcce1  /tmp/wf-epic-b/OXY-B006/security-patch-rehearsal.json
+$ perl /tmp/wf-epic-b/OXY-B006-pr-round2/verify-canonical-blocks.pl .constitution/spikes/SPK-B006.md /tmp/wf-epic-b/OXY-B006-pr-round2/p9
+fuzz-corpora|a718aa48103e4cf7f4ab60cce371ae85997e03317cb6d88c329c8db121589748|14983|ok
+security-patch-rehearsal|0e4b1d49168c4948c805ff8f5b29fdddfbe05eb5a01e6fb14f7be5e3f37bf65b|1862|ok
+$ jq -e . /tmp/wf-epic-b/OXY-B006-pr-round2/p9/fuzz-corpora.json >/dev/null
+$ jq -e . /tmp/wf-epic-b/OXY-B006-pr-round2/p9/security-patch-rehearsal.json >/dev/null
+$ sha256sum /tmp/wf-epic-b/OXY-B006-pr-round2/p9/fuzz-corpora.json /tmp/wf-epic-b/OXY-B006-pr-round2/p9/security-patch-rehearsal.json
+a718aa48103e4cf7f4ab60cce371ae85997e03317cb6d88c329c8db121589748  /tmp/wf-epic-b/OXY-B006-pr-round2/p9/fuzz-corpora.json
+0e4b1d49168c4948c805ff8f5b29fdddfbe05eb5a01e6fb14f7be5e3f37bf65b  /tmp/wf-epic-b/OXY-B006-pr-round2/p9/security-patch-rehearsal.json
 ```
 
 The output of P10 follows:
 
 ```text
-$ perl /tmp/wf-epic-b/OXY-B006/reverify-canonical-json.pl .constitution/spikes/SPK-B006.md /tmp/wf-epic-b/OXY-B006/p10
-WROTE /tmp/wf-epic-b/OXY-B006/p10/fuzz-corpora.json bytes=12176 sha256=ca622a22acef4394e81856de37b8ca3d15e8ffa2f49daaea483278a85306ee11
-WROTE /tmp/wf-epic-b/OXY-B006/p10/security-patch-rehearsal.json bytes=1861 sha256=fa8d4fe18ec459f3525490c093043755186dfc7e1ebcef5c9157045161fbcce1
-$ jq -e . /tmp/wf-epic-b/OXY-B006/p10/fuzz-corpora.json >/dev/null
-$ jq -e . /tmp/wf-epic-b/OXY-B006/p10/security-patch-rehearsal.json >/dev/null
-$ sha256sum /tmp/wf-epic-b/OXY-B006/p10/fuzz-corpora.json /tmp/wf-epic-b/OXY-B006/p10/security-patch-rehearsal.json
-ca622a22acef4394e81856de37b8ca3d15e8ffa2f49daaea483278a85306ee11  /tmp/wf-epic-b/OXY-B006/p10/fuzz-corpora.json
-fa8d4fe18ec459f3525490c093043755186dfc7e1ebcef5c9157045161fbcce1  /tmp/wf-epic-b/OXY-B006/p10/security-patch-rehearsal.json
-$ printf '%s  %s\n' ca622a22acef4394e81856de37b8ca3d15e8ffa2f49daaea483278a85306ee11 /tmp/wf-epic-b/OXY-B006/p10/fuzz-corpora.json fa8d4fe18ec459f3525490c093043755186dfc7e1ebcef5c9157045161fbcce1 /tmp/wf-epic-b/OXY-B006/p10/security-patch-rehearsal.json | sha256sum -c -
-/tmp/wf-epic-b/OXY-B006/p10/fuzz-corpora.json: OK
-/tmp/wf-epic-b/OXY-B006/p10/security-patch-rehearsal.json: OK
+$ perl /tmp/wf-epic-b/OXY-B006-pr-round2/verify-canonical-blocks.pl .constitution/spikes/SPK-B006.md /tmp/wf-epic-b/OXY-B006-pr-round2/p10
+fuzz-corpora|a718aa48103e4cf7f4ab60cce371ae85997e03317cb6d88c329c8db121589748|14983|ok
+security-patch-rehearsal|0e4b1d49168c4948c805ff8f5b29fdddfbe05eb5a01e6fb14f7be5e3f37bf65b|1862|ok
+$ prettier --parser json /tmp/wf-epic-b/OXY-B006-pr-round2/p10/fuzz-corpora.json > /tmp/wf-epic-b/OXY-B006-pr-round2/p10/fuzz-corpora.reserialized.json
+$ prettier --parser json /tmp/wf-epic-b/OXY-B006-pr-round2/p10/security-patch-rehearsal.json > /tmp/wf-epic-b/OXY-B006-pr-round2/p10/security-patch-rehearsal.reserialized.json
+$ cmp -s /tmp/wf-epic-b/OXY-B006-pr-round2/p10/fuzz-corpora.json /tmp/wf-epic-b/OXY-B006-pr-round2/p10/fuzz-corpora.reserialized.json && cmp -s /tmp/wf-epic-b/OXY-B006-pr-round2/p10/security-patch-rehearsal.json /tmp/wf-epic-b/OXY-B006-pr-round2/p10/security-patch-rehearsal.reserialized.json
+canonical_json_reserialization=passed
+$ sha256sum /tmp/wf-epic-b/OXY-B006-pr-round2/p10/fuzz-corpora.json /tmp/wf-epic-b/OXY-B006-pr-round2/p10/security-patch-rehearsal.json
+a718aa48103e4cf7f4ab60cce371ae85997e03317cb6d88c329c8db121589748  /tmp/wf-epic-b/OXY-B006-pr-round2/p10/fuzz-corpora.json
+0e4b1d49168c4948c805ff8f5b29fdddfbe05eb5a01e6fb14f7be5e3f37bf65b  /tmp/wf-epic-b/OXY-B006-pr-round2/p10/security-patch-rehearsal.json
 ```
+
+### Canonical fenced-block integrity proposal
+
+Stage 3 must add an `xtask` or continuous-integration check that extracts the exact body after each stable `canonical-block` anchor, includes its terminal LF, excludes the fences, and SHA-256-checks the raw bytes before accepting a report change. Run the check after Prettier. The protected streams use `text` fences so Markdown formatting can't rewrite their bytes.
+
+The check must cover these anchors and digests:
+
+- `fuzz-corpora`: `a718aa48103e4cf7f4ab60cce371ae85997e03317cb6d88c329c8db121589748`.
+- `security-patch-rehearsal`: `0e4b1d49168c4948c805ff8f5b29fdddfbe05eb5a01e6fb14f7be5e3f37bf65b`.
 
 ## Sources
 
@@ -582,6 +679,13 @@ $ printf '%s  %s\n' ca622a22acef4394e81856de37b8ca3d15e8ffa2f49daaea483278a85306
 - [Unicode CLDR 45 release note and SPDX mapping](https://cldr.unicode.org/downloads/cldr-45)
 - [LLVM libFuzzer documentation](https://llvm.org/docs/LibFuzzer.html)
 - [cargo-fuzz 0.13.2 README](https://raw.githubusercontent.com/rust-fuzz/cargo-fuzz/0.13.2/README.md)
+- [Rust 3d6c19b COPYRIGHT notice](https://raw.githubusercontent.com/rust-lang/rust/3d6c19bb9ab4798ecfb2ee943df01a811720fc27/COPYRIGHT)
+- [Rust 3d6c19b Apache-2.0 notice](https://raw.githubusercontent.com/rust-lang/rust/3d6c19bb9ab4798ecfb2ee943df01a811720fc27/LICENSE-APACHE)
+- [Rust 3d6c19b MIT notice](https://raw.githubusercontent.com/rust-lang/rust/3d6c19bb9ab4798ecfb2ee943df01a811720fc27/LICENSE-MIT)
+- [cargo-fuzz 0.13.2 package metadata](https://raw.githubusercontent.com/rust-fuzz/cargo-fuzz/0.13.2/Cargo.toml)
+- [cargo-fuzz 0.13.2 Apache-2.0 notice](https://raw.githubusercontent.com/rust-fuzz/cargo-fuzz/0.13.2/LICENSE-APACHE)
+- [cargo-fuzz 0.13.2 MIT notice](https://raw.githubusercontent.com/rust-fuzz/cargo-fuzz/0.13.2/LICENSE-MIT)
+- [GNU Time 1.10 source distribution](https://ftp.gnu.org/gnu/time/time-1.10.tar.gz)
 - [image Apache-2.0 notice](https://raw.githubusercontent.com/image-rs/image/76e57184f22772dad1138e96954e57945406b15e/LICENSE-APACHE)
 - [image MIT notice](https://raw.githubusercontent.com/image-rs/image/76e57184f22772dad1138e96954e57945406b15e/LICENSE-MIT)
 - The canonical registry names every fetched immutable seed and license URL; P4 preserves the corresponding SHA-256 verification output.
