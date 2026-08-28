@@ -39,6 +39,8 @@ pub enum MissingReason {
     NotInstalled,
     /// The source exceeded the collector's fixed capture bound.
     InventoryExceedsBound,
+    /// Multiple authoritative records could match the requested identity.
+    AmbiguousSource,
 }
 
 /// One observed non-private value or an explicit typed absence.
@@ -204,15 +206,6 @@ impl SystemPackageLock {
             None => package_digest(&packages)?,
         };
         Ok(Self { digest, packages })
-    }
-
-    /// Builds a complete observed package lock.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error when the package records cannot form one bounded unique lock.
-    pub fn from_packages(packages: Vec<SystemPackage>) -> Result<Self, EnvironmentError> {
-        Self::from_records(packages)
     }
 
     /// Creates an explicit missing package lock with no available package records.

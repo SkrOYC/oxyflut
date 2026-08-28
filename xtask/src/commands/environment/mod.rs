@@ -104,13 +104,14 @@ fn inspect_with_source(
     if inventory.environment() != source.environment() {
         return Err(EnvironmentCommandError::SourceEnvironment);
     }
-    validate_architecture(source.environment(), &inventory)?;
+    validate_reference_environment(source.environment(), &inventory)?;
     let projection = inventory.lock_environment_value();
     validate_lock_environment_projection(root, source.environment(), &projection)?;
+    let inventory_path = companion_inventory_path(output)?;
+    validate_artifact_pair(root, output, &inventory_path)?;
 
     let projection_reference = write_canonical_json_to_path(root, output, &projection)
         .map_err(EnvironmentCommandError::Evidence)?;
-    let inventory_path = companion_inventory_path(output)?;
     let complete_inventory =
         inventory.inventory_value(&projection_reference.path, &projection_reference.sha256);
     let inventory_reference =
@@ -133,6 +134,14 @@ fn companion_inventory_path(
         .map_err(|_| EnvironmentCommandError::InventoryPath)
 }
 
+fn validate_reference_environment(
+    environment: EnvironmentId,
+    inventory: &EnvironmentInventory,
+) -> Result<(), EnvironmentCommandError> {
+    validate_architecture(environment, inventory)?;
+    validate_operating_system(environment, inventory)
+}
+
 fn validate_architecture(
     environment: EnvironmentId,
     inventory: &EnvironmentInventory,
@@ -144,6 +153,51 @@ fn validate_architecture(
     match inventory.fields().architecture.observed_value() {
         Some(actual) if actual == expected => Ok(()),
         Some(_) | None => Err(EnvironmentCommandError::EnvironmentMismatch),
+    }
+}
+
+fn validate_operating_system(
+    environment: EnvironmentId,
+    inventory: &EnvironmentInventory,
+) -> Result<(), EnvironmentCommandError> {
+    let expected = match environment {
+        EnvironmentId::Macos => "macos-26.5",
+        EnvironmentId::Windows => "windows-11-25H2",
+        EnvironmentId::Wayland | EnvironmentId::X11 => "ubuntu-26.04",
+    };
+    match inventory.operating_system().observed_value() {
+        Some(actual) if actual == expected => Ok(()),
+        Some(_) | None => Err(EnvironmentCommandError::EnvironmentMismatch),
+    }
+}
+
+fn validate_artifact_pair(
+    root: &Path,
+    projection: &RepositoryPath,
+    inventory: &RepositoryPath,
+) -> Result<(), EnvironmentCommandError> {
+    let projection_exists = artifact_exists(root, projection)?;
+    let inventory_exists = artifact_exists(root, inventory)?;
+    match (projection_exists, inventory_exists) {
+        (true, false) => Err(EnvironmentCommandError::ArtifactPair {
+            orphaned: projection.clone(),
+        }),
+        (false, true) => Err(EnvironmentCommandError::ArtifactPair {
+            orphaned: inventory.clone(),
+        }),
+        (false, false) | (true, true) => Ok(()),
+    }
+}
+
+fn artifact_exists(root: &Path, path: &RepositoryPath) -> Result<bool, EnvironmentCommandError> {
+    let destination = root.join(path.as_str());
+    match fs::symlink_metadata(&destination) {
+        Ok(_) => Ok(true),
+        Err(source) if source.kind() == io::ErrorKind::NotFound => Ok(false),
+        Err(source) => Err(EnvironmentCommandError::Io {
+            path: destination,
+            source,
+        }),
     }
 }
 
@@ -214,6 +268,12 @@ pub(crate) enum EnvironmentCommandError {
     /// The output path could not derive a distinct companion inventory path.
     #[error("environment companion inventory path is invalid")]
     InventoryPath,
+    /// Exactly one immutable environment artifact already exists.
+    #[error("environment artifact pair is partial; orphaned artifact: {orphaned}")]
+    ArtifactPair {
+        /// The projection or inventory artifact that has no companion.
+        orphaned: RepositoryPath,
+    },
     /// The active qualification lock could not be read.
     #[error("qualification lock could not be read")]
     Io {
@@ -252,6 +312,7 @@ impl EnvironmentCommandError {
             Self::FixtureJson(_) => "environment-fixture-json",
             Self::Inventory(_) => "environment-inventory",
             Self::InventoryPath => "environment-inventory-path",
+            Self::ArtifactPair { .. } => "environment-artifact-pair",
             Self::Io { .. } => "environment-lock-io",
             Self::LockJson(_) => "environment-lock-json",
             Self::LockShape => "environment-lock-shape",
@@ -279,7 +340,7 @@ mod tests {
 
     use super::{
         EnvironmentCommandError, PlatformSource, companion_inventory_path, inspect_with_source,
-        parse_arguments, workspace_root,
+        parse_arguments, validate_reference_environment, workspace_root,
     };
     use crate::CommandOutcome;
     use crate::commands::environment::fixtures::FixturePlatformSource;
@@ -319,6 +380,22 @@ mod tests {
                         }
                     ));
                 }
+            }
+            match environment {
+                EnvironmentId::Wayland => assert_eq!(
+                    inventory.fields().protocol_version.observed_value(),
+                    Some("wayland-wl_compositor-6-xdg_wm_base-6")
+                ),
+                EnvironmentId::X11 => assert_eq!(
+                    inventory.fields().protocol_version.observed_value(),
+                    Some("x11-11.0")
+                ),
+                EnvironmentId::Macos | EnvironmentId::Windows => assert!(matches!(
+                    inventory.fields().protocol_version,
+                    InventoryValue::Missing {
+                        reason: MissingReason::ManualCapture
+                    }
+                )),
             }
             assert_eq!(
                 inventory
@@ -491,6 +568,60 @@ mod tests {
     }
 
     #[test]
+    fn reference_operating_systems_accept_pinned_releases_and_reject_nixos_without_writing()
+    -> Result<(), Box<dyn Error>> {
+        let root = test_workspace_root()?;
+        let ubuntu = FixturePlatformSource::new(&root, EnvironmentId::Wayland).collect()?;
+        validate_reference_environment(EnvironmentId::Wayland, &ubuntu)?;
+
+        let output =
+            "qualification/fixtures/environments/nixos-test.json".parse::<RepositoryPath>()?;
+        assert_no_evidence(&root, &output)?;
+        let source =
+            FixturePlatformSource::with_fixture(&root, EnvironmentId::Wayland, "wayland-nixos");
+        let result = inspect_with_source(&root, &source, &output);
+        assert!(matches!(
+            result,
+            Err(EnvironmentCommandError::EnvironmentMismatch)
+        ));
+        assert_no_evidence(&root, &output)?;
+        Ok(())
+    }
+
+    #[test]
+    fn partial_environment_artifact_pair_names_the_orphaned_artifact() -> Result<(), Box<dyn Error>>
+    {
+        let workspace = temporary_directory("partial-pair")?;
+        let root = workspace.path();
+        let output = "qualification/evidence/environment.json".parse::<RepositoryPath>()?;
+        let output_path = root.join(output.as_str());
+        let parent = output_path
+            .parent()
+            .ok_or("environment projection must have a parent")?;
+        fs::create_dir_all(parent)?;
+        fs::write(&output_path, b"{}")?;
+        let source = FixturePlatformSource::new(root, EnvironmentId::Wayland);
+
+        let result = inspect_with_source(root, &source, &output);
+        assert!(matches!(
+            &result,
+            Err(EnvironmentCommandError::ArtifactPair { orphaned }) if orphaned == &output
+        ));
+        assert_eq!(
+            result.err().map(|error| error.to_string()).as_deref(),
+            Some(
+                "environment artifact pair is partial; orphaned artifact: qualification/evidence/environment.json"
+            )
+        );
+        assert!(
+            !root
+                .join(companion_inventory_path(&output)?.as_str())
+                .exists()
+        );
+        Ok(())
+    }
+
+    #[test]
     fn linux_collector_requires_the_complete_ubuntu_binary_package_set()
     -> Result<(), Box<dyn Error>> {
         let root = test_workspace_root()?;
@@ -568,6 +699,30 @@ mod tests {
             missing.version(),
             InventoryValue::Missing {
                 reason: MissingReason::NotInstalled
+            }
+        ));
+        Ok(())
+    }
+
+    #[test]
+    fn nvidia_driver_packages_are_bound_to_one_observed_kernel_driver() -> Result<(), Box<dyn Error>>
+    {
+        let root = test_workspace_root()?;
+        let source = FixturePlatformSource::with_fixture(
+            &root,
+            EnvironmentId::Wayland,
+            "wayland-nvidia-ambiguous",
+        );
+        let inventory = source.collect()?;
+
+        assert_eq!(
+            inventory.fields().gpu_id.observed_value(),
+            Some("pci:10de:2684")
+        );
+        assert!(matches!(
+            inventory.driver_version(),
+            InventoryValue::Missing {
+                reason: MissingReason::AmbiguousSource
             }
         ));
         Ok(())
@@ -823,8 +978,8 @@ mod tests {
     }
 
     #[test]
-    fn existing_output_with_different_content_reports_a_distinct_collision_code()
-    -> Result<(), Box<dyn Error>> {
+    fn existing_output_without_its_inventory_reports_a_partial_pair() -> Result<(), Box<dyn Error>>
+    {
         let workspace = temporary_directory("collision")?;
         let root = workspace.path();
         let output = "qualification/evidence/environment.json".parse::<RepositoryPath>()?;
@@ -835,7 +990,7 @@ mod tests {
         let error = inspect_with_source(root, &source, &output)
             .err()
             .ok_or("existing output must fail")?;
-        assert_eq!(error.code(), "evidence-destination-exists");
+        assert_eq!(error.code(), "environment-artifact-pair");
         Ok(())
     }
 

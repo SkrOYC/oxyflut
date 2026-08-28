@@ -5,22 +5,21 @@
   "gpuCards": [
     {
       "card": "card0",
-      "vendor": "0x1002",
-      "device": "0x73bf",
-      "driver": "amdgpu"
+      "vendor": "0x10de",
+      "device": "0x2684",
+      "driver": "nvidia"
     }
   ],
   "rustToolchain": "rustc 1.98.0 (88d9e12ae 2026-08-20)\n",
   "compiler": "clang version 21.1.0\n",
   "sessionType": "wayland",
   "currentDesktop": "GNOME Shell 48.0\n",
-  "waylandInfo": "interface: 'wl_compositor', version: 6, name: 4\ninterface: 'xdg_wm_base', version: 6, name: 5\n",
+  "waylandInfo": "interface: 'wl_compositor', version: 6, name: 4\n",
   "dpkgQuery": {
     "binutils": "binutils\t2.44-1ubuntu1\n",
     "clang": "clang\t21.1.0-1ubuntu1\n",
     "libc6": "libc6\t2.42-1ubuntu1\n",
     "libc6-dev": "libc6-dev\t2.42-1ubuntu1\n",
-    "libgl1-mesa-dri": "libgl1-mesa-dri\t25.0.0-1ubuntu1\n",
     "libglib2.0-0t64": "libglib2.0-0t64\t2.84.0-1ubuntu1\n",
     "libgtk-4-1": "libgtk-4-1\t4.20.0+ds-1ubuntu1\n",
     "libwayland-client0": "libwayland-client0\t1.23.1-1ubuntu1\n",
@@ -29,6 +28,8 @@
     "libxcb1": "libxcb1\t1.17.0-2ubuntu1\n",
     "lld": "lld\t21.1.0-1ubuntu1\n",
     "rustc": "rustc\t1.98.0+dfsg1-1ubuntu1\n",
-    "xserver-xorg-core": "xserver-xorg-core\t2:21.1.16-1ubuntu1\n"
+    "xserver-xorg-core": "xserver-xorg-core\t2:21.1.16-1ubuntu1\n",
+    "nvidia-driver-570": "nvidia-driver-570\t570.86.16-0ubuntu1\n",
+    "nvidia-driver-575": "nvidia-driver-575\t575.57.08-0ubuntu1\n"
   }
 }

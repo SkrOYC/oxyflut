@@ -52,7 +52,7 @@ pub(crate) fn collect_linux(
 ) -> Result<EnvironmentInventory, EnvironmentCommandError> {
     #[cfg(target_os = "linux")]
     {
-        collect_linux_responses(environment, &live_responses())
+        collect_linux_responses(environment, &live_responses(environment))
     }
     #[cfg(not(target_os = "linux"))]
     {
@@ -84,7 +84,13 @@ struct LinuxResponses {
     compiler: Option<String>,
     session_type: Option<String>,
     current_desktop: Option<String>,
+    wayland_info: Option<String>,
+    xdpyinfo: Option<String>,
     dpkg_query: Option<BTreeMap<String, Option<String>>>,
+    #[serde(skip)]
+    source_failures: BTreeMap<&'static str, MissingReason>,
+    #[serde(skip)]
+    package_failures: BTreeMap<String, MissingReason>,
 }
 
 /// One graphics card observed from its matching DRM card directory.
@@ -97,11 +103,38 @@ struct LinuxGpuCard {
     driver: Option<String>,
 }
 
+impl LinuxResponses {
+    fn source_missing_reason(&self, source: &str) -> MissingReason {
+        self.source_failures
+            .get(source)
+            .copied()
+            .unwrap_or(MissingReason::SourceUnavailable)
+    }
+
+    fn protocol_missing_reason(&self, source: &str) -> MissingReason {
+        match self.source_missing_reason(source) {
+            MissingReason::InventoryExceedsBound => MissingReason::InventoryExceedsBound,
+            MissingReason::NotDeclaredByLock
+            | MissingReason::ManualCapture
+            | MissingReason::UnavailableOnHost
+            | MissingReason::SourceUnavailable
+            | MissingReason::UnsupportedBySource
+            | MissingReason::NotActiveSession
+            | MissingReason::NotInstalled
+            | MissingReason::AmbiguousSource => MissingReason::ManualCapture,
+        }
+    }
+}
+
 fn collect_linux_responses(
     environment: EnvironmentId,
     responses: &LinuxResponses,
 ) -> Result<EnvironmentInventory, EnvironmentCommandError> {
-    let session = session_value(environment, responses.session_type.as_deref());
+    let session = session_value(
+        environment,
+        responses.session_type.as_deref(),
+        responses.source_missing_reason("session_type"),
+    );
     if matches!(
         session,
         InventoryValue::Missing {
@@ -110,29 +143,72 @@ fn collect_linux_responses(
     ) {
         return Err(EnvironmentCommandError::EnvironmentMismatch);
     }
-    let (gpu_id, driver_version) =
-        gpu_and_driver(&responses.gpu_cards, responses.dpkg_query.as_ref());
+    let (gpu_id, driver_version) = gpu_and_driver(
+        &responses.gpu_cards,
+        responses.dpkg_query.as_ref(),
+        responses.source_missing_reason("gpu_cards"),
+        &responses.package_failures,
+        responses.source_missing_reason("dpkg_query"),
+    );
+    let protocol_version = match environment {
+        EnvironmentId::Wayland => wayland_protocol_version(
+            responses.wayland_info.as_deref(),
+            responses.protocol_missing_reason("wayland_info"),
+        ),
+        EnvironmentId::X11 => x11_protocol_version(
+            responses.xdpyinfo.as_deref(),
+            responses.protocol_missing_reason("xdpyinfo"),
+        ),
+        EnvironmentId::Macos | EnvironmentId::Windows => {
+            InventoryValue::missing(MissingReason::ManualCapture)
+        }
+    };
     let fields = EnvironmentFields {
-        operating_system: operating_system(responses.os_release.as_deref()),
+        operating_system: operating_system(
+            responses.os_release.as_deref(),
+            responses.source_missing_reason("os_release"),
+        ),
         minimum_version: InventoryValue::missing(MissingReason::NotDeclaredByLock),
-        architecture: architecture(responses.uname.as_deref()),
-        hardware_id: first_line_value(responses.sysfs_hardware.iter().map(String::as_str)),
+        architecture: architecture(
+            responses.uname.as_deref(),
+            responses.source_missing_reason("uname"),
+        ),
+        hardware_id: first_line_value(
+            responses.sysfs_hardware.iter().map(String::as_str),
+            responses.source_missing_reason("sysfs_hardware"),
+        ),
         gpu_id,
         driver_version,
-        compiler_identity: native_compiler_identity(responses.compiler.as_deref()),
-        sdk_identity: linux_sdk_identity(responses.dpkg_query.as_ref()),
-        rust_toolchain: compiler_identity(responses.rust_toolchain.as_deref()),
-        compositor: compositor_value(responses.current_desktop.as_deref()),
+        compiler_identity: native_compiler_identity(
+            responses.compiler.as_deref(),
+            responses.source_missing_reason("compiler"),
+        ),
+        sdk_identity: linux_sdk_identity(
+            responses.dpkg_query.as_ref(),
+            responses.source_missing_reason("dpkg_query"),
+        ),
+        rust_toolchain: compiler_identity(
+            responses.rust_toolchain.as_deref(),
+            responses.source_missing_reason("rust_toolchain"),
+        ),
+        compositor: compositor_value(
+            responses.current_desktop.as_deref(),
+            responses.source_missing_reason("current_desktop"),
+        ),
         session,
-        protocol_version: InventoryValue::missing(MissingReason::SourceUnavailable),
-        system_package_lock: system_package_lock(responses.dpkg_query.as_ref()),
+        protocol_version,
+        system_package_lock: system_package_lock(
+            responses.dpkg_query.as_ref(),
+            &responses.package_failures,
+            responses.source_missing_reason("dpkg_query"),
+        ),
     };
     EnvironmentInventory::new(environment, fields).map_err(EnvironmentCommandError::Inventory)
 }
 
-fn operating_system(raw: Option<&str>) -> InventoryValue {
+fn operating_system(raw: Option<&str>, missing_reason: MissingReason) -> InventoryValue {
     let Some(contents) = raw else {
-        return InventoryValue::missing(MissingReason::SourceUnavailable);
+        return InventoryValue::missing(missing_reason);
     };
     let id = os_release_value(contents, "ID");
     let version = os_release_value(contents, "VERSION_ID");
@@ -149,9 +225,9 @@ fn os_release_value<'contents>(contents: &'contents str, key: &str) -> Option<&'
     })
 }
 
-fn architecture(raw: Option<&str>) -> InventoryValue {
+fn architecture(raw: Option<&str>, missing_reason: MissingReason) -> InventoryValue {
     let Some(value) = raw.and_then(first_line) else {
-        return InventoryValue::missing(MissingReason::SourceUnavailable);
+        return InventoryValue::missing(missing_reason);
     };
     let normalized = match value {
         "aarch64" | "arm64" => "aarch64",
@@ -164,6 +240,9 @@ fn architecture(raw: Option<&str>) -> InventoryValue {
 fn gpu_and_driver(
     cards: &[LinuxGpuCard],
     dpkg_query: Option<&BTreeMap<String, Option<String>>>,
+    gpu_missing_reason: MissingReason,
+    package_failures: &BTreeMap<String, MissingReason>,
+    package_missing_reason: MissingReason,
 ) -> (InventoryValue, InventoryValue) {
     let qualifying = cards
         .iter()
@@ -179,7 +258,7 @@ fn gpu_and_driver(
         .collect::<Vec<_>>();
     let [(card, gpu_id)] = qualifying.as_slice() else {
         let reason = if qualifying.is_empty() {
-            MissingReason::SourceUnavailable
+            gpu_missing_reason
         } else {
             MissingReason::UnsupportedBySource
         };
@@ -189,7 +268,12 @@ fn gpu_and_driver(
         );
     };
     let gpu_id = observed_or_missing(gpu_id.clone());
-    let driver_version = driver_version(card.driver.as_deref(), dpkg_query);
+    let driver_version = driver_version(
+        card.driver.as_deref(),
+        dpkg_query,
+        package_failures,
+        package_missing_reason,
+    );
     (gpu_id, driver_version)
 }
 
@@ -207,9 +291,9 @@ fn pci_gpu_id(vendor: &str, device: &str) -> Option<String> {
     })
 }
 
-fn compiler_identity(raw: Option<&str>) -> InventoryValue {
+fn compiler_identity(raw: Option<&str>, missing_reason: MissingReason) -> InventoryValue {
     let Some(output) = raw else {
-        return InventoryValue::missing(MissingReason::SourceUnavailable);
+        return InventoryValue::missing(missing_reason);
     };
     let mut words = output.split_whitespace();
     match (words.next(), words.next()) {
@@ -218,9 +302,9 @@ fn compiler_identity(raw: Option<&str>) -> InventoryValue {
     }
 }
 
-fn native_compiler_identity(raw: Option<&str>) -> InventoryValue {
+fn native_compiler_identity(raw: Option<&str>, missing_reason: MissingReason) -> InventoryValue {
     let Some(output) = raw else {
-        return InventoryValue::missing(MissingReason::SourceUnavailable);
+        return InventoryValue::missing(missing_reason);
     };
     let Some(version) = output
         .split_whitespace()
@@ -231,12 +315,15 @@ fn native_compiler_identity(raw: Option<&str>) -> InventoryValue {
     observed_or_missing(format!("cc-{}", atomize(version)))
 }
 
-fn linux_sdk_identity(dpkg_query: Option<&BTreeMap<String, Option<String>>>) -> InventoryValue {
+fn linux_sdk_identity(
+    dpkg_query: Option<&BTreeMap<String, Option<String>>>,
+    missing_reason: MissingReason,
+) -> InventoryValue {
     let Some(raw) = dpkg_query
         .and_then(|packages| packages.get("libc6-dev"))
         .and_then(Option::as_deref)
     else {
-        return InventoryValue::missing(MissingReason::SourceUnavailable);
+        return InventoryValue::missing(missing_reason);
     };
     let Some((name, version)) = package_fields(raw) else {
         return InventoryValue::missing(MissingReason::UnsupportedBySource);
@@ -248,9 +335,13 @@ fn linux_sdk_identity(dpkg_query: Option<&BTreeMap<String, Option<String>>>) -> 
     ))
 }
 
-fn session_value(environment: EnvironmentId, raw: Option<&str>) -> InventoryValue {
+fn session_value(
+    environment: EnvironmentId,
+    raw: Option<&str>,
+    missing_reason: MissingReason,
+) -> InventoryValue {
     let Some(session) = raw.and_then(first_line) else {
-        return InventoryValue::missing(MissingReason::SourceUnavailable);
+        return InventoryValue::missing(missing_reason);
     };
     if !session.eq_ignore_ascii_case(environment.as_str()) {
         return InventoryValue::missing(MissingReason::NotActiveSession);
@@ -258,30 +349,99 @@ fn session_value(environment: EnvironmentId, raw: Option<&str>) -> InventoryValu
     observed_or_missing(session.to_ascii_lowercase())
 }
 
-fn compositor_value(raw: Option<&str>) -> InventoryValue {
+fn compositor_value(raw: Option<&str>, missing_reason: MissingReason) -> InventoryValue {
     let Some(compositor) = raw.and_then(first_line) else {
-        return InventoryValue::missing(MissingReason::SourceUnavailable);
+        return InventoryValue::missing(missing_reason);
     };
     observed_or_missing(atomize(compositor))
+}
+
+fn wayland_protocol_version(raw: Option<&str>, missing_reason: MissingReason) -> InventoryValue {
+    let Some(raw) = raw else {
+        return InventoryValue::missing(missing_reason);
+    };
+    let mut globals = BTreeMap::new();
+    for line in raw.lines() {
+        let Some(interface) = line
+            .split_once("interface: '")
+            .and_then(|(_, remainder)| remainder.split_once('\''))
+            .map(|(interface, _)| interface)
+        else {
+            continue;
+        };
+        let Some(version) = line
+            .split_once("version:")
+            .and_then(|(_, remainder)| remainder.trim_start().split_once(','))
+            .map(|(version, _)| version.trim())
+            .filter(|version| {
+                !version.is_empty() && version.bytes().all(|byte| byte.is_ascii_digit())
+            })
+        else {
+            continue;
+        };
+        globals.insert(interface, version);
+    }
+    if globals.is_empty() {
+        return InventoryValue::missing(MissingReason::ManualCapture);
+    }
+    let version = globals
+        .into_iter()
+        .map(|(interface, version)| format!("{interface}-{version}"))
+        .collect::<Vec<_>>()
+        .join("-");
+    observed_or_missing(format!("wayland-{version}"))
+}
+
+fn x11_protocol_version(raw: Option<&str>, missing_reason: MissingReason) -> InventoryValue {
+    let Some(raw) = raw else {
+        return InventoryValue::missing(missing_reason);
+    };
+    let Some(version) = raw
+        .lines()
+        .find_map(|line| line.trim_start().strip_prefix("version number:"))
+        .map(str::trim)
+        .filter(|version| {
+            !version.is_empty()
+                && version
+                    .bytes()
+                    .all(|byte| byte.is_ascii_digit() || byte == b'.')
+        })
+    else {
+        return InventoryValue::missing(MissingReason::ManualCapture);
+    };
+    observed_or_missing(format!("x11-{version}"))
 }
 
 fn driver_version(
     driver: Option<&str>,
     dpkg_query: Option<&BTreeMap<String, Option<String>>>,
+    package_failures: &BTreeMap<String, MissingReason>,
+    package_missing_reason: MissingReason,
 ) -> InventoryValue {
     let Some(driver) = driver.and_then(first_line) else {
         return InventoryValue::missing(MissingReason::SourceUnavailable);
     };
     let Some(packages) = dpkg_query else {
-        return InventoryValue::missing(MissingReason::SourceUnavailable);
+        return InventoryValue::missing(package_missing_reason);
     };
     let package = if driver.eq_ignore_ascii_case("nvidia") {
-        packages.iter().find_map(|(name, raw)| {
-            name.starts_with("nvidia-driver-")
-                .then_some(raw.as_deref())
-                .flatten()
-                .and_then(package_fields)
-        })
+        let matches = packages
+            .iter()
+            .filter(|(name, _)| name.starts_with("nvidia-driver-"))
+            .filter_map(|(_, raw)| raw.as_deref().and_then(package_fields))
+            .collect::<Vec<_>>();
+        match matches.as_slice() {
+            [(name, version)] => Some((name.clone(), version.clone())),
+            [] => {
+                let failure = package_failures
+                    .iter()
+                    .find(|(name, _)| name.starts_with("nvidia-driver-"))
+                    .map(|(_, reason)| *reason)
+                    .unwrap_or(MissingReason::NotInstalled);
+                return InventoryValue::missing(failure);
+            }
+            [_, _, ..] => return InventoryValue::missing(MissingReason::AmbiguousSource),
+        }
     } else {
         MESA_DRIVER_PACKAGES.iter().find_map(|name| {
             packages
@@ -299,9 +459,13 @@ fn driver_version(
     }
 }
 
-fn system_package_lock(dpkg_query: Option<&BTreeMap<String, Option<String>>>) -> SystemPackageLock {
+fn system_package_lock(
+    dpkg_query: Option<&BTreeMap<String, Option<String>>>,
+    package_failures: &BTreeMap<String, MissingReason>,
+    missing_reason: MissingReason,
+) -> SystemPackageLock {
     let Some(dpkg_query) = dpkg_query else {
-        return missing_package_records(MissingReason::SourceUnavailable);
+        return missing_package_records(missing_reason);
     };
     let mut records = Vec::with_capacity(LINUX_PACKAGE_REQUIREMENTS.len());
     for alternatives in LINUX_PACKAGE_REQUIREMENTS {
@@ -333,7 +497,7 @@ fn system_package_lock(dpkg_query: Option<&BTreeMap<String, Option<String>>>) ->
                 if malformed {
                     MissingReason::UnsupportedBySource
                 } else {
-                    MissingReason::NotInstalled
+                    missing_package_reason(alternatives, package_failures)
                 },
             ) {
                 Ok(record) => record,
@@ -346,6 +510,16 @@ fn system_package_lock(dpkg_query: Option<&BTreeMap<String, Option<String>>>) ->
         Ok(lock) => lock,
         Err(_) => SystemPackageLock::missing(MissingReason::UnsupportedBySource),
     }
+}
+
+fn missing_package_reason(
+    alternatives: &[&str],
+    package_failures: &BTreeMap<String, MissingReason>,
+) -> MissingReason {
+    alternatives
+        .iter()
+        .find_map(|name| package_failures.get(*name).copied())
+        .unwrap_or(MissingReason::NotInstalled)
 }
 
 fn missing_package_records(reason: MissingReason) -> SystemPackageLock {
@@ -365,9 +539,12 @@ fn package_fields(raw: &str) -> Option<(String, String)> {
     Some((name.to_owned(), version.to_owned()))
 }
 
-fn first_line_value<'responses>(mut raw: impl Iterator<Item = &'responses str>) -> InventoryValue {
+fn first_line_value<'responses>(
+    mut raw: impl Iterator<Item = &'responses str>,
+    missing_reason: MissingReason,
+) -> InventoryValue {
     raw.find_map(first_line).map_or_else(
-        || InventoryValue::missing(MissingReason::SourceUnavailable),
+        || InventoryValue::missing(missing_reason),
         |value| observed_or_missing(atomize(value)),
     )
 }
@@ -400,25 +577,90 @@ fn observed_or_missing(value: String) -> InventoryValue {
 }
 
 #[cfg(target_os = "linux")]
-fn live_responses() -> LinuxResponses {
+fn live_responses(environment: EnvironmentId) -> LinuxResponses {
+    let mut source_failures = BTreeMap::new();
+    let mut package_failures = BTreeMap::new();
+    let sysfs_hardware = [
+        "/sys/class/dmi/id/product_name",
+        "/sys/devices/virtual/dmi/id/product_name",
+    ]
+    .iter()
+    .filter_map(|path| {
+        capture_response(
+            read_file_bounded(Path::new(path), SOURCE_FILE_LIMIT),
+            "sysfs_hardware",
+            &mut source_failures,
+        )
+    })
+    .collect();
+    let (wayland_info, xdpyinfo) = match environment {
+        EnvironmentId::Wayland => (
+            capture_response(
+                command_stdout("wayland-info", &[], COMMAND_OUTPUT_LIMIT),
+                "wayland_info",
+                &mut source_failures,
+            ),
+            None,
+        ),
+        EnvironmentId::X11 => (
+            None,
+            capture_response(
+                command_stdout("xdpyinfo", &[], COMMAND_OUTPUT_LIMIT),
+                "xdpyinfo",
+                &mut source_failures,
+            ),
+        ),
+        EnvironmentId::Macos | EnvironmentId::Windows => (None, None),
+    };
+    let dpkg_query = Path::new("/usr/bin/dpkg-query")
+        .is_file()
+        .then(|| live_dpkg_query(&mut source_failures, &mut package_failures));
+
     LinuxResponses {
-        os_release: read_file_bounded(Path::new("/etc/os-release"), SOURCE_FILE_LIMIT),
-        uname: command_stdout("uname", &["-m"], COMMAND_OUTPUT_LIMIT),
-        sysfs_hardware: [
-            "/sys/class/dmi/id/product_name",
-            "/sys/devices/virtual/dmi/id/product_name",
-        ]
-        .iter()
-        .filter_map(|path| read_file_bounded(Path::new(path), SOURCE_FILE_LIMIT))
-        .collect(),
-        gpu_cards: live_gpu_cards(),
-        rust_toolchain: command_stdout("rustc", &["+1.98.0", "--version"], COMMAND_OUTPUT_LIMIT),
-        compiler: command_stdout("cc", &["--version"], COMMAND_OUTPUT_LIMIT),
+        os_release: capture_response(
+            read_file_bounded(Path::new("/etc/os-release"), SOURCE_FILE_LIMIT),
+            "os_release",
+            &mut source_failures,
+        ),
+        uname: capture_response(
+            command_stdout("uname", &["-m"], COMMAND_OUTPUT_LIMIT),
+            "uname",
+            &mut source_failures,
+        ),
+        sysfs_hardware,
+        gpu_cards: live_gpu_cards(&mut source_failures),
+        rust_toolchain: capture_response(
+            command_stdout("rustc", &["+1.98.0", "--version"], COMMAND_OUTPUT_LIMIT),
+            "rust_toolchain",
+            &mut source_failures,
+        ),
+        compiler: capture_response(
+            command_stdout("cc", &["--version"], COMMAND_OUTPUT_LIMIT),
+            "compiler",
+            &mut source_failures,
+        ),
         session_type: std::env::var("XDG_SESSION_TYPE").ok(),
         current_desktop: std::env::var("XDG_CURRENT_DESKTOP").ok(),
-        dpkg_query: Path::new("/usr/bin/dpkg-query")
-            .is_file()
-            .then(live_dpkg_query),
+        wayland_info,
+        xdpyinfo,
+        dpkg_query,
+        source_failures,
+        package_failures,
+    }
+}
+
+#[cfg(target_os = "linux")]
+fn capture_response(
+    response: Result<Option<String>, MissingReason>,
+    source: &'static str,
+    failures: &mut BTreeMap<&'static str, MissingReason>,
+) -> Option<String> {
+    match response {
+        Ok(value) => value,
+        Err(reason) => {
+            failures.insert(source, reason);
+            None
+        }
     }
 }
 
@@ -441,13 +683,23 @@ fn live_drm_card_paths() -> Vec<std::path::PathBuf> {
 }
 
 #[cfg(target_os = "linux")]
-fn live_gpu_cards() -> Vec<LinuxGpuCard> {
+fn live_gpu_cards(
+    source_failures: &mut BTreeMap<&'static str, MissingReason>,
+) -> Vec<LinuxGpuCard> {
     live_drm_card_paths()
         .iter()
         .filter_map(|path| {
             let card = path.file_name()?.to_str()?.to_owned();
-            let vendor = read_file_bounded(&path.join("device/vendor"), SOURCE_FILE_LIMIT)?;
-            let device = read_file_bounded(&path.join("device/device"), SOURCE_FILE_LIMIT)?;
+            let vendor = capture_response(
+                read_file_bounded(&path.join("device/vendor"), SOURCE_FILE_LIMIT),
+                "gpu_cards",
+                source_failures,
+            )?;
+            let device = capture_response(
+                read_file_bounded(&path.join("device/device"), SOURCE_FILE_LIMIT),
+                "gpu_cards",
+                source_failures,
+            )?;
             let driver = fs::read_link(path.join("device/driver"))
                 .ok()
                 .and_then(|driver_path| {
@@ -467,12 +719,36 @@ fn live_gpu_cards() -> Vec<LinuxGpuCard> {
 }
 
 #[cfg(target_os = "linux")]
-fn live_dpkg_query() -> BTreeMap<String, Option<String>> {
+fn live_dpkg_query(
+    source_failures: &mut BTreeMap<&'static str, MissingReason>,
+    package_failures: &mut BTreeMap<String, MissingReason>,
+) -> BTreeMap<String, Option<String>> {
     let mut output = BTreeMap::new();
     for alternatives in LINUX_PACKAGE_REQUIREMENTS {
         for name in *alternatives {
             output.insert(
                 (*name).to_owned(),
+                capture_package_response(
+                    command_stdout(
+                        "dpkg-query",
+                        &[
+                            "--show",
+                            "--showformat=${binary:Package}\\t${Version}\\n",
+                            name,
+                        ],
+                        PACKAGE_OUTPUT_LIMIT,
+                    ),
+                    name,
+                    source_failures,
+                    package_failures,
+                ),
+            );
+        }
+    }
+    for name in MESA_DRIVER_PACKAGES {
+        output.insert(
+            (*name).to_owned(),
+            capture_package_response(
                 command_stdout(
                     "dpkg-query",
                     &[
@@ -482,24 +758,13 @@ fn live_dpkg_query() -> BTreeMap<String, Option<String>> {
                     ],
                     PACKAGE_OUTPUT_LIMIT,
                 ),
-            );
-        }
-    }
-    for name in MESA_DRIVER_PACKAGES {
-        output.insert(
-            (*name).to_owned(),
-            command_stdout(
-                "dpkg-query",
-                &[
-                    "--show",
-                    "--showformat=${binary:Package}\\t${Version}\\n",
-                    name,
-                ],
-                PACKAGE_OUTPUT_LIMIT,
+                name,
+                source_failures,
+                package_failures,
             ),
         );
     }
-    for record in command_stdout(
+    let nvidia = command_stdout(
         "dpkg-query",
         &[
             "--show",
@@ -507,40 +772,79 @@ fn live_dpkg_query() -> BTreeMap<String, Option<String>> {
             "nvidia-driver-*",
         ],
         COMMAND_OUTPUT_LIMIT,
-    )
-    .into_iter()
-    .flat_map(|records| records.lines().map(str::to_owned).collect::<Vec<_>>())
-    {
-        if let Some((name, _)) = package_fields(&record) {
-            output.insert(name, Some(format!("{record}\n")));
+    );
+    match nvidia {
+        Ok(Some(records)) => {
+            for record in records.lines() {
+                if let Some((name, _)) = package_fields(record) {
+                    output.insert(name, Some(format!("{record}\n")));
+                }
+            }
+        }
+        Ok(None) => {}
+        Err(reason) => {
+            source_failures.insert("dpkg_query", reason);
+            package_failures.insert("nvidia-driver-*".to_owned(), reason);
         }
     }
     output
 }
 
 #[cfg(target_os = "linux")]
-fn read_file_bounded(path: &Path, limit: usize) -> Option<String> {
-    let file = fs::File::open(path).ok()?;
-    read_bounded(file, limit).ok()
+fn capture_package_response(
+    response: Result<Option<String>, MissingReason>,
+    package: &str,
+    source_failures: &mut BTreeMap<&'static str, MissingReason>,
+    package_failures: &mut BTreeMap<String, MissingReason>,
+) -> Option<String> {
+    match response {
+        Ok(value) => value,
+        Err(reason) => {
+            source_failures.insert("dpkg_query", reason);
+            package_failures.insert(package.to_owned(), reason);
+            None
+        }
+    }
 }
 
 #[cfg(target_os = "linux")]
-fn command_stdout(program: &str, arguments: &[&str], limit: usize) -> Option<String> {
-    let mut child = Command::new(program)
+fn read_file_bounded(path: &Path, limit: usize) -> Result<Option<String>, MissingReason> {
+    match fs::File::open(path) {
+        Ok(file) => read_bounded(file, limit).map(Some),
+        Err(_) => Ok(None),
+    }
+}
+
+#[cfg(target_os = "linux")]
+fn command_stdout(
+    program: &str,
+    arguments: &[&str],
+    limit: usize,
+) -> Result<Option<String>, MissingReason> {
+    let mut child = match Command::new(program)
         .args(arguments)
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::null())
         .spawn()
-        .ok()?;
-    let stdout = child.stdout.take()?;
-    let Ok(output) = read_bounded(stdout, limit) else {
-        let _ = child.kill();
-        let _ = child.wait();
-        return None;
+    {
+        Ok(child) => child,
+        Err(_) => return Ok(None),
     };
-    let status = child.wait().ok()?;
-    status.success().then_some(output)
+    let stdout = child
+        .stdout
+        .take()
+        .ok_or(MissingReason::SourceUnavailable)?;
+    let output = match read_bounded(stdout, limit) {
+        Ok(output) => output,
+        Err(reason) => {
+            let _ = child.kill();
+            let _ = child.wait();
+            return Err(reason);
+        }
+    };
+    let status = child.wait().map_err(|_| MissingReason::SourceUnavailable)?;
+    Ok(status.success().then_some(output))
 }
 
 #[cfg(target_os = "linux")]
@@ -558,4 +862,30 @@ fn read_bounded(mut reader: impl Read, limit: usize) -> Result<String, MissingRe
         return Err(MissingReason::InventoryExceedsBound);
     }
     String::from_utf8(output).map_err(|_| MissingReason::UnsupportedBySource)
+}
+
+#[cfg(all(test, target_os = "linux"))]
+mod tests {
+    use std::collections::BTreeMap;
+    use std::io::Cursor;
+
+    use oxyflut_qualification::environment::MissingReason;
+
+    use super::{capture_response, read_bounded};
+
+    #[test]
+    fn bounded_source_failures_remain_explicit_for_live_response_callers() {
+        let mut failures = BTreeMap::new();
+        let captured = capture_response(
+            read_bounded(Cursor::new(b"12345"), 4).map(Some),
+            "wayland_info",
+            &mut failures,
+        );
+
+        assert!(captured.is_none());
+        assert_eq!(
+            failures.get("wayland_info"),
+            Some(&MissingReason::InventoryExceedsBound)
+        );
+    }
 }

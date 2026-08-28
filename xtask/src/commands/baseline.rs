@@ -6,8 +6,8 @@ use std::path::{Path, PathBuf};
 
 use oxyflut_qualification::baseline::{BaselineAuthority, BaselineError, CapabilityBaseline};
 use oxyflut_qualification::evidence::{
-    EvidenceError, MediaType, preserve_source, write_canonical_json_to_directory,
-    write_canonical_json_to_path,
+    EvidenceError, MediaType, canonical_json_bytes, preserve_source,
+    write_canonical_json_to_directory, write_canonical_json_to_path,
 };
 use oxyflut_qualification::hash::hash_reader;
 use oxyflut_qualification::identifiers::RepositoryPath;
@@ -121,14 +121,31 @@ where
             }
 
             let canonical = baseline.canonical_value()?;
-            let draft = write_canonical_json_to_directory(root, output, &canonical)?;
-            let sidecar_path_text = format!("{}/{}.provenance.json", output.as_str(), draft.sha256);
+            let canonical_bytes = canonical_json_bytes(&canonical)?;
+            let canonical_digest =
+                hash_reader(Cursor::new(&canonical_bytes)).map_err(|source| {
+                    BaselineCommandError::Hash {
+                        path: root.join(output.as_str()),
+                        source,
+                    }
+                })?;
+            let draft_path_text = format!("{}/{}.json", output.as_str(), canonical_digest);
+            let draft_path = RepositoryPath::parse(&draft_path_text).map_err(|source| {
+                EvidenceError::InvalidPath {
+                    path: draft_path_text,
+                    source,
+                }
+            })?;
+            let sidecar_path_text =
+                format!("{}/{}.provenance.json", output.as_str(), canonical_digest);
             let sidecar_path = RepositoryPath::parse(&sidecar_path_text).map_err(|source| {
                 EvidenceError::InvalidPath {
                     path: sidecar_path_text,
                     source,
                 }
             })?;
+            validate_artifact_pair(root, &draft_path, &sidecar_path)?;
+            let draft = write_canonical_json_to_directory(root, output, &canonical)?;
             let sidecar = serde_json::json!({
                 "path": draft.path.as_str(),
                 "sha256": draft.sha256.to_string(),
@@ -142,6 +159,36 @@ where
         None => None,
     };
     Ok(output)
+}
+
+fn validate_artifact_pair(
+    root: &Path,
+    draft: &RepositoryPath,
+    sidecar: &RepositoryPath,
+) -> Result<(), BaselineCommandError> {
+    let draft_exists = artifact_exists(root, draft)?;
+    let sidecar_exists = artifact_exists(root, sidecar)?;
+    match (draft_exists, sidecar_exists) {
+        (true, false) => Err(BaselineCommandError::ArtifactPair {
+            orphaned: draft.clone(),
+        }),
+        (false, true) => Err(BaselineCommandError::ArtifactPair {
+            orphaned: sidecar.clone(),
+        }),
+        (false, false) | (true, true) => Ok(()),
+    }
+}
+
+fn artifact_exists(root: &Path, path: &RepositoryPath) -> Result<bool, BaselineCommandError> {
+    let destination = root.join(path.as_str());
+    match fs::symlink_metadata(&destination) {
+        Ok(_) => Ok(true),
+        Err(source) if source.kind() == io::ErrorKind::NotFound => Ok(false),
+        Err(source) => Err(BaselineCommandError::Io {
+            path: destination,
+            source,
+        }),
+    }
 }
 
 fn read_confined_file(root: &Path, path: &RepositoryPath) -> Result<Vec<u8>, BaselineCommandError> {
@@ -195,6 +242,8 @@ enum BaselineCommandError {
     },
     #[error("baseline input changed between validation and publication")]
     SourceSnapshotMismatch,
+    #[error("baseline artifact pair is partial; orphaned artifact: {orphaned}")]
+    ArtifactPair { orphaned: RepositoryPath },
     #[error("baseline input is not JSON")]
     Json(#[source] serde_json::Error),
     #[error("baseline schema validation failed")]
@@ -224,7 +273,9 @@ mod tests {
     use oxyflut_qualification::identifiers::RepositoryPath;
     use serde_json::Value;
 
-    use super::{BaselineCommandError, run, run_at_root, validate_at_with_before_publication};
+    use super::{
+        BaselineCommandError, run, run_at_root, validate_at, validate_at_with_before_publication,
+    };
     use crate::CommandOutcome;
     use crate::contracts::{
         readiness::{ReadinessError, ReadinessValidationError, validate_workspace},
@@ -247,24 +298,28 @@ mod tests {
     }
 
     #[test]
-    fn rejects_every_required_invalid_baseline_fixture() {
-        for fixture in [
-            "missing-key.json",
-            "duplicate-key.json",
-            "mismatched-flow.json",
-            "empty-evidence.json",
-            "synthetic-with-approval.json",
-            "approved-without-approval-evidence.json",
-            "extra-key.json",
+    fn invalid_baseline_fixtures_report_their_specific_error_variant() -> Result<(), Box<dyn Error>>
+    {
+        let root = workspace_root()?;
+        for (fixture, expected) in [
+            ("missing-key.json", "schema"),
+            ("duplicate-key.json", "baseline"),
+            ("mismatched-flow.json", "baseline"),
+            ("empty-evidence.json", "schema"),
+            ("synthetic-with-approval.json", "schema"),
+            ("approved-without-approval-evidence.json", "schema"),
+            ("extra-key.json", "schema"),
         ] {
-            assert!(matches!(
-                run(&[
-                    "--input".to_owned(),
-                    format!("qualification/fixtures/baselines/{fixture}"),
-                ]),
-                CommandOutcome::Failed(_)
-            ));
+            let input =
+                format!("qualification/fixtures/baselines/{fixture}").parse::<RepositoryPath>()?;
+            let result = validate_at(&root, &input, None);
+            match expected {
+                "schema" => assert!(matches!(result, Err(BaselineCommandError::Schema(_)))),
+                "baseline" => assert!(matches!(result, Err(BaselineCommandError::Baseline(_)))),
+                _ => return Err("baseline fixture must declare an expected error variant".into()),
+            }
         }
+        Ok(())
     }
 
     #[test]
@@ -418,6 +473,60 @@ mod tests {
             })
         );
 
+        Ok(())
+    }
+
+    #[test]
+    fn partial_baseline_artifact_pair_names_the_orphaned_draft() -> Result<(), Box<dyn Error>> {
+        let root = temporary_directory("partial-pair")?;
+        let output = "qualification/fixtures/baselines/partial-pair";
+        let arguments = [
+            "--input".to_owned(),
+            COMPLETE_FIXTURE.to_owned(),
+            "--output".to_owned(),
+            output.to_owned(),
+        ];
+        assert_eq!(run_at_root(&root, &arguments), CommandOutcome::Success);
+        let files = output_files(&root.join(output))?;
+        let draft = files
+            .iter()
+            .find(|path| {
+                !path
+                    .file_name()
+                    .and_then(|name| name.to_str())
+                    .is_some_and(|name| name.ends_with(".provenance.json"))
+            })
+            .ok_or("baseline output must contain its draft")?;
+        let sidecar = files
+            .iter()
+            .find(|path| {
+                path.file_name()
+                    .and_then(|name| name.to_str())
+                    .is_some_and(|name| name.ends_with(".provenance.json"))
+            })
+            .ok_or("baseline output must contain its sidecar")?;
+        fs::remove_file(sidecar)?;
+
+        let result = validate_at_with_before_publication(
+            &root,
+            &COMPLETE_FIXTURE.parse::<RepositoryPath>()?,
+            Some(&output.parse::<RepositoryPath>()?),
+            || Ok(()),
+        );
+        let orphaned = draft
+            .strip_prefix(&root)?
+            .to_str()
+            .ok_or("baseline draft path must be UTF-8")?;
+        assert!(matches!(
+            &result,
+            Err(BaselineCommandError::ArtifactPair { orphaned: path }) if path.as_str() == orphaned
+        ));
+        assert_eq!(
+            result.err().map(|error| error.to_string()),
+            Some(format!(
+                "baseline artifact pair is partial; orphaned artifact: {orphaned}"
+            ))
+        );
         Ok(())
     }
 
