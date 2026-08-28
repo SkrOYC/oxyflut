@@ -2,20 +2,20 @@
 
 - Ticket: OXY-B008
 - Status: BLOCKED / incomplete - candidate implementation is blocked. OXY-B008 stays open until two distinct confirmations are preserved. This record is the preserved first half plus the frozen procedure.
-- Clock start: 2026-08-28T16:46:28Z
-- Clock stop: 2026-08-28T16:50:48Z
+- Clock start: 2026-08-28T17:02:24Z
+- Clock stop: 2026-08-28T17:08:01Z
 - Scope: assessor coordination only; this report assigns no candidate score and makes no candidate selection.
 
 ## Question
 
 | ID | Question | Status | Answer and evidence | Next bounded probe |
 | :-- | :-- | :-- | :-- | :-- |
-| Q1 | Are the six frozen weighted criteria enumerated? | KK | Yes. The six exact criterion names and weights are quoted in [Frozen scoring criteria](#frozen-scoring-criteria). The host source-inspection probe in [Preserved probe outputs](#preserved-probe-outputs) extracted the source text from `.constitution/prd/constraints.md`, `Substrate selection policy`. | Not applicable. |
+| Q1 | Are the six frozen weighted criteria enumerated? | KK | Yes. [Frozen scoring criteria](#frozen-scoring-criteria) quotes the six exact names and weights from the source-inspection probe. The fresh `$defs.scores` probe in [Preserved probe outputs](#preserved-probe-outputs) records all six required qualification-evidence properties. | Not applicable. |
 | Q2 | Are the scoring anchors frozen before candidate implementation? | KU (gating) | No. `.constitution/tech-spec/contracts/qualification-lock.json` sets `measurementPolicy.scoringAnchors` to `null`, and `.constitution/prd/constraints.md` states, "The scoring anchors must be frozen before either candidate implementation begins." The host probe preserves the current `null` value. | Before candidate implementation, run an HITL anchor workshop with two accepted assessors. Expected output: one immutable artifact that defines cited-evidence anchors for each integer in the 3-5 scale for each of the six criteria, with both assessors' written acceptance and a SHA-256 digest. |
-| Q3 | Has Assessor 1 accepted the role, independence rule, scale, criteria, and consensus procedure? | KU (gating) | Partly. The preserved HITL confirmation proves availability for independent scoring and written consensus and gives every requested disclosure. It does not expressly accept the integer 3-5 scale or the six criteria. More importantly, the governing texts don't determine whether Assessor 1's declared candidate-code or evidence-authoring role permits independent scoring. See [Assessor 1 independence determination](#assessor-1-independence-determination). | Obtain from Oscar Y. <oscar@ocmasesorias.com> one dated, attributed written confirmation that explicitly accepts the role, the integer 3-5 scale, all six criteria, and the consensus procedure. Then obtain the Stage 1/Stage 3 authorship-independence decision described in the determination. Expected output: the quoted confirmation and a cited governance decision that either records a valid recusal or assigns a replacement assessor. |
-| Q4 | Is a distinct independent Assessor 2 named, available, and confirmed? | KU (gating) | No. No second distinct human has been named or has supplied a confirmation, availability declaration, or conflict disclosure. This is the OXY-B008 stop condition. | Obtain the exact second-assessor confirmation in [Second-assessor confirmation procedure](#second-assessor-confirmation-procedure) before candidate implementation. Expected output: a named human's written confirmation, completed conflict disclosure, availability declaration, and affirmation that no candidate score conclusion was seen before independent scoring. |
+| Q3 | Has Assessor 1 accepted the role, independence rule, scale, criteria, and consensus procedure? | KU (gating) | Partly. The preserved HITL confirmation proves availability for independent scoring and written consensus and gives every requested disclosure. It does not expressly accept the integer 3-5 scale or the six criteria. Assessor 1 disclosed candidate-code or qualification-evidence authorship. Until Stage 1 approves and applies the authorship-independence policy and Stage 3 updates conforming qualification contracts, that disclosure is gating regardless of self-assessment and requires whole-candidate replacement. See [Assessor 1 independence determination](#assessor-1-independence-determination). | Obtain from Oscar Y. <oscar@ocmasesorias.com> one dated, attributed written confirmation that explicitly accepts the role, the integer 3-5 scale, all six criteria, and the consensus procedure. Then have Stage 1 approve and apply the PRD amendment in [Spec edits required](#spec-edits-required), followed by the listed Stage 3 conforming contract updates. Expected output: the quoted confirmation, a cited Stage 1 policy decision, and a completed replacement-assessor confirmation for the whole candidate. |
+| Q4 | Is a distinct independent Assessor 2 named, available, and confirmed? | KU (gating) | No. No second distinct human has been named or has supplied a confirmation, availability declaration, or conflict disclosure. This is the OXY-B008 stop condition. | Obtain the exact second-assessor confirmation in [Second-assessor confirmation procedure](#second-assessor-confirmation-procedure) before candidate implementation. Expected output: a named human's written confirmation, completed conflict disclosure, availability declaration, affirmation that no candidate score conclusion was seen before independent scoring, and no unresolved candidate-code or qualification-evidence authorship disclosure. |
 | Q5 | Is the no-prior-score-conclusion independence rule established? | KK | Yes, as a frozen procedure rule. [Independence rules](#independence-rules) prohibits an assessor who saw a candidate score conclusion from serving in that candidate's independent-scoring pass. Oscar's dated self-declaration records no prior exposure and that no candidate score conclusions exist. This doesn't resolve the separate authorship conflict in Q3. | Not applicable. |
-| Q6 | Is the evidence-access and written-consensus procedure frozen? | KK | Yes. [Evidence access procedure](#evidence-access-procedure) freezes independent evidence access before score-conclusion disclosure. [Written consensus procedure](#written-consensus-procedure) now records `consensusScore` and a nonempty `consensusRationale` for every criterion, including agreements. Source: `.constitution/tech-spec/data-models/qualification-evidence.schema.json`, `$defs.score`, preserved by the host probe. | Not applicable. |
+| Q6 | Is the evidence-access and written-consensus procedure frozen? | KK | Yes. [Evidence access procedure](#evidence-access-procedure) freezes independent evidence access before score-conclusion disclosure. [Written consensus procedure](#written-consensus-procedure) records `consensusScore` and a nonempty `consensusRationale` for every criterion, including agreements. The re-run `$defs.score` source probe in [Preserved probe outputs](#preserved-probe-outputs) preserves those required fields. | Not applicable. |
 | Q7 | Can the qualification lock's assessor field be set and candidate implementation begin? | KU (gating) | No. The current lock has `candidateImplementationReady: false`, `measurementReady: false`, and `measurementPolicy.assessors: null`. The lock also lists `scoring-anchors-and-two-assessors` among pre-implementation and gating known unknowns. A resolved measurement policy requires a SHA-256 for `assessors`. Sources: `.constitution/tech-spec/contracts/qualification-lock.json`, `.constitution/tech-spec/data-models/qualification-lock.schema.json`, `$defs.measurementPolicy` and `$defs.resolvedMeasurementPolicy`; the current lock values are preserved by the host probe. | Complete Q2, Q3, and Q4, then have Stage 3 bind completed immutable artifacts by SHA-256 in the qualification lock and validate the lock. Expected output: no assessor or scoring-anchor KU remains before candidate implementation. |
 
 ## Evidence
@@ -50,7 +50,9 @@ The same source states: "After hard-gate eligibility, two assessors independentl
 | `.constitution/tech-spec/data-models/qualification-lock.schema.json`, `$defs.measurementPolicy.properties.assessors` | `{ "$ref": "#/$defs/digestOrNull" }` | KK |
 | `.constitution/tech-spec/data-models/qualification-lock.schema.json`, `$defs.resolvedMeasurementPolicy.properties.scoringAnchors` and `assessors` | Each field is `{ "$ref": "#/$defs/sha256" }`. | KK |
 | `.constitution/tech-spec/data-models/qualification-evidence.schema.json`, `$defs.assessor` | Required fields are `id` and `frozenBeforeImplementation`, whose value is `true`. | KK |
-| `.constitution/tech-spec/data-models/qualification-evidence.schema.json`, `$defs.score` | Every criterion score requires two assessor scores, an integer `consensusScore`, a nonempty `consensusRationale`, and cited evidence. Each score is an integer from 3 through 5. `$defs.scores` requires all six criterion score objects. The schema doesn't define assessor independence or authoring-conflict eligibility. | KK |
+| `.constitution/tech-spec/data-models/qualification-evidence.schema.json`, root `assessors` | The candidate record permits exactly two assessor identities: two `prefixItems`, `items: false`, `minItems: 2`, and `maxItems: 2`. | KK |
+| `.constitution/tech-spec/data-models/qualification-evidence.schema.json`, `$defs.score.properties.assessorScores` | Every criterion has exactly two un-attributed integer entries, each from 3 through 5; it has no assessor-identity field. `consensusScore`, a nonempty `consensusRationale`, and cited evidence are also required. | KK |
+| `.constitution/tech-spec/data-models/qualification-evidence.schema.json`, `$defs.scores.required` | All six required criterion objects are `platformCoverage`, `upgradeMaintenance`, `performance`, `safetySecurityPrivacy`, `distribution`, and `operationalClarity`. The re-run probes preserve the complete output. The schema doesn't define assessor independence or authoring-conflict eligibility. | KK |
 | `.constitution/tech-spec/data-models/selection-decision.schema.json`, root `required` | `qualificationLockDigest`, `candidateEvidence`, `eligibility`, `decisionBasis`, `outcome`, `selectedCandidate`, `calculation`, and `rationale` are required. The schema is a decision-output contract, not an assessor registry. | KK |
 
 The assessment record must satisfy the qualification-evidence contract only after hard-gate eligibility. This report doesn't create candidate evidence, an eligibility outcome, a calculation, a score, or a selected candidate.
@@ -78,18 +80,25 @@ These are attributable self-declarations. In particular, "Repository owner and p
 2. An assessor who has seen a candidate score conclusion before recording their own independent score can't serve for that candidate's independent-scoring pass.
 3. Candidate implementation, candidate evidence, and candidate score conclusions must remain separate from this coordination record.
 4. Each assessor must disclose repository ownership, employment or organizational role, financial or other interest in either candidate or its upstreams, candidate implementation or evidence-authoring involvement, and any prior exposure to candidate score conclusions.
-5. A disclosed relationship doesn't silently waive independence. Both assessors must record whether it prevents independent scoring before evidence access begins.
-6. A replacement assessor must complete the full confirmation procedure before seeing any candidate score conclusion.
+5. Until Stage 1 approves and applies an authorship-independence policy and Stage 3 updates the qualification contracts to conform, any assessor's disclosed authorship of candidate code or qualification evidence for that candidate is a gating conflict. It remains gating regardless of either assessor's self-assessment, and the assessor can't enter that candidate's independent-scoring pass.
+6. Under the current qualification-evidence schema, the only representable mitigation for an authorship conflict is whole-candidate assessor replacement: the replacement completes the full confirmation procedure and enters the candidate's two-assessor record before seeing any candidate score conclusion.
+7. Per-criterion recusal with a third assessor is blocked until Stage 3 changes the schema as specified in [Spec edits required](#spec-edits-required).
 
 ### Assessor 1 independence determination
 
-The governing PRD text says: "After hard-gate eligibility, two assessors independently assign an integer score from 3 through 5 to each criterion from cited evidence." The `OD-01: Rendering substrate` text says: "After hard-gate eligibility, two frozen assessors independently assign an integer score of 3, 4, or 5 to each criterion from cited KK evidence." This report's rule 5 says: "A disclosed relationship doesn't silently waive independence. Both assessors must record whether it prevents independent scoring before evidence access begins." Source: `.constitution/prd/constraints.md`, `Substrate selection policy`; `.constitution/reports/2026-08-09-open-decisions.md`, `OD-01: Rendering substrate`; and [Independence rules](#independence-rules).
+The governing PRD text says: "After hard-gate eligibility, two assessors independently assign an integer score from 3 through 5 to each criterion from cited evidence." The `OD-01: Rendering substrate` text says: "After hard-gate eligibility, two frozen assessors independently assign an integer score of 3, 4, or 5 to each criterion from cited KK evidence." Source: `.constitution/prd/constraints.md`, `Substrate selection policy`; `.constitution/reports/2026-08-09-open-decisions.md`, `OD-01: Rendering substrate`; and [Independence rules](#independence-rules).
 
-`qualification-evidence.schema.json`, `$defs.score`, requires two integer assessor scores, `consensusScore`, a nonempty `consensusRationale`, and evidence. It doesn't state whether authoring candidate code or qualification evidence prevents independent scoring. Source: `.constitution/tech-spec/data-models/qualification-evidence.schema.json`, `$defs.score`; preserved in [Preserved probe outputs](#preserved-probe-outputs).
+The re-run schema probe in [Preserved probe outputs](#preserved-probe-outputs) shows that the candidate record can name exactly two assessors and that each criterion stores exactly two un-attributed integer assessor scores. The schema doesn't state whether authoring candidate code or qualification evidence prevents independent scoring.
 
-Determination: KU (gating). Oscar disclosed that candidate code and/or qualification evidence may be authored personally. Neither the PRD, OD-01, this report's existing rules, nor `$defs.score` settles whether that authorship prevents independent scoring. This report can't declare Assessor 1 independent for a criterion whose evidence or candidate implementation Oscar authored. Stage 1 and Stage 3 must decide the rule before evidence access.
+Determination: KU (gating). Oscar disclosed that candidate code and/or qualification evidence may be authored personally. Until Stage 1 approves and applies an authorship-independence policy and Stage 3 updates the qualification contracts to conform, the same rule applies to both assessors: any candidate-code or qualification-evidence authorship disclosure remains gating regardless of self-assessment. The disclosing assessor can't independently score that candidate. No disclosure is waived or softened.
 
-Available mitigations are: require Assessor 1 to recuse from every criterion supported by evidence they authored and assign a different eligible assessor for each recused score; or replace Assessor 1 with an assessor who didn't author candidate code or qualification evidence. This report recommends the latter in [Recommendation](#recommendation). No disclosure is waived or softened.
+The current schema cannot encode a third identity for a criterion-specific replacement, or connect either criterion score to a named assessor. Therefore, whole-candidate replacement with a confirmed non-authoring assessor is the only currently representable mitigation. This report recommends that mitigation in [Recommendation](#recommendation).
+
+### Schema representability and recusal
+
+KK: The re-run schema probe in [Preserved probe outputs](#preserved-probe-outputs) proves that `assessors` is an exactly-two-item tuple and `assessorScores` is an exactly-two-item integer tuple with no identity field. A per-criterion recusal that substitutes a third person cannot be encoded in the current contract.
+
+KU (gating): Per-criterion recusal is a possible future policy option only. It remains blocked until Stage 1 approves that policy and Stage 3 applies the named schema changes, including the exact identity and recusal fields, in [Spec edits required](#spec-edits-required). Until then, replace the conflicted assessor for the entire candidate.
 
 ### Evidence access procedure
 
@@ -119,7 +128,7 @@ Before candidate implementation, the second distinct human must provide a writte
 4. Disclose repository ownership or maintainer status, employer or organizational role, financial or other interest in either candidate or upstream, candidate implementation or evidence-authoring involvement, and any prior exposure to candidate score conclusions.
 5. Confirm participation, the integer 3-5 scale, the six exact criteria in [Frozen scoring criteria](#frozen-scoring-criteria), and the consensus procedure in this report, including the agreement and disagreement requirements.
 6. Confirm that they haven't seen any candidate score conclusion before recording independent scores and that they won't see another assessor's conclusion until their own record is complete.
-7. State whether any disclosure prevents independent scoring. If it does, the coordinator must name a replacement assessor and repeat this procedure before evidence access.
+7. A candidate-code or qualification-evidence authorship disclosure remains a gating conflict regardless of the assessor's self-assessment. The assessor can't independently score that candidate; the coordinator must name a whole-candidate replacement and repeat this procedure before evidence access. Other disclosures don't silently waive independence and must be referred to the coordinator and the approved governance policy. Per-criterion recusal with a third assessor is blocked by the current schema.
 
 ### Preserved probe outputs
 
@@ -154,10 +163,10 @@ command: grep -E "\"(candidateImplementationReady|measurementReady|scoringAnchor
     "scoring-anchors-and-two-assessors",
 ```
 
-The following schema and governing-text inspection probe was run on this host.
+The following schema inspection probes were re-run on this host during the round-2 repair. The first block is an excerpt selected by `grep -A 48`; it is complete output for that command but not evidence of every `$defs.scores` member. The following exact `jq` probe separately preserves all six required `$defs.scores` properties.
 
 ```text
-command: grep -A 48 "\"score\":" .constitution/tech-spec/data-models/qualification-evidence.schema.json
+command: grep -A 48 '"score":' .constitution/tech-spec/data-models/qualification-evidence.schema.json
     "score": {
       "type": "object",
       "additionalProperties": false,
@@ -190,6 +199,76 @@ command: grep -A 48 "\"score\":" .constitution/tech-spec/data-models/qualificati
         }
       }
     },
+    "scores": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "platformCoverage",
+        "upgradeMaintenance",
+        "performance",
+        "safetySecurityPrivacy",
+        "distribution",
+        "operationalClarity"
+      ],
+      "properties": {
+        "platformCoverage": {
+          "allOf": [
+            { "$ref": "#/$defs/score" },
+            { "type": "object", "properties": { "weight": { "const": 30 } } }
+          ]
+
+command: jq -r '."$defs".scores.required[]' .constitution/tech-spec/data-models/qualification-evidence.schema.json
+platformCoverage
+upgradeMaintenance
+performance
+safetySecurityPrivacy
+distribution
+operationalClarity
+
+command: jq '{assessors: .properties.assessors, assessorScores: ."$defs".score.properties.assessorScores, scoresRequired: ."$defs".scores.required}' .constitution/tech-spec/data-models/qualification-evidence.schema.json
+{
+  "assessors": {
+    "type": "array",
+    "prefixItems": [
+      {
+        "$ref": "#/$defs/assessor"
+      },
+      {
+        "$ref": "#/$defs/assessor"
+      }
+    ],
+    "items": false,
+    "minItems": 2,
+    "maxItems": 2,
+    "uniqueItems": true
+  },
+  "assessorScores": {
+    "type": "array",
+    "prefixItems": [
+      {
+        "type": "integer",
+        "minimum": 3,
+        "maximum": 5
+      },
+      {
+        "type": "integer",
+        "minimum": 3,
+        "maximum": 5
+      }
+    ],
+    "items": false,
+    "minItems": 2,
+    "maxItems": 2
+  },
+  "scoresRequired": [
+    "platformCoverage",
+    "upgradeMaintenance",
+    "performance",
+    "safetySecurityPrivacy",
+    "distribution",
+    "operationalClarity"
+  ]
+}
 
 command: grep -A 12 "After hard-gate eligibility" .constitution/prd/constraints.md
 After hard-gate eligibility, two assessors independently assign an integer score from 3 through 5 to each criterion from cited evidence. They must record one consensus score for every disagreement. Multiply each consensus score by its weight and divide by 5 to produce a 100-point result.
@@ -219,15 +298,19 @@ Choose Option B for the ticket state and Option C for the authorship-conflict po
 | :-- | :-- | :-- |
 | A - treat Assessor 1 as sufficient and authoring as compatible with independent scoring | Rejected | The frozen policy requires two assessors, Assessor 2 is unnamed and unavailable, and the governing texts don't resolve the authoring conflict. |
 | B - retain the assessor and scoring-anchor gates | Selected | It preserves the existing policy and both stop conditions. OXY-B008 remains open until two distinct confirmations are preserved, and Q3 must be resolved before evidence access. |
-| C - use two assessors who don't author candidate code or qualification evidence for the candidate | Recommended for Stage 1/Stage 3 approval | It removes the declared authoring conflict instead of assuming it is harmless. The PRD and schema don't yet make this a binding rule, so this remains a governance KU until approved. |
+| C - use two assessors who don't author candidate code or qualification evidence for the candidate | Recommended for Stage 1 approval and subsequent Stage 3 conformance | It removes the declared authoring conflict instead of assuming it is harmless. Until Stage 1 applies the policy and Stage 3 updates conforming contracts, authorship remains a gating disclosure for either assessor. |
 
 Candidate-neutral readiness work can continue only when it doesn't begin candidate implementation or create candidate score conclusions. No candidate score, candidate ranking, or candidate selection is authorized by this report.
 
 ## Spec edits required
 
-No active-specification edit is authorized while Q2, Q3, or Q4 remains gating. If Stage 1 approves the recommended authorship policy, Stage 3 must apply these exact instructions later.
+No active-specification edit is authorized while Q2, Q3, or Q4 remains gating. Stage 1 must first approve and apply the PRD amendment below. Only after that approval and application may Stage 3 update the qualification contracts to conform; Stage 3 must not apply the PRD amendment.
 
-- `.constitution/prd/constraints.md`, `Substrate selection policy`: insert this exact sentence after the independent-scoring sentence: "A person who authors candidate implementation or qualification evidence for a candidate must not serve as an independent scorer for that candidate."
-- `.constitution/tech-spec/contracts/qualification-lock.json`, `measurementPolicy.assessors`: retain the exact value `null` until two named, available, confirmed assessors satisfy the approved authorship-independence policy; then replace `null` with the SHA-256 digest of their immutable assessor-declaration artifact. No digest is proposed because no such complete artifact exists.
-- `.constitution/tech-spec/contracts/qualification-lock.json`, `measurementPolicy.scoringAnchors`: retain the exact value `null` until the accepted assessors freeze the anchors in a separate immutable artifact.
-- `.constitution/tech-spec/contracts/qualification-lock.json`, `candidateImplementationReady`: retain the exact value `false` while any assessor, authorship-independence, or scoring-anchor gate remains unresolved.
+- Stage 1 - `.constitution/prd/constraints.md`, `Substrate selection policy`: insert this exact sentence after the independent-scoring sentence: "A person who authors candidate implementation or qualification evidence for a candidate must not serve as an independent scorer for that candidate."
+- Stage 3 - `.constitution/tech-spec/contracts/qualification-lock.json`, `measurementPolicy.assessors`: retain the exact value `null` until two named, available, confirmed assessors satisfy the Stage 1-approved authorship-independence policy; then replace `null` with the SHA-256 digest of their immutable assessor-declaration artifact. No digest is proposed because no such complete artifact exists.
+- Stage 3 - `.constitution/tech-spec/contracts/qualification-lock.json`, `measurementPolicy.scoringAnchors`: retain the exact value `null` until the accepted assessors freeze the anchors in a separate immutable artifact.
+- Stage 3 - `.constitution/tech-spec/contracts/qualification-lock.json`, `candidateImplementationReady`: retain the exact value `false` while any assessor, authorship-independence, or scoring-anchor gate remains unresolved.
+- Stage 3, blocked future option only - `.constitution/tech-spec/data-models/qualification-evidence.schema.json`, root `assessors`: replace the current exactly-two tuple with the exact value `{ "type": "array", "items": { "$ref": "#/$defs/assessor" }, "minItems": 2, "uniqueItems": true }`; remove `prefixItems`, `items: false`, and `maxItems: 2` so a third frozen replacement identity is encodable.
+- Stage 3, blocked future option only - `.constitution/tech-spec/data-models/qualification-evidence.schema.json`, add `$defs.assessorScore` with the exact value `{ "type": "object", "additionalProperties": false, "required": ["assessorId", "score"], "properties": { "assessorId": { "type": "string", "minLength": 1 }, "score": { "type": "integer", "minimum": 3, "maximum": 5 } } }`; replace `$defs.score.properties.assessorScores` with the exact value `{ "type": "array", "items": { "$ref": "#/$defs/assessorScore" }, "minItems": 2, "maxItems": 2 }`; append the exact string `"recusedAssessorIds"` to `$defs.score.required`; and add `$defs.score.properties.recusedAssessorIds` with the exact value `{ "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true }`. Stage 3 must enforce that score and recusal IDs name entries in root `assessors`, the two score IDs differ, and no score ID is recused for that criterion.
+
+The future per-criterion option remains blocked until Stage 1 approves it and Stage 3 applies and validates both listed schema changes. Until then, whole-candidate assessor replacement is mandatory.
