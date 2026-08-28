@@ -9,6 +9,7 @@
 - **Round-6 correction clock start / stop:** 2026-08-28T18:31:37Z / 2026-08-28T18:42:14Z.
 - **Round-7 correction clock start / stop:** 2026-08-28T19:08:02Z / 2026-08-28T19:17:48Z.
 - **Round-8 correction clock start / stop:** 2026-08-28T19:41:57Z / 2026-08-28T19:49:17Z.
+- **Round-9 correction clock start / stop:** 2026-08-28T20:22:41Z / 2026-08-28T20:32:29Z.
 
 ## Question
 
@@ -21,7 +22,7 @@ Table 1. Wayland baseline decisions
 | Row | Answer and evidence | Status | Next bounded probe |
 | :-- | :-- | :-- | :-- |
 | Reference compositor, session, and package lock | [Ubuntu 26.04 LTS release notes](https://documentation.ubuntu.com/release-notes/26.04/) establish Ubuntu 26.04 LTS, but the fetched release-note content names no compositor, session, package version, or package-lock digest. The non-reference host is NixOS 26.05 with Hyprland 0.55.4, so its registry cannot establish Ubuntu compositor behavior. | KU (gating) | P1: On the selected Ubuntu 26.04 x86-64 Wayland session, record `gnome-shell --version` or the selected compositor's version command, `dpkg-query -W` for the compositor, `gtk4`, `wayland-protocols`, and `at-spi2-core`, the package-manifest SHA-256, a filtered `wayland-info` registry, and the mechanically derived 97-member deterministic P1 checklist below, plus the four retained event gates. Run a 120-frame visible-surface probe with `WAYLAND_DEBUG=client` that binds every required global, creates every required non-global object, and emits every checklist member. The script parses the preserved floor derivation, so P1 must regenerate the checklist rather than maintain a manual operation list. The fixture uses `wl_pointer.set_cursor`, not `cursor-shape-v1`. Expected output: one named compositor version, one package-lock digest, negotiated versions for every required interface, the generated checklist, and a session-specific transcript covering every checklist member. |
-| Wayland core object protocol floors | The pinned [Wayland core XML](https://raw.githubusercontent.com/wayland-mirror/wayland/1ab6b693b16e1d9734496fe60c8a6ed277e4dec3/protocol/wayland.xml) establishes these operation-derived floors: `wl_compositor` 1, `wl_surface` 1, `wl_callback` 1, `wl_seat` 5, `wl_pointer` 5, `wl_keyboard` 4, `wl_touch` 3, `wl_output` 3, `wl_data_device_manager` 1, `wl_data_device` 2, `wl_data_offer` 1, and `wl_data_source` 1. The preserved XML parser output names every required request and event. The P0 completeness derivation now includes per-view and protocol-object teardown: `wl_surface.destroy`; `wl_seat.release`; `wl_pointer.release`; `wl_keyboard.release`; `wl_touch.release`; `wl_output.release`; and `wl_data_device.release`, as well as cursor, keyboard keymap and repeat, touch, output geometry and scale, clipboard selection and offers, and text-input candidate geometry. `wl_seat.release` raises its floor to 5; `wl_touch.release` and `wl_output.release` raise their floors to 3; and `wl_data_device.release` raises its floor to 2. `wl_pointer` 5 still supplies `axis_source`, `axis_stop`, and `frame`; `wl_keyboard` 4 still supplies `repeat_info`. | KK | Not required for the source-level floors. P1 must bind each required global and create every listed non-global object at the listed floor. |
+| Wayland core object protocol floors | The pinned [Wayland core XML](https://raw.githubusercontent.com/wayland-mirror/wayland/1ab6b693b16e1d9734496fe60c8a6ed277e4dec3/protocol/wayland.xml) establishes these operation-derived floors: `wl_compositor` 1, `wl_surface` 1, `wl_callback` 1, `wl_seat` 5, `wl_pointer` 5, `wl_keyboard` 4, `wl_touch` 3, `wl_output` 3, `wl_data_device_manager` 2, `wl_data_device` 2, `wl_data_offer` 1, and `wl_data_source` 1. The preserved XML parser output names every required request and event. The P0 completeness derivation includes per-view and protocol-object teardown: `wl_surface.destroy`; `wl_seat.release`; `wl_pointer.release`; `wl_keyboard.release`; `wl_touch.release`; `wl_output.release`; and `wl_data_device.release`, as well as cursor, keyboard keymap and repeat, touch, output geometry and scale, clipboard selection and offers, and text-input candidate geometry. `wl_seat.release` raises its floor to 5; `wl_touch.release` and `wl_output.release` raise their floors to 3; and `wl_data_device.release` raises its object floor to 2. `wl_data_device_manager.get_data_device` creates `wl_data_device` through a bare `new_id`, so the child inherits the manager's bound version and the factory-propagation pass raises the manager floor from its local 1 to 2. `wl_pointer` 5 still supplies `axis_source`, `axis_stop`, and `frame`; `wl_keyboard` 4 still supplies `repeat_info`. | KK | Not required for the source-level floors. P1 must bind each required global and create every listed non-global object at the listed floor. |
 | Wayland shell, scale, IME, and presentation protocol floors | The pinned [xdg-shell](https://raw.githubusercontent.com/wayland-mirror/wayland-protocols/d5aed4e4903a77aefaef03359d1ffdc0d5093456/stable/xdg-shell/xdg-shell.xml), [viewporter](https://raw.githubusercontent.com/wayland-mirror/wayland-protocols/d5aed4e4903a77aefaef03359d1ffdc0d5093456/stable/viewporter/viewporter.xml), [fractional-scale](https://raw.githubusercontent.com/wayland-mirror/wayland-protocols/d5aed4e4903a77aefaef03359d1ffdc0d5093456/staging/fractional-scale/fractional-scale-v1.xml), [text-input-v3](https://raw.githubusercontent.com/wayland-mirror/wayland-protocols/d5aed4e4903a77aefaef03359d1ffdc0d5093456/unstable/text-input/text-input-unstable-v3.xml), and version-1 [presentation-time](https://raw.githubusercontent.com/wayland-mirror/wayland-protocols/37a1560cf6981a11d44dd200d9409d09b4f0074e/stable/presentation-time/presentation-time.xml) XML establish floor 1 for `xdg_wm_base`, `xdg_surface`, `xdg_toplevel`, `wp_viewporter`, `wp_viewport`, `wp_fractional_scale_manager_v1`, `wp_fractional_scale_v1`, `zwp_text_input_manager_v3`, `zwp_text_input_v3`, `wp_presentation`, and `wp_presentation_feedback`. The required operations cover toplevel configure acknowledgement, fractional-scale destination sizing, IME surrounding text, candidate geometry through `zwp_text_input_v3.set_cursor_rectangle`, commits, and per-commit `feedback`, `sync_output`, `presented`, or `discarded`; they also cover `xdg_wm_base.destroy`, `xdg_surface.destroy`, `xdg_toplevel.destroy`, `wp_viewporter.destroy`, `wp_viewport.destroy`, `wp_fractional_scale_manager_v1.destroy`, `wp_fractional_scale_v1.destroy`, `zwp_text_input_manager_v3.destroy`, `zwp_text_input_v3.disable`, `zwp_text_input_v3.destroy`, and `wp_presentation.destroy`. Version 2 changes only the variable-refresh `refresh` contract, which the harness does not consume. | KK | Not required for the source-level floors. P1 must bind each required manager global, create its listed non-global objects, and verify the `wp_presentation` transcript. |
 | GTK 4.20.4 source API-binding ceiling | The official [GTK 4.20 source index](https://download.gnome.org/sources/gtk/4.20/) publishes GTK 4.20.4. The immutable [GTK 4.20.4 `gtkenums.h`](https://gitlab.gnome.org/GNOME/gtk/-/raw/4.20.4/gtk/gtkenums.h) source defines `GTK_INPUT_HINT_PRIVATE` and describes it as a request not to update personalized data. The preserved source SHA-256 is `c2ef75dc175e7d8b6a28c1ace0e45898a0f2f4b14454b980fd310e545eb485c9`. This source fact supports the `gtk4` crate `v4_20` binding ceiling in `stack.md`; it is not the Ubuntu reference-package identity. | KK | Not required for the documented API-binding ceiling. P1 must lock the Ubuntu package that supplies the Wayland session. |
 | GTK reference package and Wayland session lock | [SPK-B004's Ubuntu source-package audit](SPK-B004.md#ubuntu-source-package-audit) establishes the shared Ubuntu reference package identity as `libgtk-4-1` `4.22.2+ds-1ubuntu1`, with source-descriptor checksums and a patch audit. The official [Ubuntu package page](https://packages.ubuntu.com/resolute/libgtk-4-1) identifies the same binary package and version. That identity applies to both Linux sessions; the Wayland session still has no installed-package manifest digest or backend capture. The `v4_20` crate feature is a separate API-binding ceiling and does not require the reference package to be 4.20.4. | KU (gating) | P1: On the selected Ubuntu Wayland session, record `dpkg-query -W libgtk-4-1`, the package origin, and the immutable package-manifest digest. Accept this gate only when the installed package is `libgtk-4-1` `4.22.2+ds-1ubuntu1` and the manifest binds that package to the selected session. Expected output: package version, origin, manifest digest, and session identifier. |
@@ -146,7 +147,7 @@ The v1 source SHA-256 is `91e5e14481a13717fef8403203a2eaa052c85fd853c1c440ba081e
 
 ### Wayland baseline source floors
 
-The following round-5 parser output is historical evidence only. Round 6 supersedes its operation set and checklist below because the earlier parser omitted foundational registry operations, included drag-and-drop-only events, and made nondeterministic events ordinary pass requirements. XML members with no `since` attribute have version 1. Both derivations establish source API floors only; neither establishes an Ubuntu compositor's advertisement or behavior.
+The following round-5 parser output is historical evidence only. Round 6 supersedes its operation set and checklist below because the earlier parser omitted foundational registry operations, included drag-and-drop-only events, and made nondeterministic events ordinary pass requirements. Round 9 supersedes every historical local-only floor where a bare-`new_id` factory child requires a higher bound version; in particular, the displayed `wl_data_device_manager` local floor 1 is not a usable protocol floor. XML members with no `since` attribute have version 1. Neither derivation establishes an Ubuntu compositor's advertisement or behavior.
 
 ```text
 $ nix shell nixpkgs#python3 -c python3 /tmp/wf-epic-b/OXY-B003/round-5/derive-wayland-floors.py
@@ -342,7 +343,7 @@ Table 2. Corrected operation-set and event-gate answers
 
 | Row | Answer and evidence | Status | Next bounded probe |
 | :-- | :-- | :-- | :-- |
-| Corrected operation selection and deterministic pass subset | The round-6 script below verifies the SHA-256 of each pinned XML before parsing it, rejects the five drag-and-drop members, derives 101 selected operations and all floors, and mechanically marks 97 operations as deterministic pass members. The preserved run records the six immutable input URL-to-SHA-256 pairs and `selected_operations=101 deterministic_pass_operations=97 ku_events_excluded_from_pass=4`. The PRD citations above establish why clipboard is retained and operating-system drag-and-drop is not P0. | KK | Not required for the source-level selection. P1 must regenerate the parser output from the preserved derivation output rather than copy a list. |
+| Corrected operation selection and deterministic pass subset | The preserved derivation script verifies the SHA-256 of each pinned XML before parsing it, rejects the five drag-and-drop members, derives 101 selected operations, propagates bare-`new_id` factory child floors to a fixpoint, and mechanically marks 97 operations as deterministic pass members. The round-9 run records the six immutable input URL-to-SHA-256 pairs, `selected_operations=101 deterministic_pass_operations=97 ku_events_excluded_from_pass=4`, and one factory-floor change: `wl_data_device_manager` 1 to 2 through `get_data_device` to `wl_data_device`. The PRD citations above establish why clipboard is retained and operating-system drag-and-drop is not P0. | KK | Not required for the source-level selection. P1 must regenerate the parser output from the preserved derivation output rather than copy a list. |
 | Nondeterministic foundational and compositor-selected events | `wl_registry.global_remove`, `wl_touch.cancel`, `xdg_wm_base.ping`, and `wp_presentation_feedback.discarded` are selected source operations, but neither their pinned XML nor the fetched protocol specification defines a deterministic stimulus available to this report's unselected reference compositor. They are excluded from the 97-member pass rule. In particular, rendering frames cannot deterministically produce `wl_touch.cancel`. | KU (gating) | P1E: On the selected Ubuntu compositor, record a documented compositor test-control or controlled physical procedure for each event. Invoke the procedure once per event and preserve the `WAYLAND_DEBUG=client` line and its stimulus log. Expected output: `global_remove` with the removed global name; `cancel` after an active touch sequence; `ping` followed by the fixture's `pong`; and `discarded` for the named presentation-feedback object. If the locked compositor exposes no deterministic procedure for an event, STOP that event subprobe and retain this KU. |
 
 Table 3 maps every event that remains in the deterministic subset to a controlled P1 stimulus and expected transcript result. The script emits the matching `stimulus` and `expected` tags for every request and event, so the table is also the controlled-input procedure for the generated checklist.
@@ -420,6 +421,44 @@ wp_presentation_feedback|presentation-discard|compositor-discard|discarded|disca
 """.strip()
 KU_EVENTS = frozenset(("wl_registry.global_remove", "wl_touch.cancel", "xdg_wm_base.ping", "wp_presentation_feedback.discarded"))
 FORBIDDEN_DND = frozenset(("wl_data_device.enter", "wl_data_device.leave", "wl_data_device.motion", "wl_data_device.drop", "wl_data_device.start_drag"))
+CHAIN_CHECKS = (
+    ("wl_seat",),
+    ("xdg_wm_base", "xdg_surface", "xdg_toplevel"),
+    ("wp_viewporter",),
+    ("wp_fractional_scale_manager_v1",),
+    ("zwp_text_input_manager_v3",),
+    ("wp_presentation",),
+)
+
+
+def bare_factory_children(node: ET.Element) -> tuple[str, ...]:
+    """Returns static new_id children when the request or event has no version arg."""
+    arguments = tuple(node.findall("arg"))
+    if any(argument.attrib.get("name") == "version" for argument in arguments):
+        return ()
+    return tuple(
+        argument.attrib["interface"]
+        for argument in arguments
+        if argument.attrib.get("type") == "new_id" and "interface" in argument.attrib
+    )
+
+
+def propagate_factory_floors(local_floors: dict[str, int], factory_edges: list[tuple[str, str, str]]) -> tuple[dict[str, int], list[list[tuple[str, int, int, str, str]]]]:
+    """Propagates bare-new_id child floors to their factory interfaces to a fixpoint."""
+    floors = dict(local_floors)
+    passes: list[list[tuple[str, int, int, str, str]]] = []
+    while True:
+        changes: list[tuple[str, int, int, str, str]] = []
+        for parent, child, member in factory_edges:
+            if child not in floors:
+                continue
+            if floors[child] > floors[parent]:
+                before = floors[parent]
+                floors[parent] = floors[child]
+                changes.append((parent, before, floors[parent], child, member))
+        passes.append(changes)
+        if not changes:
+            return floors, passes
 
 
 def main() -> None:
@@ -433,7 +472,10 @@ def main() -> None:
             raise SystemExit(f"digest mismatch: {filename} expected={expected_hash} actual={actual_hash}")
         print(f"input file={filename} url={url} sha256={actual_hash}")
         interfaces.update({node.attrib["name"]: node for node in ET.fromstring(content).findall("interface")})
-    seen, floors, operations = set(), {}, []
+    seen: set[str] = set()
+    local_members: dict[str, list[tuple[str, int]]] = {}
+    factory_edges: list[tuple[str, str, str]] = []
+    operations: list[tuple[str, str]] = []
     print("derived-operations")
     for spec in SPECS.splitlines():
         interface, rule, stimulus, expected, names = spec.split("|")
@@ -449,14 +491,30 @@ def main() -> None:
             if qualification == "ku" and kind != "event":
                 raise SystemExit(f"KU operation is not an event: {qualified}")
             operations.append((qualified, qualification))
-            floors.setdefault(interface, []).append((name, since))
+            local_members.setdefault(interface, []).append((name, since))
+            for child in bare_factory_children(node):
+                factory_edges.append((interface, child, qualified))
             print(f"operation={qualified} kind={kind} since={since} qualification={qualification} rule={rule} stimulus={stimulus} expected={expected}")
+    local_floors = {interface: max(since for _, since in members) for interface, members in local_members.items()}
+    floors, propagation_passes = propagate_factory_floors(local_floors, factory_edges)
+    print("factory-propagation")
+    for pass_number, changes in enumerate(propagation_passes, start=1):
+        if changes:
+            for parent, before, after, child, member in changes:
+                print(f"factory-pass={pass_number} factory={parent} child={child} member={member} local_or_prior_floor={before} propagated_floor={after} changed=yes")
+        else:
+            print(f"factory-pass={pass_number} changes=none fixpoint=yes")
+    for chain in CHAIN_CHECKS:
+        chain_members = ",".join(chain)
+        result = ";".join(f"{interface}:local={local_floors[interface]},floor={floors[interface]}" for interface in chain)
+        changed = "yes" if any(local_floors[interface] != floors[interface] for interface in chain) else "no"
+        print(f"factory-chain={chain_members} result={result} changed={changed}")
     print("derived-floors")
-    for interface, members in floors.items():
+    for interface, members in local_members.items():
         required = ",".join(f"{name}@{since}" for name, since in members)
-        print(f"floor interface={interface} declared={interfaces[interface].attrib['version']} required={required} floor={max(since for _, since in members)}")
+        print(f"floor interface={interface} declared={interfaces[interface].attrib['version']} required={required} local_floor={local_floors[interface]} factory_floor={floors[interface]} floor={floors[interface]}")
     passed = sum(qualification == "pass" for _, qualification in operations)
-    print(f"summary selected_operations={len(operations)} deterministic_pass_operations={passed} ku_events_excluded_from_pass={len(operations) - passed}")
+    print(f"summary selected_operations={len(operations)} deterministic_pass_operations={passed} ku_events_excluded_from_pass={len(operations) - passed} factory_changed_interfaces={sum(local_floors[interface] != floors[interface] for interface in floors)}")
 
 
 if __name__ == "__main__":
@@ -504,7 +562,7 @@ if __name__ == "__main__":
     main()
 ```
 
-The following fresh command and trimmed output preserve the input map, derived floors, and count. The omitted `operation=` lines are reproducible only from the complete script and the digests shown here; the parser output after this block preserves the entire deterministic checklist.
+The following round-6 command and trimmed output are retained as the historical local-member derivation. It omits factory propagation, so its `wl_data_device_manager` floor is not a usable protocol floor. Round 9 supersedes that floor below. The omitted `operation=` lines are reproducible only from the complete script and the digests shown here; the parser output after this block preserves the entire deterministic checklist.
 
 ```text
 $ nix shell nixpkgs#python3 -c python3 /tmp/wf-epic-b/OXY-B003/round-6/derive-wayland-floors.py /tmp/wf-epic-b/OXY-B003/round-6/sources > /tmp/wf-epic-b/OXY-B003/round-6/derive-wayland-floors.out
@@ -544,7 +602,7 @@ summary selected_operations=101 deterministic_pass_operations=97 ku_events_exclu
 exit=0
 ```
 
-The parser ran only on the freshly generated primary output. Its full result is the deterministic P1 checklist; the four KU events are visibly excluded from the pass rule.
+The parser output is retained because factory propagation changes only the `wl_data_device_manager` bind floor, not selected operations or their pass classification. The round-9 rerun below confirms the unchanged 97-member deterministic subset and four excluded KU events.
 
 ```text
 $ nix shell nixpkgs#python3 -c python3 /tmp/wf-epic-b/OXY-B003/round-6/derive-p1-transcript-checklist.py /tmp/wf-epic-b/OXY-B003/round-6/derive-wayland-floors.out
@@ -652,6 +710,88 @@ retained_ku_events_excluded_from_pass=4
 - wl_touch.cancel
 - xdg_wm_base.ping
 - wp_presentation_feedback.discarded
+exit=0
+```
+
+### Round-9 correction: factory-version propagation
+
+The earlier derivation used only each interface's selected-member `since` maximum. That rule is insufficient for an object created through a bare `new_id`: the child inherits the factory object's bound version. The revised primary derivation script above detects each selected request or event with a static `new_id` and no `version` argument, constructs the factory-to-child graph, and repeatedly raises each factory floor to the child floor until a pass makes no changes. It retains `local_floor` separately from the propagated `factory_floor` to make the correction auditable.
+
+The revised derivation finds one change: `wl_data_device_manager.get_data_device` creates `wl_data_device` with a bare `new_id`; `wl_data_device.release` has `since="2"`; and the manager must therefore bind at version 2. The pass reaches its fixpoint on the second iteration. It checks `wl_seat`, `xdg_wm_base` through `xdg_surface` through `xdg_toplevel`, `wp_viewporter`, `wp_fractional_scale_manager_v1`, `zwp_text_input_manager_v3`, and `wp_presentation`; none changes. The P1 operation count and membership remain 97 deterministic pass operations and four separate KU events.
+
+The round-9 probe fetched the pinned core XML again from its canonical URL. The Ubuntu package-page response uses Jina only as transport. Its body is not a fixture and has no digest.
+
+```text
+$ probe_dir=/tmp/wf-epic-b/OXY-B003/round-9; wayland_url=https://raw.githubusercontent.com/wayland-mirror/wayland/1ab6b693b16e1d9734496fe60c8a6ed277e4dec3/protocol/wayland.xml; curl -sS -fL --max-time 60 --output "$probe_dir/sources/wayland.xml" "$wayland_url"; printf 'url=%s bytes=%s sha256=%s\n' "$wayland_url" "$(wc -c < "$probe_dir/sources/wayland.xml")" "$(sha256sum "$probe_dir/sources/wayland.xml" | awk '{print $1}')"
+url=https://raw.githubusercontent.com/wayland-mirror/wayland/1ab6b693b16e1d9734496fe60c8a6ed277e4dec3/protocol/wayland.xml bytes=151742 sha256=7eb8569529235c85e16d15612fc367da4538b7d515b13e32ec48ba0742c42610
+$ ubuntu_url=https://packages.ubuntu.com/resolute/at-spi2-core; curl -sS -fL --max-time 60 --output "$probe_dir/ubuntu-at-spi2-core.txt" "https://r.jina.ai/$ubuntu_url"; printf 'url=%s transport=jina bytes=%s\n' "$ubuntu_url" "$(wc -c < "$probe_dir/ubuntu-at-spi2-core.txt")"; grep -F -m 1 '2.60.0-1' "$probe_dir/ubuntu-at-spi2-core.txt"
+url=https://packages.ubuntu.com/resolute/at-spi2-core transport=jina bytes=2868
+## Package: at-spi2-core (2.60.0-1)
+exit=0
+```
+
+The following trimmed rerun preserves the revised output. It includes every derived floor and the required factory-chain checks.
+
+```text
+$ nix shell nixpkgs#python3 -c python3 /tmp/wf-epic-b/OXY-B003/round-9/derive-wayland-floors.py /tmp/wf-epic-b/OXY-B003/round-9/sources > /tmp/wf-epic-b/OXY-B003/round-9/derive-wayland-floors.out
+$ grep -E '^(input file=wayland.xml|factory-pass=|factory-chain=|floor interface=|summary)' /tmp/wf-epic-b/OXY-B003/round-9/derive-wayland-floors.out
+input file=wayland.xml url=https://raw.githubusercontent.com/wayland-mirror/wayland/1ab6b693b16e1d9734496fe60c8a6ed277e4dec3/protocol/wayland.xml sha256=7eb8569529235c85e16d15612fc367da4538b7d515b13e32ec48ba0742c42610
+factory-pass=1 factory=wl_data_device_manager child=wl_data_device member=wl_data_device_manager.get_data_device local_or_prior_floor=1 propagated_floor=2 changed=yes
+factory-pass=2 changes=none fixpoint=yes
+factory-chain=wl_seat result=wl_seat:local=5,floor=5 changed=no
+factory-chain=xdg_wm_base,xdg_surface,xdg_toplevel result=xdg_wm_base:local=1,floor=1;xdg_surface:local=1,floor=1;xdg_toplevel:local=1,floor=1 changed=no
+factory-chain=wp_viewporter result=wp_viewporter:local=1,floor=1 changed=no
+factory-chain=wp_fractional_scale_manager_v1 result=wp_fractional_scale_manager_v1:local=1,floor=1 changed=no
+factory-chain=zwp_text_input_manager_v3 result=zwp_text_input_manager_v3:local=1,floor=1 changed=no
+factory-chain=wp_presentation result=wp_presentation:local=1,floor=1 changed=no
+floor interface=wl_display declared=1 required=get_registry@1,sync@1,delete_id@1 local_floor=1 factory_floor=1 floor=1
+floor interface=wl_registry declared=1 required=global@1,bind@1,global_remove@1 local_floor=1 factory_floor=1 floor=1
+floor interface=wl_compositor declared=6 required=create_surface@1 local_floor=1 factory_floor=1 floor=1
+floor interface=wl_surface declared=6 required=attach@1,damage@1,frame@1,commit@1,enter@1,leave@1,destroy@1 local_floor=1 factory_floor=1 floor=1
+floor interface=wl_callback declared=1 required=done@1 local_floor=1 factory_floor=1 floor=1
+floor interface=wl_seat declared=10 required=capabilities@1,get_pointer@1,get_keyboard@1,get_touch@1,release@5 local_floor=5 factory_floor=5 floor=5
+floor interface=wl_pointer declared=10 required=enter@1,leave@1,motion@1,button@1,axis@1,axis_source@5,axis_stop@5,frame@5,set_cursor@1,release@3 local_floor=5 factory_floor=5 floor=5
+floor interface=wl_keyboard declared=10 required=keymap@1,enter@1,leave@1,key@1,modifiers@1,repeat_info@4,release@3 local_floor=4 factory_floor=4 floor=4
+floor interface=wl_touch declared=10 required=down@1,up@1,motion@1,frame@1,release@3,cancel@1 local_floor=3 factory_floor=3 floor=3
+floor interface=wl_output declared=4 required=geometry@1,mode@1,done@2,scale@2,release@3 local_floor=3 factory_floor=3 floor=3
+floor interface=wl_data_device_manager declared=3 required=create_data_source@1,get_data_device@1 local_floor=1 factory_floor=2 floor=2
+floor interface=wl_data_device declared=3 required=data_offer@1,selection@1,set_selection@1,release@2 local_floor=2 factory_floor=2 floor=2
+floor interface=wl_data_offer declared=3 required=offer@1,receive@1,destroy@1 local_floor=1 factory_floor=1 floor=1
+floor interface=wl_data_source declared=3 required=offer@1,send@1,cancelled@1,destroy@1 local_floor=1 factory_floor=1 floor=1
+floor interface=xdg_wm_base declared=6 required=get_xdg_surface@1,pong@1,destroy@1,ping@1 local_floor=1 factory_floor=1 floor=1
+floor interface=xdg_surface declared=6 required=get_toplevel@1,ack_configure@1,configure@1,destroy@1 local_floor=1 factory_floor=1 floor=1
+floor interface=xdg_toplevel declared=6 required=set_title@1,set_app_id@1,configure@1,close@1,destroy@1 local_floor=1 factory_floor=1 floor=1
+floor interface=wp_viewporter declared=1 required=get_viewport@1,destroy@1 local_floor=1 factory_floor=1 floor=1
+floor interface=wp_viewport declared=1 required=set_destination@1,destroy@1 local_floor=1 factory_floor=1 floor=1
+floor interface=wp_fractional_scale_manager_v1 declared=1 required=get_fractional_scale@1,destroy@1 local_floor=1 factory_floor=1 floor=1
+floor interface=wp_fractional_scale_v1 declared=1 required=preferred_scale@1,destroy@1 local_floor=1 factory_floor=1 floor=1
+floor interface=zwp_text_input_manager_v3 declared=1 required=get_text_input@1,destroy@1 local_floor=1 factory_floor=1 floor=1
+floor interface=zwp_text_input_v3 declared=1 required=enable@1,disable@1,set_surrounding_text@1,set_text_change_cause@1,set_content_type@1,set_cursor_rectangle@1,commit@1,preedit_string@1,commit_string@1,delete_surrounding_text@1,done@1,destroy@1 local_floor=1 factory_floor=1 floor=1
+floor interface=wp_presentation declared=1 required=feedback@1,destroy@1 local_floor=1 factory_floor=1 floor=1
+floor interface=wp_presentation_feedback declared=1 required=sync_output@1,presented@1,discarded@1 local_floor=1 factory_floor=1 floor=1
+summary selected_operations=101 deterministic_pass_operations=97 ku_events_excluded_from_pass=4 factory_changed_interfaces=1
+exit=0
+```
+
+The regenerated checklist parser found the same pass and KU counts:
+
+```text
+$ nix shell nixpkgs#python3 -c python3 - /tmp/wf-epic-b/OXY-B003/round-9/derive-wayland-floors.out <<'PY'
+import re
+import sys
+rows = open(sys.argv[1], encoding="utf-8").read().splitlines()
+pattern = re.compile(r"^operation=(?P<member>[a-z0-9_]+\.[a-z0-9_]+) kind=(?:request|event) since=\d+ qualification=(?P<qualification>pass|ku) ")
+items = [match.groupdict() for row in rows if (match := pattern.match(row))]
+passed = [item["member"] for item in items if item["qualification"] == "pass"]
+ku = [item["member"] for item in items if item["qualification"] == "ku"]
+assert len(passed) == 97
+assert ku == ["wl_registry.global_remove", "wl_touch.cancel", "xdg_wm_base.ping", "wp_presentation_feedback.discarded"]
+print(f"derived_deterministic_pass_operations={len(passed)}")
+print(f"retained_ku_events_excluded_from_pass={len(ku)}")
+print("exit=0")
+PY
+derived_deterministic_pass_operations=97
+retained_ku_events_excluded_from_pass=4
 exit=0
 ```
 
@@ -1176,7 +1316,7 @@ exit=0
 ## Recommendation
 
 - **Chosen option:** Use a mix of A, B, and C. Freeze the source-level core, shell, scale, text-input, clipboard, presentation, and AT-SPI interface definitions from cited upstream sources. Apply the shared Ubuntu `libgtk-4-1` `4.22.2+ds-1ubuntu1` and `at-spi2-core` `2.60.0-1` package identities to both Linux sessions while retaining the `gtk4` crate `v4_20` API-binding ceiling as a separate constraint. Use Orca and the AT-SPI 2.60.6 source definitions with documented Unicode-scalar offsets for the common accessibility baseline. Require the Option B DRM trace design for P4 only after its Ubuntu kernel identity, live format, and call-site semantics are evidenced, and retain Option C for every unproven reference-session and candidate-specific row, including the calibration acceptance bound until reviewed Stage 3 freezes it before candidate measurements.
-- **Why it fits:** The corrected source selection contains 101 operations, including foundational registry and synchronization, creation, cursor, keyboard, touch, output, candidate geometry, clipboard source, offer, selection, and client-issued release and destroy operations needed for per-view lifecycle and teardown. It excludes operating-system drag-and-drop because the PRD does not make it P0. The mechanical parser makes 97 operations the deterministic P1 transcript and retains four compositor-specific events as separate KUs. Presentation version 1 has acknowledgement and output-association operations. Version 2 only changes the variable-refresh `refresh` obligation, which the harness does not consume. Retaining KUs for server advertisement, behavior, and logical-index representation prevents source facts from becoming compositor or candidate claims. The DRM trace's independence from candidate callback streams remains unresolved until P4 proves it, along with Ubuntu kernel identity, live schema and call-site semantics, trace access, pipe-to-output attribution, P4C's predeclared clock-characterization calculation and the reviewed Stage 3 maximum-uncertainty decision made before candidate measurements. `CON-FRM-001` remains the separately applied measured interval-error gate.
+- **Why it fits:** The corrected source selection contains 101 operations, including foundational registry and synchronization, creation, cursor, keyboard, touch, output, candidate geometry, clipboard source, offer, selection, and client-issued release and destroy operations needed for per-view lifecycle and teardown. It excludes operating-system drag-and-drop because the PRD does not make it P0. The mechanical parser makes 97 operations the deterministic P1 transcript and retains four compositor-specific events as separate KUs. The factory-propagation pass raises `wl_data_device_manager` from local floor 1 to binding floor 2 because its bare-`new_id` `get_data_device` child requires version 2. Presentation version 1 has acknowledgement and output-association operations. Version 2 only changes the variable-refresh `refresh` obligation, which the harness does not consume. Retaining KUs for server advertisement, behavior, and logical-index representation prevents source facts from becoming compositor or candidate claims. The DRM trace's independence from candidate callback streams remains unresolved until P4 proves it, along with Ubuntu kernel identity, live schema and call-site semantics, trace access, pipe-to-output attribution, P4C's predeclared clock-characterization calculation and the reviewed Stage 3 maximum-uncertainty decision made before candidate measurements. `CON-FRM-001` remains the separately applied measured interval-error gate.
 - **Rejected options:** Reject a nominal refresh-rate timer, a harness-owned `wl_surface.frame` callback as an independent meter, `wp_presentation` feedback as an opportunity source, a protocol-global list as compositor behavior, an unspecified assistive technology, a scalar-to-logical equivalence assumption, a global IME index unit for every operation, and a candidate map inferred from GTK documentation.
 - **Sensitive-field rule:** Set `GtkInputPurpose` to `PASSWORD` or `PIN` as applicable and set `GtkInputHints.PRIVATE`. Continue to provide only protocol-required redacted surrounding context and never emit raw text to diagnostics. GTK describes the hint as a request, not a privacy guarantee; P2 and P3 must verify the redaction path.
 
@@ -1184,13 +1324,13 @@ exit=0
 
 Stage 3 can make the following exact edits without changing product capabilities or architecture boundaries:
 
-- `.constitution/tech-spec/contracts/platform-contracts.json` -> `environments.wayland.protocols`: OXY-D001 must apply this replacement only after the preservation step commits all nine regular fixture files and replaces every exact `<to-be-computed-by-preservation-step>` token with the streamed SHA-256 of the associated fixture. The template is syntactically valid JSON, but it is deliberately not schema-valid or digest-validator-valid until that step completes. Each eventual `kk` entry has a non-null version and local evidence; P1 retains server advertisement and behavior as a separate gate.
+- `.constitution/tech-spec/contracts/platform-contracts.json` -> `environments.wayland.protocols`: OXY-D001 must apply this replacement only after the preservation step commits all 10 regular fixture files and replaces every exact `<to-be-computed-by-preservation-step>` token with the streamed SHA-256 of the associated fixture. The template is syntactically valid JSON, but it is deliberately not schema-valid or digest-validator-valid until that step completes. Each eventual `kk` entry has a non-null version and local evidence; P1 retains server advertisement and behavior as a separate gate.
 
 The Wayland GTK row uses the same Ubuntu `libgtk-4-1` `4.22.2+ds-1ubuntu1` package identity as SPK-B004's X11 row because both reference sessions use that package. This is not a change to the `gtk4` crate `v4_20` API-binding ceiling in `stack.md`. OXY-D001 must reconcile both platform rows to that package identity while preserving their separately captured fixture paths.
 
 The Wayland AT-SPI row uses the same Ubuntu `at-spi2-core` `2.60.0-1` package identity as SPK-B004's X11 row. The Wayland fixtures retain the directly fetched 2.60.6 XML as the cited source for interface definitions. OXY-D001 must reconcile the AT-SPI protocol row and reference-configuration package identity across both environments while preserving their separately captured fixture paths.
 
-The capture map covers all 26 evidence objects in the template. The URLs are canonical upstream sources and were fetched successfully for this correction. No Jina-proxied body digest is used: the preservation step must write the direct canonical-source response to the named repository fixture and hash that regular file.
+The capture map covers all 27 evidence objects in the template. The URLs are canonical upstream sources and were fetched successfully for this correction. No Jina-proxied body digest is used: the preservation step must write the direct canonical-source response to the named repository fixture and hash that regular file. The Ubuntu AT-SPI package capture uses the same `<to-be-computed-by-preservation-step>` SHA-256 placeholder as every other evidence object.
 
 | Evidence objects | Fixture path | Canonical source URL |
 | :-- | :-- | :-- |
@@ -1203,10 +1343,11 @@ The capture map covers all 26 evidence objects in the template. The URLs are can
 | `wp_presentation`, `wp_presentation_feedback` (2) | `qualification/fixtures/external-contracts/wayland/s07-presentation-time-v1.xml` | https://raw.githubusercontent.com/wayland-mirror/wayland-protocols/37a1560cf6981a11d44dd200d9409d09b4f0074e/stable/presentation-time/presentation-time.xml |
 | `AT-SPI` `Text.xml` (1) | `qualification/fixtures/external-contracts/wayland/s08-atspi-2.60.6-text.xml` | https://gitlab.gnome.org/GNOME/at-spi2-core/-/raw/2.60.6/xml/Text.xml |
 | `AT-SPI` `EditableText.xml` (1) | `qualification/fixtures/external-contracts/wayland/s09-atspi-2.60.6-editable-text.xml` | https://gitlab.gnome.org/GNOME/at-spi2-core/-/raw/2.60.6/xml/EditableText.xml |
+| Ubuntu `at-spi2-core` package identity (1) | `qualification/fixtures/external-contracts/wayland/s10-ubuntu-at-spi2-core.html`; `sha256`: `<to-be-computed-by-preservation-step>` | https://packages.ubuntu.com/resolute/at-spi2-core |
 
 To preserve the fixtures, OXY-D001 must create `qualification/fixtures/external-contracts/wayland/`, fetch each canonical URL with `curl --fail --location --max-time 60 --output FIXTURE URL`, require `test -f FIXTURE` and `test ! -L FIXTURE`, calculate `sha256sum FIXTURE`, replace every matching token in the template with that output, commit the regular files, and run the contract digest validator. The validator then requires repository-relative paths, regular files, and streamed SHA-256 matches.
 
-The following trimmed Round-7 transport output records successful source fetches only. The Jina responses are not fixture bytes and their digests are intentionally absent. The source-package descriptor rechecks SPK-B004's package-audit input; it is not an additional object in this 26-object template.
+The following trimmed Round-7 transport output records successful source fetches only. The Jina responses are not fixture bytes and their digests are intentionally absent. The source-package descriptor rechecks SPK-B004's package-audit input; it is not an additional object in this 27-object template. The round-9 Jina fetch of the new Ubuntu AT-SPI capture is preserved in the factory-propagation correction.
 
 ```text
 $ fetch_jina ubuntu-libgtk-4-1.html https://packages.ubuntu.com/resolute/libgtk-4-1; fetch_jina gtk4-source.dsc https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/gtk4/4.22.2+ds-1ubuntu1/gtk4_4.22.2+ds-1ubuntu1.dsc; fetch_jina gtk-gtkenums.h https://gitlab.gnome.org/GNOME/gtk/-/raw/4.20.4/gtk/gtkenums.h
@@ -1329,7 +1470,7 @@ EditableText.xml http=200 bytes=4421 canonical=https://gitlab.gnome.org/GNOME/at
   },
   {
     "name": "wl_data_device_manager",
-    "version": "1",
+    "version": "2",
     "status": "kk",
     "evidence": [
       {
@@ -1504,19 +1645,22 @@ EditableText.xml http=200 bytes=4421 canonical=https://gitlab.gnome.org/GNOME/at
       {
         "path": "qualification/fixtures/external-contracts/wayland/s09-atspi-2.60.6-editable-text.xml",
         "sha256": "<to-be-computed-by-preservation-step>"
+      },
+      {
+        "path": "qualification/fixtures/external-contracts/wayland/s10-ubuntu-at-spi2-core.html",
+        "sha256": "<to-be-computed-by-preservation-step>"
       }
     ]
   }
 ]
 ```
 
-The Round-7 `nix shell nixpkgs#python3 -c python3 -` template validator accepts only the exact preservation token in quoted JSON evidence values and lowercase 64-hexadecimal values in the retained source-record digest block. It confirms that the proposed paths are local and that all 26 evidence objects are present.
+The round-9 inline template validator verifies that the revised template contains 27 evidence objects, each with a local path and the exact preservation placeholder. OXY-D001 must rerun the repository fixture and digest validator after preserving all 10 regular files.
 
 ```text
-template_evidence_objects=26
+template_evidence_objects=27
 template_remote_or_absolute_paths=0
-quoted_sha256_values=26 allowed_placeholders=26 malformed_quoted_values=0
-source_record_sha256_equals_values=16 malformed_source_record_values=0
+quoted_sha256_values=27 allowed_placeholders=27 malformed_quoted_values=0
 exit=0
 ```
 
