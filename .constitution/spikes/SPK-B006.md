@@ -303,6 +303,9 @@ The corpus importer may derive target-specific encodings only from a listed sour
 - `.constitution/tech-spec/contracts/qualification-lock.json`, `resolvedTools`: transform, don't append. For each actual campaign host, select its `instrumentation.campaignToolchain.hostToolRecords` record by hostname and host triple, then flatten its five `tools` entries (`rustc`, `cargo`, `cargo-miri` when present, `cargo-fuzz`, and GNU `time`) into individual `$defs.tool` records. Each entry must retain exactly `name`, `version`, `sourceIdentity`, `hostTriple`, `licenseId`, `executablePath`, `sha256`, and optional `pathRoot`; never append the host record itself. The first captured NixOS record is non-reference and cannot stand in for an Ubuntu reference host. Require a complete selected record, including license ID, executable hashes, and CPU-accounting fields, for every campaign host. Retain `resolved-tool-digests` in both known-unknown arrays until that condition holds.
 - `qualification/staged/fuzz-corpora.json`, `instrumentation.campaignToolchain.hostToolRecords`: before each campaign, capture hostname, host triple, reference status, operating system, selector, Rust commit, CPU-accounting fields, and the seven `$defs.tool` fields plus optional `pathRoot` for every executable. Capture `licenseId` from the package's authoritative license metadata or notice; reject an absent or non-SPDX value.
 - `.constitution/tech-spec/contracts/qualification-lock.json`, `preImplementationKnownUnknowns` and `gatingKnownUnknowns`: after both staged records and every listed source and license byte pass admission, remove only `fuzz-corpora` and `security-patch-rehearsal`. Leave all unrelated readiness gates unchanged.
+- `crates/oxyflut-qualification/src/readiness.rs`, `KNOWN_UNKNOWN_BINDINGS`: remove the existing `fuzz-corpora` row (`required_field: "measurementPolicy.fuzzCorpora"`, `evidence_path: Some("qualification/staged/fuzz-corpora.json")`, upstream owner `OXY-D001`) and `security-patch-rehearsal` row (`required_field: "measurementPolicy.securityPatchRehearsal"`, `evidence_path: Some("qualification/staged/security-patch-rehearsal.json")`, upstream owner `OXY-D001`) when their KU strings leave the arrays. This spike adds no KU string, so don't add a binding. Keep both `POLICY_FIELDS` rows: they bind and verify the staged policy digests even after the KU blockers clear. Update the module's `clearing_a_ku_string_without_its_evidence_keeps_the_gate_open` expected KU set and its KU evidence-path loop to remove the same two names.
+- `qualification/fixtures/readiness/invalid.json` and `qualification/fixtures/readiness/cleared-without-evidence.json`, `preImplementationKnownUnknowns` and `gatingKnownUnknowns`: remove `fuzz-corpora` and `security-patch-rehearsal` from all four fixture arrays. Removing the bindings without this fixture update causes `collect_known_unknowns` to return `ReadinessError::UnmappedKnownUnknown` before the intended fixture assertions run.
+- `xtask/src/commands/lock_tests.rs`, `committed_candidate_gate_is_valid_but_open_with_the_exact_ku_set`: update the asserted committed KU set by removing `fuzz-corpora` and `security-patch-rehearsal`, leaving exactly `capability-and-platform-baselines`, `complete-ime-editing-geometry-and-accessibility-maps`, `external-distribution-schema-snapshots-and-verifiers`, `hardware-gpu-driver-and-system-package-locks`, `independent-presentation-opportunity-sources`, `layout-visit-cap`, `minimum-platform-and-protocol-versions`, `raw-measurement-and-sample-validity-contracts`, `reference-application-scenes-scripts-fonts-assets-windows-cache-and-flags`, `resolved-tool-digests`, and `scoring-anchors-and-two-assessors`. In the cleared-fixture exact-set assertion, remove the same two names and retain its ten remaining entries. Remove the two matching KU output-line assertions, but retain the staged-file digest and missing-file assertions because `POLICY_FIELDS` still verifies both staged inputs.
 
 ### Canonical staged inputs
 
@@ -692,6 +695,14 @@ canonical_json_reserialization=passed
 $ sha256sum /tmp/wf-epic-b/OXY-B006-pr-round3/p13b/fuzz-corpora.json /tmp/wf-epic-b/OXY-B006-pr-round3/p13b/security-patch-rehearsal.json
 59d3459130a585e335df491f464258f40b3708c48d237600df960722ffcda105  /tmp/wf-epic-b/OXY-B006-pr-round3/p13b/fuzz-corpora.json
 27b6e4525723e2501d08e72169f8194bb070d4a79b32825f3cc70fe9e66fc14c  /tmp/wf-epic-b/OXY-B006-pr-round3/p13b/security-patch-rehearsal.json
+```
+
+P14 rechecked both protected streams after the round-4 readiness-binding correction.
+
+```text
+$ perl /tmp/wf-epic-b/OXY-B006-pr-round3/verify-canonical-blocks.pl .constitution/spikes/SPK-B006.md /tmp/wf-epic-b/PR4-B006/check
+fuzz-corpora|59d3459130a585e335df491f464258f40b3708c48d237600df960722ffcda105|15932|ok
+security-patch-rehearsal|27b6e4525723e2501d08e72169f8194bb070d4a79b32825f3cc70fe9e66fc14c|1991|ok
 ```
 
 ### Canonical fenced-block integrity proposal
