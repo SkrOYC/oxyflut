@@ -3,7 +3,7 @@
 ## Time box
 
 - **Budget:** 1 focused day.
-- **Clock start / stop:** 2026-08-28T16:43:22Z / 2026-08-28T16:52:52Z.
+- **Clock start / stop:** 2026-08-28T16:58:55Z / 2026-08-28T17:14:31Z.
 
 ## Question
 
@@ -13,257 +13,82 @@ Table 1. Decision questions and evidence
 
 | Row | Question | Answer and evidence | Status | Next bounded probe |
 | :-- | :-- | :-- | :-- | :-- |
-| 1 | Can the corpus define deep, wide, nested, virtualized, reordered, and separation or failure cases without a substrate? | Yes. The canonical manifest contains 10 fixtures with topology, expected counters, and outcome. The preserved counter-model output validates each manifest row without a substrate API. | KK | Not applicable. |
-| 2 | What is one ordinary visit? | One requested regular child-layout invocation from a policy to a realized direct child in one root transaction. The transaction entry is not a child request. Each requested ordinary invocation increments `attempted_ordinary_visits` before the cap check. A completed invocation also increments `node_visits`; a rejected request does not. Flutter documents [`RenderObject.layout`](https://api.flutter.dev/flutter/rendering/RenderObject/layout.html) as the parent-to-child layout entry point. The preserved output validates the rule. | KK | Not applicable. |
-| 3 | Do the ordinary policy families have finite bounds under the classifier? | Yes. Single-pass box, definite-basis weighted, and realized virtualized policies complete at most one ordinary visit per realized child. A custom multi-pass policy completes at most two. The six passing manifest rows validate the derived bounds. | KK | Not applicable. |
-| 4 | Can intrinsic or dry measurement consume an ordinary-policy visit? | No. Flutter documents [`RenderBox.getDryLayout`](https://api.flutter.dev/flutter/rendering/RenderBox/getDryLayout.html) as a state-free dry calculation and warns that it can produce O(N^2) behavior. The manifest and exact output record `ordinary=0`, `attempted=0`, and `intrinsic=1`, then reject the fixture from the ordinary family. | not applicable-with-citation | Not applicable. |
-| 5 | Can text shaping or text layout consume an ordinary-policy visit? | No. Yoga documents [measure functions for external layout systems](https://www.yogalayout.dev/docs/advanced/external-layout-systems), including text. The manifest and exact output record one ordinary parent-to-text-leaf visit, one attempt, and one separate text operation. | not applicable-with-citation | Not applicable. |
-| 6 | Can `2` freeze as `measurementPolicy.layoutVisitCap` while establishing compatibility with the 2.0 ms aggregate goal? | No. The counter model establishes counts, not nanosecond cost. The qualification lock lacks a reference workload, release flags, hardware identifiers, and candidate source identities. No preserved result measures application-owned layout plus paint submission. | KU (gating) | After Stage 3 authorizes nonproduction candidate probes, run the bounded timing probe in "Next bounded probe" on each locked reference configuration. |
+| 1 | Can the corpus define deep, wide, nested, virtualized, reordered, and separation or failure cases without a substrate? | Yes. The [preserved topology probe](#probe-record) builds the 10 declared trees, validates node, edge, and depth counts, replays family-specific parent-child events, and validates every declared counter. It also proves that the lazy tree contains only 64 realized children and zero visits to 9,936 unrealized IDs. | KK | Not applicable. |
+| 2 | What is one ordinary visit? | One requested regular child-layout invocation from a policy to a realized direct child in one root transaction. The request increments `attempted_ordinary_visits` before the per-child cap check; a completed invocation increments `node_visits`. The [pinned Flutter source](https://raw.githubusercontent.com/flutter/flutter/4cf24164269a5ebf0c16a028a00727d0e77bbb05/packages/flutter/lib/src/rendering/object.dart) calls `layout` the parent entry point for asking children to update layout. The probe applies this rule only to declared parent-child edges. | KK | Not applicable. |
+| 3 | Do the ordinary policy families have finite bounds under the classifier? | Yes. The [preserved topology probe](#probe-record) admits and replays single-pass box, definite-basis weighted, virtualized lazy, and custom multi-pass families. It verifies at most one completed visit per realized child for the first three and at most two for the custom family. The third custom request fails before invocation. | KK | Not applicable. |
+| 4 | Can intrinsic or dry measurement consume an ordinary-policy visit? | No. The [pinned Flutter `getDryLayout` source](https://raw.githubusercontent.com/flutter/flutter/4cf24164269a5ebf0c16a028a00727d0e77bbb05/packages/flutter/lib/src/rendering/box.dart) defines dry layout as distinct from wet layout and states that it doesn't change internal state. The probe records one `intrinsic_queries` event and zero ordinary attempts for `intrinsic-separation`. | KK (not applicable) | Not applicable. |
+| 5 | Can text shaping or text layout consume an ordinary-policy visit? | No. The [pinned Yoga source](https://raw.githubusercontent.com/facebook/yoga/bd8fe0d6d243cc7e0334d4cc68864a994f63beae/website/docs/advanced/external-layout-systems.mdx) identifies text as content delegated through a measure function to another layout system. The probe records the ordinary parent-to-realized-text-leaf request separately from one `text_operations` event. | KK (not applicable) | Not applicable. |
+| 6 | Can `2` freeze as `measurementPolicy.layoutVisitCap` while establishing compatibility with the 2.0 ms aggregate goal? | No. The [preserved topology probe](#probe-record) establishes count semantics, not application-owned layout or paint-submission duration. The lock has no candidate source identities, hardware, driver, release-flag, corpus, or record-schema bindings. | KU (gating) | After Stage 3 adds the companion record contract and authorizes unscored candidate probes, run the bounded timing procedure in "Next bounded probe" on each locked reference configuration. |
 
 ## Context and objective
 
-- **Triggering upstream file or section:** `.constitution/prd/constraints.md` defines the gating common-case node-visit limit, and `.constitution/tech-spec/contracts/qualification-lock.json` sets `measurementPolicy.layoutVisitCap` to `null`.
-- **Target:** Freeze the corpus and counter semantics, then either freeze a numeric cap from performance evidence or retain a precise blocker.
+- **Triggering upstream file or section:** `.constitution/prd/constraints.md` retains the numeric CAP-LAY-001 common-case node-visit limit as a gating KU, and `.constitution/tech-spec/contracts/qualification-lock.json` sets `measurementPolicy.layoutVisitCap` to `null`.
+- **Target:** Freeze a candidate-neutral corpus and counter semantics, then retain the numeric cap as a precise performance gate until a schema-valid timing probe resolves it.
 - **Archetype / surface:** Library and SDK layout policy under system and built-in frame constraints.
 
 ## Codebase baseline
 
-- **Status at probe start:** `LayoutResult.node_visits` reports participating-node visits made by a policy, CAP-LAY-001 requires bounded constraint propagation, and CON-PERF-001 limits aggregate application-owned layout and paint submission to 2.0 ms.
-- **Discovered constraints:** The CAP-LAY-001 flow rejects a policy that exceeds its declared cap. The CAP-LAY-002 flow also stops custom policies that exceed a cap. The qualification lock retains `layout-visit-cap` in both known-unknown lists.
-- **Boundary:** This report defines a qualification counter and corpus. It doesn't select a substrate, implement layout, change a capability, or relax CON-PERF-001.
+- **Status at probe start:** `LayoutResult.node_visits` reports a policy counter, CAP-LAY-001 requires bounded constraint propagation, and CON-PERF-001 limits aggregate application-owned layout plus paint submission to 2.0 ms.
+- **Discovered constraints:** The public contract has no `attempted_ordinary_visits` field. The qualification contract has only generic `RawSample`, and `raw-measurement.schema.json` rejects extra counter, identity, fixture, and timing fields because its root and sample objects set `additionalProperties` to `false`.
+- **Boundary:** This report defines qualification evidence. It doesn't select a substrate, implement layout, change a capability, or relax CAP-LAY-001 or CON-PERF-001.
 
 ## Reference corpus
 
-The root is in each node total, has depth 1, and is the harness-initiated transaction entry. It isn't a child visit. Every nontext ordinary leaf has a fixed finite size. Every ordinary container receives valid finite constraints. A weighted fixture uses explicit finite weights and a definite main-axis size, so it has no content-derived basis.
+The root is included in each tree's node count at depth 1. It is the harness-initiated transaction entry and isn't a child visit. Every ordinary leaf has a fixed finite size. Every ordinary container has valid finite constraints. A weighted fixture has explicit finite weights, definite main-axis space, and no content-derived basis.
 
-The canonical corpus manifest contains all 10 fixtures. It is the sole source for fixture identity, topology, expected counters, and expected outcome. The tables transcribe the manifest for review; they don't add fixture data.
-
-The manifest SHA-256 is `502be034a2795302eda483c471b71d82025513e497da842e7c672f80eceeb766`. Its exact byte serialization is UTF-8 encoded ASCII-only JSON, with keys in ASCII lexicographic order at every object level, 2-space indentation, a colon followed by one space, LF line endings, no byte-order mark, and one trailing LF byte after the final `]`. The following code block displays exactly those hashed bytes:
-
-```json
-[
-  {
-    "collection": null,
-    "depth": 64,
-    "expected": {
-      "attempted_ordinary_visits": 63,
-      "intrinsic_queries": 0,
-      "maximum_ordinary_visits_per_node": 1,
-      "ordinary_visits": 63,
-      "outcome": "pass",
-      "text_operations": 0
-    },
-    "family": "single-pass-box",
-    "id": "deep-box-064",
-    "nodes": 64,
-    "operation": "One root and 63 one-child boxes.",
-    "passes": 1
-  },
-  {
-    "collection": null,
-    "depth": 2,
-    "expected": {
-      "attempted_ordinary_visits": 1024,
-      "intrinsic_queries": 0,
-      "maximum_ordinary_visits_per_node": 1,
-      "ordinary_visits": 1024,
-      "outcome": "pass",
-      "text_operations": 0
-    },
-    "family": "single-pass-box",
-    "id": "wide-box-1024",
-    "nodes": 1025,
-    "operation": "One root and 1,024 fixed leaf children.",
-    "passes": 1
-  },
-  {
-    "collection": null,
-    "depth": 4,
-    "expected": {
-      "attempted_ordinary_visits": 584,
-      "intrinsic_queries": 0,
-      "maximum_ordinary_visits_per_node": 1,
-      "ordinary_visits": 584,
-      "outcome": "pass",
-      "text_operations": 0
-    },
-    "family": "weighted",
-    "id": "nested-weighted-8x8x8",
-    "nodes": 585,
-    "operation": "One root, eight weighted columns, 64 weighted rows, and 512 fixed leaves.",
-    "passes": 1
-  },
-  {
-    "collection": 10000,
-    "depth": 2,
-    "expected": {
-      "attempted_ordinary_visits": 64,
-      "intrinsic_queries": 0,
-      "maximum_ordinary_visits_per_node": 1,
-      "ordinary_visits": 64,
-      "outcome": "pass",
-      "text_operations": 0
-    },
-    "family": "virtualized-lazy",
-    "id": "lazy-10000-realized-64",
-    "nodes": 65,
-    "operation": "A 10,000-item collection realizes [4968,5032): 32 visible items and 16 cached items on each side. The root and 64 realized fixed leaves form the layout tree.",
-    "passes": 1
-  },
-  {
-    "collection": null,
-    "depth": 2,
-    "expected": {
-      "attempted_ordinary_visits": 128,
-      "intrinsic_queries": 0,
-      "maximum_ordinary_visits_per_node": 1,
-      "ordinary_visits": 128,
-      "outcome": "pass",
-      "text_operations": 0
-    },
-    "family": "weighted",
-    "id": "reordered-keyed-128",
-    "nodes": 129,
-    "operation": "One weighted root reverses 128 fixed keyed leaves from key-000 through key-127 to key-127 through key-000, then lays out the realized tree.",
-    "passes": 1
-  },
-  {
-    "collection": null,
-    "depth": 2,
-    "expected": {
-      "attempted_ordinary_visits": 512,
-      "intrinsic_queries": 0,
-      "maximum_ordinary_visits_per_node": 2,
-      "ordinary_visits": 512,
-      "outcome": "pass",
-      "text_operations": 0
-    },
-    "family": "custom-multi-pass",
-    "id": "custom-two-pass-256",
-    "nodes": 257,
-    "operation": "One custom root issues two declared constraint passes to 256 fixed leaves.",
-    "passes": 2
-  },
-  {
-    "collection": null,
-    "depth": 2,
-    "expected": {
-      "attempted_ordinary_visits": 33,
-      "intrinsic_queries": 0,
-      "maximum_ordinary_visits_per_node": 2,
-      "ordinary_visits": 32,
-      "outcome": "reject-cap-before-invocation-node-1",
-      "text_operations": 0
-    },
-    "family": "custom-multi-pass",
-    "id": "three-pass-cap-failure",
-    "nodes": 17,
-    "operation": "One custom root asks each of 16 fixed children for a third layout after two completed passes.",
-    "passes": 3
-  },
-  {
-    "collection": null,
-    "depth": 2,
-    "expected": {
-      "attempted_ordinary_visits": 0,
-      "intrinsic_queries": 0,
-      "maximum_ordinary_visits_per_node": 0,
-      "ordinary_visits": 0,
-      "outcome": "reject-before-child-layout",
-      "text_operations": 0
-    },
-    "family": "single-pass-box",
-    "id": "invalid-constraints",
-    "nodes": 17,
-    "operation": "One box root receives invalid constraints before it can lay out 16 fixed children.",
-    "passes": 0
-  },
-  {
-    "collection": null,
-    "depth": 2,
-    "expected": {
-      "attempted_ordinary_visits": 0,
-      "intrinsic_queries": 1,
-      "maximum_ordinary_visits_per_node": 0,
-      "ordinary_visits": 0,
-      "outcome": "reject-from-ordinary-family",
-      "text_operations": 0
-    },
-    "family": "intrinsic-measure",
-    "id": "intrinsic-separation",
-    "nodes": 2,
-    "operation": "One root requests a dry or intrinsic answer from one nondefinite child.",
-    "passes": 0
-  },
-  {
-    "collection": null,
-    "depth": 2,
-    "expected": {
-      "attempted_ordinary_visits": 1,
-      "intrinsic_queries": 0,
-      "maximum_ordinary_visits_per_node": 1,
-      "ordinary_visits": 1,
-      "outcome": "separate-counter",
-      "text_operations": 1
-    },
-    "family": "text",
-    "id": "text-separation",
-    "nodes": 2,
-    "operation": "One box root lays out one realized text leaf, which invokes text layout.",
-    "passes": 1
-  }
-]
-```
+The canonical manifest is the ASCII-only, UTF-8 JSON serialization of `@FIXTURES` in the embedded probe source, with canonical lexicographic object keys, 2-space indentation, LF line endings, and one trailing LF. Its SHA-256 is `4972e43333984047b5a1d84200d5b89a29c5b59e47c5aca8773379320f2c6c84`. The command and exact output in "Probe record" regenerate and hash those bytes.
 
 Table 2. Ordinary success corpus
 
-| Fixture | Exact topology and operation | Nodes | Depth | Ordinary visits | Attempted ordinary visits | Intrinsic queries | Text operations | Maximum visits per node | Expected outcome |
-| :-- | :-- | --: | --: | --: | --: | --: | --: | --: | :-- |
-| `deep-box-064` | One root and 63 one-child boxes. | 64 | 64 | 63 | 63 | 0 | 0 | 1 | Pass. |
-| `wide-box-1024` | One root and 1,024 fixed leaf children. | 1,025 | 2 | 1,024 | 1,024 | 0 | 0 | 1 | Pass. |
-| `nested-weighted-8x8x8` | One root, eight weighted columns, 64 weighted rows, and 512 fixed leaves. | 585 | 4 | 584 | 584 | 0 | 0 | 1 | Pass. |
-| `lazy-10000-realized-64` | A 10,000-item collection realizes `[4968,5032)`: 32 visible items and 16 cached items on each side. The root and 64 realized fixed leaves form the layout tree. | 65 realized | 2 | 64 | 64 | 0 | 0 | 1 | Pass. |
-| `reordered-keyed-128` | One weighted root reverses 128 fixed keyed leaves from `key-000` through `key-127` to `key-127` through `key-000`, then lays out the realized tree. | 129 | 2 | 128 | 128 | 0 | 0 | 1 | Pass. |
-| `custom-two-pass-256` | One custom root issues two declared constraint passes to 256 fixed leaves. | 257 | 2 | 512 | 512 | 0 | 0 | 2 | Pass. |
+| Fixture | Topology and declared event order | Tree nodes | Edges | Depth | Realized child IDs | Unrealized collection IDs | Ordinary visits | Attempts | Intrinsic | Text | Maximum per node | Outcome |
+| :-- | :-- | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | :-- |
+| `deep-box-064` | A 64-node chain. Preorder replays each actual parent-child edge once. | 64 | 63 | 64 | 63 | 0 | 63 | 63 | 0 | 0 | 1 | Pass. |
+| `wide-box-1024` | One root with 1,024 fixed leaves. The root requests each direct child once. | 1,025 | 1,024 | 2 | 1,024 | 0 | 1,024 | 1,024 | 0 | 0 | 1 | Pass. |
+| `nested-weighted-8x8x8` | Root -> 8 columns -> 64 rows -> 512 leaves. Preorder replays all 584 actual edges once with definite basis. | 585 | 584 | 4 | 584 | 0 | 584 | 584 | 0 | 0 | 1 | Pass. |
+| `lazy-10000-realized-64` | A 10,000-item collection realizes `[4968,5032)`. The root requests only those 64 IDs in ascending range order. | 65 | 64 | 2 | 64 | 9,936 | 64 | 64 | 0 | 0 | 1 | Pass. |
+| `reordered-keyed-128` | One definite-basis weighted root with 128 keyed leaves. It requests `key-127` through `key-000`, the declared reverse permutation. | 129 | 128 | 2 | 128 | 0 | 128 | 128 | 0 | 0 | 1 | Pass. |
+| `custom-two-pass-256` | One root with 256 leaves. The declared custom sequence requests every direct child twice. | 257 | 256 | 2 | 256 | 0 | 512 | 512 | 0 | 0 | 2 | Pass. |
 
-The lazy fixture issues no child-layout request for the 9,936 unrealized collection items. Collection indexing and range selection aren't ordinary visits and require separate timing evidence under CAP-SCR-001 and CON-PERF-001.
+The virtualized fixture has a 10,000-item collection model, but only 64 realized IDs become tree nodes. The probe asserts every realized ID is in `[4968,5032)`, every other collection ID is unrealized, and no unrealized ID appears in the completed-visit map. Collection indexing and range selection aren't ordinary visits and need separate CAP-SCR-001 and CON-PERF-001 timing evidence.
 
 Table 3. Failure and separation corpus
 
-| Fixture | Exact operation | Nodes | Depth | Ordinary visits | Attempted ordinary visits | Intrinsic queries | Text operations | Maximum visits per node | Expected outcome |
-| :-- | :-- | --: | --: | --: | --: | --: | --: | --: | :-- |
-| `three-pass-cap-failure` | One custom root asks each of 16 fixed children for a third layout after two completed passes. | 17 | 2 | 32 | 33 | 0 | 0 | 2 | Reject the third request to child 1 before invocation. |
-| `invalid-constraints` | One box root receives invalid constraints before it can lay out 16 fixed children. | 17 | 2 | 0 | 0 | 0 | 0 | 0 | Reject before a child-layout request. |
-| `intrinsic-separation` | One root requests a dry or intrinsic answer from one nondefinite child. | 2 | 2 | 0 | 0 | 1 | 0 | 0 | Reject from the ordinary family. |
-| `text-separation` | One box root lays out one realized text leaf, which invokes text layout. | 2 | 2 | 1 | 1 | 0 | 1 | 1 | Record the text operation in a separate counter. |
+| Fixture | Topology and operation | Tree nodes | Edges | Depth | Realized child IDs | Unrealized collection IDs | Ordinary visits | Attempts | Intrinsic | Text | Maximum per node | Outcome |
+| :-- | :-- | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | :-- |
+| `three-pass-cap-failure` | One root with 16 leaves. The third declared pass rejects `leaf-0000` before invocation. | 17 | 16 | 2 | 16 | 0 | 32 | 33 | 0 | 0 | 2 | Reject before invocation. |
+| `invalid-constraints` | One root with 16 leaves. Root validation fails before an ordinary child request. | 17 | 16 | 2 | 16 | 0 | 0 | 0 | 0 | 0 | 0 | Reject before a child request. |
+| `intrinsic-separation` | One root and one nondefinite child. The operation is one dry or intrinsic query. | 2 | 1 | 2 | 1 | 0 | 0 | 0 | 1 | 0 | 0 | Exclude from the ordinary family. |
+| `text-separation` | One root and one realized text leaf. The root issues one ordinary request and the leaf performs one text operation. | 2 | 1 | 2 | 1 | 0 | 1 | 1 | 0 | 1 | 1 | Record text separately. |
 
 ## Counting model
 
 Apply this algorithm to one root layout transaction:
 
 1. Validate root constraints before issuing a child request. If validation fails, return a structured layout failure with zero `ordinary_visits` and zero `attempted_ordinary_visits`.
-2. Classify each requested operation before it runs. An ordinary operation is a regular `layout` request from a policy to a realized direct child. A dry or intrinsic request and text-engine work use separate counters.
-3. For every requested ordinary child invocation, increment the transaction's `attempted_ordinary_visits` before the cap check.
-4. Compare the target child's completed ordinary-visit count for this transaction with the declaring policy-family cap. If the count equals the cap, reject the request before invocation and return a structured cap failure. Don't add the rejected request to `node_visits` or the completed ordinary count.
+2. Classify the operation before it runs. An ordinary operation is a regular request from a policy to a realized direct child. Dry or intrinsic requests and text-engine operations use separate counters.
+3. Before the per-child cap check, increment the transaction `attempted_ordinary_visits` counter for each requested ordinary child invocation.
+4. Compare the target child's completed ordinary-visit count in this transaction with the declaring policy-family cap. If the count equals the cap, reject the request before invocation. Don't increment the completed counter or `LayoutResult.node_visits`.
 5. Otherwise, invoke the child. Increment that child's completed count and the issuing policy's `LayoutResult.node_visits`.
-6. At transaction end, record `ordinary_visits` as the sum of emitted completed ordinary-visit events. Don't recursively sum nested `LayoutResult` values, because that double counts descendants.
+6. At transaction end, record `ordinary_visits` as the sum of completed event emissions. The harness must add each policy-local result once when it is emitted, not recursively sum nested `LayoutResult` values.
 
-This model makes `attempted_ordinary_visits` equal `ordinary_visits` for a transaction with no cap rejection. For `three-pass-cap-failure`, the 33rd requested ordinary invocation increments `attempted_ordinary_visits` and then fails the cap check. The transaction therefore records 32 completed ordinary visits and 33 attempts.
+This model makes attempts equal completed visits when no cap rejects a request. In `three-pass-cap-failure`, the 33rd request increments attempts and then fails. The transaction records 32 completed ordinary visits and 33 attempts.
 
-Table 4. Proposed ordinary-policy classifier
+Table 4. Ordinary-policy classifier
 
-| Policy family | Admission rule | Cap per realized direct child | Excluded work |
-| :-- | :-- | --: | :-- |
-| Single-pass box | The policy issues one regular request to each participating child under valid finite constraints. | 1 | Intrinsic queries and text operations. |
-| Definite-basis weighted | Weights, minimums, maximums, and main-axis space are finite and explicit. The policy issues one regular request after allocation. | 1 | Content-derived bases, dry or intrinsic measurement, and text operations. |
-| Virtualized or lazy | The viewport has a declared realized range. Only realized children receive regular requests. | 1 | Offscreen collection work, range selection, intrinsic measurement, and text operations. |
-| Custom multi-pass | The registered policy declares at most two regular passes and the harness checks each request before invocation. | 2 | Convergence loops beyond two passes, dry or intrinsic measurement, and text operations. |
+| Policy family | Admission rule | Cap per realized direct child | Replay rule | Excluded work |
+| :-- | :-- | --: | :-- | :-- |
+| Single-pass box | Regular child layout with a chain or star topology and valid finite constraints. | 1 | Preorder each actual tree edge once. | Dry or intrinsic queries and text operations. |
+| Definite-basis weighted | Regular child layout with explicit finite weights and definite basis. | 1 | Preorder nested edges, or use the declared key permutation for keyed children. | Content-derived bases, dry or intrinsic measurement, and text operations. |
+| Virtualized lazy | Regular child layout with a declared realized range and at least one unrealized collection ID. | 1 | Request only realized IDs in the declared range. | Offscreen collection work, range selection, intrinsic measurement, and text operations. |
+| Custom multi-pass | Regular child layout with a finite declared direct-child event sequence. | 2 | Replay the declared pass sequence; reject the third requested invocation to a child before invocation. | Dry or intrinsic measurement and text operations. |
 
-A policy that needs content-derived sizing, a dry query, an intrinsic query, text work, or more than two ordinary passes isn't an ordinary fixture. It enters a dedicated evidence suite and can't omit its work from `node_visits`.
+A policy that needs a dry query, intrinsic query, text operation, or a rejected third ordinary request isn't silently counted as ordinary. The harness must preserve its separate counter and result.
 
 ## Probe record
 
-The nonproduction Perl counter model runs at `/tmp/wf-epic-b/OXY-B005/layout_visit_model.pl`. It validates only the manifest arithmetic, attempt-before-cap ordering, and cap-rejection rules. It doesn't measure a layout engine or frame time. The following is the complete executed probe source. It generates the canonical manifest with the serialization stated in "Reference corpus", so the report remains reproducible from committed Markdown alone.
+The nonproduction Perl model at `/tmp/wf-epic-b/OXY-B005/layout_visit_topology_model.pl` builds actual tree edges from each fixture's declared topology. It consumes `depth`, `collection`, `family`, `operation`, realized ranges, fan-out, and the reordered key permutation. It validates topology, family admission, declared event sequence, counters, cap ordering, and the absence of unrealized visits. It doesn't measure a layout engine or frame duration.
+
+The following is the complete executed probe source.
 
 ```perl
 #!/usr/bin/env perl
@@ -272,178 +97,68 @@ use warnings;
 use Digest::SHA qw(sha256_hex);
 use JSON::PP;
 
-# Candidate-neutral counter model for OXY-B005. This is not a layout engine.
+# Candidate-neutral topology and counter model for OXY-B005. This is not a layout engine.
 my $CAP = 2;
-my @fixtures = (
+my @FIXTURES = (
   {
-    id => 'deep-box-064',
-    family => 'single-pass-box',
-    nodes => 64,
-    depth => 64,
-    passes => 1,
-    collection => undef,
-    operation => 'One root and 63 one-child boxes.',
-    expected => {
-      ordinary_visits => 63,
-      attempted_ordinary_visits => 63,
-      intrinsic_queries => 0,
-      text_operations => 0,
-      maximum_ordinary_visits_per_node => 1,
-      outcome => 'pass',
-    },
+    id => 'deep-box-064', family => 'single-pass-box', operation => 'regular-child-layout', nodes => 64, depth => 64, passes => 1, collection => undef,
+    topology => { kind => 'chain', fan_out => 1 },
+    description => 'One root and 63 one-child boxes.',
+    expected => { ordinary_visits => 63, attempted_ordinary_visits => 63, intrinsic_queries => 0, text_operations => 0, maximum_ordinary_visits_per_node => 1, outcome => 'pass' },
   },
   {
-    id => 'wide-box-1024',
-    family => 'single-pass-box',
-    nodes => 1025,
-    depth => 2,
-    passes => 1,
-    collection => undef,
-    operation => 'One root and 1,024 fixed leaf children.',
-    expected => {
-      ordinary_visits => 1024,
-      attempted_ordinary_visits => 1024,
-      intrinsic_queries => 0,
-      text_operations => 0,
-      maximum_ordinary_visits_per_node => 1,
-      outcome => 'pass',
-    },
+    id => 'wide-box-1024', family => 'single-pass-box', operation => 'regular-child-layout', nodes => 1025, depth => 2, passes => 1, collection => undef,
+    topology => { kind => 'star', fan_out => 1024 },
+    description => 'One root and 1,024 fixed leaf children.',
+    expected => { ordinary_visits => 1024, attempted_ordinary_visits => 1024, intrinsic_queries => 0, text_operations => 0, maximum_ordinary_visits_per_node => 1, outcome => 'pass' },
   },
   {
-    id => 'nested-weighted-8x8x8',
-    family => 'weighted',
-    nodes => 585,
-    depth => 4,
-    passes => 1,
-    collection => undef,
-    operation => 'One root, eight weighted columns, 64 weighted rows, and 512 fixed leaves.',
-    expected => {
-      ordinary_visits => 584,
-      attempted_ordinary_visits => 584,
-      intrinsic_queries => 0,
-      text_operations => 0,
-      maximum_ordinary_visits_per_node => 1,
-      outcome => 'pass',
-    },
+    id => 'nested-weighted-8x8x8', family => 'weighted', operation => 'regular-child-layout', nodes => 585, depth => 4, passes => 1, collection => undef,
+    topology => { kind => 'nested', fan_out => [8, 8, 8], definite_basis => JSON::PP::true },
+    description => 'One root, eight weighted columns, 64 weighted rows, and 512 fixed leaves.',
+    expected => { ordinary_visits => 584, attempted_ordinary_visits => 584, intrinsic_queries => 0, text_operations => 0, maximum_ordinary_visits_per_node => 1, outcome => 'pass' },
   },
   {
-    id => 'lazy-10000-realized-64',
-    family => 'virtualized-lazy',
-    nodes => 65,
-    depth => 2,
-    passes => 1,
-    collection => 10000,
-    operation => 'A 10,000-item collection realizes [4968,5032): 32 visible items and 16 cached items on each side. The root and 64 realized fixed leaves form the layout tree.',
-    expected => {
-      ordinary_visits => 64,
-      attempted_ordinary_visits => 64,
-      intrinsic_queries => 0,
-      text_operations => 0,
-      maximum_ordinary_visits_per_node => 1,
-      outcome => 'pass',
-    },
+    id => 'lazy-10000-realized-64', family => 'virtualized-lazy', operation => 'regular-child-layout', nodes => 65, depth => 2, passes => 1, collection => 10000,
+    topology => { kind => 'virtualized-star', realized_range => [4968, 5032], visible_range => [4984, 5016] },
+    description => 'A 10,000-item collection realizes [4968,5032): 32 visible items and 16 cached items on each side. The root and 64 realized fixed leaves form the layout tree.',
+    expected => { ordinary_visits => 64, attempted_ordinary_visits => 64, intrinsic_queries => 0, text_operations => 0, maximum_ordinary_visits_per_node => 1, outcome => 'pass' },
   },
   {
-    id => 'reordered-keyed-128',
-    family => 'weighted',
-    nodes => 129,
-    depth => 2,
-    passes => 1,
-    collection => undef,
-    operation => 'One weighted root reverses 128 fixed keyed leaves from key-000 through key-127 to key-127 through key-000, then lays out the realized tree.',
-    expected => {
-      ordinary_visits => 128,
-      attempted_ordinary_visits => 128,
-      intrinsic_queries => 0,
-      text_operations => 0,
-      maximum_ordinary_visits_per_node => 1,
-      outcome => 'pass',
-    },
+    id => 'reordered-keyed-128', family => 'weighted', operation => 'regular-child-layout', nodes => 129, depth => 2, passes => 1, collection => undef,
+    topology => { kind => 'keyed-star', key_count => 128, key_permutation => 'reverse', definite_basis => JSON::PP::true },
+    description => 'One weighted root reverses 128 fixed keyed leaves from key-000 through key-127 to key-127 through key-000, then lays out the realized tree.',
+    expected => { ordinary_visits => 128, attempted_ordinary_visits => 128, intrinsic_queries => 0, text_operations => 0, maximum_ordinary_visits_per_node => 1, outcome => 'pass' },
   },
   {
-    id => 'custom-two-pass-256',
-    family => 'custom-multi-pass',
-    nodes => 257,
-    depth => 2,
-    passes => 2,
-    collection => undef,
-    operation => 'One custom root issues two declared constraint passes to 256 fixed leaves.',
-    expected => {
-      ordinary_visits => 512,
-      attempted_ordinary_visits => 512,
-      intrinsic_queries => 0,
-      text_operations => 0,
-      maximum_ordinary_visits_per_node => 2,
-      outcome => 'pass',
-    },
+    id => 'custom-two-pass-256', family => 'custom-multi-pass', operation => 'regular-child-layout', nodes => 257, depth => 2, passes => 2, collection => undef,
+    topology => { kind => 'star', fan_out => 256 },
+    description => 'One custom root issues two declared constraint passes to 256 fixed leaves.',
+    expected => { ordinary_visits => 512, attempted_ordinary_visits => 512, intrinsic_queries => 0, text_operations => 0, maximum_ordinary_visits_per_node => 2, outcome => 'pass' },
   },
   {
-    id => 'three-pass-cap-failure',
-    family => 'custom-multi-pass',
-    nodes => 17,
-    depth => 2,
-    passes => 3,
-    collection => undef,
-    operation => 'One custom root asks each of 16 fixed children for a third layout after two completed passes.',
-    expected => {
-      ordinary_visits => 32,
-      attempted_ordinary_visits => 33,
-      intrinsic_queries => 0,
-      text_operations => 0,
-      maximum_ordinary_visits_per_node => 2,
-      outcome => 'reject-cap-before-invocation-node-1',
-    },
+    id => 'three-pass-cap-failure', family => 'custom-multi-pass', operation => 'regular-child-layout', nodes => 17, depth => 2, passes => 3, collection => undef,
+    topology => { kind => 'star', fan_out => 16 },
+    description => 'One custom root asks each of 16 fixed children for a third layout after two completed passes.',
+    expected => { ordinary_visits => 32, attempted_ordinary_visits => 33, intrinsic_queries => 0, text_operations => 0, maximum_ordinary_visits_per_node => 2, outcome => 'reject-cap-before-invocation-leaf-0000' },
   },
   {
-    id => 'invalid-constraints',
-    family => 'single-pass-box',
-    nodes => 17,
-    depth => 2,
-    passes => 0,
-    collection => undef,
-    operation => 'One box root receives invalid constraints before it can lay out 16 fixed children.',
-    expected => {
-      ordinary_visits => 0,
-      attempted_ordinary_visits => 0,
-      intrinsic_queries => 0,
-      text_operations => 0,
-      maximum_ordinary_visits_per_node => 0,
-      outcome => 'reject-before-child-layout',
-    },
+    id => 'invalid-constraints', family => 'single-pass-box', operation => 'invalid-constraints', nodes => 17, depth => 2, passes => 0, collection => undef,
+    topology => { kind => 'star', fan_out => 16 },
+    description => 'One box root receives invalid constraints before it can lay out 16 fixed children.',
+    expected => { ordinary_visits => 0, attempted_ordinary_visits => 0, intrinsic_queries => 0, text_operations => 0, maximum_ordinary_visits_per_node => 0, outcome => 'reject-before-child-layout' },
   },
   {
-    id => 'intrinsic-separation',
-    family => 'intrinsic-measure',
-    nodes => 2,
-    depth => 2,
-    passes => 0,
-    collection => undef,
-    operation => 'One root requests a dry or intrinsic answer from one nondefinite child.',
-    expected => {
-      ordinary_visits => 0,
-      attempted_ordinary_visits => 0,
-      intrinsic_queries => 1,
-      text_operations => 0,
-      maximum_ordinary_visits_per_node => 0,
-      outcome => 'reject-from-ordinary-family',
-    },
+    id => 'intrinsic-separation', family => 'intrinsic-measure', operation => 'dry-or-intrinsic-query', nodes => 2, depth => 2, passes => 0, collection => undef,
+    topology => { kind => 'star', fan_out => 1 },
+    description => 'One root requests a dry or intrinsic answer from one nondefinite child.',
+    expected => { ordinary_visits => 0, attempted_ordinary_visits => 0, intrinsic_queries => 1, text_operations => 0, maximum_ordinary_visits_per_node => 0, outcome => 'reject-from-ordinary-family' },
   },
   {
-    id => 'text-separation',
-    family => 'text',
-    nodes => 2,
-    depth => 2,
-    passes => 1,
-    collection => undef,
-    operation => 'One box root lays out one realized text leaf, which invokes text layout.',
-    expected => {
-      ordinary_visits => 1,
-      attempted_ordinary_visits => 1,
-      intrinsic_queries => 0,
-      text_operations => 1,
-      maximum_ordinary_visits_per_node => 1,
-      outcome => 'separate-counter',
-    },
+    id => 'text-separation', family => 'text', operation => 'text-layout', nodes => 2, depth => 2, passes => 1, collection => undef,
+    topology => { kind => 'star', fan_out => 1 },
+    description => 'One box root lays out one realized text leaf, which invokes text layout.',
+    expected => { ordinary_visits => 1, attempted_ordinary_visits => 1, intrinsic_queries => 0, text_operations => 1, maximum_ordinary_visits_per_node => 1, outcome => 'separate-counter' },
   },
 );
 
@@ -452,23 +167,199 @@ sub expect {
   die "assertion failed: $message\n" if !$condition;
 }
 
+sub new_tree {
+  return { nodes => {}, children => {}, unrealized_ids => {}, source_keys => [], layout_keys => [] };
+}
+
+sub add_node {
+  my ($tree, $id, $parent, $depth, $key, $realized) = @_;
+  expect(!exists $tree->{nodes}{$id}, "duplicate node $id");
+  $tree->{nodes}{$id} = { parent => $parent, depth => $depth, key => $key, realized => $realized };
+  push @{ $tree->{children}{$parent} }, $id if defined $parent;
+}
+
+sub make_star {
+  my ($fan_out, $prefix, $keys) = @_;
+  my $tree = new_tree();
+  add_node($tree, 'root', undef, 1, undef, 1);
+  for my $index (0 .. $fan_out - 1) {
+    my $key = defined $keys ? $keys->[$index] : undef;
+    add_node($tree, sprintf('%s-%04d', $prefix, $index), 'root', 2, $key, 1);
+  }
+  return $tree;
+}
+
+sub build_tree {
+  my ($fixture) = @_;
+  my $topology = $fixture->{topology};
+  my $kind = $topology->{kind};
+  if ($kind eq 'chain') {
+    my $tree = new_tree();
+    add_node($tree, 'root', undef, 1, undef, 1);
+    my $parent = 'root';
+    for my $depth (2 .. $fixture->{depth}) {
+      my $id = sprintf('box-%03d', $depth - 1);
+      add_node($tree, $id, $parent, $depth, undef, 1);
+      $parent = $id;
+    }
+    return $tree;
+  }
+  return make_star($topology->{fan_out}, 'leaf', undef) if $kind eq 'star';
+  if ($kind eq 'nested') {
+    my $tree = new_tree();
+    add_node($tree, 'root', undef, 1, undef, 1);
+    for my $column (0 .. $topology->{fan_out}[0] - 1) {
+      my $column_id = sprintf('column-%02d', $column);
+      add_node($tree, $column_id, 'root', 2, undef, 1);
+      for my $row (0 .. $topology->{fan_out}[1] - 1) {
+        my $row_id = sprintf('row-%02d-%02d', $column, $row);
+        add_node($tree, $row_id, $column_id, 3, undef, 1);
+        for my $leaf (0 .. $topology->{fan_out}[2] - 1) {
+          add_node($tree, sprintf('leaf-%02d-%02d-%02d', $column, $row, $leaf), $row_id, 4, undef, 1);
+        }
+      }
+    }
+    return $tree;
+  }
+  if ($kind eq 'virtualized-star') {
+    my ($start, $end) = @{ $topology->{realized_range} };
+    expect(defined $fixture->{collection} && 0 <= $start && $start < $end && $end <= $fixture->{collection}, 'realized range');
+    my $tree = new_tree();
+    add_node($tree, 'root', undef, 1, undef, 1);
+    for my $item (0 .. $fixture->{collection} - 1) {
+      my $id = sprintf('item-%05d', $item);
+      if ($start <= $item && $item < $end) {
+        add_node($tree, $id, 'root', 2, sprintf('key-%05d', $item), 1);
+      } else {
+        $tree->{unrealized_ids}{$id} = 1;
+      }
+    }
+    return $tree;
+  }
+  if ($kind eq 'keyed-star') {
+    my @source_keys = map { sprintf('key-%03d', $_) } 0 .. $topology->{key_count} - 1;
+    expect($topology->{key_permutation} eq 'reverse', 'key permutation declaration');
+    my $tree = make_star($topology->{key_count}, 'keyed', \@source_keys);
+    $tree->{source_keys} = \@source_keys;
+    $tree->{layout_keys} = [ reverse @source_keys ];
+    return $tree;
+  }
+  die "unknown topology: $kind\n";
+}
+
+sub edge_count {
+  my ($tree) = @_;
+  my $count = 0;
+  $count += scalar @{ $_ } for values %{ $tree->{children} };
+  return $count;
+}
+
+sub max_depth {
+  my ($tree) = @_;
+  my $maximum = 0;
+  for my $node (values %{ $tree->{nodes} }) {
+    $maximum = $node->{depth} if $node->{depth} > $maximum;
+  }
+  return $maximum;
+}
+
+sub assert_topology {
+  my ($fixture, $tree) = @_;
+  expect(scalar(keys %{ $tree->{nodes} }) == $fixture->{nodes}, "$fixture->{id}: node count");
+  expect(edge_count($tree) == $fixture->{nodes} - 1, "$fixture->{id}: edge count");
+  expect(max_depth($tree) == $fixture->{depth}, "$fixture->{id}: depth");
+  expect(!defined $tree->{nodes}{root}{parent}, "$fixture->{id}: root");
+  for my $id (keys %{ $tree->{nodes} }) {
+    my $node = $tree->{nodes}{$id};
+    next if !defined $node->{parent};
+    expect(exists $tree->{nodes}{ $node->{parent} }, "$fixture->{id}: parent edge");
+    expect($node->{depth} == $tree->{nodes}{ $node->{parent} }{depth} + 1, "$fixture->{id}: edge depth");
+  }
+  my $topology = $fixture->{topology};
+  if ($topology->{kind} eq 'nested') {
+    expect(join(',', @{ $topology->{fan_out} }) eq '8,8,8', 'nested fan-out');
+    expect($topology->{definite_basis}, 'nested definite basis');
+  }
+  if ($topology->{kind} eq 'virtualized-star') {
+    my ($start, $end) = @{ $topology->{realized_range} };
+    my ($visible_start, $visible_end) = @{ $topology->{visible_range} };
+    my @realized = map { sprintf('item-%05d', $_) } $start .. $end - 1;
+    my %realized = map { $_ => 1 } @realized;
+    my %actual = map { $_ => 1 } grep { $_ ne 'root' } keys %{ $tree->{nodes} };
+    expect(join(',', sort keys %actual) eq join(',', sort keys %realized), 'realized IDs');
+    expect(scalar(@realized) == 64, 'realized count');
+    expect(scalar(keys %{ $tree->{unrealized_ids} }) == $fixture->{collection} - scalar(@realized), 'unrealized count');
+    expect($fixture->{collection} - scalar(@realized) == 9936, '9,936 unrealized items');
+    expect($start <= $visible_start && $visible_start < $visible_end && $visible_end <= $end && $visible_end - $visible_start == 32, 'visible range');
+  }
+  if ($topology->{kind} eq 'keyed-star') {
+    my @expected = map { sprintf('key-%03d', $_) } reverse 0 .. $topology->{key_count} - 1;
+    expect(join(',', @{ $tree->{layout_keys} }) eq join(',', @expected), 'reordered key sequence');
+    expect(join(',', sort @{ $tree->{source_keys} }) eq join(',', sort @{ $tree->{layout_keys} }), 'reordered keys preserved');
+    expect($topology->{definite_basis}, 'reordered definite basis');
+  }
+}
+
+sub family_admitted {
+  my ($fixture, $tree) = @_;
+  my $family = $fixture->{family};
+  my $kind = $fixture->{topology}{kind};
+  return ($fixture->{operation} eq 'regular-child-layout' || $fixture->{operation} eq 'invalid-constraints') && ($kind eq 'chain' || $kind eq 'star') if $family eq 'single-pass-box';
+  return $fixture->{operation} eq 'regular-child-layout' && $fixture->{topology}{definite_basis} if $family eq 'weighted';
+  return $fixture->{operation} eq 'regular-child-layout' && scalar(keys %{ $tree->{unrealized_ids} }) > 0 if $family eq 'virtualized-lazy';
+  return $fixture->{operation} eq 'regular-child-layout' && $fixture->{passes} >= 1 if $family eq 'custom-multi-pass';
+  return 0 if $family eq 'intrinsic-measure' || $family eq 'text';
+  die "unknown family: $family\n";
+}
+
+sub preorder_edges {
+  my ($tree, $parent) = @_;
+  my @events;
+  for my $child (@{ $tree->{children}{$parent} // [] }) {
+    push @events, [$parent, $child], preorder_edges($tree, $child);
+  }
+  return @events;
+}
+
+sub declared_child_layout_events {
+  my ($fixture, $tree) = @_;
+  my $family = $fixture->{family};
+  if ($family eq 'single-pass-box' || $family eq 'weighted') {
+    if ($fixture->{topology}{kind} eq 'keyed-star') {
+      my %by_key = map { my $node = $tree->{nodes}{$_}; defined $node->{key} ? ($node->{key} => $_) : () } keys %{ $tree->{nodes} };
+      return map { ['root', $by_key{$_}] } @{ $tree->{layout_keys} };
+    }
+    return preorder_edges($tree, 'root');
+  }
+  if ($family eq 'virtualized-lazy') {
+    my ($start, $end) = @{ $fixture->{topology}{realized_range} };
+    return map { ['root', sprintf('item-%05d', $_)] } $start .. $end - 1;
+  }
+  if ($family eq 'custom-multi-pass') {
+    my @direct_children = @{ $tree->{children}{root} };
+    my @events;
+    push @events, map { ['root', $_] } @direct_children for 1 .. $fixture->{passes};
+    return @events;
+  }
+  if ($family eq 'text') {
+    return ['root', $tree->{children}{root}[0]];
+  }
+  die "$fixture->{id}: no ordinary event sequence\n";
+}
+
 sub new_counter {
-  return {
-    cap => $CAP,
-    completed_by_node => {},
-    attempted_ordinary_visits => 0,
-    intrinsic_queries => 0,
-    text_operations => 0,
-  };
+  return { completed_by_node => {}, attempted_ordinary_visits => 0, intrinsic_queries => 0, text_operations => 0, emitted_events => [] };
 }
 
 sub ordinary_child_layout {
-  my ($counter, $node) = @_;
+  my ($counter, $tree, $parent, $child) = @_;
+  expect(exists $tree->{nodes}{$child} && defined $tree->{nodes}{$child}{parent} && $tree->{nodes}{$child}{parent} eq $parent, 'event is a declared parent-child edge');
+  expect($tree->{nodes}{$child}{realized}, 'unrealized child cannot receive an ordinary visit');
   $counter->{attempted_ordinary_visits}++;
-  my $completed = $counter->{completed_by_node}{$node} // 0;
-  return 0 if $completed == $counter->{cap};
-  $counter->{completed_by_node}{$node} = $completed + 1;
-  return 1;
+  my $completed = $counter->{completed_by_node}{$child} // 0;
+  die "cap:$child:$counter->{attempted_ordinary_visits}\n" if $completed == $CAP;
+  $counter->{completed_by_node}{$child} = $completed + 1;
+  push @{ $counter->{emitted_events} }, [$parent, $child];
 }
 
 sub ordinary_visits {
@@ -488,174 +379,459 @@ sub maximum_ordinary_visits_per_node {
 }
 
 sub verify {
-  my ($counter, $fixture) = @_;
+  my ($fixture, $tree, $counter) = @_;
   my $expected = $fixture->{expected};
-  expect(ordinary_visits($counter) == $expected->{ordinary_visits}, 'ordinary visits');
-  expect($counter->{attempted_ordinary_visits} == $expected->{attempted_ordinary_visits}, 'attempted ordinary visits');
-  expect($counter->{intrinsic_queries} == $expected->{intrinsic_queries}, 'intrinsic queries');
-  expect($counter->{text_operations} == $expected->{text_operations}, 'text operations');
-  expect(maximum_ordinary_visits_per_node($counter) == $expected->{maximum_ordinary_visits_per_node}, 'maximum ordinary visits per node');
-}
-
-sub run_success {
-  my ($fixture) = @_;
-  my $counter = new_counter();
-  for (1 .. $fixture->{passes}) {
-    for my $node (1 .. ($fixture->{nodes} - 1)) {
-      expect(ordinary_child_layout($counter, $node), 'success fixture exceeded cap');
-    }
+  expect(ordinary_visits($counter) == $expected->{ordinary_visits}, "$fixture->{id}: ordinary visits");
+  expect($counter->{attempted_ordinary_visits} == $expected->{attempted_ordinary_visits}, "$fixture->{id}: attempted visits");
+  expect($counter->{intrinsic_queries} == $expected->{intrinsic_queries}, "$fixture->{id}: intrinsic queries");
+  expect($counter->{text_operations} == $expected->{text_operations}, "$fixture->{id}: text operations");
+  expect(maximum_ordinary_visits_per_node($counter) == $expected->{maximum_ordinary_visits_per_node}, "$fixture->{id}: per-node maximum");
+  for my $node (keys %{ $counter->{completed_by_node} }) {
+    expect(!exists $tree->{unrealized_ids}{$node}, "$fixture->{id}: unrealized visits");
+    expect($counter->{completed_by_node}{$node} <= $CAP, "$fixture->{id}: cap");
   }
-  verify($counter, $fixture);
-  return $counter;
 }
 
-sub run_three_pass_cap_failure {
+sub replay_fixture {
   my ($fixture) = @_;
+  my $tree = build_tree($fixture);
+  assert_topology($fixture, $tree);
   my $counter = new_counter();
-  my $failed_node;
-  OUTER: for (1 .. $fixture->{passes}) {
-    for my $node (1 .. ($fixture->{nodes} - 1)) {
-      if (!ordinary_child_layout($counter, $node)) {
-        $failed_node = $node;
-        last OUTER;
-      }
-    }
+  my $admitted = family_admitted($fixture, $tree);
+  if ($fixture->{operation} eq 'invalid-constraints') {
+    expect($admitted, 'invalid constraint fixture family admission');
+    verify($fixture, $tree, $counter);
+    return ($tree, $counter);
   }
-  expect($failed_node == 1, 'failed node');
-  verify($counter, $fixture);
-  return $counter;
-}
-
-sub run_invalid_constraints {
-  my ($fixture) = @_;
-  my $counter = new_counter();
-  my $root_constraints_are_invalid = 1;
-  expect($root_constraints_are_invalid, 'invalid root constraints');
-  verify($counter, $fixture);
-  return $counter;
-}
-
-sub run_intrinsic_separation {
-  my ($fixture) = @_;
-  my $counter = new_counter();
-  $counter->{intrinsic_queries}++;
-  verify($counter, $fixture);
-  return $counter;
-}
-
-sub run_text_separation {
-  my ($fixture) = @_;
-  my $counter = new_counter();
-  expect(ordinary_child_layout($counter, 1), 'text leaf layout');
-  $counter->{text_operations}++;
-  verify($counter, $fixture);
-  return $counter;
-}
-
-sub run_fixture {
-  my ($fixture) = @_;
-  my $outcome = $fixture->{expected}{outcome};
-  return run_success($fixture) if $outcome eq 'pass';
-  return run_three_pass_cap_failure($fixture) if $outcome eq 'reject-cap-before-invocation-node-1';
-  return run_invalid_constraints($fixture) if $outcome eq 'reject-before-child-layout';
-  return run_intrinsic_separation($fixture) if $outcome eq 'reject-from-ordinary-family';
-  return run_text_separation($fixture) if $outcome eq 'separate-counter';
-  die "unknown outcome: $outcome\n";
+  if ($fixture->{operation} eq 'dry-or-intrinsic-query') {
+    expect(!$admitted, 'intrinsic excluded from ordinary family');
+    $counter->{intrinsic_queries}++;
+    verify($fixture, $tree, $counter);
+    return ($tree, $counter);
+  }
+  if ($fixture->{operation} eq 'text-layout') {
+    expect(!$admitted, 'text excluded from ordinary family');
+    ordinary_child_layout($counter, $tree, @{ $_ }) for declared_child_layout_events($fixture, $tree);
+    $counter->{text_operations}++;
+    verify($fixture, $tree, $counter);
+    return ($tree, $counter);
+  }
+  expect($fixture->{operation} eq 'regular-child-layout', 'known operation');
+  expect($admitted, 'ordinary family admission');
+  my @events = declared_child_layout_events($fixture, $tree);
+  if ($fixture->{family} eq 'custom-multi-pass') {
+    expect(scalar(@events) == $fixture->{passes} * scalar(@{ $tree->{children}{root} }), 'custom pass sequence');
+  }
+  if ($fixture->{topology}{kind} eq 'keyed-star') {
+    my @emitted_keys = map { $tree->{nodes}{$_->[1]}{key} } @events;
+    expect(join(',', @emitted_keys) eq join(',', @{ $tree->{layout_keys} }), 'reordered event sequence');
+  }
+  if ($fixture->{family} eq 'virtualized-lazy') {
+    my %children = map { $_->[1] => 1 } @events;
+    my %realized = map { $_ => 1 } grep { $_ ne 'root' } keys %{ $tree->{nodes} };
+    expect(join(',', sort keys %children) eq join(',', sort keys %realized), 'virtualized event range');
+  }
+  my $completed = eval {
+    ordinary_child_layout($counter, $tree, @{ $_ }) for @events;
+    1;
+  };
+  if (!$completed) {
+    my $error = $@;
+    expect($fixture->{expected}{outcome} eq 'reject-cap-before-invocation-leaf-0000', 'unexpected cap rejection');
+    expect($error eq "cap:leaf-0000:33\n", 'cap rejection location');
+    verify($fixture, $tree, $counter);
+    return ($tree, $counter);
+  }
+  expect($fixture->{expected}{outcome} eq 'pass', 'missing expected cap rejection');
+  verify($fixture, $tree, $counter);
+  return ($tree, $counter);
 }
 
 @ARGV == 1 or die "usage: $0 MANIFEST_PATH\n";
-my $manifest_json = JSON::PP->new->ascii->canonical->indent(1)->indent_length(2)->space_before(0)->space_after(1);
-my $manifest = $manifest_json->encode(\@fixtures);
+my $json = JSON::PP->new->ascii->canonical->indent(1)->indent_length(2)->space_before(0)->space_after(1);
+my $manifest = $json->encode(\@FIXTURES);
 open my $manifest_file, '>:raw', $ARGV[0] or die "cannot write $ARGV[0]: $!\n";
 print {$manifest_file} $manifest or die "cannot write $ARGV[0]: $!\n";
 close $manifest_file or die "cannot close $ARGV[0]: $!\n";
 
-print "OXY-B005 candidate-neutral counter model\n";
+print "OXY-B005 candidate-neutral topology counter model\n";
 printf "cap=%d\n", $CAP;
 printf "corpus_sha256=%s\n", sha256_hex($manifest);
-print "fixture|family|nodes|depth|ordinary|attempted|intrinsic|text|max_per_node|result\n";
-for my $fixture (@fixtures) {
-  my $counter = run_fixture($fixture);
-  my $expected = $fixture->{expected};
-  printf "%s|%s|%d|%d|%d|%d|%d|%d|%d|%s\n", $fixture->{id}, $fixture->{family}, $fixture->{nodes}, $fixture->{depth}, ordinary_visits($counter), $counter->{attempted_ordinary_visits}, $counter->{intrinsic_queries}, $counter->{text_operations}, maximum_ordinary_visits_per_node($counter), $expected->{outcome};
+print "fixture|family|nodes|edges|depth|realized|unrealized|ordinary|attempted|intrinsic|text|max_per_node|result\n";
+for my $fixture (@FIXTURES) {
+  my ($tree, $counter) = replay_fixture($fixture);
+  printf "%s|%s|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d|%s\n",
+    $fixture->{id}, $fixture->{family}, scalar(keys %{ $tree->{nodes} }), edge_count($tree), max_depth($tree), scalar(keys %{ $tree->{nodes} }) - 1,
+    scalar(keys %{ $tree->{unrealized_ids} }), ordinary_visits($counter), $counter->{attempted_ordinary_visits}, $counter->{intrinsic_queries},
+    $counter->{text_operations}, maximum_ordinary_visits_per_node($counter), $fixture->{expected}{outcome};
 }
-print "assertions=passed\n";
+print "topology_and_counter_assertions=passed\n";
 ```
 
 Command run from the repository root:
 
 ```sh
-perl /tmp/wf-epic-b/OXY-B005/layout_visit_model.pl /tmp/wf-epic-b/OXY-B005/layout_visit_corpus.json && sha256sum /tmp/wf-epic-b/OXY-B005/layout_visit_corpus.json
+perl /tmp/wf-epic-b/OXY-B005/layout_visit_topology_model.pl /tmp/wf-epic-b/OXY-B005/layout_visit_topology_corpus.json && sha256sum /tmp/wf-epic-b/OXY-B005/layout_visit_topology_corpus.json
 ```
 
 Exact captured output:
 
 ```text
-OXY-B005 candidate-neutral counter model
+OXY-B005 candidate-neutral topology counter model
 cap=2
-corpus_sha256=502be034a2795302eda483c471b71d82025513e497da842e7c672f80eceeb766
-fixture|family|nodes|depth|ordinary|attempted|intrinsic|text|max_per_node|result
-deep-box-064|single-pass-box|64|64|63|63|0|0|1|pass
-wide-box-1024|single-pass-box|1025|2|1024|1024|0|0|1|pass
-nested-weighted-8x8x8|weighted|585|4|584|584|0|0|1|pass
-lazy-10000-realized-64|virtualized-lazy|65|2|64|64|0|0|1|pass
-reordered-keyed-128|weighted|129|2|128|128|0|0|1|pass
-custom-two-pass-256|custom-multi-pass|257|2|512|512|0|0|2|pass
-three-pass-cap-failure|custom-multi-pass|17|2|32|33|0|0|2|reject-cap-before-invocation-node-1
-invalid-constraints|single-pass-box|17|2|0|0|0|0|0|reject-before-child-layout
-intrinsic-separation|intrinsic-measure|2|2|0|0|1|0|0|reject-from-ordinary-family
-text-separation|text|2|2|1|1|0|1|1|separate-counter
-assertions=passed
-502be034a2795302eda483c471b71d82025513e497da842e7c672f80eceeb766  /tmp/wf-epic-b/OXY-B005/layout_visit_corpus.json
+corpus_sha256=4972e43333984047b5a1d84200d5b89a29c5b59e47c5aca8773379320f2c6c84
+fixture|family|nodes|edges|depth|realized|unrealized|ordinary|attempted|intrinsic|text|max_per_node|result
+deep-box-064|single-pass-box|64|63|64|63|0|63|63|0|0|1|pass
+wide-box-1024|single-pass-box|1025|1024|2|1024|0|1024|1024|0|0|1|pass
+nested-weighted-8x8x8|weighted|585|584|4|584|0|584|584|0|0|1|pass
+lazy-10000-realized-64|virtualized-lazy|65|64|2|64|9936|64|64|0|0|1|pass
+reordered-keyed-128|weighted|129|128|2|128|0|128|128|0|0|1|pass
+custom-two-pass-256|custom-multi-pass|257|256|2|256|0|512|512|0|0|2|pass
+three-pass-cap-failure|custom-multi-pass|17|16|2|16|0|32|33|0|0|2|reject-cap-before-invocation-leaf-0000
+invalid-constraints|single-pass-box|17|16|2|16|0|0|0|0|0|0|reject-before-child-layout
+intrinsic-separation|intrinsic-measure|2|1|2|1|0|0|0|1|0|0|reject-from-ordinary-family
+text-separation|text|2|1|2|1|0|1|1|0|1|1|separate-counter
+topology_and_counter_assertions=passed
+4972e43333984047b5a1d84200d5b89a29c5b59e47c5aca8773379320f2c6c84  /tmp/wf-epic-b/OXY-B005/layout_visit_topology_corpus.json
 ```
 
 ## Reference algorithm comparison
 
-Flutter documents [`RenderObject.layout`](https://api.flutter.dev/flutter/rendering/RenderObject/layout.html) as the parent request for child layout and says that a parent's `performLayout` calls `layout` on each child. This supports counting the parent-issued request, not a geometry calculation or paint operation. Flutter documents [`RenderBox.getDryLayout`](https://api.flutter.dev/flutter/rendering/RenderBox/getDryLayout.html) as state-free and potentially O(N^2). The counter therefore records dry and intrinsic work separately.
+The pinned [Flutter `RenderObject.layout` source](https://raw.githubusercontent.com/flutter/flutter/4cf24164269a5ebf0c16a028a00727d0e77bbb05/packages/flutter/lib/src/rendering/object.dart) establishes the parent-to-child request boundary used by row 2. The pinned [Flutter `RenderBox.getDryLayout` source](https://raw.githubusercontent.com/flutter/flutter/4cf24164269a5ebf0c16a028a00727d0e77bbb05/packages/flutter/lib/src/rendering/box.dart) distinguishes dry from wet layout and warns that dry layout can be O(N^2). The probe is a candidate-neutral counting model, not a claim that Oxyflut adopts Flutter behavior.
 
-The [CSS Flexible Box Layout Module Level 1](https://www.w3.org/TR/css-flexbox-1/#layout-algorithm) defines a flex layout algorithm with order-modified document order and intrinsic-size branches. The weighted corpus requires explicit definite inputs to avoid those branches. The corpus is a qualification counter model, not a claim that an Oxyflut policy implements the CSS algorithm.
+The dated [CSS Flexible Box Layout Module Level 1 Candidate Recommendation](https://www.w3.org/TR/2018/CR-css-flexbox-1-20181119/) defines order-modified document order. The reordered fixture uses an explicit reverse key permutation to exercise ordering without claiming CSS implementation conformance.
 
-Yoga documents [measure functions for external layout systems](https://www.yogalayout.dev/docs/advanced/external-layout-systems) for text and externally laid-out content. This supports a separate text counter. The ordinary text-leaf visit remains visible, but its text operation doesn't become another ordinary visit.
+The pinned [Yoga external-layout-systems source](https://raw.githubusercontent.com/facebook/yoga/bd8fe0d6d243cc7e0334d4cc68864a994f63beae/website/docs/advanced/external-layout-systems.mdx) identifies text and externally laid-out views as measure-function content. This supports a separate text-operation counter. The ordinary parent-to-text-leaf invocation remains counted, while text work remains separate.
+
+### Immutable source record
+
+All four sources were fetched successfully. The SHA-256 values are over the fetched source bytes, and each excerpt is verbatim.
+
+| Source | Fetched UTC | Bytes | SHA-256 |
+| :-- | :-- | --: | :-- |
+| [Flutter `object.dart` at `4cf24164269a5ebf0c16a028a00727d0e77bbb05`](https://raw.githubusercontent.com/flutter/flutter/4cf24164269a5ebf0c16a028a00727d0e77bbb05/packages/flutter/lib/src/rendering/object.dart) | 2026-08-28T16:59:35Z | 263,459 | `292ef7c3a0995054054274827417820556e3afa8211977037460b30e6240aa51` |
+| [Flutter `box.dart` at `4cf24164269a5ebf0c16a028a00727d0e77bbb05`](https://raw.githubusercontent.com/flutter/flutter/4cf24164269a5ebf0c16a028a00727d0e77bbb05/packages/flutter/lib/src/rendering/box.dart) | 2026-08-28T16:59:35Z | 142,065 | `66c2e64bb8b508af65178991ac81bde5f0b99bbe052d990dee361ba2f5019beb` |
+| [CSS Flexible Box Layout Module Level 1 Candidate Recommendation, 2018-11-19](https://www.w3.org/TR/2018/CR-css-flexbox-1-20181119/) | 2026-08-28T16:59:35Z | 638,802 | `288cdb522418f764d9a312c58d4dc6a76d9bbef7ac0f15344184a7d7b6a5bae8` |
+| [Yoga external-layout-systems source at `bd8fe0d6d243cc7e0334d4cc68864a994f63beae`](https://raw.githubusercontent.com/facebook/yoga/bd8fe0d6d243cc7e0334d4cc68864a994f63beae/website/docs/advanced/external-layout-systems.mdx) | 2026-08-28T17:00:27Z | 3,454 | `09053a128470512bbc6767bba3a23811c5d37e9bc2f4008e35178d0a1c502d48` |
+
+Flutter `RenderObject.layout` excerpt:
+
+```dart
+  /// This method is the main entry point for parents to ask their children to
+  /// update their layout information. The parent passes a constraints object,
+  /// which informs the child as to which layouts are permissible. The child is
+```
+
+Flutter `RenderBox.getDryLayout` excerpt:
+
+```dart
+  /// This layout is called "dry" layout as opposed to the regular "wet" layout
+  /// run performed by [performLayout] because it computes the desired size for
+  /// the given constraints without changing any internal state.
+```
+
+CSS Flexbox excerpt:
+
+```html
+<p>
+  A flex container lays out its content in
+  <dfn
+    class="dfn-paneled"
+    data-dfn-type="dfn"
+    data-export
+    id="order-modified-document-order"
+    >order-modified document order</dfn
+  >, starting from the lowest numbered ordinal group and going up. Items with
+  the same ordinal group are laid out in the order they appear in the source
+  document.
+</p>
+```
+
+Yoga excerpt:
+
+```md
+It is typical for applications to have content whose size may be dependent on factors not expressible inside of Yoga. This can often include text, or views which are rendered or laid out using a different system. Yoga allows leaf nodes to delegate to a different layout system via **Measure Functions**.
+```
 
 ## Options and trade-offs
 
-- Option A: Freeze the corpus, counting algorithm, and per-family algebraic bounds. This result supports Option A for counter semantics.
-- Option B: Freeze one global cap for every ordinary policy. The lock can store one integer, but no timing evidence supports freezing `2` as that integer.
-- Option C: Retain the numeric cap as a gating KU until an instrumented candidate probe measures the frozen corpus against CON-PERF-001. This preserves the target and prevents an intuition-based number.
+- Option A: Freeze the corpus, topology replay, counting algorithm, family classifier, and per-family algebraic bounds.
+- Option B: Freeze one global numeric cap as a performance-qualified result.
+- Option C: Retain the numeric cap as a gating KU until an instrumented candidate probe produces schema-valid timing evidence under CON-PERF-001.
 
 ## Recommendation
 
-- **Chosen option:** Use a mix of A and C. Freeze the corpus digest and counting rules from this report. Choose C for the numeric `layoutVisitCap`; retain it as `null` and gating.
-- **Derived threshold, not a freeze:** The corpus establishes that `2` is the smallest global threshold that admits the declared custom two-pass fixture. It isn't a performance recommendation because no result assigns time to a visit or reserves time for paint submission.
-- **Why it fits:** The result preserves CAP-LAY-001's bounded propagation, keeps intrinsic and text work explicit, and doesn't weaken CON-PERF-001. The widest passing fixture has 1,024 ordinary visits, which gives an all-layout arithmetic ceiling of 1.953125 microseconds per visit under 2.0 ms. That ceiling leaves no measured paint allowance and isn't performance evidence.
-- **Rejected options:** Reject a timing-only rule, an average-count rule, an unbounded intrinsic recursion, a text-work exemption hidden in `node_visits`, and a numeric threshold selected from shallow scenes.
+- **Chosen option by row:** Rows 1 through 5 use Option A. Row 6 uses Option C. Option B is rejected for row 6 because the topology model has no timing observation.
+- **Derived threshold, not a freeze:** `2` is the smallest global threshold that admits the declared two-pass custom fixture. It isn't a performance recommendation because the probe records no nanoseconds or paint-submission allowance.
+- **Why it fits:** The result preserves CAP-LAY-001's bounded propagation, keeps intrinsic and text work explicit, and doesn't weaken CON-PERF-001. The wide passing fixture has 1,024 ordinary visits, yielding an all-layout arithmetic ceiling of 1.953125 microseconds per visit under 2.0 ms. That ceiling doesn't reserve paint time and isn't performance evidence.
+- **Rejected options:** Reject a timing-only rule, an average-count rule, unbounded intrinsic recursion, a hidden text-work exemption, and a numeric cap selected from shallow scenes.
 
 ### Next bounded probe
 
-Stage 3 must first authorize unscored, nonproduction candidate probes before `candidateImplementationReady` changes. On each of the four locked reference configurations, run both instrumented candidate prototypes with `CAP_CANDIDATE=2` across the six success fixtures in table 2. For each fixture and prototype, run 20 launches, discard 300 warmup frames, and record 500 measured frames per launch.
+After Stage 3 makes the exact contract edits below and authorizes unscored candidate probes, run both instrumented candidates with `CAP_CANDIDATE=2` on the six passing fixtures in table 2. On each locked reference configuration, run 20 launches, discard 300 warmup frames, and record 500 valid measured frames per launch.
 
-Each raw record must contain the corpus digest, fixture ID, candidate source identity, hardware and driver identity, release flags, `ordinary_visits`, `attempted_ordinary_visits`, `intrinsic_queries`, `text_operations`, application-owned layout nanoseconds, paint-submission nanoseconds, and their aggregate. The expected successful output has the table 2 counters, no cap rejection, and a maximum of the 20 per-launch nearest-rank 99th percentiles at or below 2.0 ms. A failed value retains the KU and rejects the candidate. It doesn't increase the cap or change the corpus.
+For every root layout transaction, emit one schema-valid `layout-qualification-record` with the corpus and fixture identities, candidate source and artifact identities, hardware, GPU, driver, release-flag, and lock identities, separate counters, application-owned layout nanoseconds, paint-submission nanoseconds, and aggregate nanoseconds. The harness must calculate `aggregateNs` as layout plus paint submission, sum transactions by frame, calculate a nearest-rank 99th percentile per launch, then take the maximum of 20 launch percentiles. A passing fixture has table 2 counters, no cap rejection, and an aggregate no greater than 2.0 ms. A failing value retains the KU and rejects the candidate. It doesn't increase the cap or alter the corpus.
 
-Without Stage 3 authorization, the timing result is circular: candidate implementation needs the numeric cap, and numeric compatibility needs candidate layout and paint-submission code. A host-only counter model can't close that evidence gap.
+Without this Stage 3 authorization, timing evidence is circular: a candidate needs the cap to implement the policy and the cap needs candidate layout and paint-submission measurements. The host-only topology model can't close that evidence gap.
 
 ## Downstream impact
 
 - **ADRs to write or update:** None. This report doesn't change an architecture decision.
 - **Tickets unblocked in `tasks/active/`:** None. `OXY-D001` remains blocked by `layout-visit-cap`.
 - **Tickets to add or split:** Add one bounded prequalification layout-cost prototype ticket only after Stage 3 authorizes the probe in "Next bounded probe".
-- **Spec edits required:** Stage 3 must apply these exact edits without setting a numeric cap.
-  - `.constitution/tech-spec/data-models/qualification-lock.schema.json` in `$defs.measurementPolicy.required`: add `layoutVisitCorpus`.
-  - `.constitution/tech-spec/data-models/qualification-lock.schema.json` in `$defs.measurementPolicy.properties`: add `"layoutVisitCorpus": { "$ref": "#/$defs/digestOrNull" }`.
-  - `.constitution/tech-spec/data-models/qualification-lock.schema.json` in `$defs.resolvedMeasurementPolicy.properties`: add `"layoutVisitCorpus": { "$ref": "#/$defs/sha256" }`.
-  - `.constitution/tech-spec/contracts/qualification-lock.json` in `measurementPolicy`: add `"layoutVisitCorpus": "502be034a2795302eda483c471b71d82025513e497da842e7c672f80eceeb766"` and retain `"layoutVisitCap": null`.
-  - `.constitution/tech-spec/contracts/oxyflut-public.rs` in the `LayoutResult.node_visits` documentation: replace the field description with `Number of completed ordinary direct-child layout invocations issued by this policy; excludes the root entry, dry or intrinsic measurements, text operations, and rejected attempts. Every requested ordinary invocation increments the transaction's attempted_ordinary_visits counter before the per-child cap check.`
-  - `.constitution/tech-spec/stack.md` in the Scope guard paragraph that limits Stage 4 before `candidateImplementationReady`: append `Before candidateImplementationReady becomes true, Stage 4 may run unscored nonproduction candidate probes only to resolve a pre-implementation gating KU; the probes must use the frozen evidence contract and can't produce comparative scores or select a candidate.`
+- **Spec edits required:** Stage 3 must apply all of the following edits without setting a numeric cap.
+  - Create `.constitution/tech-spec/data-models/layout-qualification-record.schema.json` with the exact bytes in the following code block. Its SHA-256 is `99b3b26f878c0c8bf6bb49e1cf7706aab16254b7d74d757b8c8ddfd872f08dc0`.
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:oxyflut:schema:layout-qualification-record:1",
+  "title": "Oxyflut layout qualification record",
+  "description": "One raw, harness-emitted layout transaction. All counters and timings describe one transaction in one measured frame.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "candidate",
+    "environment",
+    "candidateSource",
+    "hardware",
+    "releaseFlagsDigest",
+    "lockDigest",
+    "corpusDigest",
+    "fixtureId",
+    "launch",
+    "frameOrdinal",
+    "transactionOrdinal",
+    "monotonicNs",
+    "ordinaryVisits",
+    "attemptedOrdinaryVisits",
+    "intrinsicQueries",
+    "textOperations",
+    "applicationOwnedLayoutNs",
+    "paintSubmissionNs",
+    "aggregateNs",
+    "capOutcome",
+    "aggregation",
+    "valid",
+    "harnessLog"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0.0",
+      "description": "Schema version; no unit or aggregation."
+    },
+    "candidate": {
+      "enum": ["focused", "integrated"],
+      "description": "Candidate identity; group records by this value before aggregation."
+    },
+    "environment": {
+      "enum": ["macos", "windows", "wayland", "x11"],
+      "description": "Tier 1 environment identity; never aggregate records across this value."
+    },
+    "candidateSource": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["revision", "artifactSha256"],
+      "properties": {
+        "revision": {
+          "$ref": "#/$defs/sha40",
+          "description": "Candidate source revision; identity only."
+        },
+        "artifactSha256": {
+          "$ref": "#/$defs/sha256",
+          "description": "Measured artifact digest; identity only."
+        }
+      }
+    },
+    "hardware": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["hardwareId", "gpuId", "driverVersion"],
+      "properties": {
+        "hardwareId": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Reference-machine hardware identity; never aggregate records across this value."
+        },
+        "gpuId": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Graphics-processor identity; never aggregate records across this value."
+        },
+        "driverVersion": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Graphics-driver identity; never aggregate records across this value."
+        }
+      }
+    },
+    "releaseFlagsDigest": {
+      "$ref": "#/$defs/sha256",
+      "description": "Digest of candidate release flags; never aggregate records across this value."
+    },
+    "lockDigest": {
+      "$ref": "#/$defs/sha256",
+      "description": "Digest of the measurement-ready qualification lock; identity only."
+    },
+    "corpusDigest": {
+      "$ref": "#/$defs/sha256",
+      "description": "Digest of the canonical layout corpus manifest; identity only."
+    },
+    "fixtureId": {
+      "enum": [
+        "deep-box-064",
+        "wide-box-1024",
+        "nested-weighted-8x8x8",
+        "lazy-10000-realized-64",
+        "reordered-keyed-128",
+        "custom-two-pass-256",
+        "three-pass-cap-failure",
+        "invalid-constraints",
+        "intrinsic-separation",
+        "text-separation"
+      ],
+      "description": "Canonical corpus fixture identity; aggregate timing only within one fixture."
+    },
+    "launch": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "One-based process launch; group 500 valid measured frames by this value before calculating a per-launch percentile."
+    },
+    "frameOrdinal": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "One-based measured-frame ordinal after warmup; no unit or aggregation."
+    },
+    "transactionOrdinal": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "One-based layout transaction within frameOrdinal; no unit or aggregation."
+    },
+    "monotonicNs": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Transaction observation timestamp in monotonic nanoseconds; do not aggregate as a duration."
+    },
+    "ordinaryVisits": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Completed ordinary direct-child layout invocations in this transaction; unit: invocations; sum only when reporting a frame total."
+    },
+    "attemptedOrdinaryVisits": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Requested ordinary direct-child layout invocations in this transaction, incremented immediately before each per-child cap check; unit: invocations; includes a rejected request and is at least ordinaryVisits."
+    },
+    "intrinsicQueries": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Dry or intrinsic queries in this transaction; unit: queries; separate from ordinaryVisits and summed only within a frame total."
+    },
+    "textOperations": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Text-engine layout or shaping operations in this transaction; unit: operations; separate from ordinaryVisits and summed only within a frame total."
+    },
+    "applicationOwnedLayoutNs": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Application-owned layout duration for this transaction; unit: nanoseconds; sum within a frame before percentile aggregation."
+    },
+    "paintSubmissionNs": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Application-owned paint-submission duration for this transaction; unit: nanoseconds; sum within a frame before percentile aggregation."
+    },
+    "aggregateNs": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "applicationOwnedLayoutNs plus paintSubmissionNs for this transaction; unit: nanoseconds; sum within a frame, calculate each launch's nearest-rank 99th percentile from 500 valid measured frame totals, then take the maximum across 20 launches."
+    },
+    "capOutcome": {
+      "enum": ["completed", "rejected-before-invocation"],
+      "description": "Outcome of the transaction's ordinary-visit cap check; identity only, and any rejected-before-invocation record fails the passing corpus expectation."
+    },
+    "aggregation": {
+      "const": "sum-transactions-per-frame;-nearest-rank-p99-per-launch;maximum-20-launches",
+      "description": "Fixed CON-PERF-001 aggregation order for valid records with identical candidate, environment, source, hardware, driver, flags, lock, corpus, and fixture identities."
+    },
+    "valid": {
+      "type": "boolean",
+      "description": "Whether the predeclared sample-validity rules admit the record; only valid records enter timing aggregation."
+    },
+    "exclusionReason": {
+      "enum": [
+        "measurement-tool-failure",
+        "unrelated-os-interruption",
+        "physical-disconnect"
+      ],
+      "description": "Required only when valid is false; no unit or aggregation."
+    },
+    "harnessLog": {
+      "$ref": "#/$defs/evidence",
+      "description": "Immutable preserved harness output for this record; identity only."
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "valid": { "const": false } },
+        "required": ["valid"]
+      },
+      "then": {
+        "required": ["exclusionReason"]
+      }
+    },
+    {
+      "if": {
+        "properties": { "valid": { "const": true } },
+        "required": ["valid"]
+      },
+      "then": {
+        "properties": { "exclusionReason": false }
+      }
+    }
+  ],
+  "$defs": {
+    "sha40": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    }
+  }
+}
+```
+
+- `.constitution/tech-spec/data-models/qualification-lock.schema.json` in `$defs.measurementPolicy.required`: add `layoutVisitCorpus` and `layoutQualificationRecordSchema`.
+- `.constitution/tech-spec/data-models/qualification-lock.schema.json` in `$defs.measurementPolicy.properties`: add exactly `"layoutVisitCorpus": { "$ref": "#/$defs/digestOrNull" }` and `"layoutQualificationRecordSchema": { "$ref": "#/$defs/digestOrNull" }`.
+- `.constitution/tech-spec/data-models/qualification-lock.schema.json` in `$defs.resolvedMeasurementPolicy.properties`: add exactly `"layoutVisitCorpus": { "$ref": "#/$defs/sha256" }` and `"layoutQualificationRecordSchema": { "$ref": "#/$defs/sha256" }`.
+- `.constitution/tech-spec/contracts/qualification-lock.json` in `measurementPolicy`: add exactly `"layoutVisitCorpus": "4972e43333984047b5a1d84200d5b89a29c5b59e47c5aca8773379320f2c6c84"` and `"layoutQualificationRecordSchema": "99b3b26f878c0c8bf6bb49e1cf7706aab16254b7d74d757b8c8ddfd872f08dc0"`; retain exactly `"layoutVisitCap": null`.
+- `.constitution/tech-spec/data-models/raw-measurement.schema.json`: make no extension for layout transactions. Its existing `additionalProperties: false` remains valid because the new companion schema owns these records.
+- `.constitution/tech-spec/contracts/oxyflut-public.rs` in `LayoutResult`: replace the `node_visits` documentation with `Number of completed ordinary direct-child layout invocations issued by this policy; excludes the root entry, dry or intrinsic measurements, text operations, and rejected attempts.` Then add immediately after `node_visits` exactly `/// Number of ordinary direct-child layout requests issued by this policy; increment immediately before the per-child cap check, include a request rejected before invocation, and exclude the root entry, dry or intrinsic measurements, and text operations.\npub attempted_ordinary_visits: u32,`.
+- `.constitution/tech-spec/contracts/oxyflut-qualification.rs` after `RawSample`: add a public `LayoutTransactionCounters` structure with `ordinary_visits: u64`, `attempted_ordinary_visits: u64`, `intrinsic_queries: u64`, and `text_operations: u64`. Its exact semantics are per root transaction: the harness observes every policy-local `LayoutResult` once as it is emitted, sums the two local ordinary counters without recursively summing child results, increments attempted before the cap check, and records rejected attempts only in attempted. Add `CandidateProbe::run_layout_fixture(&mut self, candidate: Candidate, environment: Environment, fixture_id: &str) -> Result<(GateResult<CapabilityId>, Vec<LayoutTransactionCounters>), Self::Error>;`. The schema writer attaches the required identities and timings to each emitted transaction counter record.
+- `.constitution/tech-spec/stack.md` in the Scope guard paragraph beginning `The current qualification lock`: append exactly `Before candidateImplementationReady becomes true, Stage 4 may run unscored nonproduction candidate probes only to resolve a pre-implementation gating KU; each probe must use the frozen evidence contract and can't produce comparative scores or select a candidate.`
 
 ## Sources
 
-All sources were fetched successfully through the Jina reader proxy during this spike.
-
-- [Flutter `RenderObject.layout` API documentation](https://api.flutter.dev/flutter/rendering/RenderObject/layout.html)
-- [Flutter `RenderBox.getDryLayout` API documentation](https://api.flutter.dev/flutter/rendering/RenderBox/getDryLayout.html)
-- [CSS Flexible Box Layout Module Level 1](https://www.w3.org/TR/css-flexbox-1/#layout-algorithm)
-- [Yoga: Integrating with external layout systems](https://www.yogalayout.dev/docs/advanced/external-layout-systems)
+- https://raw.githubusercontent.com/flutter/flutter/4cf24164269a5ebf0c16a028a00727d0e77bbb05/packages/flutter/lib/src/rendering/object.dart
+- https://raw.githubusercontent.com/flutter/flutter/4cf24164269a5ebf0c16a028a00727d0e77bbb05/packages/flutter/lib/src/rendering/box.dart
+- https://www.w3.org/TR/2018/CR-css-flexbox-1-20181119/
+- https://raw.githubusercontent.com/facebook/yoga/bd8fe0d6d243cc7e0334d4cc68864a994f63beae/website/docs/advanced/external-layout-systems.mdx
