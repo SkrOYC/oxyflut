@@ -10,6 +10,7 @@
 - **Round-7 correction clock start / stop:** 2026-08-28T19:08:02Z / 2026-08-28T19:17:48Z.
 - **Round-8 correction clock start / stop:** 2026-08-28T19:41:57Z / 2026-08-28T19:49:17Z.
 - **Round-9 correction clock start / stop:** 2026-08-28T20:22:41Z / 2026-08-28T20:32:29Z.
+- **Round-10 correction clock start / stop:** 2026-08-28T20:55:09Z / 2026-08-28T20:57:09Z.
 
 ## Question
 
@@ -1330,12 +1331,12 @@ The Wayland GTK row uses the same Ubuntu `libgtk-4-1` `4.22.2+ds-1ubuntu1` packa
 
 The Wayland AT-SPI row uses the same Ubuntu `at-spi2-core` `2.60.0-1` package identity as SPK-B004's X11 row. The Wayland fixtures retain the directly fetched 2.60.6 XML as the cited source for interface definitions. OXY-D001 must reconcile the AT-SPI protocol row and reference-configuration package identity across both environments while preserving their separately captured fixture paths.
 
-The capture map covers all 27 evidence objects in the template. The URLs are canonical upstream sources and were fetched successfully for this correction. No Jina-proxied body digest is used: the preservation step must write the direct canonical-source response to the named repository fixture and hash that regular file. The Ubuntu AT-SPI package capture uses the same `<to-be-computed-by-preservation-step>` SHA-256 placeholder as every other evidence object.
+The capture map covers all 29 evidence objects in the template, including the `wl_display` and `wl_registry` floors emitted by the source-of-record derivation. The URLs are canonical upstream sources and were fetched successfully for this correction. No Jina-proxied body digest is used: the preservation step must write the direct canonical-source response to the named repository fixture and hash that regular file. The Ubuntu AT-SPI package capture uses the same `<to-be-computed-by-preservation-step>` SHA-256 placeholder as every other evidence object.
 
 | Evidence objects | Fixture path | Canonical source URL |
 | :-- | :-- | :-- |
 | `GTK` (1) | `qualification/fixtures/external-contracts/wayland/s01-ubuntu-libgtk-4-1.html` | https://packages.ubuntu.com/resolute/libgtk-4-1 |
-| `wl_compositor`, `wl_surface`, `wl_callback`, `wl_seat`, `wl_pointer`, `wl_keyboard`, `wl_touch`, `wl_output`, `wl_data_device_manager`, `wl_data_device`, `wl_data_offer`, `wl_data_source` (12) | `qualification/fixtures/external-contracts/wayland/s02-wayland-core.xml` | https://raw.githubusercontent.com/wayland-mirror/wayland/1ab6b693b16e1d9734496fe60c8a6ed277e4dec3/protocol/wayland.xml |
+| `wl_display`, `wl_registry`, `wl_compositor`, `wl_surface`, `wl_callback`, `wl_seat`, `wl_pointer`, `wl_keyboard`, `wl_touch`, `wl_output`, `wl_data_device_manager`, `wl_data_device`, `wl_data_offer`, `wl_data_source` (14) | `qualification/fixtures/external-contracts/wayland/s02-wayland-core.xml` | https://raw.githubusercontent.com/wayland-mirror/wayland/1ab6b693b16e1d9734496fe60c8a6ed277e4dec3/protocol/wayland.xml |
 | `xdg_wm_base`, `xdg_surface`, `xdg_toplevel` (3) | `qualification/fixtures/external-contracts/wayland/s03-xdg-shell.xml` | https://raw.githubusercontent.com/wayland-mirror/wayland-protocols/d5aed4e4903a77aefaef03359d1ffdc0d5093456/stable/xdg-shell/xdg-shell.xml |
 | `wp_viewporter`, `wp_viewport` (2) | `qualification/fixtures/external-contracts/wayland/s04-viewporter.xml` | https://raw.githubusercontent.com/wayland-mirror/wayland-protocols/d5aed4e4903a77aefaef03359d1ffdc0d5093456/stable/viewporter/viewporter.xml |
 | `wp_fractional_scale_manager_v1`, `wp_fractional_scale_v1` (2) | `qualification/fixtures/external-contracts/wayland/s05-fractional-scale-v1.xml` | https://raw.githubusercontent.com/wayland-mirror/wayland-protocols/d5aed4e4903a77aefaef03359d1ffdc0d5093456/staging/fractional-scale/fractional-scale-v1.xml |
@@ -1347,7 +1348,7 @@ The capture map covers all 27 evidence objects in the template. The URLs are can
 
 To preserve the fixtures, OXY-D001 must create `qualification/fixtures/external-contracts/wayland/`, fetch each canonical URL with `curl --fail --location --max-time 60 --output FIXTURE URL`, require `test -f FIXTURE` and `test ! -L FIXTURE`, calculate `sha256sum FIXTURE`, replace every matching token in the template with that output, commit the regular files, and run the contract digest validator. The validator then requires repository-relative paths, regular files, and streamed SHA-256 matches.
 
-The following trimmed Round-7 transport output records successful source fetches only. The Jina responses are not fixture bytes and their digests are intentionally absent. The source-package descriptor rechecks SPK-B004's package-audit input; it is not an additional object in this 27-object template. The round-9 Jina fetch of the new Ubuntu AT-SPI capture is preserved in the factory-propagation correction.
+The following trimmed Round-7 transport output records successful source fetches only. The Jina responses are not fixture bytes and their digests are intentionally absent. The source-package descriptor rechecks SPK-B004's package-audit input; it is not an additional object in this 29-object template. The round-9 Jina fetch of the new Ubuntu AT-SPI capture is preserved in the factory-propagation correction.
 
 ```text
 $ fetch_jina ubuntu-libgtk-4-1.html https://packages.ubuntu.com/resolute/libgtk-4-1; fetch_jina gtk4-source.dsc https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/gtk4/4.22.2+ds-1ubuntu1/gtk4_4.22.2+ds-1ubuntu1.dsc; fetch_jina gtk-gtkenums.h https://gitlab.gnome.org/GNOME/gtk/-/raw/4.20.4/gtk/gtkenums.h
@@ -1376,6 +1377,28 @@ EditableText.xml http=200 bytes=4421 canonical=https://gitlab.gnome.org/GNOME/at
     "evidence": [
       {
         "path": "qualification/fixtures/external-contracts/wayland/s01-ubuntu-libgtk-4-1.html",
+        "sha256": "<to-be-computed-by-preservation-step>"
+      }
+    ]
+  },
+  {
+    "name": "wl_display",
+    "version": "1",
+    "status": "kk",
+    "evidence": [
+      {
+        "path": "qualification/fixtures/external-contracts/wayland/s02-wayland-core.xml",
+        "sha256": "<to-be-computed-by-preservation-step>"
+      }
+    ]
+  },
+  {
+    "name": "wl_registry",
+    "version": "1",
+    "status": "kk",
+    "evidence": [
+      {
+        "path": "qualification/fixtures/external-contracts/wayland/s02-wayland-core.xml",
         "sha256": "<to-be-computed-by-preservation-step>"
       }
     ]
@@ -1655,12 +1678,13 @@ EditableText.xml http=200 bytes=4421 canonical=https://gitlab.gnome.org/GNOME/at
 ]
 ```
 
-The round-9 inline template validator verifies that the revised template contains 27 evidence objects, each with a local path and the exact preservation placeholder. OXY-D001 must rerun the repository fixture and digest validator after preserving all 10 regular files.
+The round-10 inline template validator verifies that the revised template contains 29 evidence objects, each with a local path and the exact preservation placeholder. OXY-D001 must rerun the repository fixture and digest validator after preserving all 10 regular files.
 
 ```text
-template_evidence_objects=27
+$ nix shell nixpkgs#python3 -c python3 /tmp/wf-epic-b/OXY-B003/round-10/validate-wayland-protocol-template.py
+template_evidence_objects=29
 template_remote_or_absolute_paths=0
-quoted_sha256_values=27 allowed_placeholders=27 malformed_quoted_values=0
+quoted_sha256_values=29 allowed_placeholders=29 malformed_quoted_values=0
 exit=0
 ```
 
@@ -1689,8 +1713,25 @@ exit=0
 - `.constitution/tech-spec/contracts/platform-contracts.json` -> `environments.wayland.timing.perDisplayAssociation`: replace the value with `"Track each wl_surface enter/leave output set and begin a display epoch on every set change. Use wp_presentation_feedback.sync_output only to label a submitted frame's main output."`.
 - `.constitution/tech-spec/contracts/platform-contracts.json` -> `environments.wayland.accessibilityMaps`, `recoveryBaseline`, `allocations.focused`, and `allocations.integrated`: retain every `"ku-gating"` status and `null` path/digest until P3F, P3I, P5F, P5I, P6F, and P6I produce the named immutable artifacts.
 - `.constitution/tech-spec/stack.md` -> `Platform qualification pins` -> `Wayland` row -> `Reference configuration` column: replace the cell with `"x86-64 Ubuntu 26.04 LTS Wayland session with libgtk-4-1 4.22.2+ds-1ubuntu1 and at-spi2-core 2.60.0-1; the gtk4 crate v4_20 API-binding ceiling is separate; the Ubuntu compositor/session package manifest and selected-session advertisement of the frozen Wayland floors remain gating KUs; P1 must record package versions, manifest digest, registry, and a visible-surface transcript covering all 97 members of the mechanically regenerated deterministic P1 checklist, retaining the four named event gates separately, and including client-issued release and destroy operations."`.
-- `.constitution/tech-spec/contracts/qualification-lock.json` -> `preImplementationKnownUnknowns` and `gatingKnownUnknowns`: add `"wayland-ubuntu-compositor-session-package-lock"`, `"wayland-frozen-protocol-reference-session-transcript"`, `"wayland-ime-operation-unit-transcript"`, `"wayland-atspi-scalar-logical-representation"`, `"wayland-atspi-text-caret-selection-editable-transcript"`, `"wayland-orca-atspi-maps-for-both-allocations"`, `"wayland-drm-vblank-kernel-identity-live-schema-callsite"`, `"wayland-drm-vblank-calibration-uncertainty-budget"`, `"wayland-service-routing-for-both-allocations"`, and `"wayland-recovery-injection-for-both-allocations"`.
+- `.constitution/tech-spec/contracts/qualification-lock.json` -> `preImplementationKnownUnknowns` and `gatingKnownUnknowns`: add `"wayland-ubuntu-compositor-session-package-lock"`, `"wayland-frozen-protocol-reference-session-transcript"`, `"wayland-ime-operation-unit-transcript"`, `"wayland-atspi-scalar-logical-representation"`, `"wayland-atspi-text-caret-selection-editable-transcript"`, `"wayland-orca-atspi-maps-for-both-allocations"`, `"wayland-drm-vblank-kernel-identity-live-schema-callsite"`, `"wayland-drm-vblank-calibration-uncertainty-budget"`, `"wayland-service-routing-for-both-allocations"`, `"wayland-recovery-injection-for-both-allocations"`, and `"wayland-drm-vblank-calibration-acceptance-bound"`.
 - `.constitution/tech-spec/contracts/qualification-lock.json` -> new gating entry `wayland-drm-vblank-calibration-acceptance-bound`: replace its value with `"Before any candidate measurement, reviewed Stage 3 must record the numeric maximum acceptable U_95, causal-matching algorithm version, matching-window width, and review reference. P4C records U_95 = 1.96 * SE(d_bar) + r_trace / 2 + r_clock / 2 + w_max / 2 but cannot close this entry."`.
+- `crates/oxyflut-qualification/src/readiness.rs` -> `KNOWN_UNKNOWN_BINDINGS`: add the following exact `KnownUnknownBinding` rows so every added `preImplementationKnownUnknowns` value maps to a required lock field, evidence path, and upstream owner:
+
+| `known_unknown` | `required_field` | `evidence_path` | `upstream_owner` |
+| :-- | :-- | :-- | :-- |
+| `wayland-ubuntu-compositor-session-package-lock` | `referenceEnvironments.wayland-linux-x86_64.systemPackageLockDigest` | `None` | `OXY-C004` |
+| `wayland-frozen-protocol-reference-session-transcript` | `measurementPolicy.platformContracts` | `Some(".constitution/tech-spec/contracts/platform-contracts.json")` | `OXY-C004` |
+| `wayland-ime-operation-unit-transcript` | `measurementPolicy.platformContracts` | `Some(".constitution/tech-spec/contracts/platform-contracts.json")` | `OXY-C004` |
+| `wayland-atspi-scalar-logical-representation` | `measurementPolicy.platformContracts` | `Some(".constitution/tech-spec/contracts/platform-contracts.json")` | `OXY-C004` |
+| `wayland-atspi-text-caret-selection-editable-transcript` | `measurementPolicy.platformContracts` | `Some(".constitution/tech-spec/contracts/platform-contracts.json")` | `OXY-C004` |
+| `wayland-orca-atspi-maps-for-both-allocations` | `measurementPolicy.platformContracts` | `Some(".constitution/tech-spec/contracts/platform-contracts.json")` | `OXY-C004` |
+| `wayland-drm-vblank-kernel-identity-live-schema-callsite` | `measurementPolicy.platformContracts` | `Some(".constitution/tech-spec/contracts/platform-contracts.json")` | `OXY-C004` |
+| `wayland-drm-vblank-calibration-uncertainty-budget` | `measurementPolicy.platformContracts` | `Some(".constitution/tech-spec/contracts/platform-contracts.json")` | `OXY-C004` |
+| `wayland-service-routing-for-both-allocations` | `measurementPolicy.platformContracts` | `Some(".constitution/tech-spec/contracts/platform-contracts.json")` | `OXY-C004` |
+| `wayland-recovery-injection-for-both-allocations` | `measurementPolicy.platformContracts` | `Some(".constitution/tech-spec/contracts/platform-contracts.json")` | `OXY-C004` |
+| `wayland-drm-vblank-calibration-acceptance-bound` | `measurementPolicy.platformContracts` | `Some(".constitution/tech-spec/contracts/platform-contracts.json")` | `OXY-C004` |
+
+- `xtask/src/commands/lock_tests.rs` -> `committed_candidate_gate_is_valid_but_open_with_the_exact_ku_set`: update the expected `known_unknowns` vector to its exact 24-element set by retaining the existing 13 values, adding the 11 Wayland values listed in the preceding binding table, and removing no value. Keep the vector in the report's existing lexicographic order: append `wayland-atspi-scalar-logical-representation`, `wayland-atspi-text-caret-selection-editable-transcript`, `wayland-drm-vblank-calibration-acceptance-bound`, `wayland-drm-vblank-calibration-uncertainty-budget`, `wayland-drm-vblank-kernel-identity-live-schema-callsite`, `wayland-frozen-protocol-reference-session-transcript`, `wayland-ime-operation-unit-transcript`, `wayland-orca-atspi-maps-for-both-allocations`, `wayland-recovery-injection-for-both-allocations`, `wayland-service-routing-for-both-allocations`, and `wayland-ubuntu-compositor-session-package-lock` after `security-patch-rehearsal`.
 - `.constitution/tech-spec/adrs/ADR-0005-platform-hosts.md` -> `Consequences`: add `"Wayland qualification freezes source-level core, shell, scale, text-input, clipboard, and wp_presentation floors, including all client-issued P0 teardown operations. P1 must prove the selected session advertises them and records the mechanically derived 97-member deterministic P1 transcript and retains the four named nondeterministic event gates separately. wp_presentation v1 supplies per-commit acknowledgement and output association only, not the independent presentation-opportunity meter. P4 evaluates a Linux DRM drm_vblank_event trace only after Ubuntu kernel package and source or patch identity, live-format and call-site-semantic evidence, access, pipe-index-to-CRTC-object-ID-to-output attribution, the trace_marker-bracketed U_95 characterization, the reviewed Stage 3 maximum-uncertainty decision made before candidate measurements, and callback or IPC independence pass. CON-FRM-001's 10% interval-error limit is applied only to qualified measured matching results."`.
 
 ## Downstream impact
