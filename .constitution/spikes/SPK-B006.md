@@ -5,6 +5,7 @@
 - Status: Completed.
 - Budget: 1 focused day.
 - Clock start / stop: 2026-08-28T20:23:54Z / 2026-08-28T20:33:24Z.
+- Round-6 evidence clock start / stop: 2026-08-28T22:32:41Z / 2026-08-28T22:38:44Z.
 - CHANGES: `fuzz-corpora.json` SHA-256 `59d3459130a585e335df491f464258f40b3708c48d237600df960722ffcda105`, 15,932 bytes; `security-patch-rehearsal.json` SHA-256 `27b6e4525723e2501d08e72169f8194bb070d4a79b32825f3cc70fe9e66fc14c`, 1,991 bytes.
 
 ## Question
@@ -15,7 +16,7 @@ Table 1. Decision answers
 
 | Question | Status | Answer and evidence | Next bounded probe for a KU |
 | :-- | :-- | :-- | :-- |
-| Can a disclosed upstream engine patch apply to every frozen Flutter line and both consumption paths? | KU (gating) | P1 tried both repositories: `flutter/flutter` resolves all three engine-revision [`DEPS` files](https://raw.githubusercontent.com/flutter/flutter/5f77625673248ee5846fbcaf5d3e1a3878386fd7/DEPS), while `flutter/engine` resolves only 3.44.0 with identical bytes. The resolved pins are `f139fd5d...` for 3.41.0 and `b6004397...` for 3.44.0 and 3.47.0; P1 fetched their actual `pngrtran.c` files. Both pins contain the `08da33b` postimage, so that real patch is already incorporated and cannot rehearse remediation. The 3.47.0 upstream focused SDK and full-engine graphs consume libpng; P1 preserves the GN chain and SDK archive evidence. The Oxyflut integrated fork has no source identity, so its actual consumption remains unverified. | Pin the integrated-fork commit and fetch its `DEPS`, `build/secondary/third_party/libpng/BUILD.gn`, `impeller/toolkit/interop/BUILD.gn`, and final GN dependency graph. Expect the fork revision, its libpng pin, and both focused and integrated `pngrtran.c` object paths before a real patch can replace the synthetic rehearsal. |
+| Can a disclosed upstream engine patch apply to every frozen Flutter line and both consumption paths? | KU (gating) | P15 traces the lock's framework commits to engine commits: 3.41.0 `44a626f4...` -> `3452d735...`, 3.44.0 `559ffa3f...` -> `4c525dac...`, and 3.47.0 `4cf24164...` -> `5f776256...`. It then resolves `f139fd5d...` for 3.41.0 and `b6004397...` for 3.44.0 and 3.47.0 from the Flutter monorepo's engine `DEPS` files. The official `08da33b` patch adds 39 nonblank `pngrtran.c` lines; P15's whitespace-normalized containment check finds zero absent lines in either vendored postimage. It therefore proves the real patch is already incorporated on every frozen upstream line. P1 preserves the 3.47.0 focused SDK and full-engine libpng consumption evidence. The Oxyflut integrated fork still has no source identity, so its actual consumption remains unverified. | Pin the integrated-fork commit and fetch its `DEPS`, `build/secondary/third_party/libpng/BUILD.gn`, `impeller/toolkit/interop/BUILD.gn`, and final GN dependency graph. Expect the fork revision, its libpng pin, and both focused and integrated `pngrtran.c` object paths before a real patch can replace the synthetic rehearsal. |
 | Which shared patch rehearsal applies before implementation? | KK | Select `OXY-SYN-SEC-001`, a synthetic shared image-decoder hardening patch. The pinned stack assigns both candidates one bounded Rust decoder above the substrate boundary. The patch replaces unchecked RGBA byte-count multiplication with checked `u64` arithmetic and rejects overflow or more than 67,108,864 decoded bytes before allocation or adapter entry. | Not applicable. |
 | What tests establish the synthetic patch result? | KK | The frozen post-patch tests are `checked_rgba_bytes_accepts_4096_by_4096_rgba`, `checked_rgba_bytes_rejects_4097_by_4096_rgba`, `checked_rgba_bytes_rejects_u32_max_square_without_decoder_or_adapter_call`, and `asset_decode_replays_image_registry`. P7 confirms the qualification scaffold does not yet define these functions, so the patch must add them before rehearsal; the frozen rehearsal runs all four. | Not applicable. |
 | Can every architecture ingress receive attributable, licensed, capped seed material? | KK | P3 maps all eight architecture ingress categories to five immutable source sets. P4 and P13a SHA-256-verified all 18 retained seed bytes and six retained license notices, including both Apache-2.0 and MIT notices for `image`. The normalized registry requires each set to carry a `licenses` array of objects with `licenseId`, `licenseUrl`, and `licenseSha256`; it applies each set's `capBytes` at ingestion and derives each ingress's `maxLenBytes` from its mapped sets. The Unicode 16.0.0 ReadMe is dated 2024-08-25, and the same-day immutable License V3 snapshot hashes to `f5062c9a...`; Unicode documents the SPDX identifier as `Unicode-3.0`. | Not applicable. |
@@ -44,8 +45,8 @@ Table 1. Decision answers
 ## Recommendation
 
 - Chosen option: B.
-- Why it fits: `OXY-SYN-SEC-001` tests a safety boundary assigned above both adapters. The candidate `08da33b` libpng fix is already incorporated by every frozen upstream engine pin, so it cannot be a remediation rehearsal; the unpinned integrated fork also prevents proving a real patch path.
-- Option A: Rejected for this rehearsal because P1 proves the candidate patch has no remaining preimage on 3.41.0, 3.44.0, or 3.47.0, and the integrated fork has no source identity. This triggers the real-upstream-patch STOP condition only.
+- Why it fits: `OXY-SYN-SEC-001` tests a safety boundary assigned above both adapters. P15 traces the three lock-pinned framework commits to their engine revisions and proves the candidate `08da33b` libpng hunk is already incorporated by every frozen upstream engine pin, so it cannot be a remediation rehearsal; the unpinned integrated fork also prevents proving a real patch path.
+- Option A: Rejected for this rehearsal because P15 proves the candidate patch has no remaining preimage on the lock-traceable 3.41.0, 3.44.0, or 3.47.0 engine revisions, and the integrated fork has no source identity. This triggers the real-upstream-patch STOP condition only.
 - Option C: Rejected because it leaves the required preimplementation corpus and rehearsal policy unfrozen.
 - Rejected inputs: Candidate-specific patches, mutable branch references, source files without a license notice, unbounded corpus files, raw private content, and derived fixtures whose source digest is absent.
 
@@ -55,7 +56,7 @@ Table 1. Decision answers
 
 The preimage and postimage must apply in the common Rust asset-decoder module, not either adapter. The patch file must contain only this guard and the four listed tests; P7 confirms that the qualification scaffold does not yet define the post-patch test functions. The rehearsal must fail if the patch changes a candidate-specific file, touches unrelated code, omits any listed test, permits either oversized input, or reaches an adapter for a rejected image.
 
-The real upstream candidate was [libpng commit `08da33b`](https://github.com/pnggroup/libpng/commit/08da33b4c88cfcd36e5a706558a8d7e0e4773643), titled "Fix a buffer overflow in `png_init_read_transformations`." P1 used the actual Flutter monorepo, not the obsolete archive. The root [`DEPS` files](https://raw.githubusercontent.com/flutter/flutter/3452d735bd38224ef2db85ca763d862d6326b17f/DEPS) map `3452d...` to `f139fd5d...` and `4c525...` and `5f776...` to `b6004397...`. Both fetched [`pngrtran.c` postimages](https://flutter.googlesource.com/third_party/libpng/+/b6004397d2ab98f0250376d9b357337b7f422d13/pngrtran.c?format=TEXT) contain the `PNG_FLAG_OPTIMIZE_ALPHA` branch and checked component arithmetic introduced by `08da33b`. The real patch is therefore already incorporated on all three frozen lines and is unusable as a rehearsal patch.
+The real upstream candidate was [libpng commit `08da33b`](https://github.com/pnggroup/libpng/commit/08da33b4c88cfcd36e5a706558a8d7e0e4773643), titled "Fix a buffer overflow in `png_init_read_transformations`." P15 closes the lock chain before testing containment: framework 3.41.0 commit `44a626f4f0027bc38a46dc68aed5964b05a83c18` pins engine `3452d735bd38224ef2db85ca763d862d6326b17f`; 3.44.0 `559ffa3f75e7402d65a8def9c28389a9b2e6fe42` pins `4c525dac5ebe5971c5708ef73558ed8edcf4a362`; and 3.47.0 `4cf24164269a5ebf0c16a028a00727d0e77bbb05` pins `5f77625673248ee5846fbcaf5d3e1a3878386fd7`. It fetched `bin/internal/engine.version` at each framework commit, then used `flutter/flutter` for the engine `DEPS` files because Flutter Engine has merged into that monorepo. Those `DEPS` files resolve `f139fd5d...` for 3.41.0 and `b6004397...` for 3.44.0 and 3.47.0. P15 fetched the official commit patch and each vendored [`pngrtran.c` postimage](https://flutter.googlesource.com/third_party/libpng/+/b6004397d2ab98f0250376d9b357337b7f422d13/pngrtran.c?format=TEXT); all 39 nonblank added lines remain after ASCII-whitespace normalization. The real patch is therefore already incorporated on all three lock-traceable frozen lines and is unusable as a rehearsal patch.
 
 For the focused 3.47.0 SDK, [`interop_base`](https://raw.githubusercontent.com/flutter/flutter/5f77625673248ee5846fbcaf5d3e1a3878386fd7/engine/src/flutter/impeller/toolkit/interop/BUILD.gn) depends on the Flutter display list, which depends on Skia; [`png_decode_libpng`](https://raw.githubusercontent.com/flutter/flutter/5f77625673248ee5846fbcaf5d3e1a3878386fd7/engine/src/flutter/skia/BUILD.gn) in turn depends on `//flutter/third_party/libpng`. The fetched Linux SDK static archive contains `libpng.pngrtran.o` and `skia_png_init_read_transformations`. For the upstream full engine, [`shell/common`](https://raw.githubusercontent.com/flutter/flutter/5f77625673248ee5846fbcaf5d3e1a3878386fd7/engine/src/flutter/shell/common/BUILD.gn) depends on the same Skia target. The libpng [`BUILD.gn`](https://flutter.googlesource.com/third_party/libpng/+/b6004397d2ab98f0250376d9b357337b7f422d13/BUILD.gn?format=TEXT) compiles `pngrtran.c`. This is KK for the pinned upstream focused SDK and full-engine source graph, not for the unspecified integrated fork.
 
@@ -80,6 +81,42 @@ $ ar t linux-x64 Impeller SDK 5f77625673248ee5846fbcaf5d3e1a3878386fd7/lib/libim
 libpng.pngrtran.o
 $ nm -a libimpeller.a | grep skia_png_init_read_transformations
 0000000000000000 T skia_png_init_read_transformations
+```
+
+P15 corrects the lock trace for the engine pins used by P1. It fetches each framework commit's `bin/internal/engine.version`, then follows the engine revision's `DEPS` in `flutter/flutter`; the older `flutter/engine` path is not used because the engine source is in the Flutter monorepo. For containment, it fetches the official `08da33b` commit metadata and its `pngrtran.c` patch through the GitHub API, then fetches the vendored postimages through `flutter.googlesource.com`. The check extracts the 39 nonblank added lines, replaces each run of ASCII whitespace with one space, trims leading and trailing spaces, and asks whether every resulting line occurs in each normalized vendored postimage. The `4546e144...` digest is only the preserved normalized 39-line excerpt, not a digest of a proxied page.
+
+The output of P15 follows:
+
+```text
+$ curl -fsSL https://raw.githubusercontent.com/flutter/flutter/FRAMEWORK/bin/internal/engine.version
+44a626f4f0027bc38a46dc68aed5964b05a83c18 3452d735bd38224ef2db85ca763d862d6326b17f sha256=66b2f8154c073765ef3b490aebcd742be3be699f044cf39dbe4b7de58c94fea1
+559ffa3f75e7402d65a8def9c28389a9b2e6fe42 4c525dac5ebe5971c5708ef73558ed8edcf4a362 sha256=dfee60c3cf3adc7aa72966ff419b328fef984aa9b663f8f622c9043e46977aaa
+4cf24164269a5ebf0c16a028a00727d0e77bbb05 5f77625673248ee5846fbcaf5d3e1a3878386fd7 sha256=1fa9654ffa28f11071dcf4dcfdc8d75753446033985412cc3483a207097117c6
+$ GET https://api.github.com/repos/pnggroup/libpng/commits/08da33b4c88cfcd36e5a706558a8d7e0e4773643
+sha=08da33b4c88cfcd36e5a706558a8d7e0e4773643
+parents=83b23a888b4395c3ae0af3f6d484fce3e4a81155
+message=Fix a buffer overflow in `png_init_read_transformations`
+file=pngrtran.c status=modified
+$ resolve Flutter-monorepo engine DEPS and fetch vendored pngrtran.c postimages
+3452d735bd38224ef2db85ca763d862d6326b17f libpng=f139fd5d80944f5453b079672e50f32ca98ef076 deps_sha256=34e98c6f0d1caa46ace21913bb587eafe961d6f7fc9d7086961d232cd4a2179b pngrtran_sha256=185fceeb5b00b8ef55f571cbc7ea5a04a87a146d9a8eabcb9ad9b91b43d80fad
+  1784:                     if ((png_ptr->flags & PNG_FLAG_OPTIMIZE_ALPHA) != 0)
+  1793:                            (component * png_ptr->trans_alpha[i] + 128) / 255;
+  1798:                            (component * png_ptr->trans_alpha[i] + 128) / 255;
+  1803:                            (component * png_ptr->trans_alpha[i] + 128) / 255;
+4c525dac5ebe5971c5708ef73558ed8edcf4a362 libpng=b6004397d2ab98f0250376d9b357337b7f422d13 deps_sha256=c5a8557661cc4d4a76a612bfb1fd81a11814b553566cbbd4b847b51e685ec93c pngrtran_sha256=1462c8f9097342782b2180b791a83f7cc03b64b3554a8f13bd78cf6bc261c469
+  1784:                     if ((png_ptr->flags & PNG_FLAG_OPTIMIZE_ALPHA) != 0)
+  1793:                            (component * png_ptr->trans_alpha[i] + 128) / 255;
+  1798:                            (component * png_ptr->trans_alpha[i] + 128) / 255;
+  1803:                            (component * png_ptr->trans_alpha[i] + 128) / 255;
+5f77625673248ee5846fbcaf5d3e1a3878386fd7 libpng=b6004397d2ab98f0250376d9b357337b7f422d13 deps_sha256=6844fe02248df123c7aa4823e2e50230ee62c853043211f38938033792544ea0 pngrtran_sha256=1462c8f9097342782b2180b791a83f7cc03b64b3554a8f13bd78cf6bc261c469
+  1784:                     if ((png_ptr->flags & PNG_FLAG_OPTIMIZE_ALPHA) != 0)
+  1793:                            (component * png_ptr->trans_alpha[i] + 128) / 255;
+  1798:                            (component * png_ptr->trans_alpha[i] + 128) / 255;
+  1803:                            (component * png_ptr->trans_alpha[i] + 128) / 255;
+$ compare all 39 nonblank added lines from 08da33b with each vendored postimage after ASCII-whitespace normalization
+f139fd5d80944f5453b079672e50f32ca98ef076 added_lines=39 missing_from_vendored_postimage=0
+b6004397d2ab98f0250376d9b357337b7f422d13 added_lines=39 missing_from_vendored_postimage=0
+4546e1448adbbafe56cfa753254932f535bd143ccc132ade54ad76920c528916  08da33b-added-normalized.txt
 ```
 
 The output of P2 follows:
@@ -122,7 +159,7 @@ test "$("$TIME_BIN" --version | head -n 1)" = "$(printf '%s' "$HOST_RECORD" | jq
 
 Build every AddressSanitizer target with `cargo +nightly-2026-08-12 fuzz build --sanitizer address --careful TARGET`, and build every ThreadSanitizer target with `cargo +nightly-2026-08-12 fuzz build --sanitizer thread --careful TARGET`. For every successful shard, resolve `MAX_LEN_BYTES` from `ingressMapping[INGRESS].maxLenBytes`, then run `"$TIME_BIN" -v -o CPU_LOG FUZZ_EXE CORPUS -max_total_time=28800 -timeout=5 -max_len=MAX_LEN_BYTES`. Preserve `User time (seconds)`, `System time (seconds)`, and elapsed wall time from `CPU_LOG`, and record user plus system seconds in the shard ledger. Add only successful shards with the same target, sanitizer, and persistent `CORPUS`; resume until the applicable threshold is reached. `-max_total_time=28800` bounds one operational invocation only. Keep `CORPUS` as the first libFuzzer corpus directory. Before admitting another input directory, use `FUZZ_EXE -merge=1 CORPUS NEW_INPUTS`, then resume the timed target. The LLVM documentation states that the first corpus directory receives new inputs and describes `-merge=1` and resumable merge control files. Replay every minimized crash and retained seed with `cargo +nightly-2026-08-12 miri test -p PACKAGE TEST_FILTER`.
 
-P6 proves this host's `command time -v -o CPU_LOG` records the required three fields. P7 confirms the four post-patch test functions do not yet exist in the qualification scaffold, so OXY-SYN-SEC-001 must add them before rehearsal. P8 proves `nightly-2026-08-11` resolves commit `12c36e2539c54397c51d6ea4401defd8768a4f5b`, while `nightly-2026-08-12` resolves the required `3d6c19bb9ab4798ecfb2ee943df01a811720fc27`. P8 also re-hashes the executables from the dated selector. The captured host record uses only `nightly-2026-08-12`; the previous rolling-`nightly` record is inadmissible. This host records SHA-256 values for `rustc` `7de94a5c099c8d7ee4cafb905e36d882325faa480d8cff6513dd8c0887fac0c5`, `cargo` `1cf1cd7feded113706026c5f04fad33e45364546e3c0d92ddee0c1a4c8277296`, `cargo-miri` `40a69668c9ff4e5df3e6a87531f2b87dcc5c84e705ee5b06f915fb76383c94af`, `cargo-fuzz` 0.13.2 `db150590a2f9fa003fb167bc0eec3f90ba5574fcdd01f78110e6f397dda56582`, and GNU Time 1.10 `e8b9f5440e01a81e0692e68d07dfacb8059c434cae100c1fbb60b7ec52848480`. Stage 3 must stage an equivalent complete record for every campaign host and retain `resolved-tool-digests` as a gate until it does.
+P6 proves this host's `command time -v -o CPU_LOG` records the required three fields. P7 confirms the four post-patch test functions do not yet exist in the qualification scaffold, so OXY-SYN-SEC-001 must add them before rehearsal. P8 proves `nightly-2026-08-11` resolves commit `12c36e2539c54397c51d6ea4401defd8768a4f5b`, while `nightly-2026-08-12` resolves the required `3d6c19bb9ab4798ecfb2ee943df01a811720fc27`. P8 also re-hashes the executables from the dated selector. The captured host record uses only `nightly-2026-08-12`; the previous rolling-`nightly` record is inadmissible. This host records SHA-256 values for `rustc` `7de94a5c099c8d7ee4cafb905e36d882325faa480d8cff6513dd8c0887fac0c5`, `cargo` `1cf1cd7feded113706026c5f04fad33e45364546e3c0d92ddee0c1a4c8277296`, `cargo-miri` `40a69668c9ff4e5df3e6a87531f2b87dcc5c84e705ee5b06f915fb76383c94af`, `cargo-fuzz` 0.13.2 `db150590a2f9fa003fb167bc0eec3f90ba5574fcdd01f78110e6f397dda56582`, and GNU Time 1.10 `e8b9f5440e01a81e0692e68d07dfacb8059c434cae100c1fbb60b7ec52848480`. Stage 3 must stage an equivalent complete record in `qualification/staged/fuzz-corpora.json` for every campaign host and retain `resolved-tool-digests` as a gate until it does. P16 establishes that campaign-host tools must remain only in `instrumentation.campaignToolchain.hostToolRecords`; they must never enter `qualification-lock.json` `resolvedTools`. The lock binds the campaign toolchain only through `measurementPolicy.fuzzCorpora`, which holds the staged file digest.
 
 The relevant instrumentation output follows:
 
@@ -220,6 +257,113 @@ time: OK
 preflight=passed
 ```
 
+P16 re-read the repository validator to correct the rejected campaign-tool proposal. `verify_resolved_tools` delegates every nonempty lock array to the staged-manifest comparison at `xtask/src/contracts/readiness.rs:409-419`. `LockResolvedTool::from_value` allowlists exactly seven properties at `xtask/src/toolchain/lock.rs:238-262`. `verify_lock_resolved_tools` rejects duplicate names, resolves each name against the staged manifest, and requires every `TOOL_SPECS` name at `xtask/src/toolchain/lock.rs:50-75`; `verify_lock_tool` requires the staged absolute executable path at `xtask/src/toolchain/lock.rs:296-320`. Consequently, campaign-host records belong only in the staged fuzz policy. The immutable lock reference is `measurementPolicy.fuzzCorpora`, its digest of that staged file. No canonical staged block changes: it already records each host tool's `licenseId` and other campaign metadata.
+
+The output of P16 follows:
+
+```text
+$ nl -ba xtask/src/contracts/readiness.rs | sed -n "409,421p"
+   409 fn verify_resolved_tools(root: &Path, tools: &[Value]) -> Result<(), ReadinessError> {
+   410     let manifest_path = root.join(TOOLCHAIN_MANIFEST_PATH);
+   411     let manifest = crate::toolchain::ToolchainManifest::from_json(
+   412         &fs::read(&manifest_path).map_err(|source| ReadinessError::Io {
+   413             path: manifest_path,
+   414             source,
+   415         })?,
+   416     )
+   417     .map_err(|_| invariant("resolved-tool-manifest"))?;
+   418     crate::toolchain::lock::verify_lock_resolved_tools_classified(&manifest, tools)
+   419         .map_err(|failure| invariant(failure.code()))
+   420 }
+$ nl -ba xtask/src/toolchain/lock.rs | sed -n "50,76p;238,262p;296,320p"
+    50 pub(crate) fn verify_lock_resolved_tools(
+    51     manifest: &ToolchainManifest,
+    52     lock_tools: &[Value],
+    53 ) -> Result<(), ToolchainError> {
+    54     verify(manifest)?;
+    56     let mut names = BTreeSet::new();
+    57     for value in lock_tools {
+    58         let lock_tool = LockResolvedTool::from_value(value)?;
+    59         if !names.insert(lock_tool.name.clone()) {
+    60             return Err(ToolchainError::DuplicateTool {
+    61                 name: lock_tool.name,
+    62             });
+    63         }
+    64         let staged_tool = manifest.tool(&lock_tool.name)?;
+    65         verify_lock_tool(&lock_tool, staged_tool)?;
+    66     }
+    68     for specification in TOOL_SPECS {
+    69         if !names.contains(specification.name) {
+    70             return Err(ToolchainError::MissingTool {
+    71                 name: specification.name.to_owned(),
+    72             });
+    73         }
+    74     }
+    76     Ok(())
+   238     fn from_value(value: &Value) -> Result<Self, ToolchainError> {
+   239         let object = value.as_object().ok_or(ToolchainError::InvalidManifest {
+   240             reason: "a qualification-lock resolvedTools entry must be an object".to_owned(),
+   241         })?;
+   242         reject_unknown_fields(
+   243             object,
+   244             &[
+   245                 "name",
+   246                 "version",
+   247                 "sourceIdentity",
+   248                 "hostTriple",
+   249                 "licenseId",
+   250                 "executablePath",
+   251                 "sha256",
+   252             ],
+   253         )?;
+   254         Ok(Self {
+   255             name: required_string(object, "name")?,
+   256             version: required_string(object, "version")?,
+   257             source_identity: required_string(object, "sourceIdentity")?,
+   258             host_triple: required_string(object, "hostTriple")?,
+   259             license_id: required_string(object, "licenseId")?,
+   260             executable_path: required_string(object, "executablePath")?,
+   261             sha256: required_string(object, "sha256")?,
+   262         })
+   296 fn verify_lock_tool(
+   297     lock_tool: &LockResolvedTool,
+   298     staged_tool: &ResolvedTool,
+   299 ) -> Result<(), ToolchainError> {
+   300     if lock_tool.version != staged_tool.version
+   301         || lock_tool.source_identity != staged_tool.source_identity
+   302         || lock_tool.host_triple != staged_tool.host_triple
+   303         || lock_tool.license_id != staged_tool.license_id
+   304     {
+   305         return Err(ToolchainError::LockEntryMismatch {
+   306             name: lock_tool.name.clone(),
+   307         });
+   308     }
+   309     if lock_tool.sha256.parse::<Sha256Digest>().is_err() || lock_tool.sha256 != staged_tool.sha256 {
+   310         return Err(ToolchainError::DigestMismatch {
+   311             name: lock_tool.name.clone(),
+   312         });
+   313     }
+   315     let expected_path = resolve_manifest_executable_path(staged_tool)?;
+   316     let actual_path = PathBuf::from(&lock_tool.executable_path);
+   317     if !actual_path.is_absolute() || actual_path != expected_path {
+   318         return Err(ToolchainError::ExecutableSubstitution {
+   319             name: lock_tool.name.clone(),
+   320         });
+$ nl -ba xtask/src/toolchain/specs.rs | grep -E "TOOL_SPECS|name:"
+    23 pub(super) const TOOL_SPECS: &[ToolSpec] = &[
+    25         name: "c-compiler",
+    34         name: "cxx-compiler",
+    43         name: "c-header-checker",
+    52         name: "linker",
+    61         name: "archiver",
+    70         name: "symbol-inspector",
+    79         name: "bindgen",
+    88         name: "cbindgen",
+    97         name: "prettier",
+   106         name: "rustfmt",
+   115         name: "rustc",
+```
+
 ### Frozen corpus sources
 
 Table 2. Admitted source sets
@@ -299,9 +443,9 @@ The corpus importer may derive target-specific encodings only from a listed sour
 
 - `qualification/staged/fuzz-corpora.json`: create this file with the exact canonical bytes in the next section. In `admission`, set `requireLicenses` to `true` and `requiredLicenseEntryKeys` to `["licenseId", "licenseUrl", "licenseSha256"]`; don't use flat license fields. In every `corpusSets[*].licenses`, use objects with exactly those three keys. In every `ingressMapping[INGRESS]`, use `corpusSets` and `maxLenBytes`, where `maxLenBytes` is the maximum mapped `capBytes`; enforce `requireSizeAtMostCorpusSetCap` against each source set's `capBytes` at ingestion and pass only the ingress `maxLenBytes` to `-max_len`. `.constitution/tech-spec/contracts/qualification-lock.json`, `measurementPolicy.fuzzCorpora`: set the value to `59d3459130a585e335df491f464258f40b3708c48d237600df960722ffcda105`.
 - `qualification/staged/security-patch-rehearsal.json`: create this file with the exact canonical bytes in the next section. In `rehearsal[4]`, resolve `ingressMapping["application-assets"].maxLenBytes` from `qualification/staged/fuzz-corpora.json` and pass it to `-max_len`; this resolves to `1048576`. `.constitution/tech-spec/contracts/qualification-lock.json`, `measurementPolicy.securityPatchRehearsal`: set the value to `27b6e4525723e2501d08e72169f8194bb070d4a79b32825f3cc70fe9e66fc14c`.
-- `.constitution/tech-spec/data-models/qualification-lock.schema.json`, `$defs.tool.properties`: add exactly `"pathRoot": { "type": "string", "minLength": 1 }` as an optional property before using the existing `rustup-home` convention. `$defs.tool` has `additionalProperties: false`, so this schema edit is required for the three relative Rust-toolchain paths; don't add any other fields.
-- `.constitution/tech-spec/contracts/qualification-lock.json`, `resolvedTools`: transform, don't append. For each actual campaign host, select its `instrumentation.campaignToolchain.hostToolRecords` record by hostname and host triple, then flatten its five `tools` entries (`rustc`, `cargo`, `cargo-miri` when present, `cargo-fuzz`, and GNU `time`) into individual `$defs.tool` records. Each entry must retain exactly `name`, `version`, `sourceIdentity`, `hostTriple`, `licenseId`, `executablePath`, `sha256`, and optional `pathRoot`; never append the host record itself. The first captured NixOS record is non-reference and cannot stand in for an Ubuntu reference host. Require a complete selected record, including license ID, executable hashes, and CPU-accounting fields, for every campaign host. Retain `resolved-tool-digests` in both known-unknown arrays until that condition holds.
-- `qualification/staged/fuzz-corpora.json`, `instrumentation.campaignToolchain.hostToolRecords`: before each campaign, capture hostname, host triple, reference status, operating system, selector, Rust commit, CPU-accounting fields, and the seven `$defs.tool` fields plus optional `pathRoot` for every executable. Capture `licenseId` from the package's authoritative license metadata or notice; reject an absent or non-SPDX value.
+- `.constitution/tech-spec/data-models/qualification-lock.schema.json`, `$defs.tool.properties`: make no `pathRoot` edit. `xtask/src/toolchain/lock.rs:238-262` accepts only `name`, `version`, `sourceIdentity`, `hostTriple`, `licenseId`, `executablePath`, and `sha256` for a `resolvedTools` entry. The `pathRoot` fields already present in the canonical campaign record remain staged-policy data only; they are not `$defs.tool` properties.
+- `.constitution/tech-spec/contracts/qualification-lock.json`, `resolvedTools`: make no campaign-host append or transformation. `xtask/src/contracts/readiness.rs:409-419` delegates nonempty entries to the staged-manifest validator. `xtask/src/toolchain/lock.rs:50-75` rejects duplicate names, resolves every entry against the staged manifest, and requires every `TOOL_SPECS` name; `xtask/src/toolchain/lock.rs:296-320` requires an exact absolute staged path. Thus `pathRoot` yields `InvalidManifest`, Rustup-relative paths yield `ExecutableSubstitution`, campaign `cargo`, `cargo-miri`, `cargo-fuzz`, and `time` yield `MissingTool`, a campaign `rustc` either duplicates or mismatches the staged `rustc`, and multiple campaign hosts yield `DuplicateTool`. `resolvedTools` must not represent a campaign host. The lock binds campaign tools only through `measurementPolicy.fuzzCorpora`, the SHA-256 digest of `qualification/staged/fuzz-corpora.json`.
+- `qualification/staged/fuzz-corpora.json`, `instrumentation.campaignToolchain.hostToolRecords`: before each campaign, capture hostname, host triple, reference status, operating system, selector, Rust commit, CPU-accounting fields, and each executable's `name`, `version`, `sourceIdentity`, `hostTriple`, `licenseId`, `executablePath`, and `sha256`; retain an existing `pathRoot` only as campaign-record data. Capture `licenseId` from the package's authoritative license metadata or notice; reject an absent or non-SPDX value. The existing canonical block already holds these host records, including `licenseId`, so this correction requires no canonical-block change. Require a complete selected record, including license ID, executable hashes, and CPU-accounting fields, for every campaign host. Retain `resolved-tool-digests` in both known-unknown arrays until that condition holds.
 - `.constitution/tech-spec/contracts/qualification-lock.json`, `preImplementationKnownUnknowns` and `gatingKnownUnknowns`: after both staged records and every listed source and license byte pass admission, remove only `fuzz-corpora` and `security-patch-rehearsal`. Leave all unrelated readiness gates unchanged.
 - `crates/oxyflut-qualification/src/readiness.rs`, `KNOWN_UNKNOWN_BINDINGS`: remove the existing `fuzz-corpora` row (`required_field: "measurementPolicy.fuzzCorpora"`, `evidence_path: Some("qualification/staged/fuzz-corpora.json")`, upstream owner `OXY-D001`) and `security-patch-rehearsal` row (`required_field: "measurementPolicy.securityPatchRehearsal"`, `evidence_path: Some("qualification/staged/security-patch-rehearsal.json")`, upstream owner `OXY-D001`) when their KU strings leave the arrays. This spike adds no KU string, so don't add a binding. Keep both `POLICY_FIELDS` rows: they bind and verify the staged policy digests even after the KU blockers clear. Update the module's `clearing_a_ku_string_without_its_evidence_keeps_the_gate_open` expected KU set and its KU evidence-path loop to remove the same two names.
 - `qualification/fixtures/readiness/invalid.json` and `qualification/fixtures/readiness/cleared-without-evidence.json`, `preImplementationKnownUnknowns` and `gatingKnownUnknowns`: remove `fuzz-corpora` and `security-patch-rehearsal` from all four fixture arrays. Removing the bindings without this fixture update causes `collect_known_unknowns` to return `ReadinessError::UnmappedKnownUnknown` before the intended fixture assertions run.
@@ -311,7 +455,7 @@ The corpus importer may derive target-specific encodings only from a listed sour
 
 Each displayed JSON block is UTF-8, uses the displayed 2-space indentation and key order, and ends with exactly one LF. The stable canonical-block anchor, `prettier-ignore` directive, and `text` fence protect each byte stream from Markdown formatting. P13b extracts both blocks after Prettier, JSON-reserializes each with Prettier's JSON parser, compares the byte streams, and SHA-256-checks the result.
 
-The campaign policy is host-neutral except for `hostToolRecords`. Its first record captures this NixOS 26.05 host as non-reference. A campaign must select an exact hostname-and-triple match, resolve Rust through the selected dated Rustup toolchain, resolve `cargo-fuzz` and the selected GNU Time executable with `command -v`, and compare hashes against that record. `command -v time` alone yields a shell keyword on this host, so the selected record supplies the executable path to `command -v`; no Nix path or `/home/oscar` path appears in the generic procedure. P11 verifies the five records, their license IDs, and the shell-keyword result.
+The campaign policy is host-neutral except for `hostToolRecords`. Its first record captures this NixOS 26.05 host as non-reference. A campaign must select an exact hostname-and-triple match, resolve Rust through the selected dated Rustup toolchain, resolve `cargo-fuzz` and the selected GNU Time executable with `command -v`, and compare hashes against that record. `command -v time` alone yields a shell keyword on this host, so the selected record supplies the executable path to `command -v`; no Nix path or `/home/oscar` path appears in the generic procedure. P11 verifies the five records, their license IDs, and the shell-keyword result. P16 confirms the records remain only in this staged policy; no campaign-host record or tool enters the qualification lock's `resolvedTools`.
 
 The corrected current source bytes produce these declared digests and byte counts:
 
@@ -716,6 +860,9 @@ The check must cover these anchors and digests:
 
 ## Sources
 
+- [Flutter 3.41.0 framework engine version](https://raw.githubusercontent.com/flutter/flutter/44a626f4f0027bc38a46dc68aed5964b05a83c18/bin/internal/engine.version)
+- [Flutter 3.44.0 framework engine version](https://raw.githubusercontent.com/flutter/flutter/559ffa3f75e7402d65a8def9c28389a9b2e6fe42/bin/internal/engine.version)
+- [Flutter 3.47.0 framework engine version](https://raw.githubusercontent.com/flutter/flutter/4cf24164269a5ebf0c16a028a00727d0e77bbb05/bin/internal/engine.version)
 - [Flutter 3.41.0 engine `DEPS`](https://raw.githubusercontent.com/flutter/flutter/3452d735bd38224ef2db85ca763d862d6326b17f/DEPS)
 - [Flutter 3.44.0 engine `DEPS`](https://raw.githubusercontent.com/flutter/flutter/4c525dac5ebe5971c5708ef73558ed8edcf4a362/DEPS)
 - [Flutter 3.47.0 engine `DEPS`](https://raw.githubusercontent.com/flutter/flutter/5f77625673248ee5846fbcaf5d3e1a3878386fd7/DEPS)
