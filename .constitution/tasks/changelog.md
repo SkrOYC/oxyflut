@@ -2,6 +2,12 @@
 
 All notable changes to the Stage 4 execution plan appear in this file.
 
+## [v0.2.22] - 2026-08-28
+
+### Fixed
+
+- Applied PR review round 10 corrections in `a6179d0`: restored fail-closed `contracts validate` host handling, preserved typed `lock status` blocking, checked promotion before final tool verification, propagated staged-host failures in readiness tests, and restricted Mesa pairings to allowlisted Linux drivers.
+
 ## [v0.2.21] - 2026-08-28
 
 ### Fixed
