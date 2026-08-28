@@ -1,0 +1,21 @@
+{
+  "environment": "x11",
+  "operatingSystem": { "status": "observed", "value": "ubuntu-26.04" },
+  "minimumVersion": { "status": "missing", "reason": "not-declared-by-lock" },
+  "architecture": { "status": "observed", "value": "x86_64" },
+  "hardwareId": { "status": "observed", "value": "standard-q35" },
+  "gpuId": { "status": "observed", "value": "pci-1002-73bf" },
+  "driverVersion": { "status": "missing", "reason": "source-unavailable" },
+  "compilerIdentity": { "status": "observed", "value": "rustc-1.98.0" },
+  "sdkIdentity": { "status": "observed", "value": "clang-21.1.0" },
+  "compositor": { "status": "observed", "value": "xorg-server-21.1" },
+  "session": { "status": "observed", "value": "x11" },
+  "protocolVersion": { "status": "missing", "reason": "source-unavailable" },
+  "systemPackageLock": {
+    "status": "observed",
+    "packages": [
+      { "name": "gtk4", "version": "4.20.0" },
+      { "name": "xorg-server", "version": "21.1.0" }
+    ]
+  }
+}
