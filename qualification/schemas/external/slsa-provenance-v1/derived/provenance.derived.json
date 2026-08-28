@@ -15,12 +15,7 @@
           "properties": {
             "buildDefinition": {
               "type": "object",
-              "required": [
-                "buildType",
-                "externalParameters",
-                "internalParameters",
-                "resolvedDependencies"
-              ],
+              "required": ["buildType", "externalParameters"],
               "properties": {
                 "buildType": { "type": "string" },
                 "externalParameters": { "type": "object" },
@@ -33,11 +28,11 @@
             },
             "runDetails": {
               "type": "object",
-              "required": ["builder", "metadata", "byproducts"],
+              "required": ["builder"],
               "properties": {
                 "builder": {
                   "type": "object",
-                  "required": ["id", "builderDependencies", "version"],
+                  "required": ["id"],
                   "properties": {
                     "id": { "type": "string" },
                     "builderDependencies": {
@@ -52,7 +47,6 @@
                 },
                 "metadata": {
                   "type": "object",
-                  "required": ["invocationId", "startedOn", "finishedOn"],
                   "properties": {
                     "invocationId": { "type": "string" },
                     "startedOn": { "type": "string", "format": "date-time" },
@@ -73,25 +67,15 @@
   "$defs": {
     "resourceDescriptor": {
       "type": "object",
-      "required": [
-        "uri",
-        "digest",
-        "name",
-        "downloadLocation",
-        "mediaType",
-        "content",
-        "annotations"
+      "anyOf": [
+        { "required": ["uri"] },
+        { "required": ["digest"] },
+        { "required": ["content"] }
       ],
       "properties": {
         "uri": { "type": "string" },
         "digest": {
           "type": "object",
-          "required": ["sha256", "sha512", "gitCommit"],
-          "properties": {
-            "sha256": { "type": "string", "pattern": "^[0-9a-f]+$" },
-            "sha512": { "type": "string", "pattern": "^[0-9a-f]+$" },
-            "gitCommit": { "type": "string", "pattern": "^[0-9a-f]+$" }
-          },
           "additionalProperties": { "type": "string", "pattern": "^[0-9a-f]+$" }
         },
         "name": { "type": "string" },

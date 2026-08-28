@@ -5,9 +5,9 @@ use std::path::Path;
 use oxyflut_qualification::hash::hash_file;
 
 use super::{
-    ExternalContractsError, PROPOSAL_PATH, ProposalCode, SNAPSHOTS, SPDX_SCHEMA_PATH,
-    TemporaryDirectory, decode_base64, dsse_pae, outcome_at, read_json, run, verify_at,
-    verify_publication_source_bytes, workspace_root,
+    DerivedSchemaRegistry, ExternalContractsError, PROPOSAL_PATH, PROVENANCE_SCHEMA, ProposalCode,
+    SNAPSHOTS, SPDX_SCHEMA_PATH, TemporaryDirectory, decode_base64, dsse_pae, outcome_at,
+    read_json, run, verify_at, verify_publication_source_bytes, workspace_root,
 };
 use crate::CommandOutcome;
 
@@ -17,6 +17,41 @@ fn verifies_authoritative_snapshots_and_local_semantics_without_network()
     let root = workspace_root().map_err(|_| "xtask must remain below the workspace root")?;
     verify_at(&root)?;
     assert_eq!(run(&[]), CommandOutcome::Success);
+    Ok(())
+}
+
+#[test]
+fn minimal_github_actions_provenance_without_optional_descriptors_is_accepted()
+-> Result<(), Box<dyn Error>> {
+    let root = workspace_root().map_err(|_| "xtask must remain below the workspace root")?;
+    let provenance = read_json(
+        &root.join("qualification/fixtures/external-contracts/positive/provenance.json"),
+    )?;
+    assert!(
+        provenance
+            .pointer("/predicate/runDetails/metadata")
+            .is_none()
+    );
+    assert!(
+        provenance
+            .pointer("/predicate/buildDefinition/resolvedDependencies/0/digest/sha512")
+            .is_none()
+    );
+    assert!(
+        provenance
+            .pointer("/predicate/buildDefinition/resolvedDependencies/0/digest/gitCommit")
+            .is_none()
+    );
+    assert!(
+        provenance
+            .pointer("/predicate/buildDefinition/resolvedDependencies/0/content")
+            .is_none()
+    );
+
+    let registry = DerivedSchemaRegistry::load(&root)?;
+    registry
+        .registry()
+        .validate(PROVENANCE_SCHEMA, &provenance)?;
     Ok(())
 }
 

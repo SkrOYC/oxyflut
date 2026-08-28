@@ -11,27 +11,27 @@
   "predicateType": "https://slsa.dev/provenance/v1",
   "predicate": {
     "buildDefinition": {
-      "buildType": "https://example.test/build/v1",
+      "buildType": "https://slsa-framework.github.io/github-actions-buildtypes/workflow/v1",
       "externalParameters": {
-        "repository": "https://example.test/oxyflut"
+        "repository": "https://github.com/oxyflut/oxyflut",
+        "ref": "refs/heads/main"
       },
-      "internalParameters": {},
-      "resolvedDependencies": []
+      "resolvedDependencies": [
+        {
+          "uri": "git+https://github.com/oxyflut/oxyflut@refs/heads/main",
+          "digest": {
+            "sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+          }
+        }
+      ]
     },
     "runDetails": {
       "builder": {
-        "id": "https://example.test/builder/v1",
-        "builderDependencies": [],
+        "id": "https://github.com/actions/runner/github-hosted",
         "version": {
-          "tool": "1"
+          "runner": "2.320.0"
         }
-      },
-      "metadata": {
-        "invocationId": "fixture-invocation",
-        "startedOn": "2026-01-01T00:00:00Z",
-        "finishedOn": "2026-01-01T00:00:01Z"
-      },
-      "byproducts": []
+      }
     }
   }
 }
