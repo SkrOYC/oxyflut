@@ -86,6 +86,15 @@ pub struct EvidenceRef {
     pub size_bytes: u64,
 }
 
+/// The result of publishing immutable local evidence.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct EvidencePublication {
+    /// Immutable reference to the canonical evidence bytes.
+    pub reference: EvidenceRef,
+    /// Whether this invocation created the referenced file.
+    pub created: bool,
+}
+
 /// A verified local evidence file.
 #[derive(Clone, Debug)]
 pub struct VerifiedEvidence {
@@ -402,12 +411,14 @@ mod tests {
         let root = TestRepository::new("equal-records")?;
         copy_fixture(root.path(), "preserved-source.json")?;
         let source = preserved_source(root.path())?;
-        let first_reference = write_derived_json(root.path(), first, &source)?;
-        let second_reference = write_derived_json(root.path(), second, &source)?;
-        assert_eq!(first_reference, second_reference);
+        let first_publication = write_derived_json(root.path(), first, &source)?;
+        let second_publication = write_derived_json(root.path(), second, &source)?;
+        assert!(first_publication.created);
+        assert!(!second_publication.created);
+        assert_eq!(first_publication.reference, second_publication.reference);
         assert_eq!(
-            fs::read(root.path().join(first_reference.path.as_str()))?,
-            fs::read(root.path().join(second_reference.path.as_str()))?
+            fs::read(root.path().join(first_publication.reference.path.as_str()))?,
+            fs::read(root.path().join(second_publication.reference.path.as_str()))?
         );
         Ok(())
     }
@@ -423,7 +434,7 @@ mod tests {
         let derived = write_derived_json(root.path(), &record, &source)?;
 
         assert_eq!(fs::read(&source_path)?, before);
-        let verified = verify_reference(root.path(), &derived)?;
+        let verified = verify_reference(root.path(), &derived.reference)?;
         let provenance = verified
             .json()
             .and_then(Value::as_object)
@@ -603,8 +614,13 @@ mod tests {
         };
         fs::write(lock, serde_json::to_vec(&expired)?)?;
 
-        let reference = write_derived_json(root.path(), &record, &source)?;
-        assert!(root.path().join(reference.path.as_str()).is_file());
+        let publication = write_derived_json(root.path(), &record, &source)?;
+        assert!(publication.created);
+        assert!(
+            root.path()
+                .join(publication.reference.path.as_str())
+                .is_file()
+        );
         Ok(())
     }
 
@@ -620,8 +636,13 @@ mod tests {
         let lock = lock_path(&destination)?;
         fs::write(lock, [])?;
 
-        let reference = write_derived_json(root.path(), &record, &source)?;
-        assert!(root.path().join(reference.path.as_str()).is_file());
+        let publication = write_derived_json(root.path(), &record, &source)?;
+        assert!(publication.created);
+        assert!(
+            root.path()
+                .join(publication.reference.path.as_str())
+                .is_file()
+        );
         Ok(())
     }
 

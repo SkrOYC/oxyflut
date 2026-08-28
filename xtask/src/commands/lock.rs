@@ -19,8 +19,9 @@ const TOOLCHAIN_MANIFEST_PATH: &str = "qualification/tools/native-contract-toolc
 
 /// Validates one requested readiness gate without modifying the qualification lock.
 ///
-/// The command runs the schema, instance, exact-set, registry, and digest families before the
-/// readiness gate. A failed family returns exit code 1 as `lock status: invalid (FAMILY; PATH)`.
+/// The command reads the lock and external contract lock, verifies staged inputs, and derives the
+/// candidate gate report before it runs the schema, instance, exact-set, registry, digest, and
+/// readiness validators. A failed validator returns exit code 1 as `lock status: invalid (FAMILY; PATH)`.
 pub(crate) fn run(arguments: &[String]) -> CommandOutcome {
     let gate = match arguments {
         [flag, gate] if flag == "--gate" => gate.as_str(),
