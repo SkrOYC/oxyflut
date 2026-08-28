@@ -4,6 +4,7 @@
 
 - Budget: 1 focused day.
 - Clock start / stop: 2026-08-28T17:06:40Z / 2026-08-28T17:26:23Z.
+- Round-5 correction clock start / stop: 2026-08-28T21:17:23Z / 2026-08-28T21:26:36Z.
 
 ## Question
 
@@ -423,6 +424,36 @@ exit=0
 8. In `.constitution/tech-spec/contracts/platform-contracts.json`, set `environments.x11.timing.independentMeterSource` to `KU: a harness-owned DRM card FD must prove DRM_CAP_TIMESTAMP_MONOTONIC=1, DRM_CAP_CRTC_IN_VBLANK_EVENT=1, per-CRTC RandR association, calibrated timestamps, and independence from both candidate callback streams on the frozen native Xorg session.` Keep `environments.x11.timing.status` as `ku-gating`.
 9. In `.constitution/tech-spec/contracts/qualification-lock.json`, set `referenceEnvironments.x11-linux-x86_64.operatingSystem` to `Ubuntu 26.04 LTS native Xorg session; xserver-xorg-core 2:21.1.22-1ubuntu1; libgtk-4-1 4.22.2+ds-1ubuntu1; at-spi2-core 2.60.0-1; ibus-gtk4 1.5.34~rc2-1; orca 50.1.2-1ubuntu1`. Retain `referenceEnvironments.x11-linux-x86_64.minimumVersion` as `null` (gating) and `systemPackageLockDigest` as `null` until the native-Xorg probe establishes the server floor and Stage 3 records the real signed snapshot digest.
 
+- Stage 3 must commit a regular, non-symlinked same-stem `source.json` sidecar by appending `.source.json` to every captured fixture filename in the X11 map and the paired Wayland map. The 12 X11 files and 10 Wayland files require 22 sidecars. Contract evidence continues to reference the captured fixture file, not its sidecar.
+
+#### Preservation provenance and license records
+
+The sidecar convention follows `qualification/schemas/external/README.md` and the existing `qualification/schemas/external/dsse-envelope-v1/spec/protocol.source.json` file. Each sidecar must be an authoritative JSON object with exactly these fields in this order: `kind`, `repository`, `commit`, `path`, `retrievalUrl`, `license`, `licenseSource`, `version`, and `sha256`. Set `kind` to `authoritative`. Set `licenseSource` to an object with exactly `path` and `commit`. Set `sha256` to the streamed SHA-256 of the adjacent fixture, which must equal every evidence object's digest for that fixture. `repository`, `commit`, `path`, and `retrievalUrl` must identify the exact retrieved source. If a publisher exposes no source revision, use JSON `null` for the relevant `commit` value rather than inventing one.
+
+The fetched [GTK COPYING file](https://gitlab.gnome.org/GNOME/gtk/-/raw/4.22.2/COPYING), [Wayland COPYING file](https://raw.githubusercontent.com/wayland-mirror/wayland/1ab6b693b16e1d9734496fe60c8a6ed277e4dec3/COPYING), [Wayland protocols COPYING file](https://raw.githubusercontent.com/wayland-mirror/wayland-protocols/d5aed4e4903a77aefaef03359d1ffdc0d5093456/COPYING), [X.Org COPYING file](https://cgit.freedesktop.org/xorg/proto/presentproto/plain/COPYING?id=bfdc7e052302c79c5803ad95a73c9b63b350c40c), [AT-SPI release notes](https://gitlab.gnome.org/GNOME/at-spi2-core/-/raw/2.60.0/NEWS), and [Ubuntu intellectual-property policy](https://ubuntu.com/legal/terms-and-policies/intellectual-property-policy) establish the license-source identities in table 3.
+
+Table 3 defines the required license values and license-source identities. It covers all 22 fixtures without asserting that the same source family licenses unrelated package payloads.
+
+| Source family | Fixture sidecars | `license` and `licenseSource` | Source identity and `version` rule |
+| :-- | :-- | :-- | :-- |
+| GTK | X11 `s03-gtk-4.22.2-gtkatspitext.c`, `s04-gtk-4.22.2-gtkaccessibletext.c`, `s05-gtk-4.22.2-gtkaccessibletext.h`, `s06-gtk4-imcontext.html`, and `s11-gtk4-immulticontext.html` | `LGPL-2.1-or-later`; `licenseSource.path` is `COPYING` and `licenseSource.commit` is `5957885ec3c8c089965fc73ed2b882e605a1817e`. | For raw GTK source captures, use repository `https://gitlab.gnome.org/GNOME/gtk`, commit `5957885ec3c8c089965fc73ed2b882e605a1817e`, the source-relative path, and version `4.22.2`. For versionless GTK documentation pages, record repository `https://docs.gtk.org`, their retrieved URL path, and JSON `null` for `commit` unless the retrieved page identifies a source revision. |
+| Wayland | Wayland `s02-wayland-core.xml`, `s03-xdg-shell.xml`, `s04-viewporter.xml`, `s05-fractional-scale-v1.xml`, `s06-text-input-unstable-v3.xml`, and `s07-presentation-time-v1.xml` from the paired Wayland map. | `MIT`; use the matching upstream `COPYING` file and commit for `licenseSource`. | Preserve the repository, commit, path, retrieval URL, and version from each immutable raw GitHub URL in the paired Wayland capture map. The URL already identifies the required commit; don't replace it with a branch URL. |
+| X.Org | X11 `s07-presentproto.txt`. | `MIT/X11`; `licenseSource.path` is `COPYING` and `licenseSource.commit` is `bfdc7e052302c79c5803ad95a73c9b63b350c40c`. | Use repository `https://gitlab.freedesktop.org/xorg/proto/presentproto`, commit `bfdc7e052302c79c5803ad95a73c9b63b350c40c`, path `presentproto.txt`, retrieval URL `https://cgit.freedesktop.org/xorg/proto/presentproto/plain/presentproto.txt?id=bfdc7e052302c79c5803ad95a73c9b63b350c40c`, and source version `1.1`. The contract's 1.0 floor remains a minimum, not the captured source version. |
+| AT-SPI | X11 `s09-atspi-text-interface.html` and `s10-atspi-2.60.0-text.xml`, plus Wayland `s08-atspi-2.60.6-text.xml` and `s09-atspi-2.60.6-editable-text.xml` from the paired Wayland map. | `LGPL-2.1-or-later`; `licenseSource.path` is `NEWS` and `licenseSource.commit` is the matching release commit. | For raw XML, use repository `https://gitlab.gnome.org/GNOME/at-spi2-core`, its release commit, source-relative XML path, and the release version. The X11 XML uses commit `d8ab833f0230fccc009c271d9f23f53df2a32c88` and version `2.60.0`. For the versionless API page, record repository `https://gnome.pages.gitlab.gnome.org/at-spi2-core`, its retrieved URL path, and JSON `null` for `commit` unless the page identifies a source revision. |
+| Ubuntu package pages | X11 `s01-ubuntu-libgtk-4-1.html`, `s02-ubuntu-gtk4-source-package.html`, `s08-ubuntu-at-spi2-core.html`, and `s12-ubuntu-ibus-gtk4.html`, plus Wayland `s01-ubuntu-libgtk-4-1.html` and `s10-ubuntu-at-spi2-core.html` from the paired Wayland map. | `page-copyright-notice`; `licenseSource.path` is `https://ubuntu.com/legal/terms-and-policies/intellectual-property-policy` and `licenseSource.commit` is JSON `null`. | Use the publishing webpage as `repository`, its canonical page path and retrieval URL, the package version displayed by that capture, and JSON `null` for `commit`. The page record does not claim the package payload's license. |
+
+The GTK, AT-SPI, and X.Org release commits in table 3 come from the preserved discovery probe. The AT-SPI release notes state that its license is LGPL-2.1+, which this report records as the SPDX expression `LGPL-2.1-or-later`. The Ubuntu intellectual-property policy says package and binary-file copyright can be distinct from component copyright. Therefore its page captures use `page-copyright-notice`, not the license of the package they describe.
+
+```text
+$ git ls-remote https://gitlab.gnome.org/GNOME/gtk.git "refs/tags/4.22.2^{}"
+5957885ec3c8c089965fc73ed2b882e605a1817e	refs/tags/4.22.2^{}
+$ git ls-remote https://gitlab.gnome.org/GNOME/at-spi2-core.git "refs/tags/2.60.0^{}"
+d8ab833f0230fccc009c271d9f23f53df2a32c88	refs/tags/2.60.0^{}
+$ git ls-remote https://gitlab.freedesktop.org/xorg/proto/presentproto.git "refs/tags/presentproto-1.1^{}"
+bfdc7e052302c79c5803ad95a73c9b63b350c40c	refs/tags/presentproto-1.1^{}
+exit=0
+```
+
 ## Sources
 
 - [Ubuntu 26.04 LTS release notes](https://documentation.ubuntu.com/release-notes/26.04/)
@@ -455,3 +486,9 @@ exit=0
 - [Linux DRM user-space API](https://docs.kernel.org/gpu/drm-uapi.html)
 - [Unicode text segmentation](https://www.unicode.org/reports/tr29/)
 - [Vulkan registry](https://raw.githubusercontent.com/KhronosGroup/Vulkan-Docs/main/xml/vk.xml)
+- [GTK COPYING file](https://gitlab.gnome.org/GNOME/gtk/-/raw/4.22.2/COPYING)
+- [Wayland COPYING file](https://raw.githubusercontent.com/wayland-mirror/wayland/1ab6b693b16e1d9734496fe60c8a6ed277e4dec3/COPYING)
+- [Wayland protocols COPYING file](https://raw.githubusercontent.com/wayland-mirror/wayland-protocols/d5aed4e4903a77aefaef03359d1ffdc0d5093456/COPYING)
+- [X.Org COPYING file](https://cgit.freedesktop.org/xorg/proto/presentproto/plain/COPYING?id=bfdc7e052302c79c5803ad95a73c9b63b350c40c)
+- [AT-SPI release notes](https://gitlab.gnome.org/GNOME/at-spi2-core/-/raw/2.60.0/NEWS)
+- [Ubuntu intellectual-property policy](https://ubuntu.com/legal/terms-and-policies/intellectual-property-policy)
