@@ -4,7 +4,7 @@
 
 - Status: Completed.
 - Budget: 1 focused day.
-- Clock start / stop: 2026-08-28T17:02:39Z / 2026-08-28T17:23:34Z.
+- Clock start / stop: 2026-08-28T17:35:11Z / 2026-08-28T17:44:06Z.
 
 ## Question
 
@@ -16,10 +16,10 @@ Table 1. Decision answers
 | :-- | :-- | :-- | :-- |
 | Can a disclosed upstream engine patch apply to every frozen Flutter line and both consumption paths? | KU (gating) | P1 tried both repositories: `flutter/flutter` resolves all three engine-revision [`DEPS` files](https://raw.githubusercontent.com/flutter/flutter/5f77625673248ee5846fbcaf5d3e1a3878386fd7/DEPS), while `flutter/engine` resolves only 3.44.0 with identical bytes. The resolved pins are `f139fd5d...` for 3.41.0 and `b6004397...` for 3.44.0 and 3.47.0; P1 fetched their actual `pngrtran.c` files. Both pins contain the `08da33b` postimage, so that real patch is already incorporated and cannot rehearse remediation. The 3.47.0 upstream focused SDK and full-engine graphs consume libpng; P1 preserves the GN chain and SDK archive evidence. The Oxyflut integrated fork has no source identity, so its actual consumption remains unverified. | Pin the integrated-fork commit and fetch its `DEPS`, `build/secondary/third_party/libpng/BUILD.gn`, `impeller/toolkit/interop/BUILD.gn`, and final GN dependency graph. Expect the fork revision, its libpng pin, and both focused and integrated `pngrtran.c` object paths before a real patch can replace the synthetic rehearsal. |
 | Which shared patch rehearsal applies before implementation? | KK | Select `OXY-SYN-SEC-001`, a synthetic shared image-decoder hardening patch. The pinned stack assigns both candidates one bounded Rust decoder above the substrate boundary. The patch replaces unchecked RGBA byte-count multiplication with checked `u64` arithmetic and rejects overflow or more than 67,108,864 decoded bytes before allocation or adapter entry. | Not applicable. |
-| What tests establish the synthetic patch result? | KK | The frozen tests are `checked_rgba_bytes_accepts_4096_by_4096_rgba`, `checked_rgba_bytes_rejects_4097_by_4096_rgba`, `checked_rgba_bytes_rejects_u32_max_square_without_decoder_or_adapter_call`, and `asset_decode_replays_image_registry`. Both candidates must run the same shared Rust tests and image corpus. | Not applicable. |
-| Can every architecture ingress receive attributable, licensed, capped seed material? | KK | P3 maps all eight architecture ingress categories to five immutable source sets. P4 re-fetched and SHA-256-verified all 18 retained seed bytes and six license notices. The Unicode 16.0.0 ReadMe is dated 2024-08-25, and the same-day immutable License V3 snapshot hashes to `f5062c9a...`; Unicode documents the SPDX identifier as `Unicode-3.0`. | Not applicable. |
-| Can the required memory, undefined-behavior, and concurrency instrumentation be frozen? | KK | P5 preserves the LLVM definition of `-max_total_time` as a maximum run time, not CPU accounting. P6 records GNU Time's user and system fields. The campaign policy requires cumulative process CPU across resumed corpus shards, a 5-second timeout, dated `nightly-2026-08-11`, and executable-hash preflight. | Not applicable. |
-| How is the policy made immutable and attributable? | KK | Stage 3 must copy the two canonical byte streams, preserve their SHA-256 values, retain and hash every license notice and seed byte stream, require a host tool record before each campaign, and reject any source, license, size, tool, or digest mismatch. | Not applicable. |
+| What tests establish the synthetic patch result? | KK | The frozen post-patch tests are `checked_rgba_bytes_accepts_4096_by_4096_rgba`, `checked_rgba_bytes_rejects_4097_by_4096_rgba`, `checked_rgba_bytes_rejects_u32_max_square_without_decoder_or_adapter_call`, and `asset_decode_replays_image_registry`. P7 confirms the qualification scaffold does not yet define these functions, so the patch must add them before rehearsal; the frozen rehearsal runs all four. | Not applicable. |
+| Can every architecture ingress receive attributable, licensed, capped seed material? | KK | P3 maps all eight architecture ingress categories to five immutable source sets. P4 and P9 SHA-256-verified all 18 retained seed bytes and six retained license notices, including both Apache-2.0 and MIT notices for `image`. The Unicode 16.0.0 ReadMe is dated 2024-08-25, and the same-day immutable License V3 snapshot hashes to `f5062c9a...`; Unicode documents the SPDX identifier as `Unicode-3.0`. | Not applicable. |
+| Can the required memory, undefined-behavior, and concurrency instrumentation be frozen? | KK | The [LLVM libFuzzer documentation](https://llvm.org/docs/LibFuzzer.html) defines `-max_total_time` as a maximum run time, not CPU accounting. The [cargo-fuzz README](https://raw.githubusercontent.com/rust-fuzz/cargo-fuzz/0.13.2/README.md) directs users to the command help; P6 and P8 verify GNU Time accounting and that `--careful` is a `cargo fuzz build` option. The policy requires cumulative process CPU across resumed corpus shards, a 5-second timeout, dated `nightly-2026-08-12`, and executable-hash preflight. | Not applicable. |
+| How is the policy made immutable and attributable? | KK | P9 writes the exact displayed UTF-8, 2-space JSON byte streams with their displayed key order and one trailing LF, then verifies their SHA-256 values. Stage 3 must copy those bytes, retain and hash every license notice and seed byte stream, require a host tool record before each campaign, and reject any source, license, size, tool, or digest mismatch. | Not applicable. |
 
 ## Context and objective
 
@@ -52,7 +52,7 @@ Table 1. Decision answers
 
 `OXY-SYN-SEC-001` introduces `oxyflut_assets::decode::checked_rgba_bytes`. The function computes `width * height * 4` with `u64::checked_mul`, rejects overflow, rejects totals greater than `67_108_864`, converts to `usize` only after both checks, and runs before allocation or an adapter call.
 
-The preimage and postimage must apply in the common Rust asset-decoder module, not either adapter. The patch file must contain only this guard and its four listed tests. The rehearsal must fail if the patch changes a candidate-specific file, touches unrelated code, permits either oversized input, or reaches an adapter for a rejected image.
+The preimage and postimage must apply in the common Rust asset-decoder module, not either adapter. The patch file must contain only this guard and the four listed tests; P7 confirms that the qualification scaffold does not yet define the post-patch test functions. The rehearsal must fail if the patch changes a candidate-specific file, touches unrelated code, omits any listed test, permits either oversized input, or reaches an adapter for a rejected image.
 
 The real upstream candidate was [libpng commit `08da33b`](https://github.com/pnggroup/libpng/commit/08da33b4c88cfcd36e5a706558a8d7e0e4773643), titled "Fix a buffer overflow in `png_init_read_transformations`." P1 used the actual Flutter monorepo, not the obsolete archive. The root [`DEPS` files](https://raw.githubusercontent.com/flutter/flutter/3452d735bd38224ef2db85ca763d862d6326b17f/DEPS) map `3452d...` to `f139fd5d...` and `4c525...` and `5f776...` to `b6004397...`. Both fetched [`pngrtran.c` postimages](https://flutter.googlesource.com/third_party/libpng/+/b6004397d2ab98f0250376d9b357337b7f422d13/pngrtran.c?format=TEXT) contain the `PNG_FLAG_OPTIMIZE_ALPHA` branch and checked component arithmetic introduced by `08da33b`. The real patch is therefore already incorporated on all three frozen lines and is unusable as a rehearsal patch.
 
@@ -95,44 +95,71 @@ $ sha256sum source contract
 
 Use one physical core for each parser campaign. Require at least `86_400` process CPU seconds per implemented untrusted parser ingress and `28_800` process CPU seconds for each supported thread-instrumented callback or teardown target. Require a 5-second libFuzzer timeout, the ingress cap as `-max_len`, and a zero unresolved-report result. In the commands, `TARGET` is the implemented ingress fuzz target, `CORPUS` is its admitted persistent corpus directory, `CAP` is the row's byte cap, `FUZZ_EXE` is the built target executable, `CPU_LOG` is the GNU Time output, `PACKAGE` owns the replay test, and `TEST_FILTER` selects that replay.
 
-[`-max_total_time`](https://llvm.org/docs/LibFuzzer.html) is an elapsed-time maximum for one fuzzer invocation. It is only an operational bound. It cannot establish CON-SEC-001 or CON-SEC-002 process-CPU coverage. Before a campaign, install and select `nightly-2026-08-11`, then run this preflight; a mismatch fails before build or execution:
+[`-max_total_time`](https://llvm.org/docs/LibFuzzer.html) is an elapsed-time maximum for one fuzzer invocation. It is only an operational bound. It cannot establish CON-SEC-001 or CON-SEC-002 process-CPU coverage. The [cargo-fuzz README](https://raw.githubusercontent.com/rust-fuzz/cargo-fuzz/0.13.2/README.md) directs users to command help, and P8 verifies that `--careful` is a `cargo fuzz build` option. Before a campaign, select `nightly-2026-08-12`, then run this preflight; a mismatch fails before build or execution:
 
 ```sh
-TOOLCHAIN=nightly-2026-08-11
-RUSTC_BIN="$(rustup which rustc --toolchain "$TOOLCHAIN")"
-CARGO_BIN="$(rustup which cargo --toolchain "$TOOLCHAIN")"
-CARGO_MIRI_BIN="$(rustup which cargo-miri --toolchain "$TOOLCHAIN")"
+TOOLCHAIN=nightly-2026-08-12
+RUSTC_BIN="$(rustup which --toolchain "$TOOLCHAIN" rustc)"
+CARGO_BIN="$(rustup which --toolchain "$TOOLCHAIN" cargo)"
+CARGO_MIRI_BIN="$(rustup which --toolchain "$TOOLCHAIN" cargo-miri)"
 CARGO_FUZZ_BIN="$(command -v cargo-fuzz)"
+TIME_BIN="$(which time)"
 test "$(rustc +"$TOOLCHAIN" -vV | awk '/^commit-hash:/ {print $2}')" = "3d6c19bb9ab4798ecfb2ee943df01a811720fc27"
 printf '%s  %s\n' \
   '7de94a5c099c8d7ee4cafb905e36d882325faa480d8cff6513dd8c0887fac0c5' "$RUSTC_BIN" \
   '1cf1cd7feded113706026c5f04fad33e45364546e3c0d92ddee0c1a4c8277296' "$CARGO_BIN" \
   '40a69668c9ff4e5df3e6a87531f2b87dcc5c84e705ee5b06f915fb76383c94af' "$CARGO_MIRI_BIN" \
-  'db150590a2f9fa003fb167bc0eec3f90ba5574fcdd01f78110e6f397dda56582' "$CARGO_FUZZ_BIN" | sha256sum -c -
+  'db150590a2f9fa003fb167bc0eec3f90ba5574fcdd01f78110e6f397dda56582' "$CARGO_FUZZ_BIN" \
+  'e8b9f5440e01a81e0692e68d07dfacb8059c434cae100c1fbb60b7ec52848480' "$TIME_BIN" | sha256sum -c -
 test "$(cargo +"$TOOLCHAIN" fuzz --version)" = 'cargo-fuzz 0.13.2'
 ```
 
-Build each sanitizer target with `cargo +nightly-2026-08-11 fuzz build --sanitizer address TARGET` or `cargo +nightly-2026-08-11 fuzz build --sanitizer thread TARGET`. Time the resulting executable directly with a host-recorded GNU Time path: `TIME_BIN -v -o CPU_LOG FUZZ_EXE CORPUS -max_total_time=28800 -timeout=5 -max_len=CAP`. Preserve `User time (seconds)`, `System time (seconds)`, and elapsed wall time from each `CPU_LOG`. Add user plus system seconds only for successful shards using the same target, sanitizer, and persistent `CORPUS`; resume until the applicable threshold is reached. Keep `CORPUS` as the first libFuzzer corpus directory. Before admitting another input directory, use `FUZZ_EXE -merge=1 CORPUS NEW_INPUTS`, then resume the timed target. The same LLVM documentation states that the first corpus directory receives new inputs and describes `-merge=1` and resumable merge control files. Replay every minimized crash and retained seed with `cargo +nightly-2026-08-11 miri test -p PACKAGE TEST_FILTER`.
+Build every AddressSanitizer target with `cargo +nightly-2026-08-12 fuzz build --sanitizer address --careful TARGET`, and build every ThreadSanitizer target with `cargo +nightly-2026-08-12 fuzz build --sanitizer thread --careful TARGET`. For every successful shard, run the built executable as `command time -v -o CPU_LOG FUZZ_EXE CORPUS -max_total_time=28800 -timeout=5 -max_len=CAP`, preserve `User time (seconds)`, `System time (seconds)`, and elapsed wall time from `CPU_LOG`, and record user plus system seconds in the shard ledger. Add only successful shards with the same target, sanitizer, and persistent `CORPUS`; resume until the applicable threshold is reached. `-max_total_time=28800` bounds one operational invocation only. Keep `CORPUS` as the first libFuzzer corpus directory. Before admitting another input directory, use `FUZZ_EXE -merge=1 CORPUS NEW_INPUTS`, then resume the timed target. The LLVM documentation states that the first corpus directory receives new inputs and describes `-merge=1` and resumable merge control files. Replay every minimized crash and retained seed with `cargo +nightly-2026-08-12 miri test -p PACKAGE TEST_FILTER`.
 
-The captured host record identifies `nightly` only as the probe selector, not as an admissible campaign selector: `rustc 1.99.0-nightly` reports commit `3d6c19bb9ab4798ecfb2ee943df01a811720fc27` and date `2026-08-11`. The dated selector is required for campaigns. This host records SHA-256 values for `rustc` `7de94a5c099c8d7ee4cafb905e36d882325faa480d8cff6513dd8c0887fac0c5`, `cargo` `1cf1cd7feded113706026c5f04fad33e45364546e3c0d92ddee0c1a4c8277296`, `cargo-miri` `40a69668c9ff4e5df3e6a87531f2b87dcc5c84e705ee5b06f915fb76383c94af`, `cargo-fuzz` 0.13.2 `db150590a2f9fa003fb167bc0eec3f90ba5574fcdd01f78110e6f397dda56582`, and GNU Time 1.10 `e8b9f5440e01a81e0692e68d07dfacb8059c434cae100c1fbb60b7ec52848480`. Stage 3 must stage an equivalent complete record for every campaign host and retain `resolved-tool-digests` as a gate until it does.
+P6 proves this host's `command time -v -o CPU_LOG` records the required three fields. P7 confirms the four post-patch test functions do not yet exist in the qualification scaffold, so OXY-SYN-SEC-001 must add them before rehearsal. P8 proves `nightly-2026-08-11` resolves commit `12c36e2539c54397c51d6ea4401defd8768a4f5b`, while `nightly-2026-08-12` resolves the required `3d6c19bb9ab4798ecfb2ee943df01a811720fc27`. P8 also re-hashes the executables from the dated selector. The captured host record uses only `nightly-2026-08-12`; the previous rolling-`nightly` record is inadmissible. This host records SHA-256 values for `rustc` `7de94a5c099c8d7ee4cafb905e36d882325faa480d8cff6513dd8c0887fac0c5`, `cargo` `1cf1cd7feded113706026c5f04fad33e45364546e3c0d92ddee0c1a4c8277296`, `cargo-miri` `40a69668c9ff4e5df3e6a87531f2b87dcc5c84e705ee5b06f915fb76383c94af`, `cargo-fuzz` 0.13.2 `db150590a2f9fa003fb167bc0eec3f90ba5574fcdd01f78110e6f397dda56582`, and GNU Time 1.10 `e8b9f5440e01a81e0692e68d07dfacb8059c434cae100c1fbb60b7ec52848480`. Stage 3 must stage an equivalent complete record for every campaign host and retain `resolved-tool-digests` as a gate until it does.
 
 The relevant instrumentation output follows:
 
 ```text
-$ rustc +nightly -vV
+$ rustc +nightly-2026-08-11 -vV
+rustc 1.99.0-nightly (12c36e253 2026-08-10)
+commit-hash: 12c36e2539c54397c51d6ea4401defd8768a4f5b
+commit-date: 2026-08-10
+host: x86_64-unknown-linux-gnu
+$ rustc +nightly-2026-08-12 -vV
 rustc 1.99.0-nightly (3d6c19bb9 2026-08-11)
 commit-hash: 3d6c19bb9ab4798ecfb2ee943df01a811720fc27
 commit-date: 2026-08-11
 host: x86_64-unknown-linux-gnu
-$ sha256sum cargo-fuzz rustc cargo cargo-miri
-cargo-fuzz  db150590a2f9fa003fb167bc0eec3f90ba5574fcdd01f78110e6f397dda56582
-rustc       7de94a5c099c8d7ee4cafb905e36d882325faa480d8cff6513dd8c0887fac0c5
-cargo       1cf1cd7feded113706026c5f04fad33e45364546e3c0d92ddee0c1a4c8277296
-cargo-miri  40a69668c9ff4e5df3e6a87531f2b87dcc5c84e705ee5b06f915fb76383c94af
-$ /run/current-system/sw/bin/time -v true
+$ rustup toolchain install nightly-2026-08-12 --component miri --profile minimal
+info: syncing channel updates for 'nightly-2026-08-12-x86_64-unknown-linux-gnu'
+info: downloading component 'miri'
+info: installing component 'miri'
+nightly-2026-08-12-x86_64-unknown-linux-gnu updated - rustc 1.99.0-nightly (3d6c19bb9 2026-08-11)
+$ rustup which --toolchain nightly-2026-08-12 rustc
+/home/oscar/.rustup/toolchains/nightly-2026-08-12-x86_64-unknown-linux-gnu/bin/rustc
+$ rustup which --toolchain nightly-2026-08-12 cargo
+/home/oscar/.rustup/toolchains/nightly-2026-08-12-x86_64-unknown-linux-gnu/bin/cargo
+$ rustup which --toolchain nightly-2026-08-12 cargo-miri
+/home/oscar/.rustup/toolchains/nightly-2026-08-12-x86_64-unknown-linux-gnu/bin/cargo-miri
+$ command -v cargo-fuzz
+/nix/store/w6g92cm021l24m5815ry1qf57n00k5j2-cargo-fuzz-0.13.2/bin/cargo-fuzz
+$ sha256sum rustc cargo cargo-miri cargo-fuzz time
+7de94a5c099c8d7ee4cafb905e36d882325faa480d8cff6513dd8c0887fac0c5  /home/oscar/.rustup/toolchains/nightly-2026-08-12-x86_64-unknown-linux-gnu/bin/rustc
+1cf1cd7feded113706026c5f04fad33e45364546e3c0d92ddee0c1a4c8277296  /home/oscar/.rustup/toolchains/nightly-2026-08-12-x86_64-unknown-linux-gnu/bin/cargo
+40a69668c9ff4e5df3e6a87531f2b87dcc5c84e705ee5b06f915fb76383c94af  /home/oscar/.rustup/toolchains/nightly-2026-08-12-x86_64-unknown-linux-gnu/bin/cargo-miri
+db150590a2f9fa003fb167bc0eec3f90ba5574fcdd01f78110e6f397dda56582  /nix/store/w6g92cm021l24m5815ry1qf57n00k5j2-cargo-fuzz-0.13.2/bin/cargo-fuzz
+e8b9f5440e01a81e0692e68d07dfacb8059c434cae100c1fbb60b7ec52848480  /run/current-system/sw/bin/time
+$ cargo +nightly-2026-08-12 fuzz --version
+cargo-fuzz 0.13.2
+$ cargo +nightly-2026-08-12 fuzz build --help | grep -- --careful
+  -c, --careful
+$ command time -v -o CPU_LOG true
 User time (seconds): 0.00
 System time (seconds): 0.00
 Elapsed (wall clock) time (h:mm:ss or m:ss): 0:00.00
+$ grep -rn "fn asset_decode_replays_image_registry\\|fn checked_rgba_bytes" crates/oxyflut-assets/src
+NO_MATCH: the qualification scaffold does not yet contain the post-patch tests.
 ```
 
 ### Frozen corpus sources
@@ -141,7 +168,7 @@ Table 2. Admitted source sets
 
 | Set | Immutable origin and evidence | License and attribution | Cap | Observed maximum seed size |
 | :-- | :-- | :-- | --: | --: |
-| `image` | `image` v0.25.10 commit `76e57184f22772dad1138e96954e57945406b15e`; PNG, progressive JPEG, interlaced GIF, and animated alpha WebP digests appear in the canonical registry. | MIT OR Apache-2.0 under the fetched [Apache license](https://raw.githubusercontent.com/image-rs/image/76e57184f22772dad1138e96954e57945406b15e/LICENSE-APACHE), SHA-256 `0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594`, and [MIT license](https://raw.githubusercontent.com/image-rs/image/76e57184f22772dad1138e96954e57945406b15e/LICENSE-MIT). | 1,048,576 bytes | 52,286 bytes |
+| `image` | `image` v0.25.10 commit `76e57184f22772dad1138e96954e57945406b15e`; PNG, progressive JPEG, interlaced GIF, and animated alpha WebP digests appear in the canonical registry. | MIT OR Apache-2.0 under the fetched [Apache license](https://raw.githubusercontent.com/image-rs/image/76e57184f22772dad1138e96954e57945406b15e/LICENSE-APACHE), SHA-256 `0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594`, and [MIT license](https://raw.githubusercontent.com/image-rs/image/76e57184f22772dad1138e96954e57945406b15e/LICENSE-MIT), SHA-256 `c77a4cf9da729987d0fe7ccd811e3bd27393914ddf3d23467c18cc22954513b3`. | 1,048,576 bytes | 52,286 bytes |
 | `font` | Noto commit `ffebf8c1ee449e544955a7e813c54f9b73848eac`; Noto Sans Regular and Noto Sans Arabic Regular digests appear in the canonical registry. | OFL-1.1 under the fetched [Noto license](https://raw.githubusercontent.com/notofonts/noto-fonts/ffebf8c1ee449e544955a7e813c54f9b73848eac/LICENSE), SHA-256 `0dab92d0544f7b233403f14b84a663bdbfa746982eda629e7f4f9ffe1b036feb`. | 1,048,576 bytes | 509,848 bytes |
 | `unicode-text` | Unicode 16.0.0 `GraphemeBreakTest.txt` and `BidiTest.txt`; digests appear in the canonical registry. | Unicode-3.0 under the [dated 2024-08-25 Unicode License V3 snapshot](https://web.archive.org/web/20240825031908id_/https://www.unicode.org/license.txt), SHA-256 `f5062c9a188d81dfe66b56db4182dcf9e4b17c0d9b0d311a8e20b3a1b075c443`. | 8,388,608 bytes | 7,959,988 bytes |
 | `json` | JSONTestSuite commit `1ef36fa01286573e846ac449e8683f8833c5b26a`; valid, invalid-UTF-8, and missing-colon inputs appear in the canonical registry. | MIT under the fetched [JSONTestSuite license](https://raw.githubusercontent.com/nst/JSONTestSuite/1ef36fa01286573e846ac449e8683f8833c5b26a/LICENSE), SHA-256 `8bd0e0578be788c617ea01d18b2a8146e3746ae50bddadc65a5f9d3aad08ad49`. | 65,536 bytes | 7 bytes |
@@ -169,6 +196,8 @@ PASS wpt-input bytes=967 sha256=19529c6d1b4d8598ba09009b9a4808a4dd5a778356fb2e08
 PASS wpt-pointer bytes=7783 sha256=026095d92a46116740f7c8c354bccda7c90ef79fc6c8b0eeddd8a26511e7f8ed
 PASS wpt-accessibility-properties bytes=2490 sha256=b2910a4661ae5046991c6ed5d301faae243ad89669d4af621549ca5af75faf69
 PASS wpt-accessibility-action bytes=1441 sha256=965ab73007f1ad6dde5a363e6dab141079421d55acb01b3d6ba0c6bf32c3584e
+$ curl -fsSL https://raw.githubusercontent.com/image-rs/image/76e57184f22772dad1138e96954e57945406b15e/LICENSE-MIT | sha256sum
+c77a4cf9da729987d0fe7ccd811e3bd27393914ddf3d23467c18cc22954513b3  -
 $ fetch versioned UCD ReadMe and dated license snapshot
 UCD 16.0.0 ReadMe 2024-08-25 sha256=14cafa23788d3a20dd21d6b0cdcb8d6dab520781fcd9ad9392f3b88ea607e633
 Unicode License V3 snapshot 2024-08-25 1995 bytes sha256=f5062c9a188d81dfe66b56db4182dcf9e4b17c0d9b0d311a8e20b3a1b075c443
@@ -208,18 +237,20 @@ The corpus importer may derive target-specific encodings only from a listed sour
 - Tickets unblocked in `tasks/active/`: `OXY-D001` can materialize the two staged policy records. Candidate fuzz targets remain contingent on candidate implementation.
 - Tickets to add or split: Create one implementation ticket for each actual parser ingress that the implementation inventory adds beyond table 3. Each ticket must inherit the same registry admission and campaign rules.
 - Spec edits required:
-  - `qualification/staged/fuzz-corpora.json`: create this file with the exact canonical bytes in the next section. `.constitution/tech-spec/contracts/qualification-lock.json`, `measurementPolicy.fuzzCorpora`: set the value to `863f8e25ac176fb5cc68e254e281ca94df6eff62a800418cc6fd15a8c30fe83e`.
-  - `qualification/staged/security-patch-rehearsal.json`: create this file with the exact canonical bytes in the next section. `.constitution/tech-spec/contracts/qualification-lock.json`, `measurementPolicy.securityPatchRehearsal`: set the value to `eb3b364063704fcec77363d5fb50bf052ac9018e146e02205eef350c07eef3d9`.
+  - `qualification/staged/fuzz-corpora.json`: create this file with the exact canonical bytes in the next section. `.constitution/tech-spec/contracts/qualification-lock.json`, `measurementPolicy.fuzzCorpora`: set the value to `0f349f9b42fcb1dd295d0c577f2866eb70605153ad0dde68f2b486c4b71148df`.
+  - `qualification/staged/security-patch-rehearsal.json`: create this file with the exact canonical bytes in the next section. `.constitution/tech-spec/contracts/qualification-lock.json`, `measurementPolicy.securityPatchRehearsal`: set the value to `fa8d4fe18ec459f3525490c093043755186dfc7e1ebcef5c9157045161fbcce1`.
   - `.constitution/tech-spec/contracts/qualification-lock.json`, `resolvedTools`: append the exact `instrumentation.campaignToolchain.hostToolRecords[0]` record from `qualification/staged/fuzz-corpora.json`; require an equivalent complete record, including executable hashes and CPU-accounting fields, for every campaign host. Retain `resolved-tool-digests` in both known-unknown arrays until that condition holds.
   - `.constitution/tech-spec/contracts/qualification-lock.json`, `preImplementationKnownUnknowns` and `gatingKnownUnknowns`: after both staged records and every listed source and license byte pass admission, remove only `fuzz-corpora` and `security-patch-rehearsal`. Leave all unrelated readiness gates unchanged.
 
 ### Canonical staged inputs
 
+Each displayed JSON block is UTF-8, uses the displayed 2-space indentation and key order, and ends with exactly one LF. P9 extracts each displayed block byte-for-byte to its named file and hashes those files with `sha256sum`.
+
 The following source bytes produced the stated digests:
 
 ```text
-863f8e25ac176fb5cc68e254e281ca94df6eff62a800418cc6fd15a8c30fe83e  fuzz-corpora.json
-eb3b364063704fcec77363d5fb50bf052ac9018e146e02205eef350c07eef3d9  security-patch-rehearsal.json
+0f349f9b42fcb1dd295d0c577f2866eb70605153ad0dde68f2b486c4b71148df  fuzz-corpora.json
+fa8d4fe18ec459f3525490c093043755186dfc7e1ebcef5c9157045161fbcce1  security-patch-rehearsal.json
 ```
 
 ```json
@@ -238,8 +269,9 @@ eb3b364063704fcec77363d5fb50bf052ac9018e146e02205eef350c07eef3d9  security-patch
   "instrumentation": {
     "addressRequiredProcessCpuSeconds": 86400,
     "concurrencyRequiredProcessCpuSeconds": 28800,
-    "buildCommand": "cargo +nightly-2026-08-11 fuzz build TARGET",
-    "runCommand": "TIME_BIN -v -o CPU_LOG FUZZ_EXE CORPUS -max_total_time=28800 -timeout=5 -max_len=CAP",
+    "addressBuildCommand": "cargo +nightly-2026-08-12 fuzz build --sanitizer address --careful TARGET",
+    "concurrencyBuildCommand": "cargo +nightly-2026-08-12 fuzz build --sanitizer thread --careful TARGET",
+    "runCommand": "command time -v -o CPU_LOG FUZZ_EXE CORPUS -max_total_time=28800 -timeout=5 -max_len=CAP",
     "cpuAccounting": {
       "requiredFields": [
         "User time (seconds)",
@@ -250,42 +282,42 @@ eb3b364063704fcec77363d5fb50bf052ac9018e146e02205eef350c07eef3d9  security-patch
       "operationalBound": "max_total_time limits a single libFuzzer process run and never establishes process-CPU coverage."
     },
     "resume": "Keep CORPUS as the first corpus directory for every shard. Run FUZZ_EXE -merge=1 CORPUS NEW_INPUTS before admitting a new input directory, then resume timed runs until the accumulated process CPU threshold is met.",
-    "address": "cargo-fuzz 0.13.2 address sanitizer with --careful",
-    "undefinedBehavior": "cargo-fuzz --careful plus cargo +nightly-2026-08-11 miri test replay of every minimized finding",
-    "concurrency": "Build TARGET with --sanitizer thread, then use the same timed direct-executable procedure for callback and teardown targets where the environment supports it.",
+    "address": "cargo-fuzz 0.13.2 AddressSanitizer build with --careful",
+    "undefinedBehavior": "cargo-fuzz --careful plus cargo +nightly-2026-08-12 miri test replay of every minimized finding",
+    "concurrency": "Build TARGET with --sanitizer thread --careful, then use the same timed direct-executable procedure for callback and teardown targets where the environment supports it.",
     "campaignToolchain": {
-      "name": "nightly-2026-08-11",
+      "name": "nightly-2026-08-12",
       "rustcCommit": "3d6c19bb9ab4798ecfb2ee943df01a811720fc27",
       "requiredCargoFuzzVersion": "0.13.2",
       "requireHostToolRecordForEveryCampaign": true,
       "preflight": [
-        "TOOLCHAIN=nightly-2026-08-11",
+        "TOOLCHAIN=nightly-2026-08-12",
         "test \"$(rustc +$TOOLCHAIN -vV | awk '/^commit-hash:/ {print $2}')\" = \"3d6c19bb9ab4798ecfb2ee943df01a811720fc27\"",
-        "RUSTC_BIN=\"$(rustup which rustc --toolchain $TOOLCHAIN)\"; CARGO_BIN=\"$(rustup which cargo --toolchain $TOOLCHAIN)\"; CARGO_MIRI_BIN=\"$(rustup which cargo-miri --toolchain $TOOLCHAIN)\"; CARGO_FUZZ_BIN=\"$(command -v cargo-fuzz)\"",
-        "printf \"%s  %s\\n\" \"7de94a5c099c8d7ee4cafb905e36d882325faa480d8cff6513dd8c0887fac0c5\" \"$RUSTC_BIN\" \"1cf1cd7feded113706026c5f04fad33e45364546e3c0d92ddee0c1a4c8277296\" \"$CARGO_BIN\" \"40a69668c9ff4e5df3e6a87531f2b87dcc5c84e705ee5b06f915fb76383c94af\" \"$CARGO_MIRI_BIN\" \"db150590a2f9fa003fb167bc0eec3f90ba5574fcdd01f78110e6f397dda56582\" \"$CARGO_FUZZ_BIN\" | sha256sum -c -",
+        "RUSTC_BIN=\"$(rustup which --toolchain $TOOLCHAIN rustc)\"; CARGO_BIN=\"$(rustup which --toolchain $TOOLCHAIN cargo)\"; CARGO_MIRI_BIN=\"$(rustup which --toolchain $TOOLCHAIN cargo-miri)\"; CARGO_FUZZ_BIN=\"$(command -v cargo-fuzz)\"; TIME_BIN=\"$(which time)\"",
+        "printf \"%s  %s\\n\" \"7de94a5c099c8d7ee4cafb905e36d882325faa480d8cff6513dd8c0887fac0c5\" \"$RUSTC_BIN\" \"1cf1cd7feded113706026c5f04fad33e45364546e3c0d92ddee0c1a4c8277296\" \"$CARGO_BIN\" \"40a69668c9ff4e5df3e6a87531f2b87dcc5c84e705ee5b06f915fb76383c94af\" \"$CARGO_MIRI_BIN\" \"db150590a2f9fa003fb167bc0eec3f90ba5574fcdd01f78110e6f397dda56582\" \"$CARGO_FUZZ_BIN\" \"e8b9f5440e01a81e0692e68d07dfacb8059c434cae100c1fbb60b7ec52848480\" \"$TIME_BIN\" | sha256sum -c -",
         "test \"$(cargo +$TOOLCHAIN fuzz --version)\" = \"cargo-fuzz 0.13.2\""
       ],
       "hostToolRecords": [
         {
           "host": "x86_64-unknown-linux-gnu",
-          "observedToolchainSelector": "nightly",
+          "observedToolchainSelector": "nightly-2026-08-12",
           "observedRustcRelease": "1.99.0-nightly",
           "rustcCommit": "3d6c19bb9ab4798ecfb2ee943df01a811720fc27",
           "rustcCommitDate": "2026-08-11",
           "executables": [
             [
               "rustc",
-              "/home/oscar/.rustup/toolchains/nightly-x86_64-unknown-linux-gnu/bin/rustc",
+              "/home/oscar/.rustup/toolchains/nightly-2026-08-12-x86_64-unknown-linux-gnu/bin/rustc",
               "7de94a5c099c8d7ee4cafb905e36d882325faa480d8cff6513dd8c0887fac0c5"
             ],
             [
               "cargo",
-              "/home/oscar/.rustup/toolchains/nightly-x86_64-unknown-linux-gnu/bin/cargo",
+              "/home/oscar/.rustup/toolchains/nightly-2026-08-12-x86_64-unknown-linux-gnu/bin/cargo",
               "1cf1cd7feded113706026c5f04fad33e45364546e3c0d92ddee0c1a4c8277296"
             ],
             [
               "cargo-miri",
-              "/home/oscar/.rustup/toolchains/nightly-x86_64-unknown-linux-gnu/bin/cargo-miri",
+              "/home/oscar/.rustup/toolchains/nightly-2026-08-12-x86_64-unknown-linux-gnu/bin/cargo-miri",
               "40a69668c9ff4e5df3e6a87531f2b87dcc5c84e705ee5b06f915fb76383c94af"
             ],
             [
@@ -313,9 +345,18 @@ eb3b364063704fcec77363d5fb50bf052ac9018e146e02205eef350c07eef3d9  security-patch
     {
       "id": "image",
       "capBytes": 1048576,
-      "licenseId": "MIT OR Apache-2.0",
-      "licenseUrl": "https://raw.githubusercontent.com/image-rs/image/76e57184f22772dad1138e96954e57945406b15e/LICENSE-APACHE",
-      "licenseSha256": "0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594",
+      "licenses": [
+        [
+          "Apache-2.0",
+          "https://raw.githubusercontent.com/image-rs/image/76e57184f22772dad1138e96954e57945406b15e/LICENSE-APACHE",
+          "0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594"
+        ],
+        [
+          "MIT",
+          "https://raw.githubusercontent.com/image-rs/image/76e57184f22772dad1138e96954e57945406b15e/LICENSE-MIT",
+          "c77a4cf9da729987d0fe7ccd811e3bd27393914ddf3d23467c18cc22954513b3"
+        ]
+      ],
       "sources": [
         [
           "png",
@@ -476,8 +517,12 @@ eb3b364063704fcec77363d5fb50bf052ac9018e146e02205eef350c07eef3d9  security-patch
   "rehearsal": [
     "git apply --check OXY-SYN-SEC-001.patch in the shared Rust workspace",
     "cargo test -p oxyflut-assets checked_rgba_bytes",
-    "cargo +nightly-2026-08-11 fuzz run --sanitizer address --careful asset_decode CORPUS -- -max_total_time=28800 -timeout=5 -max_len=1048576",
-    "cargo +nightly-2026-08-11 miri test -p oxyflut-assets minimized_asset_decode_findings"
+    "cargo test -p oxyflut-assets asset_decode_replays_image_registry",
+    "cargo +nightly-2026-08-12 fuzz build --sanitizer address --careful asset_decode",
+    "command time -v -o CPU_LOG FUZZ_EXE CORPUS -max_total_time=28800 -timeout=5 -max_len=1048576",
+    "record User time (seconds) plus System time (seconds) for the successful address shard and resume timed shards with the same corpus until the cumulative process CPU seconds are at least 86400",
+    "cargo +nightly-2026-08-12 miri test -p oxyflut-assets checked_rgba_bytes",
+    "cargo +nightly-2026-08-12 miri test -p oxyflut-assets asset_decode_replays_image_registry"
   ],
   "acceptance": "both focused and integrated builds execute the identical shared Rust tests and replay the identical corpus; neither adapter receives an allocation request for the rejected dimensions",
   "evidence": [
@@ -488,6 +533,19 @@ eb3b364063704fcec77363d5fb50bf052ac9018e146e02205eef350c07eef3d9  security-patch
     "tool identity digest"
   ]
 }
+```
+
+The output of P9 follows:
+
+```text
+$ perl /tmp/wf-epic-b/OXY-B006/extract-staged-json.pl .constitution/spikes/SPK-B006.md /tmp/wf-epic-b/OXY-B006
+WROTE /tmp/wf-epic-b/OXY-B006/fuzz-corpora.json bytes=12144
+WROTE /tmp/wf-epic-b/OXY-B006/security-patch-rehearsal.json bytes=1861
+$ jq -e . /tmp/wf-epic-b/OXY-B006/fuzz-corpora.json >/dev/null
+$ jq -e . /tmp/wf-epic-b/OXY-B006/security-patch-rehearsal.json >/dev/null
+$ sha256sum /tmp/wf-epic-b/OXY-B006/fuzz-corpora.json /tmp/wf-epic-b/OXY-B006/security-patch-rehearsal.json
+0f349f9b42fcb1dd295d0c577f2866eb70605153ad0dde68f2b486c4b71148df  /tmp/wf-epic-b/OXY-B006/fuzz-corpora.json
+fa8d4fe18ec459f3525490c093043755186dfc7e1ebcef5c9157045161fbcce1  /tmp/wf-epic-b/OXY-B006/security-patch-rehearsal.json
 ```
 
 ## Sources
@@ -505,4 +563,7 @@ eb3b364063704fcec77363d5fb50bf052ac9018e146e02205eef350c07eef3d9  security-patch
 - [Unicode License V3 dated snapshot](https://web.archive.org/web/20240825031908id_/https://www.unicode.org/license.txt)
 - [Unicode CLDR 45 release note and SPDX mapping](https://cldr.unicode.org/downloads/cldr-45)
 - [LLVM libFuzzer documentation](https://llvm.org/docs/LibFuzzer.html)
+- [cargo-fuzz 0.13.2 README](https://raw.githubusercontent.com/rust-fuzz/cargo-fuzz/0.13.2/README.md)
+- [image Apache-2.0 notice](https://raw.githubusercontent.com/image-rs/image/76e57184f22772dad1138e96954e57945406b15e/LICENSE-APACHE)
+- [image MIT notice](https://raw.githubusercontent.com/image-rs/image/76e57184f22772dad1138e96954e57945406b15e/LICENSE-MIT)
 - The canonical registry names every fetched immutable seed and license URL; P4 preserves the corresponding SHA-256 verification output.
