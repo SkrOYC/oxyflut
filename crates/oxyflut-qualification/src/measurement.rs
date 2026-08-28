@@ -128,6 +128,7 @@ pub struct RawSample {
     value: f64,
     unit: String,
     valid: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
     exclusion_reason: Option<RawExclusionReason>,
     harness_log: EvidenceBinding,
 }
@@ -423,6 +424,7 @@ impl SampleValidityRecord {
 struct ComparisonBoundInput {
     constraint_id: String,
     statistic: ComparisonStatistic,
+    #[serde(skip_serializing_if = "Option::is_none")]
     percentile: Option<u8>,
     unit: String,
     retain_all_valid_observations: bool,
