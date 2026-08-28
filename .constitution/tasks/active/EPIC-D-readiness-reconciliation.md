@@ -30,9 +30,12 @@ The reconciliation report must name these Stage 3 revisions:
 - `.constitution/tech-spec/data-models/accessibility-map.schema.json` `reverseActions[].textLayoutBinding` has no text-layout generation value.
 - `.constitution/tech-spec/data-models/specification-phase.schema.json` `promotionEvidence.layoutQualification`, `finalContractSet`, `targetMatrix`, `losingCandidateRemoval`, and `billOfMaterials` use generic evidence references instead of typed schemas.
 - `.constitution/tech-spec/data-models/raw-measurement.schema.json` omits the `$schema` property, so raw-measurement instances cannot self-declare their schema.
+- `.constitution/tech-spec/data-models/raw-measurement.schema.json` doesn't state that `samples[].monotonicNs` is non-decreasing per `(constraintId, launch)`.
 - No Stage 3 schema defines `qualification-lock.schema.json#measurementPolicy.sampleValidityRules`; `qualification/schemas/sample-validity.schema.json` is the proposed staged schema and its digest is the proposed binding value.
 - The proposed external-contract lock values in `qualification/schemas/external/proposed-external-contract-lock.json` await Stage 3 adoption.
 - `xtask environment inspect` writes the `PATH.inventory.json` companion artifact, but no Stage 3 schema defines it and `qualification-lock.schema.json#referenceEnvironments` has no typed reference to it.
+- Wayland interface-set completeness has no Stage 3 rule. The companion inventory retains a partial observed `protocolVersion`, which lock v5 cannot represent.
+- OXY-D001 must confirm the temporary 256 KiB capture bound for `wayland-info` and `xdpyinfo` against real Ubuntu 26.04 output sizes. Truncated output remains fail-closed.
 - `qualification-lock.schema.json#measurementPolicy.{scoringAnchors,assessors,fuzzCorpora,securityPatchRehearsal}` binds path-less digests; the repository convention `qualification/staged/<field>.json` is the proposed referent and needs Stage 3 typing.
 - `qualification-lock.schema.json#resolvedTools` lacks the `pathRoot` field used by `qualification/tools/native-contract-toolchain.json` for rustup-home-relative tools.
 - Dependency advisory validation is deferred: `cargo deny --offline check advisories` and `cargo audit` can use a host-cached RustSec database, but the repository has no pinned vendored advisory database for CI. CI runs `cargo deny check licenses bans sources` until OXY-D001 records a pinned offline advisory database and its refresh policy.

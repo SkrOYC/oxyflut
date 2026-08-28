@@ -187,6 +187,7 @@ Commands:
 - **Touched Files:** `.constitution/tasks/active/EPIC-C-lock-input-tooling.md`.
 - **Justification:** The execution rules require this scope-deviation record.
 - **OXY-D001 input:** macOS `compositor`, `protocolVersion`, and `driverVersion`, plus Windows `compositor`, `session`, and `protocolVersion`, require a bounded manual capture because no authoritative content-free CLI provides them. Linux `protocolVersion` requires the same capture only when `wayland-info` or `xdpyinfo` is unavailable or unparseable. Output that exceeds the collector bound emits `missing { reason: inventory-exceeds-bound }` without parsing a partial response; otherwise the collectors emit `missing { reason: manual-capture }` rather than inferring a value.
+- **Lead ruling:** The lead host cannot measure `wayland-info` or `xdpyinfo` output. Only those protocol sources use a provisional 256 KiB capture bound; every other command keeps `COMMAND_OUTPUT_LIMIT`. Truncated output remains fail-closed. OXY-D001 must confirm the bound against real Ubuntu 26.04 output sizes.
 - **Exact-version rule:** The macOS operating-system pin matches `sw_vers -productVersion` exactly. A `26.5.1` host fails closed rather than matching the `macos-26.5` pin by prefix.
 - **Session fail-closed rule:** Wayland and X11 collection rejects every missing session value before publishing either artifact.
 - **OXY-D001 input:** A partial Wayland interface observation remains in the companion inventory because lock v5 has no `protocolVersion` field. Stage 3 must define the required interface-set completeness rule before the lock can adopt this evidence.
@@ -263,6 +264,7 @@ Epic C completed its 21 story points without claiming that any staged input is c
 | PR review round 6 | `e5036d8`, `d024f02`, `00f4908`, `63eafb2` | Targeted validation and the final review quality gate passed. | Rejected unobservable Linux sessions and relative resolved tools, verified committed complete and readiness fixtures, scoped raw clocks per launch, narrowed the evidence writer surface, and aligned manifest-bound readiness fixtures without changing qualification readiness. |
 | PR review round 6 (CI fix) | `ac14a9e`, `57bdc88` | The full suite passed with the default and alternate Rustup roots. | Replaced developer-home Rustup paths with manifest-relative fixture paths, resolved them through `pathRoot` in test loaders, refreshed immutable fixture bindings, and recorded the host-independent correction. |
 | PR review round 7 | `df7a288` | Full final quality gate passed. | Preserved external snapshot bytes, rejected whitespace-only baseline fields, and reported oversized macOS and Windows observations as bounded missing values without changing qualification readiness. |
+| PR review round 8 | `e9adbbe` | Full final quality gate passed. | Accepted Debian package-version tildes, typed bounded capture failures, enforced staged-proposal KU and resolved-tool invariants, and retained the fail-closed protocol capture rule without changing qualification readiness. |
 
 ### Stage 3 revisions required — routed to OXY-D001
 
