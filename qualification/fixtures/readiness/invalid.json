@@ -1,0 +1,155 @@
+{
+  "$schema": "../data-models/qualification-lock.schema.json",
+  "schemaVersion": "5.0.0",
+  "candidateImplementationReady": false,
+  "measurementReady": false,
+  "sourcePins": {
+    "rust": {
+      "version": "1.98.0",
+      "commit": "88d9e12ae178fab0fb5cc050a94da85685d449ea"
+    },
+    "flutterFramework": {
+      "version": "3.47.0",
+      "commit": "4cf24164269a5ebf0c16a028a00727d0e77bbb05"
+    },
+    "flutterEngine": {
+      "version": "3.47.0-engine",
+      "commit": "5f77625673248ee5846fbcaf5d3e1a3878386fd7"
+    },
+    "impellerHeaderBlob": "440f83aac6580495e488ba350e6d5cbbb32e2f11",
+    "integratedFork": {
+      "status": "ku-gating",
+      "commit": null
+    },
+    "oxyflutAdapter": {
+      "status": "ku-gating",
+      "commit": null
+    },
+    "upgradeLines": [
+      {
+        "version": "3.41.0",
+        "commit": "44a626f4f0027bc38a46dc68aed5964b05a83c18"
+      },
+      {
+        "version": "3.44.0",
+        "commit": "559ffa3f75e7402d65a8def9c28389a9b2e6fe42"
+      },
+      {
+        "version": "3.47.0",
+        "commit": "4cf24164269a5ebf0c16a028a00727d0e77bbb05"
+      }
+    ]
+  },
+  "candidateArtifacts": {
+    "darwin-arm64": {
+      "url": "https://storage.googleapis.com/flutter_infra_release/flutter/5f77625673248ee5846fbcaf5d3e1a3878386fd7/darwin-arm64/impeller_sdk.zip",
+      "sourceRevision": "5f77625673248ee5846fbcaf5d3e1a3878386fd7",
+      "httpVerified": true,
+      "sha256": "bb571afdfbdbd4f1e84b265a77b5f890aa1c564bc90d2e224c245632f62badf8",
+      "sizeBytes": 236704745
+    },
+    "linux-x64": {
+      "url": "https://storage.googleapis.com/flutter_infra_release/flutter/5f77625673248ee5846fbcaf5d3e1a3878386fd7/linux-x64/impeller_sdk.zip",
+      "sourceRevision": "5f77625673248ee5846fbcaf5d3e1a3878386fd7",
+      "httpVerified": true,
+      "sha256": "e4c3e81fe8c857a349f7077680c95d44a2f264cdbaf797f7310e8dc3c6201a93",
+      "sizeBytes": 22528769
+    },
+    "windows-x64": {
+      "url": "https://storage.googleapis.com/flutter_infra_release/flutter/5f77625673248ee5846fbcaf5d3e1a3878386fd7/windows-x64/impeller_sdk.zip",
+      "sourceRevision": "5f77625673248ee5846fbcaf5d3e1a3878386fd7",
+      "httpVerified": true,
+      "sha256": "c3766f293c61353fbfa0d021e6f15bd9193feca0bde3c6e12799e0ada2c6ccde",
+      "sizeBytes": 105779655
+    }
+  },
+  "referenceEnvironments": {
+    "macos-arm64": {
+      "operatingSystem": "macOS with Xcode 26.6 build 17F113 and macOS 26.5 SDK",
+      "minimumVersion": null,
+      "hardwareId": null,
+      "gpuId": null,
+      "driverVersion": null,
+      "systemPackageLockDigest": null
+    },
+    "windows-x86_64": {
+      "operatingSystem": "Windows 11 25H2 with Visual Studio Build Tools 2022 17.14.39 and Windows SDK 10.0.26100.8876",
+      "minimumVersion": null,
+      "hardwareId": null,
+      "gpuId": null,
+      "driverVersion": null,
+      "systemPackageLockDigest": null
+    },
+    "wayland-linux-x86_64": {
+      "operatingSystem": "Ubuntu 26.04 LTS Wayland session",
+      "minimumVersion": null,
+      "hardwareId": null,
+      "gpuId": null,
+      "driverVersion": null,
+      "systemPackageLockDigest": null
+    },
+    "x11-linux-x86_64": {
+      "operatingSystem": "Ubuntu 26.04 LTS X11 session",
+      "minimumVersion": null,
+      "hardwareId": null,
+      "gpuId": null,
+      "driverVersion": null,
+      "systemPackageLockDigest": null
+    }
+  },
+  "workload": {
+    "referenceApplication": null,
+    "scenes": null,
+    "interactionScripts": null,
+    "fonts": null,
+    "assets": null,
+    "windowMatrix": null,
+    "cacheStates": null,
+    "releaseFlags": null
+  },
+  "measurementPolicy": {
+    "rawMeasurementSchema": null,
+    "sampleValidityRules": null,
+    "capabilityBaseline": null,
+    "platformContracts": "0000000000000000000000000000000000000000000000000000000000000000",
+    "scoringAnchors": null,
+    "assessors": null,
+    "fuzzCorpora": null,
+    "securityPatchRehearsal": null,
+    "externalContractLock": null,
+    "layoutVisitCap": null
+  },
+  "resolvedTools": [],
+  "preImplementationKnownUnknowns": [
+    "minimum-platform-and-protocol-versions",
+    "hardware-gpu-driver-and-system-package-locks",
+    "reference-application-scenes-scripts-fonts-assets-windows-cache-and-flags",
+    "raw-measurement-and-sample-validity-contracts",
+    "capability-and-platform-baselines",
+    "independent-presentation-opportunity-sources",
+    "complete-ime-editing-geometry-and-accessibility-maps",
+    "scoring-anchors-and-two-assessors",
+    "fuzz-corpora",
+    "security-patch-rehearsal",
+    "layout-visit-cap",
+    "external-distribution-schema-snapshots-and-verifiers",
+    "resolved-tool-digests"
+  ],
+  "gatingKnownUnknowns": [
+    "integrated-fork-commit",
+    "oxyflut-adapter-commit",
+    "minimum-platform-and-protocol-versions",
+    "hardware-gpu-driver-and-system-package-locks",
+    "reference-application-scenes-scripts-fonts-assets-windows-cache-and-flags",
+    "raw-measurement-and-sample-validity-contracts",
+    "capability-and-platform-baselines",
+    "independent-presentation-opportunity-sources",
+    "complete-ime-editing-geometry-and-accessibility-maps",
+    "scoring-anchors-and-two-assessors",
+    "fuzz-corpora",
+    "security-patch-rehearsal",
+    "layout-visit-cap",
+    "external-distribution-schema-snapshots-and-verifiers",
+    "resolved-tool-digests"
+  ]
+}
