@@ -6,7 +6,7 @@ All notable changes to the Stage 4 execution plan appear in this file.
 
 ### Fixed
 
-- Applied PR review round 4 corrections for Windows release normalization, bounded Linux protocol collection, reference-environment pins, artifact-pair cleanup, readiness diagnostics, staged input verification, KU evidence paths, and PRD meter parsing.
+- Applied PR review round 4 corrections in `5ee7b8c` for Windows release normalization, bounded Linux protocol collection, reference-environment pins, artifact-pair cleanup, readiness diagnostics, staged input verification, KU evidence paths, and PRD meter parsing.
 
 ### Noted
 
