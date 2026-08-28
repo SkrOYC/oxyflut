@@ -103,7 +103,7 @@ RUSTC_BIN="$(rustup which --toolchain "$TOOLCHAIN" rustc)"
 CARGO_BIN="$(rustup which --toolchain "$TOOLCHAIN" cargo)"
 CARGO_MIRI_BIN="$(rustup which --toolchain "$TOOLCHAIN" cargo-miri)"
 CARGO_FUZZ_BIN="$(command -v cargo-fuzz)"
-TIME_BIN="$(which time)"
+TIME_BIN="$(command -v /run/current-system/sw/bin/time)"
 test "$(rustc +"$TOOLCHAIN" -vV | awk '/^commit-hash:/ {print $2}')" = "3d6c19bb9ab4798ecfb2ee943df01a811720fc27"
 printf '%s  %s\n' \
   '7de94a5c099c8d7ee4cafb905e36d882325faa480d8cff6513dd8c0887fac0c5' "$RUSTC_BIN" \
@@ -221,7 +221,7 @@ Table 3. Ingress-to-corpus and expected-test map
 | Architecture ingress | Seed sets | Expected parser or boundary test | Cap |
 | :-- | :-- | :-- | --: |
 | Application assets, fonts, and images | `image`, `font`, `json` | `asset_decode`, `font_registration`, and `asset_manifest_json` reject malformed or oversized input before allocation. | 1,048,576 bytes, except `json` at 65,536 bytes |
-| Operating-environment events | `wpt-events` | `platform_event_normalization` rejects invalid shape, stale identity, invalid order, and cap breach. | 65,536 bytes |
+| Pointer, touch, keyboard, window, display, and lifecycle events | `wpt-events` | `platform_event_normalization` rejects invalid shape, stale identity, invalid order, and cap breach. | 65,536 bytes |
 | Input method editor, clipboard, and platform-message content | `unicode-text`, `wpt-events` | `ime_transaction`, `clipboard_transaction`, and `platform_message` reject invalid range, index unit, sensitive-field, and payload size without recording content. | 8,388,608 bytes for Unicode seed files; 65,536 bytes for event seeds |
 | Accessibility properties and actions | `unicode-text`, `wpt-events` | `semantics_update` and `semantics_action` reject invalid node, action, range, and private payload without retargeting. | 8,388,608 bytes for Unicode seed files; 65,536 bytes for event seeds |
 | Candidate callbacks, resources, and errors | `json`, `wpt-events` | `abi_callback_decoder` and `abi_resource_validator` reject unknown status, invalid length, invalid enum, stale generation, and buffer overflow before candidate work. | 65,536 bytes |
@@ -237,19 +237,21 @@ The corpus importer may derive target-specific encodings only from a listed sour
 - Tickets unblocked in `tasks/active/`: `OXY-D001` can materialize the two staged policy records. Candidate fuzz targets remain contingent on candidate implementation.
 - Tickets to add or split: Create one implementation ticket for each actual parser ingress that the implementation inventory adds beyond table 3. Each ticket must inherit the same registry admission and campaign rules.
 - Spec edits required:
-  - `qualification/staged/fuzz-corpora.json`: create this file with the exact canonical bytes in the next section. `.constitution/tech-spec/contracts/qualification-lock.json`, `measurementPolicy.fuzzCorpora`: set the value to `0f349f9b42fcb1dd295d0c577f2866eb70605153ad0dde68f2b486c4b71148df`.
+  - `qualification/staged/fuzz-corpora.json`: create this file with the exact canonical bytes in the next section. `.constitution/tech-spec/contracts/qualification-lock.json`, `measurementPolicy.fuzzCorpora`: set the value to `ca622a22acef4394e81856de37b8ca3d15e8ffa2f49daaea483278a85306ee11`.
   - `qualification/staged/security-patch-rehearsal.json`: create this file with the exact canonical bytes in the next section. `.constitution/tech-spec/contracts/qualification-lock.json`, `measurementPolicy.securityPatchRehearsal`: set the value to `fa8d4fe18ec459f3525490c093043755186dfc7e1ebcef5c9157045161fbcce1`.
   - `.constitution/tech-spec/contracts/qualification-lock.json`, `resolvedTools`: append the exact `instrumentation.campaignToolchain.hostToolRecords[0]` record from `qualification/staged/fuzz-corpora.json`; require an equivalent complete record, including executable hashes and CPU-accounting fields, for every campaign host. Retain `resolved-tool-digests` in both known-unknown arrays until that condition holds.
   - `.constitution/tech-spec/contracts/qualification-lock.json`, `preImplementationKnownUnknowns` and `gatingKnownUnknowns`: after both staged records and every listed source and license byte pass admission, remove only `fuzz-corpora` and `security-patch-rehearsal`. Leave all unrelated readiness gates unchanged.
 
 ### Canonical staged inputs
 
-Each displayed JSON block is UTF-8, uses the displayed 2-space indentation and key order, and ends with exactly one LF. P9 extracts each displayed block byte-for-byte to its named file and hashes those files with `sha256sum`.
+Each displayed JSON block is UTF-8, uses the displayed 2-space indentation and key order, and ends with exactly one LF. P9 extracted the original displayed blocks byte-for-byte to their named files and hashed those files with `sha256sum`; P10 re-verifies the corrected current blocks.
 
-The following source bytes produced the stated digests:
+The preflight now resolves the explicit host GNU Time executable with `command -v /run/current-system/sw/bin/time`, rather than non-POSIX `which`; this avoids resolving the shell `time` keyword while retaining the host executable that P8 hashed. The `fuzz-corpora.json` canonical digest changed from `0f349f9b42fcb1dd295d0c577f2866eb70605153ad0dde68f2b486c4b71148df` to `ca622a22acef4394e81856de37b8ca3d15e8ffa2f49daaea483278a85306ee11`. The `security-patch-rehearsal.json` digest remains `fa8d4fe18ec459f3525490c093043755186dfc7e1ebcef5c9157045161fbcce1`.
+
+The corrected current source bytes produce these declared digests:
 
 ```text
-0f349f9b42fcb1dd295d0c577f2866eb70605153ad0dde68f2b486c4b71148df  fuzz-corpora.json
+ca622a22acef4394e81856de37b8ca3d15e8ffa2f49daaea483278a85306ee11  fuzz-corpora.json
 fa8d4fe18ec459f3525490c093043755186dfc7e1ebcef5c9157045161fbcce1  security-patch-rehearsal.json
 ```
 
@@ -293,7 +295,7 @@ fa8d4fe18ec459f3525490c093043755186dfc7e1ebcef5c9157045161fbcce1  security-patch
       "preflight": [
         "TOOLCHAIN=nightly-2026-08-12",
         "test \"$(rustc +$TOOLCHAIN -vV | awk '/^commit-hash:/ {print $2}')\" = \"3d6c19bb9ab4798ecfb2ee943df01a811720fc27\"",
-        "RUSTC_BIN=\"$(rustup which --toolchain $TOOLCHAIN rustc)\"; CARGO_BIN=\"$(rustup which --toolchain $TOOLCHAIN cargo)\"; CARGO_MIRI_BIN=\"$(rustup which --toolchain $TOOLCHAIN cargo-miri)\"; CARGO_FUZZ_BIN=\"$(command -v cargo-fuzz)\"; TIME_BIN=\"$(which time)\"",
+        "RUSTC_BIN=\"$(rustup which --toolchain $TOOLCHAIN rustc)\"; CARGO_BIN=\"$(rustup which --toolchain $TOOLCHAIN cargo)\"; CARGO_MIRI_BIN=\"$(rustup which --toolchain $TOOLCHAIN cargo-miri)\"; CARGO_FUZZ_BIN=\"$(command -v cargo-fuzz)\"; TIME_BIN=\"$(command -v /run/current-system/sw/bin/time)\"",
         "printf \"%s  %s\\n\" \"7de94a5c099c8d7ee4cafb905e36d882325faa480d8cff6513dd8c0887fac0c5\" \"$RUSTC_BIN\" \"1cf1cd7feded113706026c5f04fad33e45364546e3c0d92ddee0c1a4c8277296\" \"$CARGO_BIN\" \"40a69668c9ff4e5df3e6a87531f2b87dcc5c84e705ee5b06f915fb76383c94af\" \"$CARGO_MIRI_BIN\" \"db150590a2f9fa003fb167bc0eec3f90ba5574fcdd01f78110e6f397dda56582\" \"$CARGO_FUZZ_BIN\" \"e8b9f5440e01a81e0692e68d07dfacb8059c434cae100c1fbb60b7ec52848480\" \"$TIME_BIN\" | sha256sum -c -",
         "test \"$(cargo +$TOOLCHAIN fuzz --version)\" = \"cargo-fuzz 0.13.2\""
       ],
@@ -546,6 +548,22 @@ $ jq -e . /tmp/wf-epic-b/OXY-B006/security-patch-rehearsal.json >/dev/null
 $ sha256sum /tmp/wf-epic-b/OXY-B006/fuzz-corpora.json /tmp/wf-epic-b/OXY-B006/security-patch-rehearsal.json
 0f349f9b42fcb1dd295d0c577f2866eb70605153ad0dde68f2b486c4b71148df  /tmp/wf-epic-b/OXY-B006/fuzz-corpora.json
 fa8d4fe18ec459f3525490c093043755186dfc7e1ebcef5c9157045161fbcce1  /tmp/wf-epic-b/OXY-B006/security-patch-rehearsal.json
+```
+
+The output of P10 follows:
+
+```text
+$ perl /tmp/wf-epic-b/OXY-B006/reverify-canonical-json.pl .constitution/spikes/SPK-B006.md /tmp/wf-epic-b/OXY-B006/p10
+WROTE /tmp/wf-epic-b/OXY-B006/p10/fuzz-corpora.json bytes=12176 sha256=ca622a22acef4394e81856de37b8ca3d15e8ffa2f49daaea483278a85306ee11
+WROTE /tmp/wf-epic-b/OXY-B006/p10/security-patch-rehearsal.json bytes=1861 sha256=fa8d4fe18ec459f3525490c093043755186dfc7e1ebcef5c9157045161fbcce1
+$ jq -e . /tmp/wf-epic-b/OXY-B006/p10/fuzz-corpora.json >/dev/null
+$ jq -e . /tmp/wf-epic-b/OXY-B006/p10/security-patch-rehearsal.json >/dev/null
+$ sha256sum /tmp/wf-epic-b/OXY-B006/p10/fuzz-corpora.json /tmp/wf-epic-b/OXY-B006/p10/security-patch-rehearsal.json
+ca622a22acef4394e81856de37b8ca3d15e8ffa2f49daaea483278a85306ee11  /tmp/wf-epic-b/OXY-B006/p10/fuzz-corpora.json
+fa8d4fe18ec459f3525490c093043755186dfc7e1ebcef5c9157045161fbcce1  /tmp/wf-epic-b/OXY-B006/p10/security-patch-rehearsal.json
+$ printf '%s  %s\n' ca622a22acef4394e81856de37b8ca3d15e8ffa2f49daaea483278a85306ee11 /tmp/wf-epic-b/OXY-B006/p10/fuzz-corpora.json fa8d4fe18ec459f3525490c093043755186dfc7e1ebcef5c9157045161fbcce1 /tmp/wf-epic-b/OXY-B006/p10/security-patch-rehearsal.json | sha256sum -c -
+/tmp/wf-epic-b/OXY-B006/p10/fuzz-corpora.json: OK
+/tmp/wf-epic-b/OXY-B006/p10/security-patch-rehearsal.json: OK
 ```
 
 ## Sources
