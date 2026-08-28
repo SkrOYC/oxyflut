@@ -1,11 +1,16 @@
 //! Offline verification for snapshotted external distribution contracts.
+//!
+//! The SPDX JSON Schema snapshot has no immutable upstream commit pin because SPDX publishes it
+//! from `spdx.org`, not from a commit-addressed repository path. Its metadata binds the published
+//! URL and digest to the pinned SPDX serialization document that publishes that URL.
 
 use std::fs;
-use std::io::{self, Cursor};
+use std::io;
+
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering};
 
-use oxyflut_qualification::hash::{Sha256Digest, hash_file, hash_reader};
+use oxyflut_qualification::hash::{Sha256Digest, hash_file};
 use oxyflut_qualification::schema::{SchemaError, SchemaRegistry};
 use serde_json::Value;
 use thiserror::Error;
@@ -19,10 +24,14 @@ const STATEMENT_SCHEMA: &str = "urn:oxyflut:schema:external-in-toto-statement-v1
 const PROVENANCE_SCHEMA: &str = "urn:oxyflut:schema:external-slsa-provenance-v1:1";
 const DSSE_SCHEMA: &str = "urn:oxyflut:schema:external-dsse-envelope-v1:1";
 const EXTERNAL_LOCK_SCHEMA: &str = "urn:oxyflut:schema:external-contract-lock:1";
-const DSSE_PAYLOAD_TYPE: &str = "application/vnd.in-toto+json";
-const DSSE_TEST_KEY_ID: &str = "oxyflut-fixture-sha256-test-key-v1";
-const DSSE_TEST_ALGORITHM: &str = "OXYFLUT-TEST-SHA256-KEYED-V1";
-const DSSE_PAE_PREFIX: &[u8] = b"DSSEv1";
+#[path = "external_contracts/dsse.rs"]
+mod dsse;
+
+use dsse::{
+    PAYLOAD_TYPE as DSSE_PAYLOAD_TYPE, TEST_ALGORITHM as DSSE_TEST_ALGORITHM,
+    TEST_KEY_ID as DSSE_TEST_KEY_ID, TestKey, decode_base64, pae as dsse_pae,
+    verify_fixture_signature,
+};
 const SPDX_CONTEXT_PATH: &str =
     "qualification/schemas/external/spdx-3.0.1/jsonld-context/spdx-context.jsonld";
 const SPDX_CONTEXT_URI: &str = "https://spdx.org/rdf/3.0.1/spdx-context.jsonld";
@@ -107,6 +116,7 @@ fn verify_snapshots(root: &Path) -> Result<(), ExternalContractsError> {
         require_string(object, "sha256", &expected.to_string(), &metadata)?;
         match &snapshot.identity {
             SnapshotIdentity::Authoritative(identity) => {
+                verify_retrieval_source_consistency(object, &metadata)?;
                 require_string(object, "kind", "authoritative", &metadata)?;
                 require_string(object, "repository", identity.repository, &metadata)?;
                 require_string(object, "commit", identity.commit, &metadata)?;
@@ -114,6 +124,23 @@ fn verify_snapshots(root: &Path) -> Result<(), ExternalContractsError> {
                 require_string(object, "retrievalUrl", identity.retrieval_url, &metadata)?;
                 require_string(object, "license", identity.license, &metadata)?;
                 require_license_source(object, identity, &metadata)?;
+                require_string(object, "version", identity.version, &metadata)?;
+            }
+            SnapshotIdentity::Published(identity) => {
+                verify_retrieval_source_consistency(object, &metadata)?;
+                require_string(object, "kind", "authoritative", &metadata)?;
+                require_absent(object, "repository", &metadata)?;
+                require_absent(object, "commit", &metadata)?;
+                require_absent(object, "path", &metadata)?;
+                require_string(object, "retrievalUrl", identity.retrieval_url, &metadata)?;
+                require_publication_source(object, identity.publication_source, &metadata)?;
+                require_string(object, "license", identity.license, &metadata)?;
+                require_license_fields(
+                    object,
+                    identity.license_source_path,
+                    identity.license_source_commit,
+                    &metadata,
+                )?;
                 require_string(object, "version", identity.version, &metadata)?;
             }
             SnapshotIdentity::Derived(identity) => {
@@ -154,9 +181,82 @@ fn require_string(
     }
 }
 
+fn require_absent(
+    object: &serde_json::Map<String, Value>,
+    key: &str,
+    path: &Path,
+) -> Result<(), ExternalContractsError> {
+    if object.contains_key(key) {
+        Err(ExternalContractsError::SourceIdentity {
+            path: path.to_path_buf(),
+        })
+    } else {
+        Ok(())
+    }
+}
+
+fn verify_retrieval_source_consistency(
+    object: &serde_json::Map<String, Value>,
+    metadata_path: &Path,
+) -> Result<(), ExternalContractsError> {
+    let repository = object.get("repository").and_then(Value::as_str);
+    let commit = object.get("commit").and_then(Value::as_str);
+    let source_path = object.get("path").and_then(Value::as_str);
+    match (repository, commit, source_path) {
+        (Some(repository), Some(commit), Some(source_path)) => {
+            let repository = repository
+                .strip_prefix("https://github.com/")
+                .filter(|value| !value.is_empty())
+                .ok_or(ExternalContractsError::SourceIdentity {
+                    path: metadata_path.to_path_buf(),
+                })?;
+            let expected =
+                format!("https://raw.githubusercontent.com/{repository}/{commit}/{source_path}");
+            require_string(object, "retrievalUrl", &expected, metadata_path)
+        }
+        (None, None, None) => {
+            let publication = object
+                .get("publicationSource")
+                .and_then(Value::as_object)
+                .ok_or(ExternalContractsError::SourceIdentity {
+                    path: metadata_path.to_path_buf(),
+                })?;
+            for field in ["localPath", "sha256", "path", "commit"] {
+                if publication
+                    .get(field)
+                    .and_then(Value::as_str)
+                    .is_none_or(str::is_empty)
+                {
+                    return Err(ExternalContractsError::SourceIdentity {
+                        path: metadata_path.to_path_buf(),
+                    });
+                }
+            }
+            Ok(())
+        }
+        _ => Err(ExternalContractsError::SourceIdentity {
+            path: metadata_path.to_path_buf(),
+        }),
+    }
+}
+
 fn require_license_source(
     object: &serde_json::Map<String, Value>,
     identity: &AuthoritativeIdentity,
+    metadata_path: &Path,
+) -> Result<(), ExternalContractsError> {
+    let license_path = if identity.repository == "https://github.com/slsa-framework/slsa" {
+        "LICENSE.md"
+    } else {
+        "LICENSE"
+    };
+    require_license_fields(object, license_path, identity.commit, metadata_path)
+}
+
+fn require_license_fields(
+    object: &serde_json::Map<String, Value>,
+    license_path: &str,
+    license_commit: &str,
     metadata_path: &Path,
 ) -> Result<(), ExternalContractsError> {
     let license_source = object
@@ -165,13 +265,25 @@ fn require_license_source(
         .ok_or(ExternalContractsError::SourceIdentity {
             path: metadata_path.to_path_buf(),
         })?;
-    let license_path = if identity.repository == "https://github.com/slsa-framework/slsa" {
-        "LICENSE.md"
-    } else {
-        "LICENSE"
-    };
     require_string(license_source, "path", license_path, metadata_path)?;
-    require_string(license_source, "commit", identity.commit, metadata_path)
+    require_string(license_source, "commit", license_commit, metadata_path)
+}
+
+fn require_publication_source(
+    object: &serde_json::Map<String, Value>,
+    expected: &PublicationSource,
+    metadata_path: &Path,
+) -> Result<(), ExternalContractsError> {
+    let publication = object
+        .get("publicationSource")
+        .and_then(Value::as_object)
+        .ok_or(ExternalContractsError::SourceIdentity {
+            path: metadata_path.to_path_buf(),
+        })?;
+    require_string(publication, "localPath", expected.local_path, metadata_path)?;
+    require_string(publication, "sha256", expected.sha256, metadata_path)?;
+    require_string(publication, "path", expected.path, metadata_path)?;
+    require_string(publication, "commit", expected.commit, metadata_path)
 }
 
 fn verify_proposal(root: &Path) -> Result<(), ExternalContractsError> {
@@ -410,33 +522,6 @@ fn verify_dsse_envelope(
     }
 }
 
-fn dsse_pae(payload_type: &[u8], payload: &[u8]) -> Result<Vec<u8>, ExternalContractsError> {
-    let payload_type_length = payload_type.len().to_string();
-    let payload_length = payload.len().to_string();
-    let capacity = DSSE_PAE_PREFIX
-        .len()
-        .checked_add(1)
-        .and_then(|value| value.checked_add(payload_type_length.len()))
-        .and_then(|value| value.checked_add(1))
-        .and_then(|value| value.checked_add(payload_type.len()))
-        .and_then(|value| value.checked_add(1))
-        .and_then(|value| value.checked_add(payload_length.len()))
-        .and_then(|value| value.checked_add(1))
-        .and_then(|value| value.checked_add(payload.len()))
-        .ok_or(ExternalContractsError::Pae)?;
-    let mut pae = Vec::with_capacity(capacity);
-    pae.extend_from_slice(DSSE_PAE_PREFIX);
-    pae.push(b' ');
-    pae.extend_from_slice(payload_type_length.as_bytes());
-    pae.push(b' ');
-    pae.extend_from_slice(payload_type);
-    pae.push(b' ');
-    pae.extend_from_slice(payload_length.as_bytes());
-    pae.push(b' ');
-    pae.extend_from_slice(payload);
-    Ok(pae)
-}
-
 fn read_test_key(root: &Path) -> Result<TestKey, ExternalContractsError> {
     let path = root.join(FIXTURES_DIRECTORY).join("test-key.json");
     let value = read_json(&path)?;
@@ -469,100 +554,6 @@ fn read_test_key(root: &Path) -> Result<TestKey, ExternalContractsError> {
         key: key.to_owned(),
         purpose: purpose.to_owned(),
     })
-}
-
-fn verify_fixture_signature(
-    signature: &Value,
-    pae: &[u8],
-    key: &TestKey,
-) -> Result<bool, ExternalContractsError> {
-    if key.key_id != DSSE_TEST_KEY_ID
-        || key.algorithm != DSSE_TEST_ALGORITHM
-        || key.purpose != "non-production DSSE verifier fixture only"
-    {
-        return Ok(false);
-    }
-    let signature = signature.as_object().ok_or(ExternalContractsError::Pae)?;
-    if signature.get("keyid").and_then(Value::as_str) != Some(&key.key_id) {
-        return Ok(false);
-    }
-    let encoded = signature
-        .get("sig")
-        .and_then(Value::as_str)
-        .ok_or(ExternalContractsError::Pae)?;
-    let actual = decode_base64(encoded).ok_or(ExternalContractsError::Pae)?;
-    let capacity = pae
-        .len()
-        .checked_add(key.key.len())
-        .ok_or(ExternalContractsError::Pae)?;
-    let mut verification_input = Vec::with_capacity(capacity);
-    verification_input.extend_from_slice(pae);
-    verification_input.extend_from_slice(key.key.as_bytes());
-    let expected =
-        hash_reader(Cursor::new(verification_input)).map_err(|_| ExternalContractsError::Pae)?;
-    Ok(actual.as_slice() == expected.as_bytes())
-}
-
-fn decode_base64(input: &str) -> Option<Vec<u8>> {
-    let bytes = input.as_bytes();
-    let padding = bytes.iter().rev().take_while(|byte| **byte == b'=').count();
-    if padding > 2 || bytes[..bytes.len().saturating_sub(padding)].contains(&b'=') {
-        return None;
-    }
-    let raw = &bytes[..bytes.len().saturating_sub(padding)];
-    if raw.len() % 4 == 1 {
-        return None;
-    }
-    if padding > 0 && !bytes.len().is_multiple_of(4) {
-        return None;
-    }
-    let capacity = raw.len().checked_mul(3)?.checked_div(4)?.checked_add(2)?;
-    let mut decoded = Vec::with_capacity(capacity);
-    let (groups, remainder) = raw.as_chunks::<4>();
-    for [first, second, third, fourth] in groups {
-        let first = base64_value(*first)?;
-        let second = base64_value(*second)?;
-        let third = base64_value(*third)?;
-        let fourth = base64_value(*fourth)?;
-        decoded.push((first << 2) | (second >> 4));
-        decoded.push((second << 4) | (third >> 2));
-        decoded.push((third << 6) | fourth);
-    }
-    match remainder {
-        [] => Some(decoded),
-        [first, second] => {
-            let first = base64_value(*first)?;
-            let second = base64_value(*second)?;
-            if second & 0x0F != 0 {
-                return None;
-            }
-            decoded.push((first << 2) | (second >> 4));
-            Some(decoded)
-        }
-        [first, second, third] => {
-            let first = base64_value(*first)?;
-            let second = base64_value(*second)?;
-            let third = base64_value(*third)?;
-            if third & 0x03 != 0 {
-                return None;
-            }
-            decoded.push((first << 2) | (second >> 4));
-            decoded.push((second << 4) | (third >> 2));
-            Some(decoded)
-        }
-        [_] | [_, _, _, _] | [_, _, _, _, ..] => None,
-    }
-}
-
-const fn base64_value(byte: u8) -> Option<u8> {
-    match byte {
-        b'A'..=b'Z' => Some(byte - b'A'),
-        b'a'..=b'z' => Some(byte - b'a' + 26),
-        b'0'..=b'9' => Some(byte - b'0' + 52),
-        b'+' | b'-' => Some(62),
-        b'/' | b'_' => Some(63),
-        _ => None,
-    }
 }
 
 fn read_json(path: &Path) -> Result<Value, ExternalContractsError> {
@@ -657,13 +648,6 @@ impl Drop for TemporaryDirectory {
     }
 }
 
-struct TestKey {
-    key_id: String,
-    algorithm: String,
-    key: String,
-    purpose: String,
-}
-
 #[derive(Debug, Error)]
 enum ExternalContractsError {
     #[error("could not read local external-contract input")]
@@ -716,6 +700,7 @@ struct SnapshotSpec {
 
 enum SnapshotIdentity {
     Authoritative(AuthoritativeIdentity),
+    Published(PublishedIdentity),
     Derived(DerivedIdentity),
 }
 
@@ -726,6 +711,22 @@ struct AuthoritativeIdentity {
     retrieval_url: &'static str,
     license: &'static str,
     version: &'static str,
+}
+
+struct PublishedIdentity {
+    retrieval_url: &'static str,
+    publication_source: &'static PublicationSource,
+    license: &'static str,
+    license_source_path: &'static str,
+    license_source_commit: &'static str,
+    version: &'static str,
+}
+
+struct PublicationSource {
+    local_path: &'static str,
+    sha256: &'static str,
+    path: &'static str,
+    commit: &'static str,
 }
 
 struct DerivedIdentity {
@@ -774,12 +775,17 @@ const SNAPSHOTS: &[SnapshotSpec] = &[
         artifact_path: SPDX_SCHEMA_PATH,
         metadata_path: "qualification/schemas/external/spdx-3.0.1/schema/source.json",
         sha256: "582c64e809d5b3ef9bd0c4de13a32391b47b0284a3e8d199569fb96f649234b1",
-        identity: SnapshotIdentity::Authoritative(AuthoritativeIdentity {
-            repository: "https://github.com/spdx/spdx-spec",
-            commit: "61a649da8ca27924ac1ca8d2a061cb228839b24c",
-            path: "schema/3.0.1/spdx-json-schema.json",
+        identity: SnapshotIdentity::Published(PublishedIdentity {
             retrieval_url: SPDX_SCHEMA_URL,
+            publication_source: &PublicationSource {
+                local_path: "qualification/schemas/external/spdx-3.0.1/spec/serializations.source",
+                sha256: "cd62cd4edc55a80a2ca8ca4bb431405f017312f640eccf8f1a7bebdbdf84031a",
+                path: "docs/serializations.md",
+                commit: "61a649da8ca27924ac1ca8d2a061cb228839b24c",
+            },
             license: "Community-Spec-1.0 AND CC-BY-3.0",
+            license_source_path: "LICENSE",
+            license_source_commit: "61a649da8ca27924ac1ca8d2a061cb228839b24c",
             version: "3.0.1",
         }),
     },
@@ -818,7 +824,7 @@ const SNAPSHOTS: &[SnapshotSpec] = &[
             commit: "4d7f142300264276bd3d45ab91d2b0eeb4227932",
             path: "docs/provenance/v1.md",
             retrieval_url: "https://raw.githubusercontent.com/slsa-framework/slsa/4d7f142300264276bd3d45ab91d2b0eeb4227932/docs/provenance/v1.md",
-            license: "Community-Spec-1.0 AND Apache-2.0",
+            license: "Community-Spec-1.0",
             version: "1.0",
         }),
     },
@@ -831,7 +837,7 @@ const SNAPSHOTS: &[SnapshotSpec] = &[
             commit: "4d7f142300264276bd3d45ab91d2b0eeb4227932",
             path: "docs/provenance/schema/v1/provenance.cue",
             retrieval_url: "https://raw.githubusercontent.com/slsa-framework/slsa/4d7f142300264276bd3d45ab91d2b0eeb4227932/docs/provenance/schema/v1/provenance.cue",
-            license: "Community-Spec-1.0 AND Apache-2.0",
+            license: "Community-Spec-1.0",
             version: "1.0",
         }),
     },

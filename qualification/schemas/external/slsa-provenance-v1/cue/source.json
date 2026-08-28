@@ -4,7 +4,7 @@
   "commit": "4d7f142300264276bd3d45ab91d2b0eeb4227932",
   "path": "docs/provenance/schema/v1/provenance.cue",
   "retrievalUrl": "https://raw.githubusercontent.com/slsa-framework/slsa/4d7f142300264276bd3d45ab91d2b0eeb4227932/docs/provenance/schema/v1/provenance.cue",
-  "license": "Community-Spec-1.0 AND Apache-2.0",
+  "license": "Community-Spec-1.0",
   "licenseSource": {
     "path": "LICENSE.md",
     "commit": "4d7f142300264276bd3d45ab91d2b0eeb4227932"

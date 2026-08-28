@@ -1,8 +1,5 @@
 {
   "kind": "authoritative",
-  "repository": "https://github.com/spdx/spdx-spec",
-  "commit": "61a649da8ca27924ac1ca8d2a061cb228839b24c",
-  "path": "schema/3.0.1/spdx-json-schema.json",
   "retrievalUrl": "https://spdx.org/schema/3.0.1/spdx-json-schema.json",
   "publicationSource": {
     "localPath": "qualification/schemas/external/spdx-3.0.1/spec/serializations.source",
