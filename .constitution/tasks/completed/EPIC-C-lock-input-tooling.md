@@ -131,6 +131,7 @@ Command: cargo +1.98.0 run -p xtask -- measurement validate --input qualificatio
 - **Justification:** Stage 3 defines no sample-validity schema. The lead ruling requires a documented staged, nonauthoritative proposal under `qualification/schemas/` without editing the Stage 3 data-model directory.
 - **Assumption for OXY-D001 Stage 3 revision:** `raw-measurement.schema.json` omits the `$schema` property that sibling schemas declare, so raw-measurement instances cannot self-declare their schema.
 - **Assumption for OXY-D001 Stage 3 revision:** no Stage 3 schema exists for `measurementPolicy.sampleValidityRules`; the staged schema's digest is the proposed binding value.
+- **Lead ruling for OXY-D001 Stage 3 revision:** the PRD launch and per-launch observation budgets belong to the measurement-harness contract. The staged sample-validity record deliberately doesn't bind them.
 - **Touched Files:** `crates/oxyflut-qualification/src/measurement_tests.rs`.
 - **Justification:** The measurement unit tests are split from the implementation module to keep the Rust library path below the repository's hard file-size limit.
 - **Touched Files:** `crates/oxyflut-qualification/src/schema.rs` and `xtask/src/contracts/schema.rs`.
@@ -183,6 +184,7 @@ Commands:
 - **Touched Files:** `.constitution/tasks/active/EPIC-C-lock-input-tooling.md`.
 - **Justification:** The execution rules require this scope-deviation record.
 - **OXY-D001 input:** macOS `compositor`, `protocolVersion`, and `driverVersion`, plus Windows `compositor`, `session`, and `protocolVersion`, require a bounded manual capture because no authoritative content-free CLI provides them. Linux `protocolVersion` requires the same capture only when `wayland-info` or `xdpyinfo` is unavailable or unparseable. The collectors emit `missing { reason: manual-capture }` rather than inferring a value.
+- **Exact-version rule:** The macOS operating-system pin matches `sw_vers -productVersion` exactly. A `26.5.1` host fails closed rather than matching the `macos-26.5` pin by prefix.
 
 #### OXY-C005 Implement the pre-implementation readiness report
 
@@ -246,6 +248,8 @@ Epic C completed its 21 story points without claiming that any staged input is c
 | Epic C reconciliation | `cfb3fb7` | Archived Epic C without changing either readiness flag. | Preserved the active-plan handoff and routed Stage 3 gaps to OXY-D001. |
 | PR review round 1 | `25dc154`, `ca0a25f`, `b983d0d`, `923ce71`, `f0d9b6b`, `91e7b60`, `2422a57` | Targeted validation and the final review quality gate passed. | Applied review corrections without changing qualification readiness. |
 | PR review round 2 | `30ca7cf`, `ff9d6a8` | Targeted validation and the final review quality gate passed. | Hardened schema serialization, external snapshot provenance, and environment lock collection without changing qualification readiness. |
+| PR review round 3 | `ec115a2`, `1595b03`, `e1fc92d` | Targeted validation and the final review quality gate passed. | Corrected SLSA derivation, reference-environment validation, immutable artifacts, readiness reporting, and meter parsing without changing qualification readiness. |
+| PR review round 4 | `1a5fbb2`, `119eacd` | Targeted validation and the final review quality gate passed. | Corrected Windows release normalization, bounded Linux protocol collection, immutable artifacts, readiness diagnostics, and meter parsing without changing qualification readiness. |
 
 ### Stage 3 revisions required — routed to OXY-D001
 
