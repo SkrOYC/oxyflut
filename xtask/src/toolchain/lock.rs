@@ -293,23 +293,6 @@ impl LockResolvedTool {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::{ResolvedToolValidationFailure, classify_validation_failure};
-    use crate::toolchain::ToolchainError;
-
-    #[test]
-    fn unsupported_host_is_unverifiable_not_invalid() {
-        assert_eq!(
-            classify_validation_failure(ToolchainError::UnsupportedHost {
-                supported_host: "x86_64-unknown-linux-gnu",
-                detected_host: "aarch64-apple-darwin".to_owned(),
-            }),
-            ResolvedToolValidationFailure::UnverifiableHost
-        );
-    }
-}
-
 fn verify_lock_tool(
     lock_tool: &LockResolvedTool,
     staged_tool: &ResolvedTool,
@@ -337,4 +320,21 @@ fn verify_lock_tool(
         });
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{ResolvedToolValidationFailure, classify_validation_failure};
+    use crate::toolchain::ToolchainError;
+
+    #[test]
+    fn unsupported_host_is_unverifiable_not_invalid() {
+        assert_eq!(
+            classify_validation_failure(ToolchainError::UnsupportedHost {
+                supported_host: "x86_64-unknown-linux-gnu",
+                detected_host: "aarch64-apple-darwin".to_owned(),
+            }),
+            ResolvedToolValidationFailure::UnverifiableHost
+        );
+    }
 }
