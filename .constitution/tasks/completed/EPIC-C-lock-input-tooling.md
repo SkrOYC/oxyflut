@@ -259,6 +259,7 @@ Epic C completed its 21 story points without claiming that any staged input is c
 | PR review round 4 | `1a5fbb2`, `119eacd`, `5ee7b8c` | Targeted validation and the final review quality gate passed. | Corrected Windows release normalization, bounded Linux protocol collection, immutable artifacts, readiness diagnostics, and meter parsing without changing qualification readiness. |
 | PR review round 5 | `8d163ae` | Targeted validation and the final review quality gate passed. | Conservatively rejected truncated protocol responses and preserved pre-existing immutable artifacts after companion publication failures without changing qualification readiness. |
 | PR review round 6 | `e5036d8`, `00f4908` | Targeted validation and the final review quality gate passed. | Rejected unobservable Linux sessions and relative resolved tools, verified committed complete and readiness fixtures, scoped raw clocks per launch, and narrowed the evidence writer surface without changing qualification readiness. |
+| PR review round 6 (CI fix) | `ac14a9e` | The full suite passed with the default and alternate Rustup roots. | Replaced developer-home Rustup paths with manifest-relative fixture paths, resolved them through `pathRoot` in test loaders, and refreshed immutable fixture bindings. |
 
 ### Stage 3 revisions required — routed to OXY-D001
 

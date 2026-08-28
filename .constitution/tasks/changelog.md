@@ -2,6 +2,12 @@
 
 All notable changes to the Stage 4 execution plan appear in this file.
 
+## [v0.2.18] - 2026-08-28
+
+### Fixed
+
+- Applied the PR review round 6 CI fix in `ac14a9e`. Readiness fixtures retain manifest-relative Rustup paths, and test loaders resolve the host-specific prefix through `pathRoot`.
+
 ## [v0.2.17] - 2026-08-28
 
 ### Fixed
