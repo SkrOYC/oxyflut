@@ -2,20 +2,22 @@
 
 - Ticket: OXY-B007
 - Status: completed access register
-- Clock start: 2026-08-28T16:22:53Z
-- Clock stop: 2026-08-28T16:24:16Z
+- Clock start: 2026-08-28T16:50:42Z
+- Clock stop: 2026-08-28T16:52:50Z
 
 ## Purpose and scope
 
 This register records owner-confirmed access information for Tier 1 environments. It is not qualification evidence, does not set readiness, and does not establish hardware, driver, package-lock, capability, performance, or score results.
 
-A `CONFIRMED` row confirms only an owner and usable access procedure. It does not mean that the row conforms to the Stage 3 reference environment. `BLOCKED` means that no accountable owner and no usable access procedure were recorded, so the row stops at the stated unblock probe.
+A `CONFIRMED` row confirms an accountable owner, usable access procedure, and repeatable access window. It does not mean that the row conforms to the Stage 3 reference environment. `BLOCKED` means that no accountable owner and no usable access procedure were recorded, so the row stops at the stated unblock probe.
 
 `Second-configuration score-4 evidence` means evidence from a physically distinct hardware configuration. It is not a candidate score and is outside this register's scope.
 
 ## Owner attestation
 
 On 2026-08-28, Oscar Y. <oscar@ocmasesorias.com> confirmed during this session that they are the accountable owner of `thinkpadp14s`, have local interactive access and administrator rights, and consent to its use for the Wayland x86-64 and X11 x86-64 rows. The declared X11 access paths are Xwayland and Xvfb.
+
+On 2026-08-28, Oscar Y. <oscar@ocmasesorias.com> confirmed: "The owner operates the machine and can run qualification sessions at any time on request; there is no notice requirement; sessions are owner-operated and are not left unattended."
 
 No macOS arm64 or Windows x86-64 machine, accountable owner, or access procedure was supplied for this register. Those rows are blocked under the ticket STOP condition.
 
@@ -42,12 +44,12 @@ No macOS arm64 or Windows x86-64 machine, accountable owner, or access procedure
 | :-- | :-- | :-- | :-- | :-- |
 | B007-Q01 | KU (gating) | No macOS machine, accountable owner, or access procedure is recorded. STOP: this row is blocked. | Owner attestation | On an identified macOS machine, its owner must run `uname -m; sw_vers; system_profiler SPHardwareDataType SPDisplaysDataType; xcodebuild -version` and preserve the output in `/tmp/wf-epic-b/B007-macos/owner-confirmation.txt`. The owner must date and sign a confirmation of physical machine identity, GPU, CPU, RAM, interactive-session access, administrator requirements, repeatable access window, consent, and physical distinctness. Expected output identifies `arm64`, macOS release and build, hardware and display inventory, and Xcode and SDK versions. |
 | B007-Q02 | KU (gating) | No Windows machine, accountable owner, or access procedure is recorded. STOP: this row is blocked. | Owner attestation | On an identified Windows machine, its owner must run `hostname; Get-CimInstance Win32_OperatingSystem; Get-CimInstance Win32_ComputerSystem; Get-CimInstance Win32_Processor; Get-CimInstance Win32_VideoController` in PowerShell and preserve the output in `C:\Temp\wf-epic-b\B007-windows\owner-confirmation.txt`. The owner must date and sign a confirmation of x86-64 architecture, interactive desktop access, administrator requirements, repeatable access window, consent, and physical distinctness. Expected output identifies the Windows release and build, machine, CPU, RAM, GPU, and driver. |
-| B007-Q03 | KK | Oscar Y. owns `thinkpadp14s`; the owner attested to local interactive access, administrator rights, and consent for Wayland use. The preserved probe identifies an x86-64 NixOS host in a Wayland Hyprland session. | Owner attestation; [host discovery probe](#host-discovery-probe) | - |
-| B007-Q04 | KK | Oscar Y. owns the same `thinkpadp14s`; the owner attested to local interactive access, administrator rights, and consent for the X11 compatibility path. The preserved probe finds Xwayland and Xvfb, while the active session is Wayland Hyprland. | Owner attestation; [host discovery probe](#host-discovery-probe) | - |
+| B007-Q03 | KK | Oscar Y. owns `thinkpadp14s`; the owner attested to local interactive access, administrator rights, and consent for Wayland use. The owner confirmed scheduling constraints of "on request, any time, no notice requirement" and a repeatable access window of "owner-operated sessions on request; not unattended." The preserved probe identifies an x86-64 NixOS host in a Wayland Hyprland session. | Owner attestation; [host discovery probe](#host-discovery-probe) | - |
+| B007-Q04 | KK | Oscar Y. owns the same `thinkpadp14s`; the owner attested to local interactive access, administrator rights, and consent for the X11 compatibility path. The owner confirmed scheduling constraints of "on request, any time, no notice requirement" and a repeatable access window of "owner-operated sessions on request; not unattended." The preserved probe identifies active `Xwayland :0`, queries its server and extensions, and has `xwininfo` connect to its root window. A separately launched `Xvfb :99` also accepts an `xdpyinfo` connection and is then stopped. | Owner attestation; [X11 access probe](#x11-access-probe) | - |
 | B007-Q05 | KU (gating) | No macOS configuration exists in this register to compare with the required arm64 macOS 26.5 SDK reference. | [Stage 3 platform pins](../tech-spec/stack.md#platform-qualification-pins) | Complete B007-Q01's owner confirmation. Compare its `sw_vers` and `xcodebuild -version` output against the pinned macOS 26.5 SDK and Xcode 26.6 build `17F113`; expected output either matches both pins or records the exact gap. |
 | B007-Q06 | KU (gating) | No Windows configuration exists in this register to compare with the required Windows 11 25H2 x86-64 reference. | [Stage 3 platform pins](../tech-spec/stack.md#platform-qualification-pins) | Complete B007-Q02's owner confirmation. Compare its `Win32_OperatingSystem` output against Windows 11 25H2 and record the Visual Studio Build Tools and Windows SDK versions; expected output either matches every pin or records each exact gap. |
 | B007-Q07 | KK | No. The available host reports `PRETTY_NAME="NixOS 26.05 (Yarara)"`, not Ubuntu 26.04 LTS. This host is not the Ubuntu 26.04 LTS Wayland reference environment. | [Host discovery probe](#host-discovery-probe); [Stage 3 platform pins](../tech-spec/stack.md#platform-qualification-pins); [Ubuntu 26.04 LTS release notes](https://documentation.ubuntu.com/release-notes/26.04/) | - |
-| B007-Q08 | KK | No. The available host reports `PRETTY_NAME="NixOS 26.05 (Yarara)"`, not Ubuntu 26.04 LTS. Its X11 path is Xwayland/Xvfb rather than a native X server session, which is an additional conformance gap. This host is not the Ubuntu 26.04 LTS X11 reference environment. | [Host discovery probe](#host-discovery-probe); [Stage 3 platform pins](../tech-spec/stack.md#platform-qualification-pins); [Ubuntu 26.04 LTS release notes](https://documentation.ubuntu.com/release-notes/26.04/) | - |
+| B007-Q08 | KK | No. The available host reports `PRETTY_NAME="NixOS 26.05 (Yarara)"`, not Ubuntu 26.04 LTS. The confirmed interactive X11 path is Xwayland, and the separate Xvfb path is headless; neither demonstrates a native X11 desktop session. This host is not the Ubuntu 26.04 LTS X11 reference environment. | [Host discovery probe](#host-discovery-probe); [X11 access probe](#x11-access-probe); [Stage 3 platform pins](../tech-spec/stack.md#platform-qualification-pins); [Ubuntu 26.04 LTS release notes](https://documentation.ubuntu.com/release-notes/26.04/) | - |
 | B007-Q09 | KU (gating) | No macOS configuration is available, so a distinct second configuration is not established. | Owner attestation | Complete B007-Q01, then have the owner state whether the proposed physical machine is distinct from every other configuration recorded for score-4 evidence. Expected output is a dated identity and distinctness declaration. |
 | B007-Q10 | KU (gating) | No Windows configuration is available, so a distinct second configuration is not established. | Owner attestation | Complete B007-Q02, then have the owner state whether the proposed physical machine is distinct from every other configuration recorded for score-4 evidence. Expected output is a dated identity and distinctness declaration. |
 | B007-Q11 | KK | No. The Wayland and X11 rows are the same physical `thinkpadp14s` machine. They count as one hardware configuration, so this register cannot provide second-configuration score-4 evidence. | Owner attestation; [host discovery probe](#host-discovery-probe) | - |
@@ -96,17 +98,19 @@ The answer rows contain six KK findings and six gating KUs. The owner attestatio
 | Interactive-session availability | Local interactive access confirmed by owner; `loginctl` lists seat session 2 for user `oscar` |
 | Administrator requirements | Owner attested to administrator rights; coordinate privileged changes with the owner |
 | Access procedure | Coordinate with Oscar Y., use the local interactive Wayland session, and re-run the host discovery probe before a session |
-| Scheduling constraints and repeatable access window | Local-only, owner-coordinated access. No standing calendar window or service-level availability was attested; schedule each session with the owner. |
+| Scheduling constraints | on request, any time, no notice requirement |
+| Repeatable access window | owner-operated sessions on request; not unattended |
 
 ### X11 x86-64 access
 
 | Field | Value |
 | :-- | :-- |
-| Session type, compositor, or X server | Xwayland/Xvfb compatibility path only; `Xvfb` and `Xwayland` executables are present. This is not a native X server session. |
-| Interactive-session availability | Local interactive access confirmed by owner through the declared Xwayland/Xvfb path |
+| Session type, compositor, or X server | Active `Xwayland :0` provides the interactive X11 compatibility path inside the Wayland Hyprland session. `Xvfb :99` was separately launched and queried as a headless path. Neither is a native X11 desktop session. |
+| Interactive-session availability | Local interactive Xwayland access is confirmed: `xwininfo -root -display :0` connected and returned the root-window geometry. Xvfb is headless and provides no interactive desktop. |
 | Administrator requirements | Owner attested to administrator rights; coordinate privileged changes with the owner |
-| Access procedure | Coordinate with Oscar Y., use the local interactive session, and start or verify the declared Xwayland/Xvfb path before a session |
-| Scheduling constraints and repeatable access window | Local-only, owner-coordinated access. No standing calendar window or service-level availability was attested; schedule each session with the owner. |
+| Access procedure | Follow the exact [X11 access procedure](#x11-access-procedure). |
+| Scheduling constraints | on request, any time, no notice requirement |
+| Repeatable access window | owner-operated sessions on request; not unattended |
 
 ### Reference conformance and feasibility
 
@@ -115,7 +119,7 @@ The answer rows contain six KK findings and six gating KUs. The owner attestatio
 | macOS arm64 | Not assessed: no machine is available to compare with the Stage 3 arm64 macOS 26.5 SDK reference. | Hardware and GPU suitability cannot be assessed. | Not established; no configuration is recorded. | BLOCKED |
 | Windows x86-64 | Not assessed: no machine is available to compare with the Stage 3 Windows 11 25H2 x86-64 reference. | Hardware and GPU suitability cannot be assessed. | Not established; no configuration is recorded. | BLOCKED |
 | Wayland x86-64 | No. NixOS 26.05 is not the Stage 3 Ubuntu 26.04 LTS Wayland reference. | Available for owner-coordinated, non-reference exploratory access only. This register has no GPU driver, package-lock, or measurement evidence. | Not feasible from this register. The Wayland and X11 paths share one physical machine and count as one hardware configuration. | CONFIRMED |
-| X11 x86-64 | No. NixOS 26.05 is not the Stage 3 Ubuntu 26.04 LTS X11 reference. Xwayland/Xvfb is not a native X server session. | Available for owner-coordinated, non-reference X11-compatibility exploration only. The native-session and reference-OS gaps prevent reference use. | Not feasible from this register. The X11 and Wayland paths share one physical machine and count as one hardware configuration. | CONFIRMED |
+| X11 x86-64 | No. NixOS 26.05 is not the Stage 3 Ubuntu 26.04 LTS X11 reference. The confirmed interactive path is Xwayland, and Xvfb is headless; neither establishes a native X11 desktop session. | Available for owner-coordinated, non-reference X11-compatibility exploration only. The native-session and reference-OS gaps prevent reference use. | Not feasible from this register. The X11 and Wayland paths share one physical machine and count as one hardware configuration. | CONFIRMED |
 
 ## Host discovery probe
 
@@ -201,6 +205,157 @@ $ hostname
 thinkpadp14s
 ```
 
+### X11 access procedure
+
+The following procedure establishes access only. It does not qualify graphics, drivers, X11 behavior, or product capabilities.
+
+For interactive Xwayland access:
+
+1. Coordinate with Oscar Y. and use the local Hyprland session on `thinkpadp14s`.
+2. Run `pgrep -a Xwayland`. Success is a process line containing `Xwayland :0`, as recorded in the probe.
+3. Connect clients to that server by setting `DISPLAY=:0`; do not select a display merely because an executable exists.
+4. Run `nix shell nixpkgs#xorg.xdpyinfo -c xdpyinfo -display :0 | head -40`. Success includes `name of display: :0`, `vendor string: The X.Org Foundation`, and `X.Org version: 24.1.13`; its extension list includes `Present` and `RANDR`.
+5. Run the Present and XInput extension queries recorded in the probe. Success includes `Present version 1.4` and `XInputExtension version 2.4`. `xdpyinfo -ext RANDR` reports `RANDR extension not supported by xdpyinfo`, so this procedure does not claim a RANDR version.
+6. Run `nix shell nixpkgs#xorg.xwininfo -c xwininfo -root -display :0 | head -15`. Success includes `Window id: 0x350 (the root window)`, `Width: 1920`, and `Height: 1080`, demonstrating that the minimal X11 client connected to `:0`.
+
+For headless Xvfb access:
+
+1. Create `/tmp/wf-epic-b/OXY-B007/` and run `Xvfb :99 -screen 0 1280x720x24 >/tmp/wf-epic-b/OXY-B007/xvfb-99.log 2>&1 &`; immediately store its process ID as `XVFB_PID=$!`.
+2. Run `nix shell nixpkgs#xorg.xdpyinfo -c xdpyinfo -display :99 | head -15`. Success includes `name of display: :99`, `vendor string: The X.Org Foundation`, and `X.Org version: 21.1.24`.
+3. Stop only the server started in step 1 with `kill "$XVFB_PID"; wait "$XVFB_PID"`, then run `pgrep -a Xvfb`. During this probe, `pgrep` exited 1 with no matching process after the stop.
+
+This evidence establishes that X11 clients can connect to active Xwayland on `:0` and to a temporary Xvfb server on `:99`. It does not establish native X11 desktop-session behavior, a native X server session, graphics or driver behavior, any P0 capability, or conformance to the Stage 3 Ubuntu 26.04 LTS X11 reference.
+
+## X11 access probe
+
+The following raw output was captured on `thinkpadp14s` during this ticket. Long `xdpyinfo -ext` reports are trimmed to the relevant raw lines; the retained lines below are the outputs used by this register.
+
+```text
+$ pgrep -a Xwayland
+3128 Xwayland :0 -rootless -core -listenfd 45 -listenfd 46 -displayfd 94 -wm 91
+[pgrep exit: 0]
+
+$ nix shell nixpkgs#xorg.xdpyinfo -c xdpyinfo -display :0 | head -40
+name of display:    :0
+version number:    11.0
+vendor string:    The X.Org Foundation
+vendor release number:    12401013
+X.Org version: 24.1.13
+maximum request size:  16777212 bytes
+motion buffer size:  256
+bitmap unit, bit order, padding:    32, LSBFirst, 32
+image byte order:    LSBFirst
+number of supported pixmap formats:    7
+supported pixmap formats:
+    depth 1, bits_per_pixel 1, scanline_pad 32
+    depth 4, bits_per_pixel 8, scanline_pad 32
+    depth 8, bits_per_pixel 8, scanline_pad 32
+    depth 15, bits_per_pixel 16, scanline_pad 32
+    depth 16, bits_per_pixel 16, scanline_pad 32
+    depth 24, bits_per_pixel 32, scanline_pad 32
+    depth 32, bits_per_pixel 32, scanline_pad 32
+keycode range:    minimum 8, maximum 255
+focus:  None
+number of extensions:    25
+    BIG-REQUESTS
+    Composite
+    DAMAGE
+    DOUBLE-BUFFER
+    DRI3
+    GLX
+    Generic Event Extension
+    MIT-SHM
+    Present
+    RANDR
+    RECORD
+    RENDER
+    SECURITY
+    SHAPE
+    SYNC
+    X-Resource
+    XC-MISC
+    XFIXES
+    XFree86-VidModeExtension
+[pipeline exit: 141 0]
+
+$ nix shell nixpkgs#xorg.xdpyinfo -c xdpyinfo -display :0 -ext Present
+Present version 1.4 opcode: 146
+  screen #0 capabilities: 0x19 (PresentCapabilityAsync | PresentCapabilityAsyncMayTear | PresentCapabilitySyncobj)
+
+$ nix shell nixpkgs#xorg.xdpyinfo -c xdpyinfo -display :0 -ext RANDR
+RANDR extension not supported by xdpyinfo
+
+$ nix shell nixpkgs#xorg.xdpyinfo -c xdpyinfo -display :0 -ext XInputExtension
+XInputExtension version 2.4 opcode: 131, base event: 66, base error: 129
+  Extended devices :
+    "Virtual core pointer" [XPointer]
+    "xwayland-pointer:1" [XExtensionPointer]
+    "xwayland-relative-pointer:1" [XExtensionPointer]
+    "xwayland-pointer-gestures:1" [XExtensionPointer]
+    "xwayland-keyboard:1" [XExtensionKeyboard]
+
+$ nix shell nixpkgs#xorg.xwininfo -c xwininfo -root -display :0 | head -15
+evaluation warning: The xorg package set has been deprecated, 'xorg.xwininfo' has been renamed to 'xwininfo'
+this path will be fetched (25.3 KiB download, 61.9 KiB unpacked):
+  /nix/store/kprk0hfljdxg538ipvlnhc7ibz42xxi4-xwininfo-1.1.6
+copying path '/nix/store/kprk0hfljdxg538ipvlnhc7ibz42xxi4-xwininfo-1.1.6' from 'https://cache.nixos.org'...
+
+xwininfo: Window id: 0x350 (the root window) (has no name)
+
+  Absolute upper-left X:  0
+  Absolute upper-left Y:  0
+  Relative upper-left X:  0
+  Relative upper-left Y:  0
+  Width: 1920
+  Height: 1080
+  Depth: 24
+  Visual: 0x40
+  Visual Class: TrueColor
+  Border width: 0
+  Class: InputOutput
+  Colormap: 0x3f (installed)
+[pipeline exit: 0 0]
+
+$ Xvfb :99 -screen 0 1280x720x24 &
+[started PID: 1998478]
+[Xvfb startup check: running]
+
+$ nix shell nixpkgs#xorg.xdpyinfo -c xdpyinfo -display :99 | head -15
+name of display:    :99
+version number:    11.0
+vendor string:    The X.Org Foundation
+vendor release number:    12101024
+X.Org version: 21.1.24
+maximum request size:  16777212 bytes
+motion buffer size:  256
+bitmap unit, bit order, padding:    32, LSBFirst, 32
+image byte order:    LSBFirst
+number of supported pixmap formats:    6
+supported pixmap formats:
+    depth 1, bits_per_pixel 1, scanline_pad 32
+    depth 4, bits_per_pixel 8, scanline_pad 32
+    depth 8, bits_per_pixel 8, scanline_pad 32
+    depth 16, bits_per_pixel 16, scanline_pad 32
+[pipeline exit: 141 0]
+
+$ kill Xvfb_PID; wait Xvfb_PID
+[kill and wait exit: 0]
+
+$ pgrep -a Xvfb
+[pgrep exit: 1; 1 means no Xvfb process matched]
+
+$ cat /tmp/wf-epic-b/OXY-B007/xvfb-99.log
+The XKEYBOARD keymap compiler (xkbcomp) reports:
+> Warning:          Multiple symbols for level 1/group 1 on key <FK23>
+>                   Using F23, ignoring XF86TouchpadOff
+> Warning:          Symbol map for key <FK23> redefined
+>                   Using last definition for conflicting fields
+> Warning:          Symbol map for key <FK24> redefined
+>                   Using last definition for conflicting fields
+Errors from xkbcomp are not fatal to the X server
+[Xvfb log exit: 0]
+```
+
 ## Recommendation
 
 Use a mix of option B and option C.
@@ -209,8 +364,8 @@ Use a mix of option B and option C.
 | :-- | :-- | :-- |
 | macOS arm64 | C - remain blocked | Keep the row blocked until B007-Q01 produces a named owner and a usable procedure. No hardware, session, or reference conformance can be inferred. |
 | Windows x86-64 | C - remain blocked | Keep the row blocked until B007-Q02 produces a named owner and a usable procedure. No hardware, session, or reference conformance can be inferred. |
-| Wayland x86-64 | B - non-reference exploratory access | Use `thinkpadp14s` only for owner-coordinated exploratory access. Its NixOS 26.05 environment differs from the Ubuntu 26.04 LTS reference, and the shared hardware cannot supply a second configuration. |
-| X11 x86-64 | B - non-reference X11-compatibility access | Use the same host only for Xwayland/Xvfb compatibility exploration. Do not treat it as native X11 or as the Ubuntu 26.04 LTS reference. It is the same hardware configuration as the Wayland row. |
+| Wayland x86-64 | B - non-reference exploratory access | Use `thinkpadp14s` for owner-operated exploratory access on request, at any time, with no notice requirement. Its NixOS 26.05 environment differs from the Ubuntu 26.04 LTS reference, and the shared hardware cannot supply a second configuration. |
+| X11 x86-64 | B - non-reference X11-compatibility access | Use the confirmed Xwayland `:0` path for owner-operated interactive exploration on request, at any time, with no notice requirement, and use the temporary Xvfb `:99` path for headless exploration. Do not treat either path as native X11 or as the Ubuntu 26.04 LTS reference. It is the same hardware configuration as the Wayland row. |
 
 ### Spec edits required
 
