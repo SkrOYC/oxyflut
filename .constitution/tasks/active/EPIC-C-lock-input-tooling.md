@@ -174,6 +174,13 @@ Commands:
 - cargo +1.98.0 run -p xtask -- environment inspect --environment ENVIRONMENT --output PATH
 ```
 
+##### OXY-C004 Deviations & Justifications
+
+- **Touched Files:** `xtask/Cargo.toml`, `Cargo.lock`.
+- **Justification:** Fixture-backed collectors deserialize bounded raw platform responses through the same collector parsers as live sources; the existing stack-pinned `serde` dependency supplies those derives and records xtask's direct use in the workspace lockfile.
+- **Touched Files:** `.constitution/tasks/active/EPIC-C-lock-input-tooling.md`.
+- **Justification:** The execution rules require this scope-deviation record.
+
 #### OXY-C005 Implement the pre-implementation readiness report
 
 - **Type:** Feature

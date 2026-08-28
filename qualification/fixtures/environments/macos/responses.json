@@ -1,0 +1,12 @@
+{
+  "swVers": "26.5\n",
+  "uname": "arm64\n",
+  "sysctlModel": "MacBookPro18,3\n",
+  "systemProfiler": "{\"SPDisplaysDataType\":[{\"_name\":\"Apple M3 Pro\"}]}",
+  "compiler": "Apple clang version 17.0.0 (clang-1700.0.13.3)\n",
+  "sdk": "26.5\n",
+  "compositor": "Aqua\n",
+  "session": "Aqua\n",
+  "protocolVersion": "AppKit SDK 26.6\n",
+  "packageReceipts": ["xcode\t26.6-17F113\n", "macos-sdk\t26.5\n"]
+}
