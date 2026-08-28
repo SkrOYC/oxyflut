@@ -20,6 +20,12 @@ use super::{EnvironmentCommandError, PlatformSource};
 #[cfg(target_os = "windows")]
 const OUTPUT_LIMIT: usize = 16 * 1024;
 
+// These exact product identities implement the Visual Studio Build Tools 2022 17.14.39 and
+// Windows SDK 10.0.26100.8876 pins in stack.md. The package query is filtered to this set before
+// its output is bounded.
+const WINDOWS_PACKAGE_REQUIREMENTS: &[&str] =
+    &["Microsoft.VisualStudio.BuildTools", "Microsoft.WindowsSDK"];
+
 /// Collects the Windows Tier 1 environment only when executing on Windows.
 pub(crate) struct WindowsSource;
 
@@ -59,10 +65,38 @@ struct WindowsResponses {
     computer_system: Option<String>,
     video_controller: Option<String>,
     pnp_signed_driver: Option<String>,
-    compiler: Option<String>,
+    compiler: Option<CompilerResponse>,
+    compiler_env: Option<String>,
+    compiler_vswhere: Option<String>,
     sdk: Option<String>,
     rust_toolchain: Option<String>,
     package_catalog: Option<String>,
+}
+
+/// A captured compiler banner and its process exit status.
+///
+/// `cl /Bv` writes a usable banner while returning a nonzero status when no source file is given.
+/// The collector deliberately parses that banner regardless of its status and reserves process
+/// success checks for commands whose output requires one.
+#[derive(Debug, Deserialize)]
+#[serde(untagged)]
+enum CompilerResponse {
+    /// Compatibility with manually captured fixtures that record only output.
+    Output(String),
+    /// A raw command result that retains the exit status alongside the banner.
+    Command {
+        stdout: String,
+        #[serde(rename = "exitCode")]
+        _exit_code: Option<i32>,
+    },
+}
+
+impl CompilerResponse {
+    fn banner(&self) -> &str {
+        match self {
+            Self::Output(stdout) | Self::Command { stdout, .. } => stdout,
+        }
+    }
 }
 
 fn collect_windows_responses(
@@ -78,12 +112,15 @@ fn collect_windows_responses(
         architecture: architecture(responses.processor.as_deref()),
         hardware_id: json_identity(responses.computer_system.as_deref(), "Model", "hardware"),
         gpu_id: gpu_identity(responses.video_controller.as_deref()),
-        driver_version: json_identity(
+        driver_version: driver_identity(
+            responses.video_controller.as_deref(),
             responses.pnp_signed_driver.as_deref(),
-            "DriverVersion",
-            "driver",
         ),
-        compiler_identity: command_identity(responses.compiler.as_deref(), "msvc"),
+        compiler_identity: compiler_identity(
+            responses.compiler.as_ref(),
+            responses.compiler_env.as_deref(),
+            responses.compiler_vswhere.as_deref(),
+        ),
         sdk_identity: json_identity(responses.sdk.as_deref(), "Version", "windows-sdk"),
         rust_toolchain: rust_toolchain_identity(responses.rust_toolchain.as_deref()),
         compositor: InventoryValue::missing(MissingReason::ManualCapture),
@@ -144,17 +181,67 @@ fn json_identity(raw: Option<&str>, field: &str, prefix: &str) -> InventoryValue
     )
 }
 
-fn command_identity(raw: Option<&str>, prefix: &str) -> InventoryValue {
-    let Some(raw) = raw else {
+fn driver_identity(
+    video_controller: Option<&str>,
+    pnp_signed_driver: Option<&str>,
+) -> InventoryValue {
+    let Some(video_controller) = video_controller else {
         return InventoryValue::missing(MissingReason::SourceUnavailable);
     };
-    let Some(version) = raw
-        .split_whitespace()
-        .find(|word| word.bytes().any(|byte| byte.is_ascii_digit()))
-    else {
+    let Some(pnp_signed_driver) = pnp_signed_driver else {
+        return InventoryValue::missing(MissingReason::SourceUnavailable);
+    };
+    let Some(video_device_id) = json_string(Some(video_controller), "PNPDeviceID") else {
         return InventoryValue::missing(MissingReason::UnsupportedBySource);
     };
-    observed_or_missing(format!("{prefix}-{}", atomize(version)))
+    let Ok(driver) = serde_json::from_str::<Value>(pnp_signed_driver) else {
+        return InventoryValue::missing(MissingReason::UnsupportedBySource);
+    };
+    let Some(driver) = first_json_object(&driver) else {
+        return InventoryValue::missing(MissingReason::UnsupportedBySource);
+    };
+    let device_id = driver.get("DeviceID").and_then(Value::as_str);
+    let device_class = driver.get("DeviceClass").and_then(Value::as_str);
+    let version = driver.get("DriverVersion").and_then(Value::as_str);
+    match (device_id, device_class, version) {
+        (Some(device_id), Some("DISPLAY"), Some(version))
+            if device_id == video_device_id && !version.trim().is_empty() =>
+        {
+            observed_or_missing(format!("driver-{}", atomize(version)))
+        }
+        _ => InventoryValue::missing(MissingReason::UnsupportedBySource),
+    }
+}
+
+fn compiler_identity(
+    compiler: Option<&CompilerResponse>,
+    vctools_version: Option<&str>,
+    vswhere_version: Option<&str>,
+) -> InventoryValue {
+    let version = compiler
+        .map(CompilerResponse::banner)
+        .and_then(version_token)
+        .or_else(|| vctools_version.and_then(version_token))
+        .or_else(|| vswhere_version.and_then(version_token));
+    version.map_or_else(
+        || InventoryValue::missing(MissingReason::SourceUnavailable),
+        |version| observed_or_missing(format!("msvc-{}", atomize(version))),
+    )
+}
+
+fn version_token(raw: &str) -> Option<&str> {
+    raw.split_whitespace()
+        .find(|word| word.bytes().any(|byte| byte.is_ascii_digit()))
+        .map(|word| {
+            word.trim_matches(|character: char| !character.is_ascii_digit() && character != '.')
+        })
+        .filter(|version| {
+            !version.is_empty()
+                && version.bytes().any(|byte| byte == b'.')
+                && version
+                    .bytes()
+                    .all(|byte| byte.is_ascii_digit() || byte == b'.')
+        })
 }
 
 fn rust_toolchain_identity(raw: Option<&str>) -> InventoryValue {
@@ -190,28 +277,44 @@ fn first_json_object(value: &Value) -> Option<&serde_json::Map<String, Value>> {
 
 fn package_lock(raw: Option<&str>) -> SystemPackageLock {
     let Some(raw) = raw else {
-        return SystemPackageLock::missing(MissingReason::SourceUnavailable);
+        return missing_package_records(MissingReason::SourceUnavailable);
     };
     let Ok(value) = serde_json::from_str::<Value>(raw) else {
-        return SystemPackageLock::missing(MissingReason::UnsupportedBySource);
+        return missing_package_records(MissingReason::UnsupportedBySource);
     };
     let values = match value {
         Value::Array(values) => values,
         Value::Object(value) => vec![Value::Object(value)],
         Value::Null | Value::Bool(_) | Value::Number(_) | Value::String(_) => {
-            return SystemPackageLock::missing(MissingReason::UnsupportedBySource);
+            return missing_package_records(MissingReason::UnsupportedBySource);
         }
     };
-    let mut records = values.iter().filter_map(package_fields).collect::<Vec<_>>();
-    records.sort_unstable_by(|left, right| left.0.cmp(&right.0));
-    records.truncate(oxyflut_qualification::environment::MAXIMUM_SYSTEM_PACKAGES);
-    if records.is_empty() {
-        return SystemPackageLock::missing(MissingReason::SourceUnavailable);
+    let mut observed = std::collections::BTreeMap::new();
+    for value in &values {
+        let Some(name) = value
+            .as_object()
+            .and_then(|object| object.get("Name"))
+            .and_then(Value::as_str)
+        else {
+            return missing_package_records(MissingReason::UnsupportedBySource);
+        };
+        if !WINDOWS_PACKAGE_REQUIREMENTS.contains(&name) {
+            continue;
+        }
+        let Some((name, version)) = package_fields(value) else {
+            return missing_package_records(MissingReason::UnsupportedBySource);
+        };
+        if observed.insert(name, version).is_some() {
+            return missing_package_records(MissingReason::UnsupportedBySource);
+        }
     }
-    let records = records
-        .into_iter()
-        .map(|(name, version)| {
-            SystemPackage::new(name, version).map_err(|_| MissingReason::UnsupportedBySource)
+    let records = WINDOWS_PACKAGE_REQUIREMENTS
+        .iter()
+        .map(|name| match observed.remove(*name) {
+            Some(version) => SystemPackage::new((*name).to_owned(), version)
+                .map_err(|_| MissingReason::UnsupportedBySource),
+            None => SystemPackage::missing((*name).to_owned(), MissingReason::NotInstalled)
+                .map_err(|_| MissingReason::UnsupportedBySource),
         })
         .collect::<Result<Vec<_>, _>>();
     match records.and_then(|records| {
@@ -219,6 +322,17 @@ fn package_lock(raw: Option<&str>) -> SystemPackageLock {
     }) {
         Ok(lock) => lock,
         Err(reason) => SystemPackageLock::missing(reason),
+    }
+}
+
+fn missing_package_records(reason: MissingReason) -> SystemPackageLock {
+    let records = WINDOWS_PACKAGE_REQUIREMENTS
+        .iter()
+        .map(|name| SystemPackage::missing((*name).to_owned(), reason))
+        .collect::<Result<Vec<_>, _>>();
+    match records.and_then(SystemPackageLock::from_records) {
+        Ok(lock) => lock,
+        Err(_) => SystemPackageLock::missing(MissingReason::UnsupportedBySource),
     }
 }
 
@@ -264,15 +378,20 @@ fn live_responses() -> WindowsResponses {
             "Get-CimInstance Win32_VideoController | Select-Object -First 1 PNPDeviceID | ConvertTo-Json -Compress",
         ),
         pnp_signed_driver: powershell_json(
-            "Get-CimInstance Win32_PnPSignedDriver | Where-Object {$_.DeviceID -like 'PCI\\VEN_*'} | Select-Object -First 1 DeviceID,DriverVersion | ConvertTo-Json -Compress",
+            "$video = Get-CimInstance Win32_VideoController | Select-Object -First 1 PNPDeviceID; if ($null -ne $video) { Get-CimInstance Win32_PnPSignedDriver | Where-Object {$_.DeviceClass -eq 'DISPLAY' -and $_.DeviceID -eq $video.PNPDeviceID} | Select-Object -First 1 DeviceID,DeviceClass,DriverVersion | ConvertTo-Json -Compress }",
         ),
-        compiler: command_stdout("cmd", &["/C", "cl /Bv 2>&1"]),
+        compiler: command_output_regardless_of_status("cmd", &["/C", "cl /Bv 2>&1"]),
+        compiler_env: std::env::var("VCToolsVersion").ok(),
+        compiler_vswhere: command_stdout(
+            "vswhere",
+            &["-latest", "-property", "installationVersion"],
+        ),
         sdk: powershell_json(
             "Get-ItemProperty 'HKLM:\\SOFTWARE\\WOW6432Node\\Microsoft\\Microsoft SDKs\\Windows\\v10.0' | Select-Object @{Name='Version';Expression={$_.ProductVersion}} | ConvertTo-Json -Compress",
         ),
         rust_toolchain: command_stdout("rustc", &["+1.98.0", "--version"]),
         package_catalog: powershell_json(
-            "Get-Package | Sort-Object Name | Select-Object -First 64 Name,@{Name='Version';Expression={$_.Version.ToString()}} | ConvertTo-Json -Compress",
+            "Get-Package | Where-Object {$_.Name -in @('Microsoft.VisualStudio.BuildTools','Microsoft.WindowsSDK')} | Select-Object Name,@{Name='Version';Expression={$_.Version.ToString()}} | ConvertTo-Json -Compress",
         ),
     }
 }
@@ -287,6 +406,36 @@ fn powershell_json(script: &str) -> Option<String> {
 
 #[cfg(target_os = "windows")]
 fn command_stdout(program: &str, arguments: &[&str]) -> Option<String> {
+    command_output(program, arguments).and_then(|output| output.success().then_some(output.stdout))
+}
+
+#[cfg(target_os = "windows")]
+fn command_output_regardless_of_status(
+    program: &str,
+    arguments: &[&str],
+) -> Option<CompilerResponse> {
+    command_output(program, arguments).map(|output| CompilerResponse::Command {
+        stdout: output.stdout,
+        _exit_code: output.exit_code,
+    })
+}
+
+#[cfg(target_os = "windows")]
+struct CommandOutput {
+    stdout: String,
+    exit_code: Option<i32>,
+    success: bool,
+}
+
+#[cfg(target_os = "windows")]
+impl CommandOutput {
+    const fn success(&self) -> bool {
+        self.success
+    }
+}
+
+#[cfg(target_os = "windows")]
+fn command_output(program: &str, arguments: &[&str]) -> Option<CommandOutput> {
     let mut child = Command::new(program)
         .args(arguments)
         .stdin(Stdio::null())
@@ -304,8 +453,11 @@ fn command_stdout(program: &str, arguments: &[&str]) -> Option<String> {
         let _ = child.wait();
         return None;
     }
-    if !child.wait().ok()?.success() {
-        return None;
-    }
-    String::from_utf8(output).ok()
+    let status = child.wait().ok()?;
+    let stdout = String::from_utf8(output).ok()?;
+    Some(CommandOutput {
+        stdout,
+        exit_code: status.code(),
+        success: status.success(),
+    })
 }

@@ -8,9 +8,7 @@
     "stdout": "Microsoft C/C++ Optimizing Compiler Version 19.44.35207 for x64\n",
     "exitCode": 2
   },
-  "compilerEnv": null,
-  "compilerVswhere": null,
   "sdk": "{\"Version\":\"10.0.26100.8876\"}",
   "rustToolchain": "rustc 1.98.0 (88d9e12ae 2026-08-20)\n",
-  "packageCatalog": "[{\"Name\":\"Microsoft.WindowsSDK\",\"Version\":\"10.0.26100.8876\"},{\"Name\":\"Microsoft.VisualStudio.BuildTools\",\"Version\":\"17.14.39\"}]"
+  "packageCatalog": "[{\"Name\":\"Microsoft.VisualStudio.BuildTools\",\"Version\":\"17.14.39\"}]"
 }

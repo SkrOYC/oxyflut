@@ -4,12 +4,9 @@
   "computerSystem": "{\"Model\":\"Standard PC\"}",
   "videoController": "{\"PNPDeviceID\":\"PCI\\\\VEN_10DE&DEV_2684&SUBSYS_00000000&REV_A1\"}",
   "pnpSignedDriver": "{\"DeviceID\":\"PCI\\\\VEN_10DE&DEV_2684&SUBSYS_00000000&REV_A1\",\"DeviceClass\":\"DISPLAY\",\"DriverVersion\":\"32.0.15.6094\"}",
-  "compiler": {
-    "stdout": "Microsoft C/C++ Optimizing Compiler Version 19.44.35207 for x64\n",
-    "exitCode": 2
-  },
+  "compiler": null,
   "compilerEnv": null,
-  "compilerVswhere": null,
+  "compilerVswhere": "17.14.39\n",
   "sdk": "{\"Version\":\"10.0.26100.8876\"}",
   "rustToolchain": "rustc 1.98.0 (88d9e12ae 2026-08-20)\n",
   "packageCatalog": "[{\"Name\":\"Microsoft.WindowsSDK\",\"Version\":\"10.0.26100.8876\"},{\"Name\":\"Microsoft.VisualStudio.BuildTools\",\"Version\":\"17.14.39\"}]"

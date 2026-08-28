@@ -9,7 +9,6 @@
   "session": "Aqua\n",
   "pkgutilPkgInfo": {
     "com.apple.pkg.CLTools_Executables": "package-id: com.apple.pkg.CLTools_Executables\nversion: 26.6-17F113\n",
-    "com.apple.pkg.CLTools_SDK_macOS": "package-id: com.apple.pkg.CLTools_SDK_macOS\nversion: 26.5\n",
     "com.apple.pkg.Xcode": "package-id: com.apple.pkg.Xcode\nversion: 26.6-17F113\n"
   }
 }
