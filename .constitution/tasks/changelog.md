@@ -2,6 +2,12 @@
 
 All notable changes to the Stage 4 execution plan appear in this file.
 
+## [v0.2.19] - 2026-08-28
+
+### Fixed
+
+- Applied PR review round 7 corrections: `df7a288` preserves external snapshot bytes, rejects whitespace-only baseline fields, and bounds macOS and Windows observations; updated completion records reconcile review commits.
+
 ## [v0.2.18] - 2026-08-28
 
 ### Fixed

@@ -119,10 +119,10 @@ Qualification planning has three states. While `contracts/qualification-lock.jso
 | Command | Purpose | Availability at v0.15.0 |
 | :-- | :-- | :-- |
 | `prettier --prose-wrap never --check '**/*.md' '!target/**' '!.devenv/**' '!qualification/fixtures/**'` | Check repository Markdown formatting without hard wrapping while preserving digest-pinned qualification fixtures. | Available. |
-| `cargo +1.98.0 fmt --all --check` | Check Rust formatting. | Missing until the workspace exists. |
-| `cargo +1.98.0 clippy --workspace --all-targets --all-features -- -D warnings` | Check Rust code and all feature combinations. | Missing until the workspace exists. |
-| `cargo +1.98.0 test --workspace --all-features` | Run unit, integration, contract, and documentation tests. | Missing until the workspace exists. |
-| `cargo +1.98.0 run -p xtask -- contracts validate` | Validate local schemas, instances, exact upstream sets, digests, Rust contracts, the authoritative C header and generated bindings, platform and accessibility baselines, score arithmetic, the selection decision, and Phase 3B promotion references. | Missing until `xtask` exists. |
+| `cargo +1.98.0 fmt --all --check` | Check Rust formatting. | Available. |
+| `cargo +1.98.0 clippy --workspace --all-targets --all-features -- -D warnings` | Check Rust code and all feature combinations. | Available. |
+| `cargo +1.98.0 test --workspace --all-features` | Run unit, integration, contract, and documentation tests. | Available. |
+| `cargo +1.98.0 run -p xtask -- contracts validate` | Validate local schemas, instances, exact upstream sets, digests, Rust contracts, the authoritative C header and generated bindings, platform and accessibility baselines, score arithmetic, the selection decision, and Phase 3B promotion references. | Available. |
 | `cargo +1.98.0 run -p xtask -- evidence verify PATH` | Verify one repository-relative evidence file, its schema or media type, canonical derived form when applicable, and every declared digest without rewriting preserved source bytes. Replace `PATH` with the evidence path. | Available. |
 | `cargo +1.98.0 run -p xtask -- external-contracts verify` | Verify local SPDX, in-toto, SLSA, and DSSE snapshots and the staged external-contract-lock proposal without network resolution. | Available. |
 | `cargo +1.98.0 run -p xtask -- baseline validate --input PATH` | Validate one candidate-neutral capability baseline and optionally publish its canonical draft. Replace `PATH` with the baseline path. | Available. |
@@ -134,7 +134,7 @@ Qualification planning has three states. While `contracts/qualification-lock.jso
 | `cargo +1.98.0 run -p xtask -- probe --candidate CANDIDATE --environment ENVIRONMENT` | Run one frozen Tier 1 capability matrix. Replace `CANDIDATE` and `ENVIRONMENT` with locked identifiers. | Missing until the harness exists. |
 | `cargo +1.98.0 run -p xtask -- qualify --all-candidates --locked` | Run hard gates and produce schema-valid eligibility records without selecting from incomplete evidence. | Missing until both probes exist. |
 | `cargo +1.98.0 fuzz run FUZZ_TARGET` | Run one frozen fuzz target. Replace `FUZZ_TARGET` with the ingress target identifier. | Missing until fuzz targets exist. |
-| `cargo +1.98.0 deny check` | Enforce dependency source, license, advisory, and duplicate policy. | Missing until the dependency policy exists. |
+| `cargo +1.98.0 deny check licenses bans sources` | Enforce dependency source, license, and duplicate policy. | Available for `licenses bans sources`; advisories deferred to OXY-D001. |
 | `cargo +1.98.0 audit` | Check the lockfile against RustSec advisories. | Missing until the workspace exists. |
 
 Qualification CLI commands write content-free diagnostics to standard error. Validation, evidence, external-contract, baseline, environment-inspection, build, probe, and qualification commands return exit code 0 on success and 1 on invalid input, failed validation, or execution failure. `lock status` returns 0 when the requested gate is ready, 2 when the lock is valid but the requested gate remains open, and 1 when the lock itself is invalid. No command converts an open gate into readiness.
