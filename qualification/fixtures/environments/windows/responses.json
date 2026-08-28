@@ -1,5 +1,5 @@
 {
-  "operatingSystem": "{\"Version\":\"11-25H2\"}",
+  "operatingSystem": "{\"ProductName\":\"Windows 11 Pro\",\"DisplayVersion\":\"25H2\"}\r\n",
   "processor": "{\"Architecture\":9}",
   "computerSystem": "{\"Model\":\"Standard PC\"}",
   "videoController": "{\"PNPDeviceID\":\"PCI\\\\VEN_10DE&DEV_2684&SUBSYS_00000000&REV_A1\"}",
