@@ -6,7 +6,7 @@ All notable changes to the Stage 4 execution plan appear in this file.
 
 ### Fixed
 
-- Applied PR review round 6 corrections in `e5036d8` for Linux session collection, resolved-tool validation, complete-fixture verification, raw-clock ordering, and evidence writer visibility.
+- Applied PR review round 6 corrections in `e5036d8` and `00f4908` for Linux session collection, resolved-tool validation, complete-fixture verification, raw-clock ordering, evidence writer visibility, and manifest-bound readiness fixtures.
 
 ### Noted
 
