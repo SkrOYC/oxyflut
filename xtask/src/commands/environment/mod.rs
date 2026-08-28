@@ -190,7 +190,10 @@ pub(crate) enum EnvironmentCommandError {
     EnvironmentMismatch,
     /// The host does not run the requested operating system.
     #[error("environment source is unavailable on this host")]
-    UnsupportedHost,
+    UnsupportedHost {
+        /// The explicit inventory reason that prevents host collection.
+        reason: oxyflut_qualification::environment::MissingReason,
+    },
     /// A fixture response could not be read.
     #[cfg(test)]
     #[error("environment fixture could not be read")]
@@ -238,11 +241,11 @@ pub(crate) enum EnvironmentCommandError {
 }
 
 impl EnvironmentCommandError {
-    const fn code(&self) -> &'static str {
+    fn code(&self) -> &'static str {
         match self {
             Self::EnvironmentMismatch => "environment-mismatch",
             Self::SourceEnvironment => "environment-source-mismatch",
-            Self::UnsupportedHost => "environment-unsupported-host",
+            Self::UnsupportedHost { .. } => "environment-unsupported-host",
             #[cfg(test)]
             Self::FixtureIo { .. } => "environment-fixture-io",
             #[cfg(test)]
@@ -254,6 +257,9 @@ impl EnvironmentCommandError {
             Self::LockShape => "environment-lock-shape",
             Self::SchemaRegistry(_) => "environment-schema-registry",
             Self::Schema(_) => "environment-lock-schema",
+            Self::Evidence(error) if error.code() == "content-address-collision" => {
+                "evidence-destination-exists"
+            }
             Self::Evidence(_) => "environment-evidence",
         }
     }
@@ -264,7 +270,8 @@ mod tests {
     use std::collections::BTreeSet;
     use std::error::Error;
     use std::fs;
-    use std::path::PathBuf;
+    use std::path::{Path, PathBuf};
+    use std::sync::atomic::{AtomicU64, Ordering};
 
     use oxyflut_qualification::environment::{EnvironmentInventory, InventoryValue, MissingReason};
     use oxyflut_qualification::evidence::{MediaType, canonical_json_bytes, verify_file};
@@ -285,7 +292,7 @@ mod tests {
             let source = FixturePlatformSource::new(&root, environment);
             let inventory = source.collect()?;
             assert_eq!(inventory.environment(), environment);
-            assert_eq!(EnvironmentInventory::field_names().len(), 12);
+            assert_eq!(EnvironmentInventory::field_names().len(), 13);
             assert!(inventory.fields().architecture.observed_value().is_some());
             assert!(
                 inventory
@@ -295,11 +302,24 @@ mod tests {
                     .is_some()
             );
             assert!(inventory.fields().sdk_identity.observed_value().is_some());
-            assert!(inventory.fields().session.observed_value().is_some());
+            assert!(inventory.fields().rust_toolchain.observed_value().is_some());
             assert!(
                 inventory.system_package_lock().packages().len()
                     <= oxyflut_qualification::environment::MAXIMUM_SYSTEM_PACKAGES
             );
+            match environment {
+                EnvironmentId::Macos | EnvironmentId::Wayland | EnvironmentId::X11 => {
+                    assert!(inventory.fields().session.observed_value().is_some());
+                }
+                EnvironmentId::Windows => {
+                    assert!(matches!(
+                        inventory.fields().session,
+                        InventoryValue::Missing {
+                            reason: MissingReason::ManualCapture
+                        }
+                    ));
+                }
+            }
             assert_eq!(
                 inventory
                     .lock_environment_value()
@@ -353,22 +373,17 @@ mod tests {
     #[test]
     fn inspect_writes_bound_projection_and_complete_inventory_through_the_evidence_writer()
     -> Result<(), Box<dyn Error>> {
-        let root = test_workspace_root()?;
-        let output_text = format!(
-            "qualification/fixtures/environments/output-test-{}.json",
-            std::process::id()
-        );
-        let output = output_text.parse::<RepositoryPath>()?;
-        let output_path = root.join(&output_text);
+        let workspace = temporary_directory("inspect")?;
+        let root = workspace.path();
+        let output = "qualification/evidence/output.json".parse::<RepositoryPath>()?;
+        let output_path = root.join(output.as_str());
         let inventory_path = root.join(companion_inventory_path(&output)?.as_str());
-        remove_if_exists(&output_path)?;
-        remove_if_exists(&inventory_path)?;
 
-        let source = FixturePlatformSource::new(&root, EnvironmentId::Wayland);
-        let references = inspect_with_source(&root, &source, &output)?;
-        let projection = verify_file(&root, &output, &MediaType::application_json())?;
+        let source = FixturePlatformSource::new(root, EnvironmentId::Wayland);
+        let references = inspect_with_source(root, &source, &output)?;
+        let projection = verify_file(root, &output, &MediaType::application_json())?;
         let companion_path = companion_inventory_path(&output)?;
-        let companion = verify_file(&root, &companion_path, &MediaType::application_json())?;
+        let companion = verify_file(root, &companion_path, &MediaType::application_json())?;
         let projection_value: serde_json::Value = serde_json::from_slice(&fs::read(&output_path)?)?;
         let companion_value: serde_json::Value =
             serde_json::from_slice(&fs::read(&inventory_path)?)?;
@@ -421,6 +436,7 @@ mod tests {
         );
         assert!(companion_value.pointer("/compilerIdentity").is_some());
         assert!(companion_value.pointer("/sdkIdentity").is_some());
+        assert!(companion_value.pointer("/rustToolchain").is_some());
         assert!(companion_value.pointer("/compositor").is_some());
         assert!(companion_value.pointer("/session").is_some());
         assert!(companion_value.pointer("/protocolVersion").is_some());
@@ -437,8 +453,6 @@ mod tests {
                 .is_some_and(|packages| !packages.is_empty())
         );
 
-        fs::remove_file(output_path)?;
-        fs::remove_file(inventory_path)?;
         Ok(())
     }
 
@@ -517,6 +531,19 @@ mod tests {
     }
 
     #[test]
+    fn linux_driver_identity_binds_the_kernel_driver_and_userspace_package()
+    -> Result<(), Box<dyn Error>> {
+        let root = test_workspace_root()?;
+        let source = FixturePlatformSource::new(&root, EnvironmentId::Wayland);
+        let inventory = source.collect()?;
+        assert_eq!(
+            inventory.driver_version().observed_value(),
+            Some("amdgpu/libgl1-mesa-dri=25.0.0-1ubuntu1")
+        );
+        Ok(())
+    }
+
+    #[test]
     fn missing_required_linux_package_is_typed_and_never_hashes_a_partial_set()
     -> Result<(), Box<dyn Error>> {
         let root = test_workspace_root()?;
@@ -550,7 +577,7 @@ mod tests {
         let inventory = source.collect()?;
         assert_eq!(
             inventory.fields().gpu_id.observed_value(),
-            Some("pci-VEN_10DE-DEV_2684")
+            Some("pci:10de:2684")
         );
         Ok(())
     }
@@ -603,14 +630,6 @@ mod tests {
         workspace_root().map_err(|_| "xtask must remain directly below the workspace root".into())
     }
 
-    fn remove_if_exists(path: &PathBuf) -> Result<(), Box<dyn Error>> {
-        match fs::remove_file(path) {
-            Ok(()) => Ok(()),
-            Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(()),
-            Err(error) => Err(error.into()),
-        }
-    }
-
     fn assert_no_evidence(
         root: &std::path::Path,
         output: &RepositoryPath,
@@ -630,7 +649,9 @@ mod tests {
         }
 
         fn collect(&self) -> Result<EnvironmentInventory, EnvironmentCommandError> {
-            let root = workspace_root().map_err(|_| EnvironmentCommandError::UnsupportedHost)?;
+            let root = workspace_root().map_err(|_| EnvironmentCommandError::UnsupportedHost {
+                reason: MissingReason::UnavailableOnHost,
+            })?;
             FixturePlatformSource::new(&root, EnvironmentId::X11).collect()
         }
     }
@@ -640,23 +661,99 @@ mod tests {
         #[cfg(not(target_os = "macos"))]
         assert!(matches!(
             super::macos::MacosSource.collect(),
-            Err(EnvironmentCommandError::UnsupportedHost)
+            Err(EnvironmentCommandError::UnsupportedHost {
+                reason: MissingReason::UnavailableOnHost
+            })
         ));
         #[cfg(not(target_os = "windows"))]
         assert!(matches!(
             super::windows::WindowsSource.collect(),
-            Err(EnvironmentCommandError::UnsupportedHost)
+            Err(EnvironmentCommandError::UnsupportedHost {
+                reason: MissingReason::UnavailableOnHost
+            })
         ));
         #[cfg(not(target_os = "linux"))]
         assert!(matches!(
             super::linux::collect_linux(EnvironmentId::Wayland),
-            Err(EnvironmentCommandError::EnvironmentMismatch)
+            Err(EnvironmentCommandError::UnsupportedHost {
+                reason: MissingReason::UnavailableOnHost
+            })
         ));
+    }
+
+    #[test]
+    fn existing_output_with_different_content_reports_a_distinct_collision_code()
+    -> Result<(), Box<dyn Error>> {
+        let workspace = temporary_directory("collision")?;
+        let root = workspace.path();
+        let output = "qualification/evidence/environment.json".parse::<RepositoryPath>()?;
+        fs::create_dir_all(root.join("qualification/evidence"))?;
+        fs::write(root.join(output.as_str()), b"{}")?;
+        let source = FixturePlatformSource::new(root, EnvironmentId::Wayland);
+
+        let error = inspect_with_source(root, &source, &output)
+            .err()
+            .ok_or("existing output must fail")?;
+        assert_eq!(error.code(), "evidence-destination-exists");
+        Ok(())
     }
 
     #[test]
     fn environment_command_stays_registered_and_returns_an_outcome() {
         let outcome = super::run(&[]);
         assert!(matches!(outcome, CommandOutcome::Failed(_)));
+    }
+
+    static TEMP_SEQUENCE: AtomicU64 = AtomicU64::new(0);
+
+    struct TemporaryDirectory {
+        path: PathBuf,
+    }
+
+    impl TemporaryDirectory {
+        fn path(&self) -> &Path {
+            &self.path
+        }
+    }
+
+    impl Drop for TemporaryDirectory {
+        fn drop(&mut self) {
+            let _ = fs::remove_dir_all(&self.path);
+        }
+    }
+
+    fn temporary_directory(name: &str) -> Result<TemporaryDirectory, Box<dyn Error>> {
+        let source = test_workspace_root()?;
+        for _ in 0..128 {
+            let sequence = TEMP_SEQUENCE.fetch_add(1, Ordering::Relaxed);
+            let path = std::env::temp_dir().join(format!(
+                "oxyflut-environment-{name}-{}-{sequence}",
+                std::process::id()
+            ));
+            match fs::create_dir(&path) {
+                Ok(()) => {
+                    copy_directory(&source.join(".constitution"), &path.join(".constitution"))?;
+                    copy_directory(&source.join("qualification"), &path.join("qualification"))?;
+                    return Ok(TemporaryDirectory { path });
+                }
+                Err(error) if error.kind() == std::io::ErrorKind::AlreadyExists => continue,
+                Err(error) => return Err(error.into()),
+            }
+        }
+        Err("could not create a temporary environment workspace".into())
+    }
+
+    fn copy_directory(source: &Path, destination: &Path) -> Result<(), std::io::Error> {
+        fs::create_dir_all(destination)?;
+        for entry in fs::read_dir(source)? {
+            let entry = entry?;
+            let destination_path = destination.join(entry.file_name());
+            if entry.file_type()?.is_dir() {
+                copy_directory(&entry.path(), &destination_path)?;
+            } else {
+                fs::copy(entry.path(), destination_path)?;
+            }
+        }
+        Ok(())
     }
 }

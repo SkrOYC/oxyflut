@@ -18,7 +18,7 @@ use serde_json::Value;
 use super::{EnvironmentCommandError, PlatformSource};
 
 #[cfg(target_os = "windows")]
-const OUTPUT_LIMIT: usize = 4096;
+const OUTPUT_LIMIT: usize = 16 * 1024;
 
 /// Collects the Windows Tier 1 environment only when executing on Windows.
 pub(crate) struct WindowsSource;
@@ -35,7 +35,9 @@ impl PlatformSource for WindowsSource {
         }
         #[cfg(not(target_os = "windows"))]
         {
-            Err(EnvironmentCommandError::UnsupportedHost)
+            Err(EnvironmentCommandError::UnsupportedHost {
+                reason: MissingReason::UnavailableOnHost,
+            })
         }
     }
 }
@@ -56,12 +58,11 @@ struct WindowsResponses {
     processor: Option<String>,
     computer_system: Option<String>,
     video_controller: Option<String>,
+    pnp_signed_driver: Option<String>,
     compiler: Option<String>,
     sdk: Option<String>,
-    compositor: Option<String>,
-    session: Option<String>,
-    protocol_version: Option<String>,
-    package_receipts: Vec<String>,
+    rust_toolchain: Option<String>,
+    package_catalog: Option<String>,
 }
 
 fn collect_windows_responses(
@@ -78,16 +79,17 @@ fn collect_windows_responses(
         hardware_id: json_identity(responses.computer_system.as_deref(), "Model", "hardware"),
         gpu_id: gpu_identity(responses.video_controller.as_deref()),
         driver_version: json_identity(
-            responses.video_controller.as_deref(),
+            responses.pnp_signed_driver.as_deref(),
             "DriverVersion",
             "driver",
         ),
         compiler_identity: command_identity(responses.compiler.as_deref(), "msvc"),
         sdk_identity: json_identity(responses.sdk.as_deref(), "Version", "windows-sdk"),
-        compositor: raw_identity(responses.compositor.as_deref()),
-        session: raw_identity(responses.session.as_deref()),
-        protocol_version: raw_identity(responses.protocol_version.as_deref()),
-        system_package_lock: package_lock(&responses.package_receipts),
+        rust_toolchain: rust_toolchain_identity(responses.rust_toolchain.as_deref()),
+        compositor: InventoryValue::missing(MissingReason::ManualCapture),
+        session: InventoryValue::missing(MissingReason::ManualCapture),
+        protocol_version: InventoryValue::missing(MissingReason::ManualCapture),
+        system_package_lock: package_lock(responses.package_catalog.as_deref()),
     };
     EnvironmentInventory::new(EnvironmentId::Windows, fields)
         .map_err(EnvironmentCommandError::Inventory)
@@ -121,10 +123,16 @@ fn gpu_identity(raw: Option<&str>) -> InventoryValue {
     if !bus.eq_ignore_ascii_case("PCI") {
         return InventoryValue::missing(MissingReason::UnsupportedBySource);
     }
-    let vendor = pnp_id.split('&').find(|part| part.starts_with("VEN_"));
-    let device = pnp_id.split('&').find(|part| part.starts_with("DEV_"));
+    let vendor = pnp_id.split('&').find_map(|part| part.strip_prefix("VEN_"));
+    let device = pnp_id.split('&').find_map(|part| part.strip_prefix("DEV_"));
     match (vendor, device) {
-        (Some(vendor), Some(device)) => observed_or_missing(format!("pci-{vendor}-{device}")),
+        (Some(vendor), Some(device)) if is_hex4(vendor) && is_hex4(device) => {
+            observed_or_missing(format!(
+                "pci:{}:{}",
+                vendor.to_ascii_lowercase(),
+                device.to_ascii_lowercase()
+            ))
+        }
         _ => InventoryValue::missing(MissingReason::UnsupportedBySource),
     }
 }
@@ -149,11 +157,18 @@ fn command_identity(raw: Option<&str>, prefix: &str) -> InventoryValue {
     observed_or_missing(format!("{prefix}-{}", atomize(version)))
 }
 
-fn raw_identity(raw: Option<&str>) -> InventoryValue {
-    raw.and_then(first_line).map_or_else(
-        || InventoryValue::missing(MissingReason::SourceUnavailable),
-        |value| observed_or_missing(atomize(value)),
-    )
+fn rust_toolchain_identity(raw: Option<&str>) -> InventoryValue {
+    let Some(raw) = raw else {
+        return InventoryValue::missing(MissingReason::SourceUnavailable);
+    };
+    let Some(version) = raw.split_whitespace().nth(1) else {
+        return InventoryValue::missing(MissingReason::UnsupportedBySource);
+    };
+    observed_or_missing(format!("rustc-{}", atomize(version)))
+}
+
+fn is_hex4(value: &str) -> bool {
+    value.len() == 4 && value.bytes().all(|byte| byte.is_ascii_hexdigit())
 }
 
 fn json_string(raw: Option<&str>, field: &str) -> Option<String> {
@@ -173,19 +188,30 @@ fn first_json_object(value: &Value) -> Option<&serde_json::Map<String, Value>> {
     }
 }
 
-fn package_lock(receipts: &[String]) -> SystemPackageLock {
-    if receipts.is_empty() {
+fn package_lock(raw: Option<&str>) -> SystemPackageLock {
+    let Some(raw) = raw else {
+        return SystemPackageLock::missing(MissingReason::SourceUnavailable);
+    };
+    let Ok(value) = serde_json::from_str::<Value>(raw) else {
+        return SystemPackageLock::missing(MissingReason::UnsupportedBySource);
+    };
+    let values = match value {
+        Value::Array(values) => values,
+        Value::Object(value) => vec![Value::Object(value)],
+        Value::Null | Value::Bool(_) | Value::Number(_) | Value::String(_) => {
+            return SystemPackageLock::missing(MissingReason::UnsupportedBySource);
+        }
+    };
+    let mut records = values.iter().filter_map(package_fields).collect::<Vec<_>>();
+    records.sort_unstable_by(|left, right| left.0.cmp(&right.0));
+    records.truncate(oxyflut_qualification::environment::MAXIMUM_SYSTEM_PACKAGES);
+    if records.is_empty() {
         return SystemPackageLock::missing(MissingReason::SourceUnavailable);
     }
-    let records = receipts
-        .iter()
-        .map(|receipt| {
-            package_fields(receipt)
-                .ok_or(MissingReason::UnsupportedBySource)
-                .and_then(|(name, version)| {
-                    SystemPackage::new(name, version)
-                        .map_err(|_| MissingReason::UnsupportedBySource)
-                })
+    let records = records
+        .into_iter()
+        .map(|(name, version)| {
+            SystemPackage::new(name, version).map_err(|_| MissingReason::UnsupportedBySource)
         })
         .collect::<Result<Vec<_>, _>>();
     match records.and_then(|records| {
@@ -196,17 +222,11 @@ fn package_lock(receipts: &[String]) -> SystemPackageLock {
     }
 }
 
-fn package_fields(raw: &str) -> Option<(String, String)> {
-    let (name, version) = raw.lines().next()?.split_once('\t')?;
-    Some((name.to_owned(), version.to_owned()))
-}
-
-fn first_line(value: &str) -> Option<&str> {
-    value
-        .lines()
-        .next()
-        .map(str::trim)
-        .filter(|value| !value.is_empty())
+fn package_fields(value: &Value) -> Option<(String, String)> {
+    let object = value.as_object()?;
+    let name = object.get("Name")?.as_str()?.to_owned();
+    let version = object.get("Version")?.as_str()?.to_owned();
+    Some((name, version))
 }
 
 fn atomize(value: &str) -> String {
@@ -232,7 +252,7 @@ fn observed_or_missing(value: String) -> InventoryValue {
 fn live_responses() -> WindowsResponses {
     WindowsResponses {
         operating_system: powershell_json(
-            "Get-CimInstance Win32_OperatingSystem | Select-Object Version | ConvertTo-Json -Compress",
+            "Get-ComputerInfo | Select-Object @{Name='Version';Expression={$_.OsVersion}} | ConvertTo-Json -Compress",
         ),
         processor: powershell_json(
             "Get-CimInstance Win32_Processor | Select-Object -First 1 Architecture | ConvertTo-Json -Compress",
@@ -241,14 +261,19 @@ fn live_responses() -> WindowsResponses {
             "Get-CimInstance Win32_ComputerSystem | Select-Object Model | ConvertTo-Json -Compress",
         ),
         video_controller: powershell_json(
-            "Get-CimInstance Win32_VideoController | Select-Object -First 1 PNPDeviceID,DriverVersion | ConvertTo-Json -Compress",
+            "Get-CimInstance Win32_VideoController | Select-Object -First 1 PNPDeviceID | ConvertTo-Json -Compress",
         ),
-        compiler: command_stdout("cl", &["/Bv"]),
-        sdk: None,
-        compositor: None,
-        session: None,
-        protocol_version: None,
-        package_receipts: Vec::new(),
+        pnp_signed_driver: powershell_json(
+            "Get-CimInstance Win32_PnPSignedDriver | Where-Object {$_.DeviceID -like 'PCI\\VEN_*'} | Select-Object -First 1 DeviceID,DriverVersion | ConvertTo-Json -Compress",
+        ),
+        compiler: command_stdout("cmd", &["/C", "cl /Bv 2>&1"]),
+        sdk: powershell_json(
+            "Get-ItemProperty 'HKLM:\\SOFTWARE\\WOW6432Node\\Microsoft\\Microsoft SDKs\\Windows\\v10.0' | Select-Object @{Name='Version';Expression={$_.ProductVersion}} | ConvertTo-Json -Compress",
+        ),
+        rust_toolchain: command_stdout("rustc", &["+1.98.0", "--version"]),
+        package_catalog: powershell_json(
+            "Get-Package | Sort-Object Name | Select-Object -First 64 Name,@{Name='Version';Expression={$_.Version.ToString()}} | ConvertTo-Json -Compress",
+        ),
     }
 }
 

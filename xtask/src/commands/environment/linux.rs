@@ -23,6 +23,7 @@ use super::EnvironmentCommandError;
 const COMMAND_OUTPUT_LIMIT: usize = 4096;
 const SOURCE_FILE_LIMIT: usize = 4096;
 const PACKAGE_OUTPUT_LIMIT: usize = 512;
+const MESA_DRIVER_PACKAGES: &[&str] = &["libgl1-mesa-dri", "mesa-vulkan-drivers"];
 
 // Verification source (OXY-C004): packages.ubuntu.com name searches over all suites returned
 // HTTP 200 for each exact binary package name: libglib2.0-0t64, libglib2.0-0, libgtk-4-1,
@@ -56,7 +57,9 @@ pub(crate) fn collect_linux(
     #[cfg(not(target_os = "linux"))]
     {
         let _ = environment;
-        Err(EnvironmentCommandError::EnvironmentMismatch)
+        Err(EnvironmentCommandError::UnsupportedHost {
+            reason: MissingReason::UnavailableOnHost,
+        })
     }
 }
 
@@ -78,8 +81,8 @@ struct LinuxResponses {
     sysfs_hardware: Vec<String>,
     sysfs_gpu: Vec<String>,
     lspci: Option<String>,
-    driver_versions: Vec<String>,
-    rustc: Option<String>,
+    drm_drivers: Vec<String>,
+    rust_toolchain: Option<String>,
     compiler: Option<String>,
     session_type: Option<String>,
     current_desktop: Option<String>,
@@ -90,7 +93,15 @@ fn collect_linux_responses(
     environment: EnvironmentId,
     responses: &LinuxResponses,
 ) -> Result<EnvironmentInventory, EnvironmentCommandError> {
-    let session = session_value(environment, responses.session_type.as_deref())?;
+    let session = session_value(environment, responses.session_type.as_deref());
+    if matches!(
+        session,
+        InventoryValue::Missing {
+            reason: MissingReason::NotActiveSession
+        }
+    ) {
+        return Err(EnvironmentCommandError::EnvironmentMismatch);
+    }
     let fields = EnvironmentFields {
         operating_system: operating_system(responses.os_release.as_deref()),
         minimum_version: InventoryValue::missing(MissingReason::NotDeclaredByLock),
@@ -100,9 +111,13 @@ fn collect_linux_responses(
             responses.sysfs_gpu.iter().map(String::as_str),
             responses.lspci.as_deref(),
         ),
-        driver_version: first_line_value(responses.driver_versions.iter().map(String::as_str)),
-        compiler_identity: compiler_identity(responses.rustc.as_deref()),
-        sdk_identity: compiler_sdk_identity(responses.compiler.as_deref()),
+        driver_version: driver_version(
+            responses.drm_drivers.iter().map(String::as_str),
+            responses.dpkg_query.as_ref(),
+        ),
+        compiler_identity: native_compiler_identity(responses.compiler.as_deref()),
+        sdk_identity: linux_sdk_identity(responses.dpkg_query.as_ref()),
+        rust_toolchain: compiler_identity(responses.rust_toolchain.as_deref()),
         compositor: compositor_value(responses.current_desktop.as_deref()),
         session,
         protocol_version: InventoryValue::missing(MissingReason::SourceUnavailable),
@@ -154,19 +169,33 @@ fn gpu_model<'responses>(
 
 fn parse_sysfs_gpu(line: &str) -> Option<String> {
     let (vendor, device) = line.split_once('\t')?;
-    let vendor = vendor.trim();
-    let device = device.trim();
-    (!vendor.is_empty() && !device.is_empty()).then(|| format!("pci:{vendor}:{device}"))
+    pci_gpu_id(vendor, device)
 }
 
 fn gpu_from_lspci(raw: Option<&str>) -> InventoryValue {
     let Some(identifier) = raw
         .and_then(|output| output.lines().next())
         .and_then(|line| line.split_whitespace().nth(2))
+        .and_then(|identifier| identifier.split_once(':'))
+        .and_then(|(vendor, device)| pci_gpu_id(vendor, device))
     else {
         return InventoryValue::missing(MissingReason::SourceUnavailable);
     };
-    observed_or_missing(format!("pci:{identifier}"))
+    observed_or_missing(identifier)
+}
+
+fn pci_gpu_id(vendor: &str, device: &str) -> Option<String> {
+    let vendor = vendor.trim().strip_prefix("0x").unwrap_or(vendor.trim());
+    let device = device.trim().strip_prefix("0x").unwrap_or(device.trim());
+    let is_hex4 =
+        |value: &str| value.len() == 4 && value.bytes().all(|byte| byte.is_ascii_hexdigit());
+    (is_hex4(vendor) && is_hex4(device)).then(|| {
+        format!(
+            "pci:{}:{}",
+            vendor.to_ascii_lowercase(),
+            device.to_ascii_lowercase()
+        )
+    })
 }
 
 fn compiler_identity(raw: Option<&str>) -> InventoryValue {
@@ -180,7 +209,7 @@ fn compiler_identity(raw: Option<&str>) -> InventoryValue {
     }
 }
 
-fn compiler_sdk_identity(raw: Option<&str>) -> InventoryValue {
+fn native_compiler_identity(raw: Option<&str>) -> InventoryValue {
     let Some(output) = raw else {
         return InventoryValue::missing(MissingReason::SourceUnavailable);
     };
@@ -193,17 +222,31 @@ fn compiler_sdk_identity(raw: Option<&str>) -> InventoryValue {
     observed_or_missing(format!("cc-{}", atomize(version)))
 }
 
-fn session_value(
-    environment: EnvironmentId,
-    raw: Option<&str>,
-) -> Result<InventoryValue, EnvironmentCommandError> {
+fn linux_sdk_identity(dpkg_query: Option<&BTreeMap<String, Option<String>>>) -> InventoryValue {
+    let Some(raw) = dpkg_query
+        .and_then(|packages| packages.get("libc6-dev"))
+        .and_then(Option::as_deref)
+    else {
+        return InventoryValue::missing(MissingReason::SourceUnavailable);
+    };
+    let Some((name, version)) = package_fields(raw) else {
+        return InventoryValue::missing(MissingReason::UnsupportedBySource);
+    };
+    observed_or_missing(format!(
+        "linux-sdk-{}-{}",
+        atomize(&name),
+        atomize(&version)
+    ))
+}
+
+fn session_value(environment: EnvironmentId, raw: Option<&str>) -> InventoryValue {
     let Some(session) = raw.and_then(first_line) else {
-        return Err(EnvironmentCommandError::EnvironmentMismatch);
+        return InventoryValue::missing(MissingReason::SourceUnavailable);
     };
     if !session.eq_ignore_ascii_case(environment.as_str()) {
-        return Err(EnvironmentCommandError::EnvironmentMismatch);
+        return InventoryValue::missing(MissingReason::NotActiveSession);
     }
-    Ok(observed_or_missing(session.to_ascii_lowercase()))
+    observed_or_missing(session.to_ascii_lowercase())
 }
 
 fn compositor_value(raw: Option<&str>) -> InventoryValue {
@@ -211,6 +254,40 @@ fn compositor_value(raw: Option<&str>) -> InventoryValue {
         return InventoryValue::missing(MissingReason::SourceUnavailable);
     };
     observed_or_missing(atomize(compositor))
+}
+
+fn driver_version<'driver>(
+    mut drivers: impl Iterator<Item = &'driver str>,
+    dpkg_query: Option<&BTreeMap<String, Option<String>>>,
+) -> InventoryValue {
+    let Some(driver) = drivers.next().and_then(first_line) else {
+        return InventoryValue::missing(MissingReason::SourceUnavailable);
+    };
+    let Some(packages) = dpkg_query else {
+        return InventoryValue::missing(MissingReason::SourceUnavailable);
+    };
+    let package = if driver.eq_ignore_ascii_case("nvidia") {
+        packages.iter().find_map(|(name, raw)| {
+            name.starts_with("nvidia-driver-")
+                .then_some(raw.as_deref())
+                .flatten()
+                .and_then(package_fields)
+        })
+    } else {
+        MESA_DRIVER_PACKAGES.iter().find_map(|name| {
+            packages
+                .get(*name)
+                .and_then(Option::as_deref)
+                .and_then(package_fields)
+        })
+    };
+    match package {
+        Some((package, version)) => observed_or_missing(format!(
+            "{}/{package}={version}",
+            atomize(driver).to_ascii_lowercase()
+        )),
+        None => InventoryValue::missing(MissingReason::NotInstalled),
+    }
 }
 
 fn system_package_lock(dpkg_query: Option<&BTreeMap<String, Option<String>>>) -> SystemPackageLock {
@@ -327,15 +404,8 @@ fn live_responses() -> LinuxResponses {
         .collect(),
         sysfs_gpu: live_sysfs_gpu(),
         lspci: command_stdout("lspci", &["-Dn", "-d", "::0300"], COMMAND_OUTPUT_LIMIT),
-        driver_versions: [
-            "/sys/module/nvidia/version",
-            "/sys/module/amdgpu/version",
-            "/sys/module/i915/version",
-        ]
-        .iter()
-        .filter_map(|path| read_file_bounded(Path::new(path), SOURCE_FILE_LIMIT))
-        .collect(),
-        rustc: command_stdout("rustc", &["+1.98.0", "--version"], COMMAND_OUTPUT_LIMIT),
+        drm_drivers: live_drm_drivers(),
+        rust_toolchain: command_stdout("rustc", &["+1.98.0", "--version"], COMMAND_OUTPUT_LIMIT),
         compiler: command_stdout("cc", &["--version"], COMMAND_OUTPUT_LIMIT),
         session_type: std::env::var("XDG_SESSION_TYPE").ok(),
         current_desktop: std::env::var("XDG_CURRENT_DESKTOP").ok(),
@@ -346,7 +416,7 @@ fn live_responses() -> LinuxResponses {
 }
 
 #[cfg(target_os = "linux")]
-fn live_sysfs_gpu() -> Vec<String> {
+fn live_drm_card_paths() -> Vec<std::path::PathBuf> {
     let Ok(directory) = fs::read_dir("/sys/class/drm") else {
         return Vec::new();
     };
@@ -361,6 +431,11 @@ fn live_sysfs_gpu() -> Vec<String> {
         .collect::<Vec<_>>();
     paths.sort();
     paths
+}
+
+#[cfg(target_os = "linux")]
+fn live_sysfs_gpu() -> Vec<String> {
+    live_drm_card_paths()
         .iter()
         .filter_map(|path| {
             let vendor = read_file_bounded(&path.join("device/vendor"), SOURCE_FILE_LIMIT)?;
@@ -370,6 +445,19 @@ fn live_sysfs_gpu() -> Vec<String> {
                 first_line(&vendor)?,
                 first_line(&device)?
             ))
+        })
+        .collect()
+}
+
+#[cfg(target_os = "linux")]
+fn live_drm_drivers() -> Vec<String> {
+    live_drm_card_paths()
+        .iter()
+        .filter_map(|path| fs::read_link(path.join("device/driver")).ok())
+        .filter_map(|path| {
+            path.file_name()
+                .and_then(|name| name.to_str())
+                .map(str::to_owned)
         })
         .collect()
 }
@@ -393,13 +481,43 @@ fn live_dpkg_query() -> BTreeMap<String, Option<String>> {
             );
         }
     }
+    for name in MESA_DRIVER_PACKAGES {
+        output.insert(
+            (*name).to_owned(),
+            command_stdout(
+                "dpkg-query",
+                &[
+                    "--show",
+                    "--showformat=${binary:Package}\\t${Version}\\n",
+                    name,
+                ],
+                PACKAGE_OUTPUT_LIMIT,
+            ),
+        );
+    }
+    for record in command_stdout(
+        "dpkg-query",
+        &[
+            "--show",
+            "--showformat=${binary:Package}\\t${Version}\\n",
+            "nvidia-driver-*",
+        ],
+        COMMAND_OUTPUT_LIMIT,
+    )
+    .into_iter()
+    .flat_map(|records| records.lines().map(str::to_owned).collect::<Vec<_>>())
+    {
+        if let Some((name, _)) = package_fields(&record) {
+            output.insert(name, Some(format!("{record}\n")));
+        }
+    }
     output
 }
 
 #[cfg(target_os = "linux")]
 fn read_file_bounded(path: &Path, limit: usize) -> Option<String> {
     let file = fs::File::open(path).ok()?;
-    read_bounded(file, limit)
+    read_bounded(file, limit).ok()
 }
 
 #[cfg(target_os = "linux")]
@@ -412,27 +530,28 @@ fn command_stdout(program: &str, arguments: &[&str], limit: usize) -> Option<Str
         .spawn()
         .ok()?;
     let stdout = child.stdout.take()?;
-    let output = read_bounded(stdout, limit);
-    if output.is_none() {
+    let Ok(output) = read_bounded(stdout, limit) else {
         let _ = child.kill();
         let _ = child.wait();
         return None;
-    }
+    };
     let status = child.wait().ok()?;
-    status.success().then_some(output?)
+    status.success().then_some(output)
 }
 
 #[cfg(target_os = "linux")]
-fn read_bounded(mut reader: impl Read, limit: usize) -> Option<String> {
-    let capture_limit = limit.checked_add(1)?;
+fn read_bounded(mut reader: impl Read, limit: usize) -> Result<String, MissingReason> {
+    let capture_limit = limit
+        .checked_add(1)
+        .ok_or(MissingReason::InventoryExceedsBound)?;
     let mut output = Vec::with_capacity(capture_limit);
     reader
         .by_ref()
-        .take(u64::try_from(capture_limit).ok()?)
+        .take(u64::try_from(capture_limit).map_err(|_| MissingReason::InventoryExceedsBound)?)
         .read_to_end(&mut output)
-        .ok()?;
+        .map_err(|_| MissingReason::SourceUnavailable)?;
     if output.len() > limit {
-        return None;
+        return Err(MissingReason::InventoryExceedsBound);
     }
-    String::from_utf8(output).ok()
+    String::from_utf8(output).map_err(|_| MissingReason::UnsupportedBySource)
 }
