@@ -135,6 +135,8 @@ Use one physical core for each parser campaign. Require at least `86_400` proces
 
 [`-max_total_time`](https://llvm.org/docs/LibFuzzer.html) is an elapsed-time maximum for one fuzzer invocation. It is only an operational bound. It cannot establish CON-SEC-001 or CON-SEC-002 process-CPU coverage. The [cargo-fuzz README](https://raw.githubusercontent.com/rust-fuzz/cargo-fuzz/0.13.2/README.md) directs users to command help, and P8 verifies that `--careful` is a `cargo fuzz build` option. Before a campaign, select `nightly-2026-08-12`, select exactly one `hostToolRecords` entry by both `hostname` and Rust host triple, then run this preflight. It resolves Rust tools through `rustup which --toolchain`, resolves non-Rust tools through `command -v`, compares every resolved executable hash with that selected record, and fails before build or execution on no match or any mismatch.
 
+For Rustup-resolved `rustc`, `cargo`, and `cargo-miri`, `executablePath` and `pathRoot` are provenance-only fields. `rustup which` determines their paths, and the preflight checks their hashes and Rust commit. Only `time` has a path assertion: the record supplies `executablePath` to `command -v`, then the preflight checks the resolved path's hash and version.
+
 ```sh
 POLICY=qualification/staged/fuzz-corpora.json
 TOOLCHAIN=nightly-2026-08-12
@@ -256,6 +258,8 @@ cargo-fuzz: OK
 time: OK
 preflight=passed
 ```
+
+This reconciles the record with `reference-hardware-access.md`: non-reference campaign-host tool records with `reference: false` are a deliberate exemption from its prohibition on adding `thinkpadp14s` hardware, GPU, driver, or access information to the lock. They identify a toolchain, not a qualification environment, and carry no GPU, driver, or access data. Because `requireHostToolRecordForEveryCampaign` is `true`, every new campaign host changes the lock-bound policy digest and requires a new lock re-bind.
 
 P16 re-read the repository validator to correct the rejected campaign-tool proposal. `verify_resolved_tools` delegates every nonempty lock array to the staged-manifest comparison at `xtask/src/contracts/readiness.rs:409-419`. `LockResolvedTool::from_value` allowlists exactly seven properties at `xtask/src/toolchain/lock.rs:238-262`. `verify_lock_resolved_tools` rejects duplicate names, resolves each name against the staged manifest, and requires every `TOOL_SPECS` name at `xtask/src/toolchain/lock.rs:50-75`; `verify_lock_tool` requires the staged absolute executable path at `xtask/src/toolchain/lock.rs:296-320`. Consequently, campaign-host records belong only in the staged fuzz policy. The immutable lock reference is `measurementPolicy.fuzzCorpora`, its digest of that staged file. No canonical staged block changes: it already records each host tool's `licenseId` and other campaign metadata.
 
@@ -403,6 +407,21 @@ c77a4cf9da729987d0fe7ccd811e3bd27393914ddf3d23467c18cc22954513b3  -
 $ fetch versioned UCD ReadMe and dated license snapshot
 UCD 16.0.0 ReadMe 2024-08-25 sha256=14cafa23788d3a20dd21d6b0cdcb8d6dab520781fcd9ad9392f3b88ea607e633
 Unicode License V3 snapshot 2024-08-25 1995 bytes sha256=f5062c9a188d81dfe66b56db4182dcf9e4b17c0d9b0d311a8e20b3a1b075c443
+```
+
+The `unicode-text` sources are live, versioned UCD publication paths rather than commit-pinned archives. This is a deliberate fail-closed trade: the frozen SHA-256 values make an in-place source revision a rebuild failure, not a silent input difference. Unicode uses versioned UCD paths as its stable published form; the [UCD 16.0.0 ReadMe](https://www.unicode.org/Public/16.0.0/ucd/ReadMe.txt) identifies the published database version and date. Stage 3 can add an archive-snapshot mirror URL as a secondary source only when it creates the file through a canonical re-freeze with a new digest.
+
+P17 re-fetched the UCD ReadMe and both live source URLs through the Jina reader proxy. The byte counts are transport results, not fixture digests.
+
+```text
+PASS url=https://www.unicode.org/Public/16.0.0/ucd/ReadMe.txt jina_bytes=833
+PASS url=https://www.unicode.org/Public/16.0.0/ucd/auxiliary/GraphemeBreakTest.txt jina_bytes=172088
+PASS url=https://www.unicode.org/Public/16.0.0/ucd/BidiTest.txt jina_bytes=7960131
+$ grep -E -m 4 "Unicode Character Database|Date|Version" ReadMe.txt
+# Unicode Character Database
+# Date: 2024-08-25
+# UAX #44, "Unicode Character Database"
+for the Unicode Character Database, for Version 16.0.0 of the Unicode Standard.
 ```
 
 The output of P3 follows:
@@ -873,6 +892,8 @@ The check must cover these anchors and digests:
 - [Skia libpng GN target](https://raw.githubusercontent.com/flutter/flutter/5f77625673248ee5846fbcaf5d3e1a3878386fd7/engine/src/flutter/skia/BUILD.gn)
 - [full-engine shell GN target](https://raw.githubusercontent.com/flutter/flutter/5f77625673248ee5846fbcaf5d3e1a3878386fd7/engine/src/flutter/shell/common/BUILD.gn)
 - [Unicode 16.0.0 UCD ReadMe](https://www.unicode.org/Public/16.0.0/ucd/ReadMe.txt)
+- [Unicode 16.0.0 GraphemeBreakTest](https://www.unicode.org/Public/16.0.0/ucd/auxiliary/GraphemeBreakTest.txt)
+- [Unicode 16.0.0 BidiTest](https://www.unicode.org/Public/16.0.0/ucd/BidiTest.txt)
 - [Unicode License V3 dated snapshot](https://web.archive.org/web/20240825031908id_/https://www.unicode.org/license.txt)
 - [Unicode CLDR 45 release note and SPDX mapping](https://cldr.unicode.org/downloads/cldr-45)
 - [LLVM libFuzzer documentation](https://llvm.org/docs/LibFuzzer.html)
