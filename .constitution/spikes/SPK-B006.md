@@ -6,13 +6,15 @@
 - Budget: 1 focused day.
 - Clock start / stop: 2026-08-28T20:23:54Z / 2026-08-28T20:33:24Z.
 - Round-6 evidence clock start / stop: 2026-08-28T22:32:41Z / 2026-08-28T22:38:44Z.
-- CHANGES: `fuzz-corpora.json` SHA-256 `59f239e1e9dffbca7eb9d15be6cb69139435a74d4d86b0c6d8e0ddcc1b93b80d`, 15,991 bytes; `security-patch-rehearsal.json` SHA-256 `27b6e4525723e2501d08e72169f8194bb070d4a79b32825f3cc70fe9e66fc14c`, 1,991 bytes.
+- CHANGES: `fuzz-corpora.json` SHA-256 `59f239e1e9dffbca7eb9d15be6cb69139435a74d4d86b0c6d8e0ddcc1b93b80d`, 15,991 bytes; `security-patch-rehearsal.json` SHA-256 `82037d5fd08495aee0ff2a2c2e7e8a4b9ade4c2f76b65f966586a5872667d9bd`, 2,000 bytes.
 - Round-9 correction clock start / stop: 2026-08-29T01:02:59Z / 2026-08-29T01:08:30Z.
 - Round-9 correction: Remove `fuzz-corpora` and `security-patch-rehearsal`, add `campaign-host-tool-records`, and reduce each affected KU array by one entry.
 - Round-12 correction clock start / stop: 2026-08-29T02:32:25Z / 2026-08-29T02:39:48Z.
-- Round-12 correction: Pin GNU Time output parsing to `LC_ALL=C`, re-freeze `fuzz-corpora`, and retain `security-patch-rehearsal` unchanged.
+- Round-12 correction: Pin GNU Time output parsing to `LC_ALL=C` and re-freeze `fuzz-corpora`.
 - Round-13 correction clock start / stop: 2026-08-29T03:04:16Z / 2026-08-29T03:10:15Z.
 - Round-13 correction: P20 adds ordered, context-preserving preimage and postimage hunk assertions for the three frozen engine lines without changing either canonical staged block.
+- Round-14 correction clock start / stop: 2026-08-29T03:36:04Z / 2026-08-29T03:41:44Z.
+- Round-14 correction: Order the two expected KU vectors lexicographically, make prescribed Rustup resolution host-neutral, and re-freeze `security-patch-rehearsal` with `LC_ALL=C` before GNU Time parses its English field labels.
 
 ## Question
 
@@ -172,6 +174,7 @@ For Rustup-resolved `rustc`, `cargo`, and `cargo-miri`, `executablePath` and `pa
 POLICY=qualification/staged/fuzz-corpora.json
 TOOLCHAIN=nightly-2026-08-12
 export LC_ALL=C
+export RUSTUP_HOME="${RUSTUP_HOME:-$HOME/.rustup}"
 HOST_NAME="$(hostname)"
 HOST_TRIPLE="$(rustc +"$TOOLCHAIN" -vV | awk '/^host:/ {print $2}')"
 HOST_RECORD="$(jq -cer --arg hostname "$HOST_NAME" --arg triple "$HOST_TRIPLE" '[.instrumentation.campaignToolchain.hostToolRecords[] | select(.hostname == $hostname and .hostTriple == $triple)] | if length == 1 then .[0] else error("expected exactly one host record") end' "$POLICY")"
@@ -606,7 +609,7 @@ The corpus importer may derive target-specific encodings only from a listed sour
 ### Spec edits required
 
 - `qualification/staged/fuzz-corpora.json`: create this file with the exact canonical bytes in the next section. In `admission`, set `requireLicenses` to `true` and `requiredLicenseEntryKeys` to `["licenseId", "licenseUrl", "licenseSha256"]`; don't use flat license fields. In every `corpusSets[*].licenses`, use objects with exactly those three keys. In every `ingressMapping[INGRESS]`, use `corpusSets` and `maxLenBytes`, where `maxLenBytes` is the maximum mapped `capBytes`; enforce `requireSizeAtMostCorpusSetCap` against each source set's `capBytes` at ingestion and pass only the ingress `maxLenBytes` to `-max_len`. Set `instrumentation.runCommand` to the canonical `LC_ALL=C; export LC_ALL;`-prefixed command and prefix `instrumentation.campaignToolchain.preflight[0]` and `[4]` with `export LC_ALL=C;`. `.constitution/tech-spec/contracts/qualification-lock.json`, `measurementPolicy.fuzzCorpora`: set the value to `59f239e1e9dffbca7eb9d15be6cb69139435a74d4d86b0c6d8e0ddcc1b93b80d`.
-- `qualification/staged/security-patch-rehearsal.json`: create this file with the exact canonical bytes in the next section. In `rehearsal[4]`, resolve `ingressMapping["application-assets"].maxLenBytes` from `qualification/staged/fuzz-corpora.json` and pass it to `-max_len`; this resolves to `1048576`. `.constitution/tech-spec/contracts/qualification-lock.json`, `measurementPolicy.securityPatchRehearsal`: set the value to `27b6e4525723e2501d08e72169f8194bb070d4a79b32825f3cc70fe9e66fc14c`.
+- `qualification/staged/security-patch-rehearsal.json`: create this file with the exact canonical bytes in the next section. In `rehearsal[4]`, resolve `ingressMapping["application-assets"].maxLenBytes` from `qualification/staged/fuzz-corpora.json`, pass it to `-max_len`, and invoke GNU Time as `LC_ALL=C "$TIME_BIN"`; this resolves `maxLenBytes` to `1048576` and keeps the parsed GNU Time field labels English. `.constitution/tech-spec/contracts/qualification-lock.json`, `measurementPolicy.securityPatchRehearsal`: set the value to `82037d5fd08495aee0ff2a2c2e7e8a4b9ade4c2f76b65f966586a5872667d9bd`.
 - `.constitution/tech-spec/data-models/qualification-lock.schema.json`, `$defs.tool.properties`: make no `pathRoot` edit. `xtask/src/toolchain/lock.rs:238-262` accepts only `name`, `version`, `sourceIdentity`, `hostTriple`, `licenseId`, `executablePath`, and `sha256` for a `resolvedTools` entry. The `pathRoot` fields already present in the canonical campaign record remain staged-policy data only; they are not `$defs.tool` properties.
 - `.constitution/tech-spec/contracts/qualification-lock.json`, `resolvedTools`: make no campaign-host append or transformation. `xtask/src/contracts/readiness.rs:409-419` delegates nonempty entries to the staged-manifest validator. `xtask/src/toolchain/lock.rs:50-75` rejects duplicate names, resolves every entry against the staged manifest, and requires every `TOOL_SPECS` name; `xtask/src/toolchain/lock.rs:296-320` requires an exact absolute staged path. Thus `pathRoot` yields `InvalidManifest`, Rustup-relative paths yield `ExecutableSubstitution`, campaign `cargo`, `cargo-miri`, `cargo-fuzz`, and `time` yield `MissingTool`, a campaign `rustc` either duplicates or mismatches the staged `rustc`, and multiple campaign hosts yield `DuplicateTool`. `resolvedTools` must not represent a campaign host. The lock binds campaign tools only through `measurementPolicy.fuzzCorpora`, the SHA-256 digest of `qualification/staged/fuzz-corpora.json`.
 - `qualification/staged/fuzz-corpora.json`, `instrumentation.campaignToolchain.hostToolRecords`: before each campaign, capture hostname, host triple, reference status, operating system, selector, Rust commit, CPU-accounting fields, and each executable's `name`, `version`, `sourceIdentity`, `hostTriple`, `licenseId`, `executablePath`, and `sha256`; retain an existing `pathRoot` only as campaign-record data. Capture `licenseId` from the package's authoritative license metadata or notice; reject an absent or non-SPDX value. The existing canonical block already holds these host records, including `licenseId`, so this correction requires no canonical-block change. Require a complete selected record, including license ID, executable hashes, and CPU-accounting fields, for every campaign host. Add `campaign-host-tool-records` to both known-unknown arrays. Clear it only when every campaign host that produced evidence has a complete selected `hostToolRecords` entry. This rule must not alter `resolved-tool-digests`, which remains OXY-A008's `resolvedTools` gate.
@@ -625,7 +628,7 @@ KnownUnknownBinding {
 Clear that KU only when every campaign host that produced evidence has a complete selected `hostToolRecords` entry. Keep both `POLICY_FIELDS` rows: they bind and verify the staged policy digests even after the two policy KU blockers clear. Update the module's `clearing_a_ku_string_without_its_evidence_keeps_the_gate_open` expected KU set and its KU evidence-path loop by removing the two policy KUs and adding `campaign-host-tool-records` with evidence path `qualification/staged/fuzz-corpora.json`.
 
 - `qualification/fixtures/readiness/invalid.json` and `qualification/fixtures/readiness/cleared-without-evidence.json`, `preImplementationKnownUnknowns` and `gatingKnownUnknowns`: remove `fuzz-corpora` and `security-patch-rehearsal` and add `campaign-host-tool-records` to all four fixture arrays. This is a net reduction of one entry in each array. Without this fixture update, `collect_known_unknowns` returns `ReadinessError::UnmappedKnownUnknown` before the intended fixture assertions run.
-- `xtask/src/commands/lock_tests.rs`, `committed_candidate_gate_is_valid_but_open_with_the_exact_ku_set`: remove `fuzz-corpora` and `security-patch-rehearsal`, add `campaign-host-tool-records`, and assert exactly `capability-and-platform-baselines`, `campaign-host-tool-records`, `complete-ime-editing-geometry-and-accessibility-maps`, `external-distribution-schema-snapshots-and-verifiers`, `hardware-gpu-driver-and-system-package-locks`, `independent-presentation-opportunity-sources`, `layout-visit-cap`, `minimum-platform-and-protocol-versions`, `raw-measurement-and-sample-validity-contracts`, `reference-application-scenes-scripts-fonts-assets-windows-cache-and-flags`, `resolved-tool-digests`, and `scoring-anchors-and-two-assessors`. In `cleared_ku_without_evidence_remains_open_with_the_exact_remaining_ku_set`, remove the same two names, add `campaign-host-tool-records`, and assert exactly `capability-and-platform-baselines`, `campaign-host-tool-records`, `complete-ime-editing-geometry-and-accessibility-maps`, `external-distribution-schema-snapshots-and-verifiers`, `hardware-gpu-driver-and-system-package-locks`, `independent-presentation-opportunity-sources`, `layout-visit-cap`, `minimum-platform-and-protocol-versions`, `raw-measurement-and-sample-validity-contracts`, `reference-application-scenes-scripts-fonts-assets-windows-cache-and-flags`, and `scoring-anchors-and-two-assessors`. In `candidate_report_lines_are_stable_and_content_free`, replace the two policy KU output-line assertions with `blocking: field-path=preImplementationKnownUnknowns.campaign-host-tool-records kind=ku evidence-path=qualification/staged/fuzz-corpora.json upstream-owner=OXY-D001`. Retain the staged-file digest and missing-file assertions because `POLICY_FIELDS` still verifies both staged inputs.
+- `xtask/src/commands/lock_tests.rs`, `committed_candidate_gate_is_valid_but_open_with_the_exact_ku_set`: remove `fuzz-corpora` and `security-patch-rehearsal`, add `campaign-host-tool-records`, and assert exactly `campaign-host-tool-records`, `capability-and-platform-baselines`, `complete-ime-editing-geometry-and-accessibility-maps`, `external-distribution-schema-snapshots-and-verifiers`, `hardware-gpu-driver-and-system-package-locks`, `independent-presentation-opportunity-sources`, `layout-visit-cap`, `minimum-platform-and-protocol-versions`, `raw-measurement-and-sample-validity-contracts`, `reference-application-scenes-scripts-fonts-assets-windows-cache-and-flags`, `resolved-tool-digests`, and `scoring-anchors-and-two-assessors`. In `cleared_ku_without_evidence_remains_open_with_the_exact_remaining_ku_set`, remove the same two names, add `campaign-host-tool-records`, and assert exactly `campaign-host-tool-records`, `capability-and-platform-baselines`, `complete-ime-editing-geometry-and-accessibility-maps`, `external-distribution-schema-snapshots-and-verifiers`, `hardware-gpu-driver-and-system-package-locks`, `independent-presentation-opportunity-sources`, `layout-visit-cap`, `minimum-platform-and-protocol-versions`, `raw-measurement-and-sample-validity-contracts`, `reference-application-scenes-scripts-fonts-assets-windows-cache-and-flags`, and `scoring-anchors-and-two-assessors`. Both expected `known_unknowns` vectors are in lexicographic `field_path` order, so `campaign-host-tool-records` precedes `capability-and-platform-baselines`. In `candidate_report_lines_are_stable_and_content_free`, replace the two policy KU output-line assertions with `blocking: field-path=preImplementationKnownUnknowns.campaign-host-tool-records kind=ku evidence-path=qualification/staged/fuzz-corpora.json upstream-owner=OXY-D001`. Retain the staged-file digest and missing-file assertions because `POLICY_FIELDS` still verifies both staged inputs.
 
 ### Canonical staged inputs
 
@@ -637,7 +640,7 @@ The corrected current source bytes produce these declared digests and byte count
 
 ```text
 59f239e1e9dffbca7eb9d15be6cb69139435a74d4d86b0c6d8e0ddcc1b93b80d  fuzz-corpora.json  15991 bytes
-27b6e4525723e2501d08e72169f8194bb070d4a79b32825f3cc70fe9e66fc14c  security-patch-rehearsal.json  1991 bytes
+82037d5fd08495aee0ff2a2c2e7e8a4b9ade4c2f76b65f966586a5872667d9bd  security-patch-rehearsal.json  2000 bytes
 ```
 
 <!-- canonical-block: fuzz-corpora -->
@@ -973,7 +976,7 @@ The corrected current source bytes produce these declared digests and byte count
     "cargo test -p oxyflut-assets checked_rgba_bytes",
     "cargo test -p oxyflut-assets asset_decode_replays_image_registry",
     "cargo +nightly-2026-08-12 fuzz build --sanitizer address --careful asset_decode",
-    "MAX_LEN_BYTES=\"$(jq -er '.ingressMapping[\"application-assets\"].maxLenBytes' qualification/staged/fuzz-corpora.json)\"; \"$TIME_BIN\" -v -o CPU_LOG FUZZ_EXE CORPUS -max_total_time=28800 -timeout=5 -max_len=$MAX_LEN_BYTES",
+    "MAX_LEN_BYTES=\"$(jq -er '.ingressMapping[\"application-assets\"].maxLenBytes' qualification/staged/fuzz-corpora.json)\"; LC_ALL=C \"$TIME_BIN\" -v -o CPU_LOG FUZZ_EXE CORPUS -max_total_time=28800 -timeout=5 -max_len=$MAX_LEN_BYTES",
     "record User time (seconds) plus System time (seconds) for the successful address shard and resume timed shards with the same corpus until the cumulative process CPU seconds are at least 86400",
     "cargo +nightly-2026-08-12 miri test -p oxyflut-assets checked_rgba_bytes",
     "cargo +nightly-2026-08-12 miri test -p oxyflut-assets asset_decode_replays_image_registry"
@@ -1025,6 +1028,30 @@ fuzz-corpora|59f239e1e9dffbca7eb9d15be6cb69139435a74d4d86b0c6d8e0ddcc1b93b80d|15
 security-patch-rehearsal|27b6e4525723e2501d08e72169f8194bb070d4a79b32825f3cc70fe9e66fc14c|1991|ok
 ```
 
+P13a, P13b, and P14 preserve their round-12 verification output. P21 re-freezes the current canonical block after adding the GNU Time locale assignment and verifies both protected streams without changing `fuzz-corpora`.
+
+The output of P21 follows:
+
+```text
+$ perl /tmp/wf-epic-b/OXY-B006-pr-round-14/verify-canonical-blocks.pl .constitution/spikes/SPK-B006.md /tmp/wf-epic-b/OXY-B006-pr-round-14/p21
+fuzz-corpora|59f239e1e9dffbca7eb9d15be6cb69139435a74d4d86b0c6d8e0ddcc1b93b80d|15991|ok
+security-patch-rehearsal|82037d5fd08495aee0ff2a2c2e7e8a4b9ade4c2f76b65f966586a5872667d9bd|2000|ok
+$ jq -e . /tmp/wf-epic-b/OXY-B006-pr-round-14/p21/fuzz-corpora.json >/dev/null
+$ jq -e . /tmp/wf-epic-b/OXY-B006-pr-round-14/p21/security-patch-rehearsal.json >/dev/null
+$ prettier --parser json /tmp/wf-epic-b/OXY-B006-pr-round-14/p21/fuzz-corpora.json > /tmp/wf-epic-b/OXY-B006-pr-round-14/p21/fuzz-corpora.reserialized.json
+$ prettier --parser json /tmp/wf-epic-b/OXY-B006-pr-round-14/p21/security-patch-rehearsal.json > /tmp/wf-epic-b/OXY-B006-pr-round-14/p21/security-patch-rehearsal.reserialized.json
+$ cmp -s /tmp/wf-epic-b/OXY-B006-pr-round-14/p21/fuzz-corpora.json /tmp/wf-epic-b/OXY-B006-pr-round-14/p21/fuzz-corpora.reserialized.json
+$ cmp -s /tmp/wf-epic-b/OXY-B006-pr-round-14/p21/security-patch-rehearsal.json /tmp/wf-epic-b/OXY-B006-pr-round-14/p21/security-patch-rehearsal.reserialized.json
+canonical_json_reserialization=passed
+$ sha256sum /tmp/wf-epic-b/OXY-B006-pr-round-14/p21/fuzz-corpora.json /tmp/wf-epic-b/OXY-B006-pr-round-14/p21/security-patch-rehearsal.json
+59f239e1e9dffbca7eb9d15be6cb69139435a74d4d86b0c6d8e0ddcc1b93b80d  /tmp/wf-epic-b/OXY-B006-pr-round-14/p21/fuzz-corpora.json
+82037d5fd08495aee0ff2a2c2e7e8a4b9ade4c2f76b65f966586a5872667d9bd  /tmp/wf-epic-b/OXY-B006-pr-round-14/p21/security-patch-rehearsal.json
+$ wc -c /tmp/wf-epic-b/OXY-B006-pr-round-14/p21/fuzz-corpora.json /tmp/wf-epic-b/OXY-B006-pr-round-14/p21/security-patch-rehearsal.json
+15991 /tmp/wf-epic-b/OXY-B006-pr-round-14/p21/fuzz-corpora.json
+ 2000 /tmp/wf-epic-b/OXY-B006-pr-round-14/p21/security-patch-rehearsal.json
+17991 total
+```
+
 P19 confirmed that the recorded host uses `LANG=es_CL.UTF-8` and that the locale pin produces the exact English labels. The [GNU Time 1.10 manual](https://www.gnu.org/software/time/manual/time.html) documents the same verbose labels; P19 also found the upstream 1.10 source's explicit no-gettext declaration, so this probe doesn't assume that an Ubuntu package has no downstream localization patch.
 
 ```text
@@ -1049,7 +1076,7 @@ Stage 3 must add an `xtask` or continuous-integration check that extracts the ex
 The check must cover these anchors and digests:
 
 - `fuzz-corpora`: `59f239e1e9dffbca7eb9d15be6cb69139435a74d4d86b0c6d8e0ddcc1b93b80d` (15,991 bytes).
-- `security-patch-rehearsal`: `27b6e4525723e2501d08e72169f8194bb070d4a79b32825f3cc70fe9e66fc14c` (1,991 bytes).
+- `security-patch-rehearsal`: `82037d5fd08495aee0ff2a2c2e7e8a4b9ade4c2f76b65f966586a5872667d9bd` (2,000 bytes).
 
 ## Sources
 
