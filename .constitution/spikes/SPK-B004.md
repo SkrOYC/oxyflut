@@ -629,7 +629,7 @@ exit=0 bytes=52654
   - `Focused allocation recovery injection` -> `capability-and-platform-baselines`.
   - `Integrated allocation recovery injection` -> `capability-and-platform-baselines`.
 - Edits 4 through 6 promote only documented GTK, X Present feedback, and AT-SPI source rows to `kk`; they remove no existing known-unknown string. `minimum-platform-and-protocol-versions`, `complete-ime-editing-geometry-and-accessibility-maps`, `independent-presentation-opportunity-sources`, and `capability-and-platform-baselines` remain unaffected and keep the mapped gates closed for the reasons above.
-- Stage 3 must commit a regular, non-symlinked same-stem `.source.json` sidecar for each of the 15 X11 fixtures listed in table 3. Contract evidence continues to reference the captured fixture, not its sidecar. The 10 Wayland sidecars are specified solely by [SPK-B003's Spec edits required](SPK-B003.md#spec-edits-required); this X11 report neither restates nor governs them.
+- Stage 3 must commit a regular, non-symlinked same-stem `.source.json` sidecar for each of the 15 X11 fixtures listed in table 3. Contract evidence continues to reference the captured fixture, not its sidecar. The Wayland sidecars are specified solely by [SPK-B003's Spec edits required](SPK-B003.md#spec-edits-required); this X11 report neither restates nor governs them.
 
 #### Preservation provenance and license records
 
