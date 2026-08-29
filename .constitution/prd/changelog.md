@@ -8,7 +8,7 @@ All notable changes to the product requirements appear in this file.
 
 - Added glossary definitions for routed qualification terms, provisional selection, and the qualification sequence.
 - Added deferral notes for parallel candidate qualification and simultaneous Tier 1 qualification.
-- Added the declared candidate and Tier 1 environment sequencing policy.
+- Added the declared sequential candidate and Tier 1 environment qualification policy.
 
 ### Changed
 

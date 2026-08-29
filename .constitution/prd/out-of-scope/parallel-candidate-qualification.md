@@ -2,5 +2,5 @@
 
 - **Context:** Both substrate candidates could enter the frozen suite at the same time.
 - **Decision:** deferred.
-- **Reason:** The qualification sequence evaluates the integrated candidate first and creates focused-candidate work only after the integrated candidate fails hard-gate eligibility in the first Tier 1 environment.
-- **Consequences:** Downstream stages must not require simultaneous candidate qualification. This deferral reopens automatically when the integrated candidate fails hard-gate eligibility in the first Tier 1 environment.
+- **Reason:** The declared qualification sequence evaluates the integrated candidate first; its hard-gate eligibility failure in the first Tier 1 environment triggers sequential focused-candidate qualification under that sequence, not parallel qualification.
+- **Consequences:** Downstream stages must not require parallel candidate qualification. Reintroducing it requires a Stage 1 Evolution pass.

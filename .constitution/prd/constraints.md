@@ -68,7 +68,7 @@ The scoring anchors must be frozen before either candidate implementation begins
 
 Qualification uses a declared sequence. The integrated candidate enters the frozen suite first; build and qualify the focused candidate only if the integrated candidate fails hard-gate eligibility in the first Tier 1 environment. CAP-SUB-001 requires the same complete frozen suite for every candidate that enters qualification.
 
-Qualify Tier 1 environments in this order: Wayland, X11, macOS, then Windows. Apply readiness gates separately to each environment on pinned reference hardware the project controls. An environment without accountable reference hardware remains blocked. A selection supported by complete evidence from the first environment is provisional and becomes final only after every Tier 1 environment passes.
+Qualify Tier 1 environments in this order: Wayland, X11, macOS, then Windows. Apply readiness gates separately to the first Tier 1 environment and every later Tier 1 environment on pinned reference hardware the project controls. An environment without accountable reference hardware remains blocked. A selection supported by complete evidence from the first Tier 1 environment is provisional and becomes final only after every later Tier 1 environment passes.
 
 CAP-SUB-003 selects the sole eligible candidate, subject to the provisional-to-final rule. The two-assessor weighted comparison applies only when two candidates are eligible.
 
