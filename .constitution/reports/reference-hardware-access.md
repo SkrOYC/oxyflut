@@ -248,6 +248,24 @@ $ hostname
 thinkpadp14s
 ```
 
+### Pinned Nix package-attribute verification
+
+The CI workflow's locked `devenv` installation and `devenv.lock` pin Nixpkgs revision `56c02bc00adcf003215cc4bd996d6efaf4cff188`. The prescribed commands below use that explicit GitHub flake reference rather than the mutable `nixpkgs` registry alias. The Nix flake manual documents the `github:NixOS/nixpkgs/<revision>` form as a specific Nixpkgs revision. This host probe verifies that the unprefixed `xdpyinfo`, `xwininfo`, and `xrandr` package attributes resolve and run at that revision. It checks package resolution and command availability only; it does not establish X11 access or qualification behavior.
+
+```text
+$ nix shell github:NixOS/nixpkgs/56c02bc00adcf003215cc4bd996d6efaf4cff188#xdpyinfo --command xdpyinfo -version
+xdpyinfo 1.4.0
+[exit: 0]
+$ nix shell github:NixOS/nixpkgs/56c02bc00adcf003215cc4bd996d6efaf4cff188#xwininfo --command xwininfo -version
+xwininfo 1.1.6
+[exit: 0]
+$ nix shell github:NixOS/nixpkgs/56c02bc00adcf003215cc4bd996d6efaf4cff188#xrandr --command xrandr --version
+WARNING: running xrandr against an Xwayland server. See the xrandr man page for details.
+xrandr program version       1.5.4
+Server reports RandR version 1.6
+[exit: 0]
+```
+
 ### X11 access procedure
 
 The following procedure establishes access only. It does not qualify graphics, drivers, X11 behavior, or product capabilities.
@@ -257,14 +275,14 @@ For interactive Xwayland access:
 1. Coordinate with Oscar Y. and use the local Hyprland session on `thinkpadp14s`.
 2. Run `pgrep -a Xwayland`. Success is a process line containing `Xwayland :0`, as recorded in the probe.
 3. Connect clients to that server by setting `DISPLAY=:0`; do not select a display merely because an executable exists.
-4. Run `nix shell nixpkgs#xorg.xdpyinfo -c xdpyinfo -display :0 | head -40`. Success includes `name of display: :0`, `vendor string: The X.Org Foundation`, and `X.Org version: 24.1.13`; its extension list includes `Present` and `RANDR`.
-5. Run the Present and XInput extension queries recorded in the probe. Success includes `Present version 1.4` and `XInputExtension version 2.4`. `xdpyinfo -ext RANDR` reports `RANDR extension not supported by xdpyinfo`, so this procedure does not claim a RANDR version.
-6. Run `nix shell nixpkgs#xorg.xwininfo -c xwininfo -root -display :0 | head -15`. Success includes `Window id: 0x350 (the root window)`, `Width: 1920`, and `Height: 1080`, demonstrating that the minimal X11 client connected to `:0`.
+4. Run `nix shell github:NixOS/nixpkgs/56c02bc00adcf003215cc4bd996d6efaf4cff188#xdpyinfo --command xdpyinfo -display :0 | head -40`. Success includes `name of display: :0`, `vendor string: The X.Org Foundation`, and `X.Org version: 24.1.13`; its extension list includes `Present` and `RANDR`.
+5. Run `nix shell github:NixOS/nixpkgs/56c02bc00adcf003215cc4bd996d6efaf4cff188#xdpyinfo --command xdpyinfo -display :0 -ext Present`, `nix shell github:NixOS/nixpkgs/56c02bc00adcf003215cc4bd996d6efaf4cff188#xdpyinfo --command xdpyinfo -display :0 -ext XInputExtension`, and `DISPLAY=:0 nix shell github:NixOS/nixpkgs/56c02bc00adcf003215cc4bd996d6efaf4cff188#xrandr --command xrandr --version`. Success includes `Present version 1.4`, `XInputExtension version 2.4`, and a `Server reports RandR version` line. The historical `xdpyinfo -ext RANDR` output remains evidence that `xdpyinfo` itself does not report a RANDR version.
+6. Run `nix shell github:NixOS/nixpkgs/56c02bc00adcf003215cc4bd996d6efaf4cff188#xwininfo --command xwininfo -root -display :0 | head -15`. Success includes `Window id: 0x350 (the root window)`, `Width: 1920`, and `Height: 1080`, demonstrating that the minimal X11 client connected to `:0`.
 
 For headless Xvfb access:
 
-1. Run the exact script preserved in the [X11 access probe](#x11-access-probe). It first creates `/tmp/wf-epic-b/OXY-B007` and exits 1 if that fails, then creates a unique log directory below it with `mktemp -d` and exits 1 if that fails. It writes the server log to `$LOGDIR/xvfb99.log` and records the server process ID in `XVFB_PID`.
-2. The script runs `nix shell nixpkgs#xorg.xdpyinfo -c xdpyinfo -display :99 | head -15`. Success includes `name of display: :99`, `vendor string: The X.Org Foundation`, and `X.Org version: 21.1.24`.
+1. Run a copy of the lifecycle script preserved in the [X11 access probe](#x11-access-probe), but replace its historical mutable-alias invocation with the pinned command in the next step. It must first create `/tmp/wf-epic-b/OXY-B007` and exit 1 if that fails, create a unique log directory below it with `mktemp -d` and exit 1 if that fails, write the server log to `$LOGDIR/xvfb99.log`, and record the started server process ID in `XVFB_PID`. The preserved script remains historical evidence and is not the current procedure.
+2. The current script runs `nix shell github:NixOS/nixpkgs/56c02bc00adcf003215cc4bd996d6efaf4cff188#xdpyinfo --command xdpyinfo -display :99 | head -15`. Success includes `name of display: :99`, `vendor string: The X.Org Foundation`, and `X.Org version: 21.1.24`.
 3. The script signals only its recorded process with `kill "$XVFB_PID"`, then waits for that exact process with `wait "$XVFB_PID"`. The recorded `wait exit: 0` establishes that the child process terminated successfully. The script then runs `pgrep -a Xvfb` and prints its status. [pgrep(1)](https://man7.org/linux/man-pages/man1/pgrep.1.html) defines exit 1 as no matching processes and exits 2 and 3 as command-line and fatal errors. The recorded `pgrep exit: 1` therefore establishes that no host process matched `Xvfb` when the probe ended.
 
 This evidence establishes that X11 clients can connect to active Xwayland on `:0` and to a temporary Xvfb server on `:99`. It does not establish native X11 desktop-session behavior, a native X server session, graphics or driver behavior, any P0 capability, or conformance to the Stage 3 Ubuntu 26.04 LTS X11 reference.
@@ -456,3 +474,4 @@ This prohibition applies to `referenceEnvironments` and any hardware, GPU, drive
 - [Microsoft vswhere README](https://github.com/microsoft/vswhere) - fetched successfully through the Jina reader proxy on 2026-08-28; identifies the installer path for `vswhere.exe`.
 - [Ubuntu 26.04 LTS release notes](https://documentation.ubuntu.com/release-notes/26.04/) - fetched successfully through the Jina reader proxy on 2026-08-28; identifies the official Ubuntu 26.04 LTS release named by the Stage 3 reference pins.
 - [pgrep(1) Linux manual page](https://man7.org/linux/man-pages/man1/pgrep.1.html) - fetched successfully through the Jina reader proxy on 2026-08-28; defines pgrep exit statuses 1, 2, and 3.
+- [Nix flake reference manual](https://nixos.org/manual/nix/stable/command-ref/new-cli/nix3-flake.html) - fetched successfully through the Jina reader proxy on 2026-08-29; documents the `github:NixOS/nixpkgs/<revision>` flake-reference form used by the current X11 procedure.
