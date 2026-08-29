@@ -12,6 +12,7 @@
 - **Round-9 correction clock start / stop:** 2026-08-28T20:53:47Z / 2026-08-28T20:54:45Z.
 - **Round-10 correction clock start / stop:** 2026-08-28T21:17:30Z / 2026-08-28T21:20:54Z.
 - **Round-11 correction clock start / stop:** 2026-08-28T23:54:23Z / 2026-08-28T23:58:42Z.
+- **Round-14 correction clock start / stop:** 2026-08-29T03:35:59Z / 2026-08-29T03:42:44Z.
 - **Scope result:** This report changes no product capability, architecture boundary, source tree, or specification. The only repository file changed is this report.
 
 ## Question
@@ -23,7 +24,7 @@
 | ID | Baseline question | Allocation | Status | Answer and cited evidence | Next bounded probe for a KU |
 | :-- | :-- | :-- | :-- | :-- | :-- |
 | B001-01 | Which SDK supplies the baseline? | Both | KK | Xcode 26.6 includes the macOS 26.5 SDK, and Apple's release page identifies the build as `17F113`. See S1 and S2, whose preserved excerpts and digests appear in [Authoritative source records](#authoritative-source-records). | Not applicable. |
-| B001-02 | What is the minimum deployment target? | Both | KU (gating) | `NSView.displayLink(target:selector:)` is macOS 14.0+, but the fetched pages for `NSTextInputClient`, `NSAccessibilityProtocol`, `NSWindow.didChangeScreenNotification`, `NSApplication.didBecomeActiveNotification`, and `NSWorkspace.didWakeNotification` identify only `macOS`, not a minimum version. The availability matrix therefore cannot derive a verified maximum. STOP: an official availability value was not fetched for every baseline interface. See S3-S7 and S11-S12, S20. | P8: on a macOS host with Xcode 26.6, fetch and preserve Apple's DocC availability metadata or the corresponding Apple SDK declaration for each `unavailable` matrix cell, then have a second command verify every declared minimum is at most the proposed target. Expected output: a source manifest with each API, Apple URL, stated minimum, source digest, and `maximumMinimum`; otherwise retain this KU. |
+| B001-02 | What is the minimum deployment target? | Both | KU (gating) | `NSView.displayLink(target:selector:)` is macOS 14.0+, but the fetched pages for `NSTextInputClient`, `NSAccessibilityProtocol`, `NSWindow.didChangeScreenNotification`, `NSApplication.didBecomeActiveNotification`, and `NSWorkspace.didWakeNotification` identify only `macOS`, not a minimum version. The availability matrix therefore cannot derive a verified maximum. STOP: an official availability value was not fetched for every baseline interface. See S3-S7 and S11-S12, S20. | P8: on a macOS host with Xcode 26.6, fetch and preserve Apple's DocC availability metadata or the corresponding Apple SDK declaration for each `unavailable` matrix cell, then have a second command verify every declared minimum is at most the proposed target. Expected output: one availability record for each API with its Apple URL, stated minimum, and direct-capture fixture digest, plus a matching source-record sidecar and `maximumMinimum`; otherwise retain this KU. |
 | B001-03 | Does AppKit provide the native input method editor transport and UTF-16 index unit? | Both | KK | `NSTextInputClient` lists marked and selected ranges, marked-text replacement, unmarking, insertion, character-index lookup, and first-rectangle operations. `NSTextInputContext` owns a client, activates and deactivates, discards a conversion session, and invalidates character coordinates. Apple states that an `NSString` presents itself as UTF-16 code units. These are interface-availability facts, not evidence that either allocation implements the contract. See S4-S6. | Not applicable. |
 | B001-04 | Does the proposed input method editor map preserve composition, replacement, cancellation, deletion, focus transfer, candidate geometry, and checked UTF-16 conversion? | Focused and integrated | KU (gating) | Apple's interface documentation establishes operations but not either allocation's callback transcript, conversion behavior, secure-field handling, two-view routing, or an exact CJK input-source identity. S23 gives `com.apple.inputmethod.Kotoeri.Japanese` only as an example of an identifier, not as a host pin. The host preflight could not run AppKit. STOP: no controlled AppKit probe or input-source enumeration ran. See S4-S6, S23, and the [Controlled probe record](#controlled-probe-record). | P1a must inventory, select, and confirm the active host CJK source. P1 must then run the action-by-vector matrix separately through the focused standalone host and the P6-gated integrated fork on a pinned arm64 macOS host. Expected output: a digested inventory and selection record, then distinct redacted `focused/` and `integrated/` JSONL transcripts and validation records with client identity, view generation, UTF-16 ranges, conversion result, pass or fail, and the stated exit code. |
 | B001-05 | Can a numeric-input and sensitive-field policy be frozen? | Both | KU (gating) | `NSTextInputTraits` exposes text-input traits, but the fetched page does not establish a numeric negotiation contract or prove that a secure field returns only redacted surrounding context. STOP: documentation does not establish either behavior. See S19. | P1: log only trait names, classification, range lengths, and redaction checks for numeric and secure fixtures. Expected output: a supported setting and no raw secure text, or a cited unsupported result. |
@@ -39,7 +40,7 @@
 | B001-15 | Which observable built-in signals form the recovery baseline? | Both | KK | AppKit provides window resize and screen-change notifications, and `NSWorkspace.didWakeNotification` reports device wake from sleep. `CAMetalLayer.nextDrawable()` can return `nil` after drawable exhaustion or invalid layer properties. Metal exposes completion, terminal command-buffer status, and an error description. Apple excludes `MTLDeviceNotificationName.wasRemoved` on Apple Silicon. See S11, S13-S16, S18, S20, S21, and S26. | Not applicable. |
 | B001-16 | Is focused recovery injectable for resize, drawable unavailability, OS resume, topology change, and graphics failure? | Focused | KU (gating) | The source evidence documents observable stimuli, not the focused allocation's recovery behavior, preservation of state, deadlines, retry bound, allocation bound, release deadline, or a reproducible graphics-device-loss injection. STOP: no macOS host is available for P5. See S14-S16 and S20-S21. | P5: use the documented drawable-exhaustion stimulus and a real sleep and wake, then run the normalized cases against the focused allocation. Expected output: timestamped trace records that satisfy every assertion in [Recovery qualification corpus](#recovery-qualification-corpus), or a named unavailable injection point. |
 | B001-17 | Is integrated recovery injectable through the inherited embedder and C ABI? | Integrated | KU (gating) | No pinned integrated source inventory or fault trace establishes the inherited lifecycle and Metal paths through the C ABI. STOP: the integrated input and trace are absent. | P6, then P5: inventory inherited recovery paths and run each normalized P5 case through the integrated C ABI. Expected output: a source inventory digest and one trace per case, or a named unavailable injection point. |
-| B001-18 | Is immutable evidence available for every remaining status-bearing candidate claim? | Both | KU (gating) | This report preserves authoritative excerpts and digests for source-availability claims and a host preflight output. It has no candidate input method editor transcript, accessibility map, independent-timing trace, routing trace, recovery trace, or integrated source inventory. STOP: those artifacts do not exist. See [Evidence preservation convention](#evidence-preservation-convention). | P7: publish fetched source bodies and every successful P1-P6 result under the stated repository fixture root, then write a manifest that names source URL, command, host identifier, input digest, output digest, and validator result. Expected output: SHA-256 verification for every referenced evidence object. |
+| B001-18 | Is immutable evidence available for every remaining status-bearing candidate claim? | Both | KU (gating) | This report preserves authoritative excerpts and digests for source-availability claims and a host preflight output. It has no candidate input method editor transcript, accessibility map, independent-timing trace, routing trace, recovery trace, or integrated source inventory. STOP: those artifacts do not exist. See [Evidence preservation convention](#evidence-preservation-convention). | P7: publish fetched source bodies and every successful P1-P6 result under the stated repository fixture root. Write a same-stem source-record sidecar for every fetched source body and a sidecar appropriate to each probe result. Expected output: SHA-256 verification for every referenced fixture and its source record. |
 
 ## Context and objective
 
@@ -305,7 +306,7 @@ The P5 command is `cd /tmp/wf-epic-b/OXY-B001/mac-recovery-probe && xcrun --sdk 
 | P4 | `cd /tmp/wf-epic-b/OXY-B001/mac-routing-probe && ./routing_probe --allocation focused --two-windows --interleave --teardown && ./routing_probe --allocation integrated --through-c-abi --two-windows --interleave --teardown`. | Proves each request carries an owning view generation and stale target behavior. |
 | P5 | `mac-recovery-probe` command in [Recovery qualification corpus](#recovery-qualification-corpus). | Runs drawable loss, real sleep and wake, display topology, resize, and available graphics-error cases through both allocations. |
 | P6 | `repo_root="${OXYFLUT_REPO_ROOT:?set to the checkout path}" && cd /tmp/wf-epic-b/OXY-B001/integrated-inventory && ./inventory.sh --qualification-lock "$repo_root/.constitution/tech-spec/contracts/qualification-lock.json" --fork-root "$FORK_ROOT" --adapter-root "$ADAPTER_ROOT" --inventory-output inventory.json --input-lock-output integrated-input-lock.json --artifact-manifest-output integrated-probe-artifact-manifest.json --build-attestation-output integrated-build-attestation.json`. `FORK_ROOT` and `ADAPTER_ROOT` name the two absolute local Git worktrees; the script rejects an unset, nonabsolute, dirty, non-Git, or submodule-containing root. | Reads the resolved integrated-fork and Oxyflut-adapter commits from the qualification lock, constructs the `git-archive-tar-sha256-v2` canonical source archives, writes and sidecars the input-only lock before compilation, compiles only from those saved archives, embeds the provenance blob, hashes the executable, writes the schema-valid executable artifact manifest, and finally writes and sidecars the post-build attestation. It emits the commit-bound macOS path and symbol inventory. It exits `0` only with both frozen identities, canonical-source digests, input-lock sidecar, provenance blob, executable manifest, post-build attestation, and complete inventory. It exits `80` with `integrated-input-pin-missing`, `81` with `integrated-inventory-incomplete`, `82` with `integrated-source-verification-failed`, `83` with `integrated-probe-compile-failed`, or `84` with `integrated-inventory-write-failed`. |
-| P7 | `cd /tmp/wf-epic-b/OXY-B001/evidence-lock && ./lock.sh ../sources ../mac-* > manifest.json`. | Fetches each cited source again, preserves the exact fetched bytes under the evidence root, then computes fixture SHA-256 values and writes a manifest that verifies every path and digest. |
+| P7 | `cd /tmp/wf-epic-b/OXY-B001/evidence-lock && ./lock.sh --source-records ../sources ../mac-*`. | Fetches each cited canonical URL directly, preserves its exact response body under the evidence root, computes the fixture SHA-256, and writes a same-stem `.source.json` record that the verifier rehashes. It writes no separate manifest. |
 | P8 | `cd /tmp/wf-epic-b/OXY-B001/macos-availability && ./collect-apple-availability.sh > availability.json && ./verify-maximum-minimum.sh availability.json`. | Preserves authoritative availability for every `not stated` interface and either derives one verified maximum or retains B001-02 as a KU. |
 
 ## Options and trade-offs
@@ -486,23 +487,30 @@ qualification/fixtures/contracts/supersession.json:6:      "current": "urn:oxyfl
 
 ## Evidence preservation convention
 
-The current `platform-contracts` schema accepts evidence objects with exactly `path` and a 64-hex `sha256`. Existing qualification fixtures use repository-relative paths with the same pair. The report preserves normalized source excerpts, not source bodies. Jina-proxied bodies are not byte-stable, so this report does not claim any source-body digest or predeclare a fixture digest. P7 must fetch each cited source, preserve the exact fetched bytes under `qualification/fixtures/external-contracts/macos/official-sources/`, record the origin and fetch URLs plus UTC timestamp in a manifest, and compute each fixture digest only after the fixture file exists. This report proposes the convention but creates no fixture files.
+The current `platform-contracts` schema accepts evidence objects with exactly `path` and a 64-hex `sha256`. Existing qualification fixtures use repository-relative paths with the same pair. The reader-proxy excerpts in this report are historical evidence only. They aren't fixtures, and no Jina reader response supplies fixture bytes or a fixture digest.
 
-```json
-{
-  "path": "qualification/fixtures/external-contracts/macos/official-sources/s3-nsview-display-link.reader.md",
-  "sha256": "<to-be-computed-by-P7>"
-}
+P7 must fetch every cited canonical URL directly with `curl --fail --location --max-time 60 --output FIXTURE URL`. It must require `test -f FIXTURE` and `test ! -L FIXTURE`, then write the exact response body to `qualification/fixtures/external-contracts/macos/sNN-<slug>.html`, where `NN` is the zero-padded source ID and `slug` is the stable lowercase source name. It must compute the streamed SHA-256 only after the regular fixture exists. The two prior examples are renamed as follows:
+
+| Source | Exact fixture path | Required same-stem sidecar |
+| :-- | :-- | :-- |
+| S3 | `qualification/fixtures/external-contracts/macos/s03-nsview-display-link.html` | `qualification/fixtures/external-contracts/macos/s03-nsview-display-link.html.source.json` |
+| S20 | `qualification/fixtures/external-contracts/macos/s20-nsworkspace-did-wake.html` | `qualification/fixtures/external-contracts/macos/s20-nsworkspace-did-wake.html.source.json` |
+
+Every fixture needs a same-stem `.source.json` sidecar. Following `qualification/schemas/external/README.md` and the B003 and B004 convention, the sidecar sets `kind` to `authoritative`, records `repository`, `commit`, upstream-relative `path`, `retrievalUrl`, `license`, `licenseSource`, `version`, and the sibling fixture's `sha256`. It sets `commit` and `version` to JSON `null` when the publisher supplies no source revision or version. `path` and `licenseSource.path` must be relative to their named upstream repository, never a local capture path. Use an SPDX expression only when the fetched upstream license source proves it. Otherwise, use a `LicenseRef` with its required note and URL.
+
+For every Apple documentation or release page, P7 must use `license` `LicenseRef-page-copyright-notice`, `licenseSource.repository` `https://www.apple.com`, `licenseSource.path` `legal/internet-services/terms/site.html`, and `licenseUrl` `https://www.apple.com/legal/internet-services/terms/site.html`. Its `licenseNote` must state that the fixture captures an Apple webpage as evidence and that the Apple page-content terms don't provide an SPDX license for that webpage. The fetched [Apple Website Terms of Use](https://www.apple.com/legal/internet-services/terms/site.html) identify site content as owned, controlled, or licensed by Apple and prohibit copying unless the terms expressly allow it. S33 preserves the fetched excerpt. For an Apple documentation page, `repository` is its canonical origin, such as `https://developer.apple.com`, and `path` is its canonical URL path without the leading slash. For a source URL whose canonical identity needs a query, `path` includes that query. The sidecar's `retrievalUrl` is the complete canonical URL.
+
+P7 must not write a separate manifest. Its verifier must read each sidecar, require a regular non-symlinked sibling at the same stem, recompute the sibling SHA-256, require equality with the sidecar and every evidence object that names the fixture, and reject an absent, nonregular, or digest-mismatched sidecar. A URL alone is not a schema-valid evidence item. P8 must produce its own direct-capture fixture and source record with a matching fixture digest before any deployment-target object can change from `ku-gating` to `kk`.
+
+The following Round-14 reader-proxy fetch is historical licensing evidence. It isn't a fixture and has no full-body digest:
+
+```text
+$ fetched=$(date -u '+%Y-%m-%dT%H:%M:%SZ'); curl -sS -fL --max-time 60 "https://r.jina.ai/https://www.apple.com/legal/internet-services/terms/site.html" -o /tmp/wf-epic-b/OXY-B001/round-14/apple-website-terms.reader.txt
+fetched=2026-08-29T03:37:56Z canonical=https://www.apple.com/legal/internet-services/terms/site.html bytes=21297
+12:### Content
+14-All text, graphics, user interfaces, visual interfaces, photographs, trademarks, logos, sounds, music, artwork and computer code (collectively, "Content"), including but not limited to the design, structure, selection, coordination, expression, "look and feel" and arrangement of such Content, contained on the Site is owned, controlled or licensed by or to Apple, and is protected by trade dress, copyright, patent and trademark laws, and various other intellectual property rights and unfair competition laws.
+exit=0
 ```
-
-```json
-{
-  "path": "qualification/fixtures/external-contracts/macos/official-sources/s20-nsworkspace-did-wake.reader.md",
-  "sha256": "<to-be-computed-by-P7>"
-}
-```
-
-The proposed objects are intentionally not schema-valid until P7 replaces `<to-be-computed-by-P7>` with the digest of the preserved fixture. Stage 3 must not add either object to an evidence array before that replacement. A URL alone is not a schema-valid evidence item. P8 must produce its own exact source-body and manifest digest before any deployment-target object can change from `ku-gating` to `kk`.
 
 ## Sources
 
@@ -543,6 +551,7 @@ Source IDs S22, S24, and S25 are intentionally absent because their sources were
 | S30 | https://gnome.pages.gitlab.gnome.org/at-spi2-core/devel-docs/doc-org.a11y.atspi.Accessible.html | https://gnome.pages.gitlab.gnome.org/at-spi2-core/devel-docs/doc-org.a11y.atspi.Accessible.html | 2026-08-28T17:42:46Z | `235e0fab627d0238c68b2987b283e0aab5b5cc7f1cf023b3c85f892a4d33a2d4` |
 | S31 | https://git-scm.com/docs/git-archive | https://git-scm.com/docs/git-archive | 2026-08-28T18:20:02Z | `21b89779c56ae813b5a7383ab1dd942a3773d01e1dc732aac7e7f1bc828ba023` |
 | S32 | https://git-scm.com/docs/git-archive | https://git-scm.com/docs/git-archive | 2026-08-28T18:36:43Z | `eeb017eadfe17d6e3a7587fbf07e966ae276674cc6f519b335318b77343dce4c` |
+| S33 | https://www.apple.com/legal/internet-services/terms/site.html | https://www.apple.com/legal/internet-services/terms/site.html | 2026-08-29T03:37:56Z | `6b24304574d190c00f42340e155ef78112d1dd3ec090820c838d36e0e6ba9578` |
 
 #### Preserved verbatim excerpts
 
@@ -746,6 +755,13 @@ If the attribute export-subst is set for a file then Git will expand several pla
 Note that attributes are by default taken from the `.gitattributes` files in the tree that is being archived.
 ```
 
+`S33`
+
+```text
+All text, graphics, user interfaces, visual interfaces, photographs, trademarks, logos, sounds, music, artwork and computer code (collectively, "Content"), including but not limited to the design, structure, selection, coordination, expression, "look and feel" and arrangement of such Content, contained on the Site is owned, controlled or licensed by or to Apple, and is protected by trade dress, copyright, patent and trademark laws, and various other intellectual property rights and unfair competition laws.
+Except as expressly provided in these Terms of Use, no part of the Site and no Content may be copied, reproduced, republished, uploaded, posted, publicly displayed, encoded, translated, transmitted or distributed in any way (including "mirroring") to any other computer, server, Web site or other medium for publication or distribution or for any commercial enterprise, without Apple’s express prior written consent.
+```
+
 The following command produced the table digests from these normalized excerpts.
 
 ```text
@@ -824,3 +840,4 @@ eeb017eadfe17d6e3a7587fbf07e966ae276674cc6f519b335318b77343dce4c  /tmp/wf-epic-b
 - S30: https://gnome.pages.gitlab.gnome.org/at-spi2-core/devel-docs/doc-org.a11y.atspi.Accessible.html
 - S31: https://git-scm.com/docs/git-archive
 - S32: https://git-scm.com/docs/git-archive
+- S33: https://www.apple.com/legal/internet-services/terms/site.html
