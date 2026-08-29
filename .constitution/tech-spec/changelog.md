@@ -8,12 +8,14 @@ All notable changes to the technical specification appear in this file.
 
 - Added ADR-0011 for environment-sequenced readiness and provisional selection.
 - Added the `shared-runtime` Phase 3A planning scope.
+- Added the workload-input data-model contract, the `qualification/staged/` and `qualification/evidence/` ownership rules, and the layout-prequalification validator command contract.
 
 ### Changed
 
 - Applied sequential qualification: the integrated candidate enters first, and the focused candidate is built only on the first-environment hard-gate failure trigger.
 - Applied per-environment readiness boundaries for candidate adapters, the engine bridge, and measurement; shared substrate-neutral crates and the candidate-neutral `oxyflut-substrate` contract crate are plannable with a null or test substrate.
 - Re-pinned the Linux reference configuration and reference-host validation to `thinkpadp14s` on NixOS 26.05 with a Hyprland Wayland session, interactive Xwayland, and headless Xvfb; the Ubuntu 26.04 LTS Linux references are superseded.
+- Defined each reference environment's `minimumVersion` as the version set captured from its own reference session and frozen as the lock floor.
 - Rebound 14 raw-measurement and sample-validity fixture `lockDigest` values after the Linux lock change and updated the Tier 1 environment-pin assertion.
 - Updated the scope guard, candidate rules, and verification-command contract, including the per-crate shared-runtime test command.
 
@@ -35,6 +37,7 @@ All notable changes to the technical specification appear in this file.
 - T1.5a: `.constitution/tech-spec/data-models/{layout-qualification-record,layout-prequalification-run,layout-prequalification-suite}.schema.json` and their fixture corpora; admit `null-substrate` and record `paintSubmissionNs` as nullable for that candidate in the SPK-B005 layout suite; enforce with `schema_compiles_committed_contract_instances_and_fixture_corpus`, `run_fixture_corpus`, and the `layout-prequalification validate` custom-validator fixture corpus; see ADR-0011.
 - T1.6: `PATH.inventory.json`; type the environment inventory and Wayland interface completeness; enforce with `POLICY_FIELDS` and `LOCK_SCHEMA`; see [T1](../reports/pre-implementation-readiness.md#t1-schema-creation-and-migration).
 - T1.7: `.constitution/tech-spec/data-models/{qualification-evidence,selection-decision}.schema.json`; migrate per-environment eligibility, `not-entered` records, candidate states, and `selectionState`; enforce with `LOCK_SCHEMA` and schema validation; see ADR-0011.
+- T1.8: `.constitution/tech-spec/data-models/workload-input.schema.json` and `qualification/fixtures/contracts/workload-input/`; land the workload-input schema and fixture corpus; enforce with the `schema_count` 23->24 change and `run_fixture_corpus`; see ADR-0011.
 - T2.1: `qualification/fixtures/contracts/{semantic-role-registry,semantic-role-registry-snapshot}/`; land the proposed fixture corpora; enforce with `run_fixture_corpus`; see [T2](../reports/pre-implementation-readiness.md#t2-schema-fixture-corpora).
 - T2.2: `qualification/fixtures/contracts/accessibility-map/` and `migration/accessibility-map-v5-to-v6.{input,expected}.json`; land the accessibility-map corpus and migration pair; enforce with `run_fixture_corpus`, `$schema` discovery, and `validate_migration_fixture`; see [T2](../reports/pre-implementation-readiness.md#t2-schema-fixture-corpora).
 - T2.3: `qualification/fixtures/contracts/{layout-qualification-record,layout-prequalification-run,layout-prequalification-suite}/`; land layout fixture corpora; enforce with `run_fixture_corpus`; see [T2](../reports/pre-implementation-readiness.md#t2-schema-fixture-corpora).

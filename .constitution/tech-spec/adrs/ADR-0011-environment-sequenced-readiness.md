@@ -19,6 +19,12 @@ Lock v6 scopes `candidateImplementationReady` to one Tier 1 environment. That en
 
 That environment's candidate-implementation gate also requires `referenceEnvironments.<environment>.minimumVersion`, `hardwareId`, `gpuId`, `driverVersion`, and `systemPackageLockDigest` for that environment only.
 
+## Reference-environment minimum versions
+
+A reference environment's `minimumVersion` is the version set observed on its own reference session by `environment inspect`. Capture the version set once and freeze it in the lock as that environment's floor. The lock must not claim a floor that differs from the captured evidence.
+
+For Wayland, the capture records the compositor version and the advertised protocol and interface versions. For X11, the capture records the Xwayland and Xvfb server versions and the X protocol version.
+
 `measurementPolicy.scoringAnchors` and `measurementPolicy.assessors` move to that environment's `measurementReady`. They are required there only when two substrate candidates have entered qualification; a one-candidate provisional selection requires neither field. Completed candidate source identities remain required for every environment's `measurementReady`.
 
 ## Layout-cap prequalification
@@ -34,6 +40,14 @@ The lock v6 command contract is `lock status --gate candidate-implementation --e
 ## Capability baseline approval
 
 The approved 52-capability baseline is an Epic E deliverable, not an external input. Produce it with `baseline validate --input PATH`, publish its canonical draft with that command's `--output` form, and record project-owner approval in the baseline provenance fields. Enforce publication and approval with `baseline validate` and `validate_capability_baseline`.
+
+## Workload input contract
+
+The next Stage 4 epic must add `data-models/workload-input.schema.json` and its fixture corpus. The schema types every `workload.*` lock entry as an object with `schemaVersion`, `field`, `id`, `description`, `path`, `sha256`, `byteCount`, `identities`, and `license`.
+
+The `field` enum contains `referenceApplication`, `scenes`, `interactionScripts`, `fonts`, `assets`, `windowMatrix`, `cacheStates`, and `releaseFlags`. Each `path` is repository-relative under `qualification/staged/workload/`. The `identities` object contains `name` and `revision`. The `license` value is an SPDX expression or an identifier that begins with `LicenseRef-`.
+
+Each of the lock's eight workload digests binds the SHA-256 of its workload-input document. The schema and its fixtures must change `schema_count` from 23 to 24 and pass `run_fixture_corpus`.
 
 ## Provisional selection artifact
 

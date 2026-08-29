@@ -40,16 +40,22 @@ The Stage 4 qualification plan must create the following target structure throug
 │   ├── windows
 │   └── linux
 ├── qualification
+│   ├── evidence
 │   ├── fixtures
 │   ├── golden
 │   ├── probes
-│   └── schemas
+│   ├── schemas
+│   └── staged
 ├── fuzz
 ├── xtask
 └── .constitution
 ```
 
 Every verification command must run inside `devenv shell`. You can use `direnv` to enter the same environment.
+
+The qualification-schema and fixture landing that defines an input owns `qualification/staged/` and stores that input before lock admission.
+
+The qualification command that produces a record owns `qualification/evidence/` and stores its schema-valid, digest-bound evidence there.
 
 The `oxyflut` crate reexports only the reviewed public surface. Internal crates follow the logical boundaries in `architecture/containers.md`. The candidate adapter crates implement one internal substrate contract and cannot expose raw native handles to application crates.
 
@@ -128,6 +134,7 @@ Qualification planning is environment-sequenced. The `shared-runtime` scope perm
 | `cargo +1.98.0 run -p xtask -- external-contracts verify` | Verify local SPDX, in-toto, SLSA, and DSSE snapshots and the staged external-contract-lock proposal without network resolution. | Available. |
 | `cargo +1.98.0 run -p xtask -- baseline validate --input PATH` | Produce the approved 52-capability baseline with this command. Publish its canonical draft with `cargo +1.98.0 run -p xtask -- baseline validate --input INPUT_PATH --output OUTPUT_PATH`; the project owner records approval in the baseline's provenance fields. | Available. |
 | `cargo +1.98.0 run -p xtask -- measurement validate --input PATH` | Validate one raw-measurement or sample-validity record without executing a candidate measurement. Replace `PATH` with the record path. | Available. |
+| `cargo +1.98.0 run -p xtask -- layout-prequalification validate --lock LOCK_PATH --corpus CORPUS_PATH --suite-schema SUITE_SCHEMA_PATH --suite SUITE_PATH --output RESULT_PATH` | Validate one layout-prequalification suite. Exit 0 means valid, and exit 1 means invalid. Writes one schema-valid suite result at `RESULT_PATH` and never mutates the lock. Replace `LOCK_PATH`, `CORPUS_PATH`, `SUITE_SCHEMA_PATH`, `SUITE_PATH`, and `RESULT_PATH` with the lock, corpus, suite schema, suite, and result paths. | Missing until Epic E lands the layout prequalification validator. |
 | `cargo +1.98.0 run -p xtask -- environment inspect --environment ENVIRONMENT --output PATH` | Capture one content-bounded reference-environment inventory for `macos`, `windows`, `wayland`, or `x11`. Replace `ENVIRONMENT` and `PATH` with locked values. | Available. |
 | `cargo +1.98.0 run -p xtask -- lock status --gate candidate-implementation` | Validate all pre-implementation inputs and report remaining KUs without changing either readiness flag. | Available. |
 | `cargo +1.98.0 run -p xtask -- lock status --gate candidate-implementation --environment ENVIRONMENT` | Report candidate-implementation readiness for one Tier 1 environment. Exit 0 means ready, exit 2 means valid-but-open, and exit 1 means invalid. | Missing until Epic E lands lock v6. |
