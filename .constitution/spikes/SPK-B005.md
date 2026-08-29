@@ -1719,9 +1719,11 @@ For a `text` fixture, `family` names the scenario. The single ordinary visit is 
 
 `policyCaps` is the normative per-family bound. The model's global `$CAP = 2` is the candidate bound only for the `three-pass-cap-failure` scenario; it isn't a substitute for the cap-1 bounds of `single-pass-box`, `weighted`, or `virtualized-lazy`.
 
-The proposed `xtask layout-prequalification validate` command must derive each node's cap from `policyCaps[family]`. It must treat `nonOrdinaryFamilies` under the preceding text-fixture rule and must not apply an ordinary cap to a text operation.
+The proposed `xtask layout-prequalification validate` command must derive each node's cap from `policyCaps[family]` only when `family` isn't in `nonOrdinaryFamilies`. For a fixture whose `family` is in `nonOrdinaryFamilies`, the cap for an ordinary child-layout event is `policyCaps[issuingFamily]`. The `text-separation` fixture must name `issuingFamily: "single-pass-box"`, so its one ordinary request has cap 1. The text operation gets no ordinary cap.
 
-OXY-D001 must decide whether to add a cap-1 rejection fixture, for example `reject-cap-before-invocation`, before the v6 lock binds these digests. Adding that fixture re-freezes the corpus, counting-rules, model-source, and changelog blocks.
+OXY-D001 must add a required `issuingFamily` field to the corpus schema for every fixture whose `family` is in `nonOrdinaryFamilies` when the corpus and counting-rules blocks next re-freeze. The validator must reject a nonordinary fixture that lacks `issuingFamily` or names a family absent from `policyCaps`.
+
+OXY-D001 must decide whether to add a cap-1 rejection fixture, for example `reject-cap-before-invocation`, before the v6 lock binds these digests. Adding that fixture or the required `issuingFamily` field re-freezes the corpus, counting-rules, model-source, and changelog blocks.
 
 - `.constitution/tech-spec/data-models/qualification-lock.schema.json`: apply the schema-semver rule that a new required field on an existing durable document is breaking and therefore needs a major bump. Replace `$id` with `urn:oxyflut:schema:qualification-lock:6` and the `schemaVersion` `const` with `"6.0.0"`.
 - `.constitution/tech-spec/data-models/qualification-lock.schema.json` in `$defs.measurementPolicy.required`: add `layoutVisitCorpus`, `layoutQualificationRecordSchema`, `layoutPrequalificationRunSchema`, `layoutPrequalificationSuiteSchema`, `layoutVisitCountingRules`, and `layoutPrequalificationIdentities`.
@@ -1729,7 +1731,9 @@ OXY-D001 must decide whether to add a cap-1 rejection fixture, for example `reje
 - `.constitution/tech-spec/data-models/qualification-lock.schema.json` in `$defs.resolvedMeasurementPolicy.properties`: add exactly `"layoutVisitCorpus": { "$ref": "#/$defs/sha256" }`, `"layoutQualificationRecordSchema": { "$ref": "#/$defs/sha256" }`, `"layoutPrequalificationRunSchema": { "$ref": "#/$defs/sha256" }`, `"layoutPrequalificationSuiteSchema": { "$ref": "#/$defs/sha256" }`, `"layoutVisitCountingRules": { "$ref": "#/$defs/sha256" }`, and `"layoutPrequalificationIdentities": { "$ref": "#/$defs/layoutPrequalificationIdentities" }`.
 - `.constitution/tech-spec/data-models/qualification-lock.schema.json` in `$defs`: add `layoutPrequalificationIdentitiesOrNull` as `{"oneOf":[{"type":"null"},{"$ref":"#/$defs/layoutPrequalificationIdentities"}]}`; add `layoutPrequalificationIdentities` as an object with `additionalProperties: false`, required `focused` and `integrated` properties, and each property referencing `candidateEnvironmentIdentities`; add `candidateEnvironmentIdentities` as an object with `additionalProperties: false`, required `macos`, `windows`, `wayland`, and `x11` properties, and each property referencing `layoutPrequalificationIdentity`; add `layoutPrequalificationIdentity` as an object with `additionalProperties: false`, required `revision` and `artifactSha256` properties, and exactly `"revision": { "$ref": "#/$defs/sha40" }` and `"artifactSha256": { "$ref": "#/$defs/sha256" }`.
 - `.constitution/tech-spec/contracts/qualification-lock.json`: migrate `schemaVersion` from `"5.0.0"` to `"6.0.0"`; add to `measurementPolicy` exactly `"layoutVisitCorpus": "4972e43333984047b5a1d84200d5b89a29c5b59e47c5aca8773379320f2c6c84"`, `"layoutQualificationRecordSchema": "09d96af49384e47ee6154f386af2ef771985516a61c843d561835654283bd7b1"`, `"layoutPrequalificationRunSchema": "76dfee7dfcdfdd49e2d67afdf83ab43c29dbb6513652a8023b0869a7d59293e2"`, `"layoutPrequalificationSuiteSchema": "27e3a876f3b8d5e88ad43089a9eff0c7ce225a6d9cece5fcd789f7759c05c924"`, `"layoutVisitCountingRules": "6cd0d7c7b06587525d9127f15cceecdd6f9c21b8a62be93c70c9b3756ca459c2"`, and `"layoutPrequalificationIdentities": null`; retain exactly `"sampleValidityRules": null`, `"layoutVisitCap": null`, `"candidateImplementationReady": false`, and `"measurementReady": false`.
-- Create `.constitution/tech-spec/migrations/qualification-lock-v5-to-v6.md` with the title `# Qualification lock v5 to v6` and these required statements: preserve the byte-for-byte v5 input and its computed SHA-256 before writing the derived v6 instance; add the six `measurementPolicy` fields above; don't add migration metadata to the lock because its root rejects additional properties; preserve `sampleValidityRules: null`, `layoutVisitCap: null`, both readiness flags as `false`, and `layout-visit-cap` in both known-unknown arrays; and validate the source and derived documents with their respective schemas. The note must name the preserved v5 path and computed source digest after Stage 3 performs the migration; this report cannot supply an unfetched digest.
+- `.constitution/tech-spec/changelog.md`: retain the frozen `qualification-lock-v6-changelog-entry` below as the v5-to-v6 migration note. Don't create a `.constitution/tech-spec/migrations/` directory.
+- `qualification/fixtures/contracts/migration/qualification-lock-v5-to-v6.input.json` and `qualification/fixtures/contracts/migration/qualification-lock-v5-to-v6.expected.json`: add the byte-preserved v5 input and its derived v6 fixture. The expected fixture adds the six `measurementPolicy` fields above, changes `schemaVersion` to `"6.0.0"`, adds no migration metadata, retains `sampleValidityRules: null`, `layoutVisitCap: null`, both readiness flags as `false`, and `layout-visit-cap` in both known-unknown arrays.
+- `xtask/src/contracts/schema.rs`: extend `validate_migration_fixture` and add a matching contract test that loads `qualification-lock-v5-to-v6.input.json`, computes its SHA-256 before and after derivation, derives the declared v6 document, and byte-compares it with `qualification-lock-v5-to-v6.expected.json`. The test must validate the expected v6 document and reject the v5 input through the v6 identity. Existing generic supersession validation must continue to validate the updated supersession fixture.
 - `.constitution/tech-spec/stack.md`: set the `Version` bullet to `v0.16.0` and replace the single Scope-guard `v0.15.0` reference with `v0.16.0`. `.constitution/tech-spec/contracts/specification-phase.json`, `.constitution/tech-spec/contracts/platform-contracts.json`, and `.constitution/tech-spec/contracts/capability-traceability.json`: set each `specificationVersion` to exactly `"0.16.0"` in the same change so active cross-document equality remains valid.
 - `.constitution/tech-spec/changelog.md`: prepend this exact entry before `## [v0.15.0] - 2026-08-26`.
 
@@ -1790,7 +1794,7 @@ def nearest_rank_p99_ns(frame_totals):
 - `xtask/src/contracts/readiness.rs`: replace `LOCK_SCHEMA` with `urn:oxyflut:schema:qualification-lock:6`, then extend the claimed-ready policy checks to require all five new digest fields and a non-null, complete `layoutPrequalificationIdentities` matrix. This validator loads the copied readiness locks through `LOCK_SCHEMA`; its fixtures must therefore be v6 before `xtask contracts validate` can reach their intended semantic assertions.
 - `xtask/src/commands/environment/mod.rs`: retain the existing v6 `LOCK_SCHEMA` update already listed. It validates the same copied qualification-lock fixtures, so no separate layout-field traversal is needed after the v6 schema resolves their required shape.
 - The broad inventory also reaches `xtask/src/contracts/traceability/{mod.rs,fixtures.rs,tests.rs}`, `xtask/src/commands/{baseline.rs,measurement.rs}`, `xtask/src/contracts/readiness_tests.rs`, and `crates/oxyflut-qualification/src/identifiers.rs`. Their matches concern `capabilityBaseline`, raw-measurement records, platform-schema v5 values, active specification versions, or generic schema-version parsing; none hard-codes the qualification-lock v5 identity or enumerates the new layout fields. Keep their existing version or digest work in the 56-path inventory, but don't add an unrelated layout migration.
-- `.constitution/tech-spec/contracts/qualification-lock.json`: in addition to the six fields already specified, add `layout-prequalification-identities` to both `preImplementationKnownUnknowns` and `gatingKnownUnknowns` while `measurementPolicy.layoutPrequalificationIdentities` is `null`. `.constitution/tech-spec/migrations/qualification-lock-v5-to-v6.md` must state this preservation rule alongside `layout-visit-cap`. This is a distinct KU: `layout-visit-cap` remains the unresolved numeric threshold, while `layout-prequalification-identities` is the unresolved source-and-artifact binding required to run the prequalification matrix.
+- `.constitution/tech-spec/contracts/qualification-lock.json`: in addition to the six fields already specified, add `layout-prequalification-identities` to both `preImplementationKnownUnknowns` and `gatingKnownUnknowns` while `measurementPolicy.layoutPrequalificationIdentities` is `null`. The `qualification-lock-v5-to-v6` migration fixture and its `validate_migration_fixture` contract test must preserve this rule alongside `layout-visit-cap`. This is a distinct KU: `layout-visit-cap` remains the unresolved numeric threshold, while `layout-prequalification-identities` is the unresolved source-and-artifact binding required to run the prequalification matrix.
 - `.constitution/tech-spec/stack.md` in the Scope guard paragraph beginning `The current qualification lock`: append exactly `Before candidateImplementationReady becomes true, Stage 4 may run unscored nonproduction candidate probes only to resolve a pre-implementation gating KU; each probe must use the frozen evidence contract and can't produce comparative scores or select a candidate.`
 
 ### Version migration inventory
@@ -2029,6 +2033,28 @@ After the final Prettier check for this correction, the round-2 verifier recheck
 set -euo pipefail
 rm -rf /tmp/wf-epic-b/OXY-B005/canonical-blocks-round-11
 perl /tmp/wf-epic-b/OXY-B005/verify-canonical-blocks-round-2.pl .constitution/spikes/SPK-B005.md /tmp/wf-epic-b/OXY-B005/canonical-blocks-round-11
+```
+
+```text
+layout-visit-corpus|4972e43333984047b5a1d84200d5b89a29c5b59e47c5aca8773379320f2c6c84|6152|ok
+layout-visit-topology-model-source|a0774355500de806c118316982dc6b781518f9b1134f6c9239d6f3fcc149ddff|18850|ok
+layout-qualification-record-schema|09d96af49384e47ee6154f386af2ef771985516a61c843d561835654283bd7b1|13109|ok
+layout-prequalification-run-schema|76dfee7dfcdfdd49e2d67afdf83ab43c29dbb6513652a8023b0869a7d59293e2|5479|ok
+layout-prequalification-suite-schema|27e3a876f3b8d5e88ad43089a9eff0c7ce225a6d9cece5fcd789f7759c05c924|2467|ok
+layout-visit-counting-rules|6cd0d7c7b06587525d9127f15cceecdd6f9c21b8a62be93c70c9b3756ca459c2|976|ok
+qualification-lock-v6-changelog-entry|7c271171a6cdda4515e7c96e26ac5db79cd05f1d5acc1d62e03ceb37853f2bb9|651|ok
+canonical_fenced_blocks=7
+canonical_fence_assertions=passed
+```
+
+### PR round-13 verification
+
+After the final Prettier check for this correction, the round-2 verifier rechecked all seven protected streams. It wrote only `/tmp/wf-epic-b/OXY-B005/canonical-blocks-round-13/` files.
+
+```sh
+set -euo pipefail
+rm -rf /tmp/wf-epic-b/OXY-B005/canonical-blocks-round-13
+perl /tmp/wf-epic-b/OXY-B005/verify-canonical-blocks-round-2.pl .constitution/spikes/SPK-B005.md /tmp/wf-epic-b/OXY-B005/canonical-blocks-round-13
 ```
 
 ```text
