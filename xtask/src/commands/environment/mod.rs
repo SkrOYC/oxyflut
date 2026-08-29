@@ -32,6 +32,11 @@ pub(crate) trait PlatformSource {
 
     /// Collects the inventory without inspecting candidate code or changing readiness.
     fn collect(&self) -> Result<EnvironmentInventory, EnvironmentCommandError>;
+
+    /// Returns a host identity when the source can validate a declared reference host.
+    fn reference_host_identity(&self) -> Result<Option<String>, EnvironmentCommandError> {
+        Ok(None)
+    }
 }
 
 /// Inspects one live reference environment and writes its immutable evidence pair.
@@ -106,7 +111,11 @@ fn inspect_with_source(
     if inventory.environment() != source.environment() {
         return Err(EnvironmentCommandError::SourceEnvironment);
     }
-    validate_reference_environment(source.environment(), &inventory)?;
+    validate_reference_environment(
+        source.environment(),
+        &inventory,
+        source.reference_host_identity()?.as_deref(),
+    )?;
     let projection = inventory.lock_environment_value();
     validate_lock_environment_projection(root, source.environment(), &projection)?;
     let inventory_path = companion_inventory_path(output)?;
@@ -183,14 +192,19 @@ fn companion_inventory_path(
 fn validate_reference_environment(
     environment: EnvironmentId,
     inventory: &EnvironmentInventory,
+    host_identity: Option<&str>,
 ) -> Result<(), EnvironmentCommandError> {
     validate_architecture(environment, inventory)?;
-    validate_operating_system(environment, inventory)
+    validate_operating_system(environment, inventory)?;
+    validate_linux_reference_identity(environment, inventory, host_identity)
 }
 
 struct ReferenceEnvironmentPin {
     architecture: &'static str,
     operating_system: &'static str,
+    host_identity: Option<&'static str>,
+    gpu_id: Option<&'static str>,
+    compositor: Option<&'static str>,
 }
 
 /// Returns the hard-coded Tier 1 lock pin for one environment.
@@ -202,14 +216,23 @@ const fn reference_environment_pin(environment: EnvironmentId) -> ReferenceEnvir
         EnvironmentId::Macos => ReferenceEnvironmentPin {
             architecture: "aarch64",
             operating_system: "macos-26.5",
+            host_identity: None,
+            gpu_id: None,
+            compositor: None,
         },
         EnvironmentId::Windows => ReferenceEnvironmentPin {
             architecture: "x86_64",
             operating_system: "windows-11-25H2",
+            host_identity: None,
+            gpu_id: None,
+            compositor: None,
         },
         EnvironmentId::Wayland | EnvironmentId::X11 => ReferenceEnvironmentPin {
             architecture: "x86_64",
-            operating_system: "ubuntu-26.04",
+            operating_system: "nixos-26.05",
+            host_identity: Some("thinkpadp14s"),
+            gpu_id: Some("amd-renoir-integrated-gpu"),
+            compositor: Some("Hyprland"),
         },
     }
 }
@@ -234,6 +257,26 @@ fn validate_operating_system(
         Some(actual) if actual == expected => Ok(()),
         Some(_) | None => Err(EnvironmentCommandError::EnvironmentMismatch),
     }
+}
+
+fn validate_linux_reference_identity(
+    environment: EnvironmentId,
+    inventory: &EnvironmentInventory,
+    host_identity: Option<&str>,
+) -> Result<(), EnvironmentCommandError> {
+    let pin = reference_environment_pin(environment);
+    let (Some(expected_host), Some(expected_gpu), Some(expected_compositor)) =
+        (pin.host_identity, pin.gpu_id, pin.compositor)
+    else {
+        return Ok(());
+    };
+    if host_identity != Some(expected_host)
+        || inventory.fields().gpu_id.observed_value() != Some(expected_gpu)
+        || inventory.fields().compositor.observed_value() != Some(expected_compositor)
+    {
+        return Err(EnvironmentCommandError::EnvironmentMismatch);
+    }
+    Ok(())
 }
 
 fn validate_artifact_pair(
@@ -536,7 +579,8 @@ mod tests {
         let output_path = root.join(output.as_str());
         let inventory_path = root.join(companion_inventory_path(&output)?.as_str());
 
-        let source = FixturePlatformSource::new(root, EnvironmentId::Wayland);
+        let source =
+            FixturePlatformSource::with_fixture(root, EnvironmentId::Wayland, "wayland-nixos");
         let references = inspect_with_source(root, &source, &output)?;
         let projection = verify_file(root, &output, &MediaType::application_json())?;
         let companion_path = companion_inventory_path(&output)?;
@@ -591,17 +635,25 @@ mod tests {
                 .and_then(serde_json::Value::as_str),
             Some("observed")
         );
-        assert!(companion_value.pointer("/compilerIdentity").is_some());
-        assert!(companion_value.pointer("/sdkIdentity").is_some());
-        assert!(companion_value.pointer("/rustToolchain").is_some());
-        assert!(companion_value.pointer("/compositor").is_some());
-        assert!(companion_value.pointer("/session").is_some());
-        assert!(companion_value.pointer("/protocolVersion").is_some());
+        assert_eq!(
+            projection_value.pointer("/hardwareId"),
+            Some(&serde_json::Value::Null)
+        );
+        assert_eq!(
+            projection_value.pointer("/gpuId"),
+            Some(&serde_json::Value::String(
+                "amd-renoir-integrated-gpu".to_owned()
+            ))
+        );
+        assert_eq!(
+            projection_value.pointer("/systemPackageLockDigest"),
+            Some(&serde_json::Value::Null)
+        );
         assert_eq!(
             companion_value
                 .pointer("/systemPackageLock/digest/status")
                 .and_then(serde_json::Value::as_str),
-            Some("observed")
+            Some("missing")
         );
         assert!(
             companion_value
@@ -614,19 +666,35 @@ mod tests {
     }
 
     #[test]
-    fn inactive_session_fails_closed_without_writing_evidence() -> Result<(), Box<dyn Error>> {
-        let root = test_workspace_root()?;
-        let output = "qualification/fixtures/environments/inactive-session-test.json"
-            .parse::<RepositoryPath>()?;
-        assert_no_evidence(&root, &output)?;
+    fn x11_in_wayland_session_with_xwayland_writes_evidence() -> Result<(), Box<dyn Error>> {
+        let workspace = temporary_directory("xwayland")?;
+        let root = workspace.path();
+        let output = "qualification/evidence/xwayland.json".parse::<RepositoryPath>()?;
+        let source = FixturePlatformSource::with_fixture(root, EnvironmentId::X11, "wayland-nixos");
+
+        inspect_with_source(root, &source, &output)?;
+        assert!(root.join(output.as_str()).is_file());
+        assert!(
+            root.join(companion_inventory_path(&output)?.as_str())
+                .is_file()
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn x11_xvfb_path_writes_evidence() -> Result<(), Box<dyn Error>> {
+        let workspace = temporary_directory("xvfb")?;
+        let root = workspace.path();
+        let output = "qualification/evidence/xvfb.json".parse::<RepositoryPath>()?;
         let source =
-            FixturePlatformSource::with_fixture(&root, EnvironmentId::X11, "x11-on-wayland");
-        let result = inspect_with_source(&root, &source, &output);
-        assert!(matches!(
-            result,
-            Err(EnvironmentCommandError::EnvironmentMismatch)
-        ));
-        assert_no_evidence(&root, &output)?;
+            FixturePlatformSource::with_fixture(root, EnvironmentId::X11, "x11-nixos-xvfb");
+
+        inspect_with_source(root, &source, &output)?;
+        assert!(root.join(output.as_str()).is_file());
+        assert!(
+            root.join(companion_inventory_path(&output)?.as_str())
+                .is_file()
+        );
         Ok(())
     }
 
@@ -668,23 +736,51 @@ mod tests {
     }
 
     #[test]
-    fn reference_operating_systems_accept_pinned_releases_and_reject_nixos_without_writing()
+    fn reference_operating_systems_accept_pinned_nixos_and_reject_ubuntu_without_writing()
     -> Result<(), Box<dyn Error>> {
         let root = test_workspace_root()?;
-        let ubuntu = FixturePlatformSource::new(&root, EnvironmentId::Wayland).collect()?;
-        validate_reference_environment(EnvironmentId::Wayland, &ubuntu)?;
-
-        let output =
-            "qualification/fixtures/environments/nixos-test.json".parse::<RepositoryPath>()?;
-        assert_no_evidence(&root, &output)?;
         let source =
             FixturePlatformSource::with_fixture(&root, EnvironmentId::Wayland, "wayland-nixos");
+        let nixos = source.collect()?;
+        validate_reference_environment(
+            EnvironmentId::Wayland,
+            &nixos,
+            source.reference_host_identity()?.as_deref(),
+        )?;
+
+        let output =
+            "qualification/fixtures/environments/ubuntu-test.json".parse::<RepositoryPath>()?;
+        assert_no_evidence(&root, &output)?;
+        let source = FixturePlatformSource::new(&root, EnvironmentId::Wayland);
         let result = inspect_with_source(&root, &source, &output);
         assert!(matches!(
             result,
             Err(EnvironmentCommandError::EnvironmentMismatch)
         ));
         assert_no_evidence(&root, &output)?;
+        Ok(())
+    }
+
+    #[test]
+    fn reference_host_gpu_compositor_and_xwayland_mismatches_fail_closed()
+    -> Result<(), Box<dyn Error>> {
+        let workspace = temporary_directory("reference-mismatches")?;
+        let root = workspace.path();
+        for (environment, fixture) in [
+            (EnvironmentId::Wayland, "wayland-nixos-wrong-host"),
+            (EnvironmentId::Wayland, "wayland-nixos-wrong-gpu"),
+            (EnvironmentId::Wayland, "wayland-nixos-wrong-compositor"),
+            (EnvironmentId::X11, "x11-nixos-without-xwayland"),
+        ] {
+            let output = RepositoryPath::parse(&format!("qualification/evidence/{fixture}.json"))?;
+            let source = FixturePlatformSource::with_fixture(root, environment, fixture);
+            let result = inspect_with_source(root, &source, &output);
+            assert!(matches!(
+                result,
+                Err(EnvironmentCommandError::EnvironmentMismatch)
+            ));
+            assert_no_evidence(root, &output)?;
+        }
         Ok(())
     }
 
@@ -802,7 +898,8 @@ mod tests {
             .ok_or("environment projection must have a parent")?;
         fs::create_dir_all(parent)?;
         fs::write(&output_path, b"{}")?;
-        let source = FixturePlatformSource::new(root, EnvironmentId::Wayland);
+        let source =
+            FixturePlatformSource::with_fixture(root, EnvironmentId::Wayland, "wayland-nixos");
 
         let result = inspect_with_source(root, &source, &output);
         assert!(matches!(
@@ -1188,9 +1285,15 @@ mod tests {
                 .get(2)
                 .ok_or("Tier 1 stack row must contain a reference configuration")?;
             let mut words = configuration.split_whitespace();
-            let architecture = match words.next() {
-                Some("arm64") => "aarch64",
-                Some("x86-64") => "x86_64",
+            let architecture = match (environment, words.next()) {
+                (EnvironmentId::Macos, Some("arm64")) => "aarch64",
+                (EnvironmentId::Windows, Some("x86-64")) => "x86_64",
+                (EnvironmentId::Wayland | EnvironmentId::X11, Some("`thinkpadp14s`:")) => {
+                    match words.next() {
+                        Some("x86_64") => "x86_64",
+                        _ => return Err("Linux stack row must name the pinned architecture"),
+                    }
+                }
                 _ => return Err("Tier 1 stack row must start with a pinned architecture"),
             };
             let operating_system = match environment {
@@ -1210,8 +1313,10 @@ mod tests {
                     }
                 },
                 EnvironmentId::Wayland | EnvironmentId::X11 => match (words.next(), words.next()) {
-                    (Some("Ubuntu"), Some(version)) => format!("ubuntu-{version}"),
-                    _ => return Err("Linux stack row must name an Ubuntu version"),
+                    (Some("NixOS"), Some(version)) => {
+                        format!("nixos-{}", version.trim_end_matches(','))
+                    }
+                    _ => return Err("Linux stack row must name a NixOS version"),
                 },
             };
             if rows
@@ -1287,7 +1392,8 @@ mod tests {
         let output = "qualification/evidence/environment.json".parse::<RepositoryPath>()?;
         fs::create_dir_all(root.join("qualification/evidence"))?;
         fs::write(root.join(output.as_str()), b"{}")?;
-        let source = FixturePlatformSource::new(root, EnvironmentId::Wayland);
+        let source =
+            FixturePlatformSource::with_fixture(root, EnvironmentId::Wayland, "wayland-nixos");
 
         let error = inspect_with_source(root, &source, &output)
             .err()

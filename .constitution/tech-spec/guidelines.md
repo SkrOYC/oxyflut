@@ -40,16 +40,22 @@ The Stage 4 qualification plan must create the following target structure throug
 │   ├── windows
 │   └── linux
 ├── qualification
+│   ├── evidence
 │   ├── fixtures
 │   ├── golden
 │   ├── probes
-│   └── schemas
+│   ├── schemas
+│   └── staged
 ├── fuzz
 ├── xtask
 └── .constitution
 ```
 
 Every verification command must run inside `devenv shell`. You can use `direnv` to enter the same environment.
+
+The qualification-schema and fixture landing that defines an input owns `qualification/staged/` and stores that input before lock admission.
+
+The qualification command that produces a record owns `qualification/evidence/` and stores its schema-valid, digest-bound evidence there.
 
 The `oxyflut` crate reexports only the reviewed public surface. Internal crates follow the logical boundaries in `architecture/containers.md`. The candidate adapter crates implement one internal substrate contract and cannot expose raw native handles to application crates.
 
@@ -83,11 +89,11 @@ The `oxyflut` crate reexports only the reviewed public surface. Internal crates 
 
 ## Candidate rules
 
-The focused candidate consumes only the pinned standalone SDK and implements platform integration above the substrate boundary. The integrated candidate can transport callbacks through the pinned engine fork but must pass them through the same normalization and ownership checks.
+The integrated candidate enters the frozen suite first and can transport callbacks through the pinned engine fork only after the target environment is candidate-implementation ready; it must pass every callback through the same normalization and ownership checks. Build the focused candidate from the pinned standalone SDK only if the integrated candidate fails hard-gate eligibility in the first qualification environment; it implements platform integration above the rendering substrate boundary.
 
-Both candidates must implement the same Rust `SubstrateAdapter` contract, use the same public Rust contract, emit the same evidence schemas, and run the same capability corpus. The focused adapter calls generated standalone SDK bindings. The integrated adapter calls the `OxySubstrateApi` table. Candidate-specific test exceptions are forbidden.
+Every substrate candidate that enters qualification must implement the same Rust `SubstrateAdapter` contract, use the same public Rust contract, emit the same evidence schemas, and run the same capability corpus. The focused adapter calls generated standalone SDK bindings. The integrated adapter calls the `OxySubstrateApi` table. Candidate-specific test exceptions are forbidden.
 
-The integrated candidate must build a feasibility configuration that can link unused Dart components for diagnosis. Every scored, measured, packaged, or distributed configuration must set `flutter_enable_dart=false` and must pass binary inspection for forbidden runtime imports and strings.
+The feasibility configuration build is a documented spike procedure until `candidate build` exists. The integrated candidate must build a feasibility configuration that can link unused Dart components for diagnosis. Every scored, measured, packaged, or distributed configuration must set `flutter_enable_dart=false` and must pass binary inspection for forbidden runtime imports and strings.
 
 ## Contract and schema evolution
 
@@ -110,37 +116,42 @@ Use Conventional Commits. A commit that changes a public contract, ABI, schema, 
 
 ## Verification commands
 
-The following commands are the Stage 4 command contract. The documentation formatter and the qualification commands marked Available exist in the repository at v0.15.0; Stage 4 can schedule implementation of the remaining missing commands for qualification work only.
+The following commands are the Stage 4 command contract. The documentation formatter and each qualification command marked Available exist in the repository at v0.16.0. Stage 4 can schedule implementation of the remaining missing commands for qualification work only.
 
-The staged native toolchain supports only `x86_64-unknown-linux-gnu`; other Tier 1 hosts are an OXY-D001 lock input.
+The staged native toolchain supports only `x86_64-unknown-linux-gnu`; other Tier 1 hosts are a decided-deferred lock input owned by the next Stage 4 epic, superseding the archived hardware-ticket recommendation.
 
-Qualification planning has three states. While `contracts/qualification-lock.json` has `candidateImplementationReady: false`, Stage 4 can plan only repository scaffolding, contract validators, evidence writers, external-schema snapshotting, environment discovery, baseline authoring, and pre-implementation lock finalization. When `candidateImplementationReady` becomes true, Stage 4 can plan both candidate adapters, the integrated engine changes, and the shared capability implementation against that frozen suite, but it cannot collect comparable or scored evidence. Evidence collection begins only after completed candidate sources and adapters are pinned and the lock validates with `measurementReady: true`. Changing a pre-implementation input resets both readiness flags and invalidates affected work; changing a source pin after measurement begins creates a new lock and restarts affected evidence.
+Qualification planning is environment-sequenced. The `shared-runtime` scope permits the shared substrate-neutral crates `oxyflut-runtime`, `oxyflut-layout`, `oxyflut-scene`, `oxyflut-text`, `oxyflut-semantics`, `oxyflut-input`, `oxyflut-platform`, `oxyflut-view`, and `oxyflut-diagnostics`, plus the candidate-neutral `oxyflut-substrate` contract crate, against `contracts/oxyflut-public.rs` and `contracts/oxyflut-substrate.rs` with a null or test substrate without a readiness flag. For each Tier 1 environment, that environment's `candidateImplementationReady` permits only that environment's candidate adapter and engine-bridge work; the integrated candidate is first, and the focused candidate is built only after the integrated candidate fails hard-gate eligibility in the first qualification environment. `measurementPolicy.scoringAnchors` and `measurementPolicy.assessors` don't gate that environment's candidate-implementation readiness; when two substrate candidates enter qualification, both gate that environment's `measurementReady`. That environment's `measurementReady` permits comparable or scored evidence only after completed candidate source identities are pinned. A changed pre-implementation input resets affected environment readiness; a changed source pin after measurement starts creates a new lock and restarts affected evidence.
 
-| Command | Purpose | Availability at v0.15.0 |
+| Command | Purpose | Availability at v0.16.0 |
 | :-- | :-- | :-- |
 | `prettier --prose-wrap never --check '**/*.md' '!target/**' '!.devenv/**' '!qualification/fixtures/**'` | Check repository Markdown formatting without hard wrapping while preserving digest-pinned qualification fixtures. | Available. |
 | `cargo +1.98.0 fmt --all --check` | Check Rust formatting. | Available. |
 | `cargo +1.98.0 clippy --workspace --all-targets --all-features -- -D warnings` | Check Rust code and all feature combinations. | Available. |
 | `cargo +1.98.0 test --workspace --all-features` | Run unit, integration, contract, and documentation tests. | Available. |
+| `cargo +1.98.0 test -p CRATE --all-features` | Run all-feature tests for one shared-runtime crate. Replace `CRATE` with the crate name. | Available. |
 | `cargo +1.98.0 run -p xtask -- contracts validate` | Validate local schemas, instances, exact upstream sets, digests, Rust contracts, the authoritative C header and generated bindings, platform and accessibility baselines, score arithmetic, the selection decision, and Phase 3B promotion references. | Available. |
 | `cargo +1.98.0 run -p xtask -- evidence verify PATH` | Verify one repository-relative evidence file, its schema or media type, canonical derived form when applicable, and every declared digest without rewriting preserved source bytes. Replace `PATH` with the evidence path. | Available. |
 | `cargo +1.98.0 run -p xtask -- external-contracts verify` | Verify local SPDX, in-toto, SLSA, and DSSE snapshots and the staged external-contract-lock proposal without network resolution. | Available. |
-| `cargo +1.98.0 run -p xtask -- baseline validate --input PATH` | Validate one candidate-neutral capability baseline and optionally publish its canonical draft. Replace `PATH` with the baseline path. | Available. |
+| `cargo +1.98.0 run -p xtask -- baseline validate --input PATH` | Produce the approved 52-capability baseline with this command. Publish its canonical draft with `cargo +1.98.0 run -p xtask -- baseline validate --input INPUT_PATH --output OUTPUT_PATH`; the project owner records approval in the baseline's provenance fields. | Available. |
 | `cargo +1.98.0 run -p xtask -- measurement validate --input PATH` | Validate one raw-measurement or sample-validity record without executing a candidate measurement. Replace `PATH` with the record path. | Available. |
+| `cargo +1.98.0 run -p xtask -- layout-prequalification validate --lock LOCK_PATH --corpus CORPUS_PATH --suite-schema SUITE_SCHEMA_PATH --suite SUITE_PATH --output RESULT_PATH` | Validate one layout-prequalification suite. Exit 0 means valid, and exit 1 means invalid. Writes one schema-valid suite result at `RESULT_PATH` and never mutates the lock. Replace `LOCK_PATH`, `CORPUS_PATH`, `SUITE_SCHEMA_PATH`, `SUITE_PATH`, and `RESULT_PATH` with the lock, corpus, suite schema, suite, and result paths. | Missing until Epic E lands the layout prequalification validator. |
 | `cargo +1.98.0 run -p xtask -- environment inspect --environment ENVIRONMENT --output PATH` | Capture one content-bounded reference-environment inventory for `macos`, `windows`, `wayland`, or `x11`. Replace `ENVIRONMENT` and `PATH` with locked values. | Available. |
 | `cargo +1.98.0 run -p xtask -- lock status --gate candidate-implementation` | Validate all pre-implementation inputs and report remaining KUs without changing either readiness flag. | Available. |
+| `cargo +1.98.0 run -p xtask -- lock status --gate candidate-implementation --environment ENVIRONMENT` | Report candidate-implementation readiness for one Tier 1 environment. Exit 0 means ready, exit 2 means valid-but-open, and exit 1 means invalid. | Missing until Epic E lands lock v6. |
+| `cargo +1.98.0 run -p xtask -- lock status --gate measurement --environment ENVIRONMENT` | Report measurement readiness for one Tier 1 environment. Exit 0 means ready, exit 2 means valid-but-open, and exit 1 means invalid. | Missing until Epic E lands lock v6. |
 | `cargo +1.98.0 run -p xtask -- candidate build --candidate focused --locked` | Build the focused candidate from the qualification lock. | Missing until the adapter exists. |
 | `cargo +1.98.0 run -p xtask -- candidate build --candidate integrated --locked --dart-disabled` | Build the integrated candidate without the secondary runtime. | Missing until the fork and adapter exist. |
 | `cargo +1.98.0 run -p xtask -- probe --candidate CANDIDATE --environment ENVIRONMENT` | Run one frozen Tier 1 capability matrix. Replace `CANDIDATE` and `ENVIRONMENT` with locked identifiers. | Missing until the harness exists. |
 | `cargo +1.98.0 run -p xtask -- qualify --all-candidates --locked` | Run hard gates and produce schema-valid eligibility records without selecting from incomplete evidence. | Missing until both probes exist. |
 | `cargo +1.98.0 fuzz run FUZZ_TARGET` | Run one frozen fuzz target. Replace `FUZZ_TARGET` with the ingress target identifier. | Missing until fuzz targets exist. |
-| `cargo +1.98.0 deny check licenses bans sources` | Enforce dependency source, license, and duplicate policy. | Available for `licenses bans sources`; advisories deferred to OXY-D001. |
+| `cargo +1.98.0 deny check licenses bans sources` | Enforce dependency source, license, and duplicate policy. | Available. |
+| `cargo +1.98.0 deny check advisories` | advisory validation is blocked until Stage 3 binds a pinned offline RustSec advisory database and refresh policy. | Blocked until Stage 3 binds a pinned advisory database |
 | `cargo +1.98.0 audit` | Check the lockfile against RustSec advisories. | Missing until the workspace exists. |
 
-Qualification CLI commands write content-free diagnostics to standard error. Validation, evidence, external-contract, baseline, environment-inspection, build, probe, and qualification commands return exit code 0 on success and 1 on invalid input, failed validation, or execution failure. `lock status` returns 0 when the requested gate is ready, 2 when the lock is valid but the requested gate remains open, and 1 when the lock itself is invalid. No command converts an open gate into readiness.
+Qualification CLI commands write content-free diagnostics to standard error. Validation, evidence, external-contract, baseline, environment-inspection, build, probe, and qualification commands return exit code 0 on success and 1 on invalid input, failed validation, or execution failure. `lock status` returns 0 when the requested gate is ready, 2 when the lock is valid but the requested gate remains open, and 1 when the lock itself is invalid. With lock v6, omitting `--environment` reports every Tier 1 environment and returns 2 unless every environment is ready. No command converts an open gate into readiness.
 
 ## Production-planning prohibition
 
-Stage 4 must read and validate `contracts/specification-phase.json` before planning work. If `productionReady` is `false`, Stage 4 can plan only the qualification commands in this file.
+Stage 4 must read and validate `contracts/specification-phase.json` before planning work. If `productionReady` is `false`, Stage 4 can plan only the qualification commands in this file and work in the permitted `shared-runtime` scope.
 
 Phase 3B must replace this section with the selected production commands, remove losing-candidate commands, accept ADR-0010, and advance Stage 3 to v1.0.0 or later. No other document can waive this prohibition.

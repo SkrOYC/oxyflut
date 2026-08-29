@@ -89,19 +89,51 @@ pub(crate) fn collect_fixture_linux(
     collect_linux_responses(environment, &responses)
 }
 
+/// Reads the Linux hostname used to validate a declared reference host.
+#[cfg(test)]
+pub(crate) fn fixture_reference_host_identity(
+    bytes: &[u8],
+) -> Result<Option<String>, EnvironmentCommandError> {
+    let responses = serde_json::from_slice(bytes).map_err(EnvironmentCommandError::FixtureJson)?;
+    Ok(host_identity_from_responses(&responses))
+}
+
+/// Collects the Linux hostname used to validate a declared reference host.
+pub(crate) fn reference_host_identity() -> Option<String> {
+    #[cfg(target_os = "linux")]
+    {
+        command_stdout("hostname", &[], COMMAND_OUTPUT_LIMIT)
+            .ok()
+            .flatten()
+            .as_deref()
+            .and_then(first_line)
+            .map(str::to_owned)
+    }
+    #[cfg(not(target_os = "linux"))]
+    {
+        None
+    }
+}
+
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 struct LinuxResponses {
     os_release: Option<String>,
     uname: Option<String>,
+    #[cfg(test)]
+    hostname: Option<String>,
     sysfs_hardware: Vec<String>,
     gpu_cards: Vec<LinuxGpuCard>,
+    gpu_family: Option<String>,
     rust_toolchain: Option<String>,
     compiler: Option<String>,
     session_type: Option<String>,
     current_desktop: Option<String>,
+    display: Option<String>,
     wayland_info: Option<String>,
     xdpyinfo: Option<String>,
+    xwayland_process: Option<String>,
+    xvfb_process: Option<String>,
     dpkg_query: Option<BTreeMap<String, Option<String>>>,
     #[serde(skip)]
     wayland_info_truncated: bool,
@@ -158,13 +190,14 @@ fn collect_linux_responses(
     if matches!(environment, EnvironmentId::Wayland | EnvironmentId::X11) && session.is_missing() {
         return Err(EnvironmentCommandError::EnvironmentMismatch);
     }
-    let (gpu_id, driver_version) = gpu_and_driver(
+    let (fallback_gpu_id, driver_version) = gpu_and_driver(
         &responses.gpu_cards,
         responses.dpkg_query.as_ref(),
         responses.source_missing_reason("gpu_cards"),
         &responses.package_failures,
         responses.source_missing_reason("dpkg_query"),
     );
+    let gpu_id = reference_gpu_family(responses.gpu_family.as_deref()).unwrap_or(fallback_gpu_id);
     let protocol_version = match environment {
         EnvironmentId::Wayland => wayland_protocol_version(
             responses.wayland_info.as_deref(),
@@ -180,6 +213,9 @@ fn collect_linux_responses(
             InventoryValue::missing(MissingReason::ManualCapture)
         }
     };
+    if !active_linux_display_environment(environment, &session, &protocol_version, responses) {
+        return Err(EnvironmentCommandError::EnvironmentMismatch);
+    }
     let fields = EnvironmentFields {
         operating_system: operating_system(
             responses.os_release.as_deref(),
@@ -252,6 +288,22 @@ fn architecture(raw: Option<&str>, missing_reason: MissingReason) -> InventoryVa
         other => other,
     };
     observed_or_missing(normalized.to_owned())
+}
+
+fn reference_gpu_family(raw: Option<&str>) -> Option<InventoryValue> {
+    let raw = raw.and_then(first_line)?;
+    let normalized = raw.to_ascii_lowercase();
+    (normalized.contains("amd/ati") && normalized.contains("renoir"))
+        .then(|| observed_or_missing("amd-renoir-integrated-gpu".to_owned()))
+}
+
+#[cfg(test)]
+fn host_identity_from_responses(responses: &LinuxResponses) -> Option<String> {
+    responses
+        .hostname
+        .as_deref()
+        .and_then(first_line)
+        .map(str::to_owned)
 }
 
 fn gpu_and_driver(
@@ -360,10 +412,76 @@ fn session_value(
     let Some(session) = raw.and_then(first_line) else {
         return InventoryValue::missing(missing_reason);
     };
-    if !session.eq_ignore_ascii_case(environment.as_str()) {
+    let active = match environment {
+        EnvironmentId::Wayland => session.eq_ignore_ascii_case("wayland"),
+        EnvironmentId::X11 => {
+            session.eq_ignore_ascii_case("x11") || session.eq_ignore_ascii_case("wayland")
+        }
+        EnvironmentId::Macos | EnvironmentId::Windows => false,
+    };
+    if !active {
         return InventoryValue::missing(MissingReason::NotActiveSession);
     }
     observed_or_missing(session.to_ascii_lowercase())
+}
+
+fn active_linux_display_environment(
+    environment: EnvironmentId,
+    session: &InventoryValue,
+    protocol_version: &InventoryValue,
+    responses: &LinuxResponses,
+) -> bool {
+    match environment {
+        EnvironmentId::Wayland => session.observed_value() == Some("wayland"),
+        EnvironmentId::X11 => {
+            let Some(display) = responses.display.as_deref().and_then(first_line) else {
+                return false;
+            };
+            if !x11_server_answers_display(
+                responses.xdpyinfo.as_deref(),
+                display,
+                responses.xdpyinfo_truncated,
+            ) || protocol_version.observed_value().is_none()
+            {
+                return false;
+            }
+            match session.observed_value() {
+                Some("x11") => true,
+                Some("wayland") => {
+                    process_serves_display(
+                        responses.xwayland_process.as_deref(),
+                        "Xwayland",
+                        display,
+                    ) || process_serves_display(responses.xvfb_process.as_deref(), "Xvfb", display)
+                }
+                Some(_) | None => false,
+            }
+        }
+        EnvironmentId::Macos | EnvironmentId::Windows => false,
+    }
+}
+
+fn x11_server_answers_display(raw: Option<&str>, display: &str, truncated: bool) -> bool {
+    !truncated
+        && x11_protocol_version(raw, MissingReason::SourceUnavailable, false)
+            .observed_value()
+            .is_some()
+        && raw.is_some_and(|output| {
+            output.lines().any(|line| {
+                line.trim_start()
+                    .strip_prefix("name of display:")
+                    .is_some_and(|observed| observed.trim() == display)
+            })
+        })
+}
+
+fn process_serves_display(raw: Option<&str>, process: &str, display: &str) -> bool {
+    raw.is_some_and(|output| {
+        output.lines().any(|line| {
+            line.split_whitespace().any(|word| word == process)
+                && line.split_whitespace().any(|word| word == display)
+        })
+    })
 }
 
 fn compositor_value(raw: Option<&str>, missing_reason: MissingReason) -> InventoryValue {
@@ -670,8 +788,19 @@ fn live_responses(environment: EnvironmentId) -> LinuxResponses {
             "uname",
             &mut source_failures,
         ),
+        #[cfg(test)]
+        hostname: capture_response(
+            command_stdout("hostname", &[], COMMAND_OUTPUT_LIMIT),
+            "hostname",
+            &mut source_failures,
+        ),
         sysfs_hardware,
         gpu_cards: live_gpu_cards(&mut source_failures),
+        gpu_family: capture_response(
+            command_stdout("lspci", &[], SOURCE_FILE_LIMIT),
+            "gpu_family",
+            &mut source_failures,
+        ),
         rust_toolchain: capture_response(
             command_stdout("rustc", &["+1.98.0", "--version"], COMMAND_OUTPUT_LIMIT),
             "rust_toolchain",
@@ -684,8 +813,19 @@ fn live_responses(environment: EnvironmentId) -> LinuxResponses {
         ),
         session_type: std::env::var("XDG_SESSION_TYPE").ok(),
         current_desktop: std::env::var("XDG_CURRENT_DESKTOP").ok(),
+        display: std::env::var("DISPLAY").ok(),
         wayland_info,
         xdpyinfo,
+        xwayland_process: capture_response(
+            command_stdout("pgrep", &["-a", "Xwayland"], COMMAND_OUTPUT_LIMIT),
+            "xwayland_process",
+            &mut source_failures,
+        ),
+        xvfb_process: capture_response(
+            command_stdout("pgrep", &["-a", "Xvfb"], COMMAND_OUTPUT_LIMIT),
+            "xvfb_process",
+            &mut source_failures,
+        ),
         dpkg_query,
         wayland_info_truncated,
         xdpyinfo_truncated,

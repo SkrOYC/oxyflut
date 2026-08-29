@@ -1,7 +1,7 @@
 {
   "$schema": "urn:oxyflut:staged:sample-validity:1",
   "schemaVersion": "1.0.0",
-  "lockDigest": "c536f10a949349531c62dbd3b508fde8a920f31f625169396b36efd4c2f4d2fc",
+  "lockDigest": "93364eb345914cf8471257c0a1bce087abc3f0c796d825d725b4b44e0479ac33",
   "environment": "macos",
   "candidate": "focused",
   "meterVersion": "synthetic-meter-v1",

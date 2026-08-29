@@ -7,18 +7,24 @@
 ## Behavior
 
 ```mermaid
-flowchart LR
-    Suite[Frozen complete P0 suite] -->|controlled runs| Mac[macOS row]
-    Suite -->|controlled runs| Win[Windows row]
-    Suite -->|controlled runs| Wayland[Wayland row]
-    Suite -->|controlled runs| X11[X11 row]
-    Mac -->|evidence file handoff| Gate{All rows pass}
-    Win -->|evidence file handoff| Gate
-    Wayland -->|evidence file handoff| Gate
-    X11 -->|evidence file handoff| Gate
-    Gate -->|yes| Eligible[Platform coverage eligible]
-    Gate -->|no| Reject[Candidate ineligible]
+flowchart TD
+    Suite[Frozen complete P0 suite] -->|controlled runs| Wayland[Wayland readiness]
+    Wayland -->|evidence file handoff| WaylandPass{Wayland row passes?}
+    WaylandPass -->|pass| X11[X11 readiness]
+    WaylandPass -->|fail| Reject[Candidate ineligible]
+    X11 -->|evidence file handoff| X11Pass{X11 row passes?}
+    X11Pass -->|pass| Mac[macOS readiness]
+    X11Pass -->|fail| Reject
+    Mac -->|evidence file handoff| MacPass{macOS row passes?}
+    MacPass -->|pass| Windows[Windows readiness]
+    MacPass -->|fail| Reject
+    Windows -->|evidence file handoff| WindowsPass{Windows row passes?}
+    WindowsPass -->|pass| AllPass[All four Tier 1 environments pass]
+    WindowsPass -->|fail| Reject
+    AllPass -->|final transition| Final[Final selection and production release]
 ```
+
+Tier 1 environments are qualified in the declared order: Wayland, X11, macOS, then Windows; the first production release waits for all four to pass.
 
 ## Failure path
 

@@ -14,6 +14,7 @@
   "compiler": "clang version 21.1.0\n",
   "sessionType": "x11",
   "currentDesktop": "X.Org Server 21.1\n",
+  "display": ":0\n",
   "xdpyinfo": "name of display: :0\nversion number:    11.0\n",
   "dpkgQuery": {
     "binutils": "binutils\t2.44-1ubuntu1\n",

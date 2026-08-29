@@ -89,6 +89,8 @@ All P0 capabilities are release-blocking on every Tier 1 environment unless a ca
 | P0 | CAP-SUB-003 | If zero candidates are eligible, the project must reopen substrate research; if one is eligible, it must select that candidate; if two are eligible, it must apply the frozen weighted comparison. | Every eligibility outcome needs a deterministic decision. |
 | P0 | CAP-SUB-004 | If two eligible candidates differ by fewer than 5 weighted points, the project must select the candidate with lower measured upgrade-maintenance cost; equal or inconclusive evidence keeps the decision open. | Maintenance cost is the explicit final tie-break. |
 
+Substrate candidates and Tier 1 environments enter the frozen suite in the declared qualification sequence in the substrate selection policy; a provisional selection cannot satisfy CAP-PLT-001.
+
 ## Later platform delivery
 
 | Priority | Capability ID | Capability | Rationale |

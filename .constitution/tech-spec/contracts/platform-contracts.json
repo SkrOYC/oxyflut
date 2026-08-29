@@ -148,7 +148,7 @@
       "openQuestions": [
         "minimum deployment target",
         "complete IME mapping",
-        "complete accessibility maps for both candidates",
+        "complete accessibility maps for every substrate candidate that enters qualification",
         "independence of the external timing observer",
         "injectable recovery mechanisms",
         "immutable evidence for every status-bearing platform claim"
@@ -325,7 +325,7 @@
       "openQuestions": [
         "minimum Windows build",
         "complete TSF mapping",
-        "complete accessibility maps for both candidates",
+        "complete accessibility maps for every substrate candidate that enters qualification",
         "independence and precision of per-output timing",
         "injectable recovery mechanisms",
         "immutable evidence for every status-bearing platform claim"
@@ -333,7 +333,7 @@
     },
     "wayland": {
       "status": "ku-gating",
-      "reference": "Ubuntu 26.04 LTS x86-64 Wayland session with locked GTK and Wayland packages",
+      "reference": "thinkpadp14s x86_64 NixOS 26.05 Hyprland Wayland session with a required NixOS system closure pin",
       "minimumVersion": {
         "status": "ku-gating",
         "value": null,
@@ -498,7 +498,7 @@
       "openQuestions": [
         "minimum compositor and protocol versions",
         "complete IME mapping",
-        "complete accessibility maps for both candidates",
+        "complete accessibility maps for every substrate candidate that enters qualification",
         "independent presentation-opportunity source",
         "injectable recovery mechanisms",
         "immutable evidence for every status-bearing platform claim"
@@ -506,7 +506,7 @@
     },
     "x11": {
       "status": "ku-gating",
-      "reference": "Ubuntu 26.04 LTS x86-64 X11 session with locked GTK and X11 packages",
+      "reference": "thinkpadp14s x86_64 NixOS 26.05 Hyprland session with interactive Xwayland and headless Xvfb X11 paths and a required NixOS system closure pin",
       "minimumVersion": {
         "status": "ku-gating",
         "value": null,
@@ -672,7 +672,7 @@
       "openQuestions": [
         "minimum X server and protocol versions",
         "complete IME mapping",
-        "complete accessibility maps for both candidates",
+        "complete accessibility maps for every substrate candidate that enters qualification",
         "independent presentation-opportunity source",
         "injectable recovery mechanisms",
         "immutable evidence for every status-bearing platform claim"

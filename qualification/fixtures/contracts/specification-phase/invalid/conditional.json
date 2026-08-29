@@ -5,7 +5,8 @@
   "phase": "qualification-3a",
   "productionReady": true,
   "permittedStage4Scopes": [
-    "qualification"
+    "qualification",
+    "shared-runtime"
   ],
   "requiredSuccessor": "production-3b",
   "blockers": [

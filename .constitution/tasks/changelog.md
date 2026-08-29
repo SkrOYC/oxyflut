@@ -2,6 +2,31 @@
 
 All notable changes to the Stage 4 execution plan appear in this file.
 
+## [v0.5.0] - 2026-08-29
+
+### Added
+
+- Added Epic E for specification landings and Linux readiness, Epic F for the integrated substrate candidate on Linux, and Epic G for the shared application runtime.
+- Added the time-boxed `SPK-F001` Dart-free integrated-candidate build spike.
+- Added the null-substrate layout-prequalification and Platform integration skeleton tickets.
+- Added `OXY-E026` for the Stage 3 workload-input schema, its fixture corpus, and the `schema_count=24` assertion.
+
+### Changed
+
+- Split the readiness landings into checklist-ordered tickets, including the external-fixture, approved baseline, lock v6, provisional-selection, layout-cap, workload-schema, and final-digest dependencies.
+- Applied sequential Wayland-then-X11 candidate-adapter readiness, the one-candidate assessor rule, and per-environment lock-status commands planned for lock v6.
+- Applied the Stage 3 target structure for `qualification/evidence/` and the distinct `INPUT_PATH` and `OUTPUT_PATH` baseline-publication placeholders.
+- Recomputed the active backlog to 131 points and the 43-point critical path through the equal `OXY-E006` or `OXY-E007` and `OXY-E017` or `OXY-E023` branches, `OXY-E020`, `OXY-E008`, `OXY-F003`, `OXY-F004`, and `OXY-F005`.
+- macOS and Windows reference hardware remain blocked, the focused substrate candidate remains conditional on the first-environment hard-gate trigger, and comparable measurement, selection evidence, and production delivery remain deferred.
+
+### Fixed
+
+- Made `OXY-E006` capture and freeze the Linux minimum-version floors, then clear the matching two Linux minimum-version KU strings only with capture evidence.
+- Made `OXY-E024` create the eight `qualification/staged/workload/<field>.json` documents after the workload-input schema and v6 lock land.
+- Marked the D15 layout-prequalification command as a Stage 3 contract missing until `OXY-E010` lands it in both layout tickets.
+- Corrected consumer dependencies for lock fields, version migration, ABI artifacts, and final evidence digests.
+- Removed duplicate `OXY-E004` ownership: `OXY-E019` retains ABI regeneration, `OXY-E020` retains T6 version migration, and `OXY-E025` owns T8.6 evidence-digest freezing.
+
 ## [v0.4.0] - 2026-08-29
 
 ### Added
@@ -12,8 +37,6 @@ All notable changes to the Stage 4 execution plan appear in this file.
 
 - Recomputed the critical path to zero active story points.
 - Archived Epic D at `.constitution/tasks/completed/EPIC-D-readiness-reconciliation.md`.
-
-### Noted
 
 - No readiness flag was set; every `measurementPolicy` field, `resolvedTools`, and `referenceEnvironments` capture remains missing.
 - `Known gaps routed to OXY-D001` in `.constitution/tech-spec/changelog.md` is superseded only by Stage 3's v0.16.0 entry and is not edited here.
@@ -34,8 +57,6 @@ All notable changes to the Stage 4 execution plan appear in this file.
 - Archived Epic B with its completion record and deviations, including the `.constitution/tasks/active/EPIC-B-readiness-research.md` to `.constitution/tasks/completed/EPIC-B-readiness-research.md` rename in this release.
 - Routed every Epic B Stage 3 revision, retained gating KU, and blocked external input into the `OXY-D001 Inputs from Epic B` section of `.constitution/tasks/active/EPIC-D-readiness-reconciliation.md`.
 
-### Noted
-
 - macOS arm64 and Windows x86-64 reference-hardware access is blocked. Neither environment has a named accountable owner or a usable access procedure, so neither can be compared with its Stage 3 reference.
 - OXY-B008 is CLOSED AS BLOCKED. Only one confirmation is preserved, so its acceptance pass log remains unmet; the second-assessor confirmation is a named external input for OXY-D001, `measurementPolicy.assessors` stays `null`, and the assessor gate is not complete.
 - The authorship-independence rule is unresolved. Stage 1 must approve and apply the PRD amendment before Stage 3 can update the conforming qualification contracts, and until then a disclosed candidate-code or qualification-evidence authorship remains a gating conflict.
@@ -53,7 +74,7 @@ All notable changes to the Stage 4 execution plan appear in this file.
 
 - Applied PR review round 9 corrections in `28d8c5e`: classified unverifiable staged hosts as valid-but-open, skipped unreachable readiness toolchains, retained per-receipt macOS failures, and added Windows and X11 collector coverage.
 
-### Noted
+### Changed
 
 - Template generation remains library-only until OXY-D001 defines the measurement-harness contract and assigns a command surface.
 
@@ -63,7 +84,7 @@ All notable changes to the Stage 4 execution plan appear in this file.
 
 - Applied PR review round 8 corrections in `e9adbbe`: accepted Debian package-version tildes, typed macOS and Windows capture-bound failures, enforced staged external-proposal and resolved-tool invariants, and raised only Linux protocol-source captures to 256 KiB pending OXY-D001 confirmation.
 
-### Noted
+### Changed
 
 - OXY-D001 must state the raw-measurement per-`(constraintId, launch)` monotonic-clock scope, define Wayland interface-set completeness, and confirm the temporary Linux protocol-source capture bound against real Ubuntu 26.04 output sizes.
 
@@ -85,7 +106,7 @@ All notable changes to the Stage 4 execution plan appear in this file.
 
 - Applied PR review round 6 corrections in `e5036d8` and `00f4908` for Linux session collection, resolved-tool validation, complete-fixture verification, raw-clock ordering, evidence writer visibility, and manifest-bound readiness fixtures.
 
-### Noted
+### Changed
 
 - OXY-D001 must define the raw-measurement monotonic-clock scope and Wayland required interface-set completeness.
 
@@ -96,7 +117,7 @@ All notable changes to the Stage 4 execution plan appear in this file.
 - Applied PR review round 4 corrections in `5ee7b8c` for Windows release normalization, bounded Linux protocol collection, reference-environment pins, artifact-pair cleanup, readiness diagnostics, staged input verification, KU evidence paths, and PRD meter parsing.
 - Amended 2026-08-28: Recorded PR review round 5 commits `8d163ae`, `1234f60`, and `7e79086` for fail-closed protocol capture, immutable artifact-pair cleanup, and publication-result clarification.
 
-### Noted
+### Changed
 
 - OXY-D001 must type the PRD launch and per-launch observation budgets in the measurement-harness contract. The staged sample-validity record deliberately excludes them.
 
@@ -107,33 +128,26 @@ All notable changes to the Stage 4 execution plan appear in this file.
 - Completed Epic C PR review rounds 1 and 2: `25dc154`, `ca0a25f`, `b983d0d`, `923ce71`, `f0d9b6b`, `91e7b60`, `2422a57`, `30ca7cf`, and `ff9d6a8`.
 - Applied PR review round 3 corrections for SLSA schema derivation, reference-environment validation, immutable artifact pairs, readiness reporting, and meter parsing.
 
-### Noted
+### Changed
 
 - OXY-D001 must assign owners for workload, scoring-anchor, corpus, and sample-validity baseline validation. `contracts validate` covers platform and accessibility baselines, and `measurement validate` covers sample-validity records.
 
 ## [v0.2.14] - 2026-08-28
 
-### Completed
+### Changed
 
 - Completed and archived Epic C tickets OXY-C001–OXY-C005: `a731182`, `316f932`, `2fb134e`, `81ede6f`, `383021a`, `3831555`, `fd32fb9`, `3b0fc3a`, `05ee6f1`, and `c0015f5`.
-
-### Noted
-
 - OXY-D001 must route the raw-measurement `$schema` declaration, `measurementPolicy.sampleValidityRules` schema, proposed external-contract lock, `PATH.inventory.json` companion inventory schema, path-less staged measurement-policy input references, and `resolvedTools.pathRoot` Stage 3 gaps.
 
 ## [v0.2.13] - 2026-08-27
 
-### Completed
+### Changed
 
 - Completed and archived Epic A tickets OXY-A001–OXY-A008: `94966fc`, `9d9cece`, `000448d`, `ce3019b`, `971f12e`, `ddbc70c`, `f2c9087`, `7ceea79`, `6a8447e`, `a245e4b`, `538fde1`, `908c265`, `1a0545f`, `93999fe`, `8b23150`, `5e38738`, `8162b47`, and `39dd00c`.
 - Reconciled and archived Epic A with `ced1cd7`.
 - Completed PR review rounds 1–4: `e2d362e`, `923ad31`, `0f9aa53`, `f80e27a`, `13536a9`, `62019ad`, `09041ab`, `03ab783`, `fe3e533`, `4339a01`, `73b58e6`, and `chore: final review polish for the qualification foundation (PR review round 4)`.
 
-### Changed
-
 - Updated the Prettier checker command lines in the Epic B and Epic D plans to use the Nix-declared `prettier` executable.
-
-### Noted
 
 - OXY-D001 must record the three routed Stage 3 schema gaps and the required devenv toolchain.
 

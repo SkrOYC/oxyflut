@@ -1,19 +1,27 @@
 # Qualification technical stack
 
-- **Version:** v0.15.0
+- **Version:** v0.16.0
 - **Status:** Phase 3A qualification specification
 - **Production ready:** no
 - **Required successor:** Phase 3B production specification
 
 ## Scope guard
 
-This specification defines concrete builds for comparing both substrate candidates. It does not select a production substrate and cannot authorize a production implementation plan.
+This specification defines Phase 3A qualification builds and does not select a production rendering substrate or authorize a production implementation plan.
 
-Stage 4 can use v0.15.0 only for qualification infrastructure, candidate probes, common contract tests, measurements, and evidence collection. Stage 4 must not plan the production framework, release delivery, or removal of either candidate until Phase 3B reaches v1.0.0.
+Stage 4 can use v0.16.0 for qualification infrastructure, candidate probes, common contract tests, measurements, evidence collection, and the `shared-runtime` scope. It must not plan the production framework, release delivery, or removal of a substrate candidate until Phase 3B reaches v1.0.0.
 
-The current qualification lock has `candidateImplementationReady: false` and `measurementReady: false`. Until `candidateImplementationReady` becomes true, Stage 4 is limited to qualification scaffolding, validators, environment discovery, baseline authoring, external-contract snapshotting, and pre-implementation lock finalization. Candidate implementation can then begin against the frozen suite. Comparable or scored evidence collection cannot begin until the completed candidate source identities are pinned and `measurementReady` becomes true.
+The shared substrate-neutral crates `oxyflut-runtime`, `oxyflut-layout`, `oxyflut-scene`, `oxyflut-text`, `oxyflut-semantics`, `oxyflut-input`, `oxyflut-platform`, `oxyflut-view`, and `oxyflut-diagnostics`, plus the candidate-neutral `oxyflut-substrate` contract crate, are plannable now against `contracts/oxyflut-public.rs` and `contracts/oxyflut-substrate.rs` with a null or test substrate.
 
-The machine-readable `contracts/specification-phase.json` file enforces the same state. ADR-0001 defines the promotion gate, and ADR-0010 keeps substrate selection proposed.
+For each Tier 1 environment, that environment's `candidateImplementationReady` gates only the candidate adapter and engine bridge: `oxyflut-substrate-engine`, `oxyflut-substrate-impeller`, and `native/engine-bridge`. The integrated candidate enters the frozen suite first; build the focused candidate only if the integrated candidate fails hard-gate eligibility in the first qualification environment. Measurement for an environment remains gated by that environment's `measurementReady`; comparable or scored evidence also requires pinned completed candidate source identities.
+
+`measurementPolicy.scoringAnchors` and `measurementPolicy.assessors` don't gate an environment's `candidateImplementationReady`. When two substrate candidates enter qualification, both fields gate that environment's `measurementReady`.
+
+To resolve `layoutVisitCap`, run the SPK-B005 layout prequalification suite against the shared `oxyflut-layout` crate with a `null-substrate` on the Linux reference host. Record ordinary visits, attempted ordinary visits, intrinsic queries, and application-owned layout time; record paint-submission time as not applicable. This requires no candidate adapter.
+
+Before candidateImplementationReady becomes true, Stage 4 may run unscored nonproduction candidate probes only to resolve a pre-implementation gating KU; each probe must use the frozen evidence contract and can't produce comparative scores or select a candidate.
+
+The machine-readable `contracts/specification-phase.json` file permits the same qualification and shared-runtime scopes. ADR-0001 defines the promotion gate, ADR-0010 keeps substrate selection proposed, and ADR-0011 defines environment-sequenced readiness.
 
 ## Shared bill of materials
 
@@ -29,7 +37,7 @@ The following entries are mandatory for both qualification candidates:
 | Worker handoff | `crossbeam-channel` 0.5.16 | Trial | Provides bounded asynchronous asset and decoding queues without introducing an application-wide async runtime. |
 | Flags | `bitflags` 2.13.1 | Adopt for Phase 3A | Models closed capability and state masks. |
 | Text boundaries | `unicode-segmentation` 1.13.3 | Trial | Supplies grapheme and word boundaries for the shared editing model. Rendering geometry remains substrate-qualified. |
-| Image decoding | `image` 0.25.10 with default features disabled and `gif`, `jpeg`, `png`, and `webp` enabled | Trial | Gives both candidates one shared bounded Rust decoder above the substrate boundary; adapters receive identical validated decoded pixels and never own image decoding. |
+| Image decoding | `image` 0.25.10 with default features disabled and `gif`, `jpeg`, `png`, and `webp` enabled | Trial | Gives every substrate candidate that enters qualification one shared bounded Rust decoder above the substrate boundary; adapters receive identical validated decoded pixels and never own image decoding. |
 | Evidence serialization | `serde` 1.0.229 and `serde_json` 1.0.151 | Adopt for Phase 3A | Implements the owned JSON evidence formats in `data-models/`. |
 | Evidence hashing | `sha2` 0.11.0 with default features disabled | Adopt for Phase 3A | Supplies the shared streaming SHA-256 primitive used by validators and evidence writers; version 0.11.0 supports the pinned Rust toolchain with an MSRV of 1.85. |
 | JSON Schema validation | `jsonschema` 0.51.0 with default features disabled | Adopt for Phase 3A | Validates local schemas without network resolution. |
@@ -45,7 +53,7 @@ No database, network service, remote telemetry system, application plugin runtim
 
 ## Substrate candidate pins
 
-Both candidates use Flutter framework 3.47.0 at commit `4cf24164269a5ebf0c16a028a00727d0e77bbb05`, whose `bin/internal/engine.version` pins engine commit `5f77625673248ee5846fbcaf5d3e1a3878386fd7`. Upgrade rehearsal uses the consecutive 3.41.0, 3.44.0, and 3.47.0 stable feature-release lines frozen by the PRD evidence contract.
+Both candidates use Flutter framework 3.47.0 at commit `4cf24164269a5ebf0c16a028a00727d0e77bbb05`, whose `bin/internal/engine.version` pins engine commit `5f77625673248ee5846fbcaf5d3e1a3878386fd7`. Upgrade rehearsal uses the consecutive 3.41.0, 3.44.0, and 3.47.0 stable feature-release lines frozen by the PRD evidence contract. The integrated candidate enters qualification first; build and qualify the focused candidate only if the integrated candidate fails hard-gate eligibility in the first Tier 1 environment. Every substrate candidate that enters qualification uses the identical frozen suite.
 
 | Candidate | Concrete input | Posture | Qualification boundary |
 | :-- | :-- | :-- | :-- |
@@ -62,16 +70,22 @@ These pins define the first reference configurations. Hardware identifiers, driv
 | :-- | :-- | :-- | :-- |
 | macOS | arm64 macOS 26.5 SDK through Xcode 26.6 build `17F113`; minimum deployment target is a gating KU | `objc2` 0.6.4 and `objc2-app-kit` 0.3.2 with direct AppKit, Core Graphics, accessibility, text-input, clipboard, and view-associated display-link integration | Flutter macOS embedder from the pinned fork, with callbacks normalized through the Oxyflut adapter and measured against the same external display observer |
 | Windows | x86-64 Windows 11 25H2; Visual Studio Build Tools 2022 17.14.39; Windows SDK 10.0.26100.8876; minimum supported build is a gating KU | `windows` 0.62.2 with explicit Win32, text, accessibility, clipboard, per-output DXGI observation, and graphics features | Flutter Windows embedder from the pinned fork, with callbacks normalized through the Oxyflut adapter and measured against the same external per-output observer |
-| Wayland | x86-64 Ubuntu 26.04 LTS Wayland session; minimum compositor and protocol versions are gating KUs | `gtk4` 0.11.4 with `v4_20`, `glib` 0.22.8, `wayland-client` 0.31.15, and `wayland-protocols` 0.32.13 | Flutter Linux embedder from the pinned fork, supplemented only where a P0 probe proves the inherited mechanism insufficient; an independent opportunity source remains a gating KU for both candidates |
-| X11 | x86-64 Ubuntu 26.04 LTS X11 session; minimum X server and protocol versions are gating KUs | The same GTK and GLib pins plus `x11rb` 0.14.0 for separately observed display and window-system evidence | Flutter Linux embedder from the pinned fork, supplemented only where a P0 probe proves the inherited mechanism insufficient; an independent opportunity source remains a gating KU for both candidates |
+| Wayland | `thinkpadp14s`: x86_64 NixOS 26.05, AMD Renoir integrated GPU, Hyprland Wayland session; minimum compositor and protocol versions are captured as the floor by the reference-environment capture; their KU strings remain in the lock until that capture clears them with its evidence | `gtk4` 0.11.4 with `v4_20`, `glib` 0.22.8, `wayland-client` 0.31.15, and `wayland-protocols` 0.32.13 | Flutter Linux embedder from the pinned fork, supplemented only where a P0 probe proves the inherited mechanism insufficient; an independent opportunity source remains a gating KU for every substrate candidate that enters qualification |
+| X11 | `thinkpadp14s`: x86_64 NixOS 26.05, AMD Renoir integrated GPU, Hyprland Wayland session; an `x11` inspection runs with `XDG_SESSION_TYPE=wayland` and is valid only when `DISPLAY` is set, the Xwayland process serves that display, and `xdpyinfo` answers on it; Xvfb is the separate headless path and must serve its selected display; minimum Xwayland, Xvfb, and X protocol versions are captured as the floor by the reference-environment capture; their KU strings remain in the lock until that capture clears them with its evidence | The same GTK and GLib pins plus `x11rb` 0.14.0 for separately observed display and window-system evidence | Flutter Linux embedder from the pinned fork, supplemented only where a P0 probe proves the inherited mechanism insufficient; an independent opportunity source remains a gating KU for every substrate candidate that enters qualification |
 
-The selected host dependencies are qualification choices. Phase 3B must remove any dependency that the winning candidate doesn't need and must repeat artifact, memory, license, and security validation.
+The two Linux rows are one Hyprland/Xwayland configuration rather than a mainstream distribution session, which is a recorded qualification risk. The Ubuntu 26.04 LTS Linux references are superseded by this NixOS reference configuration. The selected host dependencies are qualification choices. Phase 3B must remove any dependency that the winning candidate doesn't need and repeat artifact, memory, license, and security validation.
+
+### Linux reference identity and lock semantics
+
+For Linux, `hardwareId` means the nonserial DMI product-name value that the collector reads from `/sys/class/dmi/id/product_name` or `/sys/devices/virtual/dmi/id/product_name`. It does not mean the hostname. The preserved host-discovery probe records `thinkpadp14s` but no DMI product-name value, so both Linux `hardwareId` lock values are `null`. The validator checks the hostname separately as `thinkpadp14s`, normalizes the recorded AMD Renoir GPU family as `amd-renoir-integrated-gpu`, and requires the `Hyprland` compositor.
+
+Linux `systemPackageLockDigest` remains `null`. The preserved probe records no `nix path-info --json /run/current-system` output, so it supplies no `narHash` to bind the NixOS system closure.
 
 ## Engine and platform build tools
 
 The pinned Flutter checkout and its dependency lock define Clang, GN, Ninja, sysroot, and engine dependency revisions. The qualification lock must record every resolved tool digest and generated configuration. It must reject an unrecorded tool substitution.
 
-Apple builds use the Xcode pin in this file. Windows builds use the Visual Studio and Windows SDK pins. Linux builds use the signed Ubuntu 26.04 package repositories frozen by snapshot and package version in the qualification lock.
+Apple builds use the Xcode pin in this file. Windows builds use the Visual Studio and Windows SDK pins. Linux `systemPackageLockDigest` binds the SHA-256 digest of the `narHash` for `/run/current-system` reported by `nix path-info --json /run/current-system`; the closure hash binds the evaluated NixOS system rather than only flake inputs. Capture the value with `nix path-info --json /run/current-system` and record its `narHash` before the Linux environment can become ready. The active field remains `null` because the preserved probe has no such output.
 
 ## Compatibility policy
 
@@ -91,8 +105,8 @@ Oxyflut has no database and no durable application-state store in Phase 3A. The 
 
 Phase 3B is required. Stage 3 remains incomplete for production until all of the following conditions hold:
 
-- The qualification lock reached `candidateImplementationReady: true` before candidate implementation, then reached `measurementReady: true` after completed candidate source identities were pinned and before evidence collection. Every cited result binds to that unchanged measurement-ready lock digest.
-- CAP-SUB-001 through CAP-SUB-004 produce a selected eligible candidate from preserved evidence.
+- Each Tier 1 environment reached `candidateImplementationReady: true` before its candidate-adapter or engine-bridge work, then reached `measurementReady: true` after completed candidate source identities were pinned and before evidence collection for that environment. Every cited result binds to that environment's unchanged measurement-ready lock digest.
+- A final selection exists: CAP-SUB-001 through CAP-SUB-004 produce a selected eligible candidate from preserved evidence, and every Tier 1 environment has passed in the declared Wayland, X11, macOS, Windows order.
 - The common-case layout visit cap is frozen and passes its qualification corpus.
 - ADR-0010 changes from `proposed` to `accepted` with the selected candidate and cited evidence.
 - The losing candidate leaves the production workspace, dependency graph, artifacts, and production verification commands.
@@ -103,6 +117,15 @@ Phase 3B is required. Stage 3 remains incomplete for production until all of the
 - The Stage 3 version advances to v1.0.0 or later and records the promotion in `changelog.md`.
 
 Failure of any condition keeps Phase 3A active. It does not permit a partial production specification.
+
+## Provisional selection
+
+A provisional selection is supported by complete evidence from the first qualified Tier 1 environment.
+
+- It permits candidate-adapter work for the provisional selection in the next Tier 1 environment.
+- It forbids Phase 3B promotion.
+- It forbids removal of the untriggered substrate candidate's build recipe.
+- It becomes final only after every Tier 1 environment passes.
 
 ## Verified sources
 
@@ -115,4 +138,3 @@ Failure of any condition keeps Phase 3A active. It does not permit a partial pro
 - [NSView display-link API](<https://developer.apple.com/documentation/appkit/nsview/displaylink(target:selector:)>)
 - [Windows SDK release notes](https://learn.microsoft.com/en-us/windows/apps/windows-sdk/release-notes)
 - [IDXGIOutput::WaitForVBlank](https://learn.microsoft.com/en-us/windows/win32/api/dxgi/nf-dxgi-idxgioutput-waitforvblank)
-- [Ubuntu 26.04 LTS release notes](https://documentation.ubuntu.com/release-notes/26.04/)
