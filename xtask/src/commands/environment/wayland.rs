@@ -16,4 +16,8 @@ impl PlatformSource for WaylandSource {
     fn collect(&self) -> Result<EnvironmentInventory, EnvironmentCommandError> {
         linux::collect_linux(EnvironmentId::Wayland)
     }
+
+    fn reference_host_identity(&self) -> Result<Option<String>, EnvironmentCommandError> {
+        Ok(linux::reference_host_identity())
+    }
 }

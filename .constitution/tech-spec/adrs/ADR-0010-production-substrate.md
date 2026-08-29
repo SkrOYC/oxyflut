@@ -19,7 +19,7 @@ Phase 3B can accept this ADR only when:
 - At least one candidate is eligible under every hard gate in every Tier 1 environment before final acceptance.
 - The zero-candidate, one-candidate, or two-candidate rule produces the final selection only after all four Tier 1 environments pass.
 - The selected candidate passes the frozen common-case layout visit cap.
-- The selection-decision record cites both immutable candidate records, recomputes the two-assessor consensus totals, and applies the score margin or maintenance tie-break exactly.
+- When two substrate candidates enter qualification, the selection-decision record cites both immutable candidate records, recomputes the two-assessor consensus totals, and applies the score margin or maintenance tie-break exactly.
 - Every promotion reference validates against the same ready qualification-lock digest and Stage 3 version.
 - Complete platform, input method editor, accessibility, timing, recovery, distribution, and security baselines contain no gating P0 KU.
 - The losing candidate is removed from production dependencies, commands, artifacts, and contract variants.

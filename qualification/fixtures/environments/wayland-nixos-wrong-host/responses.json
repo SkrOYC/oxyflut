@@ -1,7 +1,7 @@
 {
   "osRelease": "ID=nixos\nVERSION_ID=26.05\n",
   "uname": "x86_64\n",
-  "hostname": "thinkpadp14s\n",
+  "hostname": "wrong-host\n",
   "sysfsHardware": [],
   "gpuCards": [],
   "gpuFamily": "07:00.0 VGA compatible controller: Advanced Micro Devices, Inc. [AMD/ATI] Renoir [Radeon Vega Series / Radeon Vega Mobile Series] (rev d1)\n",

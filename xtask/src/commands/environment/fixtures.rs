@@ -41,6 +41,11 @@ impl FixturePlatformSource {
             .join(&self.fixture)
             .join(RESPONSES_FILE)
     }
+
+    fn fixture_bytes(&self) -> Result<Vec<u8>, EnvironmentCommandError> {
+        let path = self.fixture_path();
+        fs::read(&path).map_err(|source| EnvironmentCommandError::FixtureIo { path, source })
+    }
 }
 
 impl PlatformSource for FixturePlatformSource {
@@ -49,15 +54,22 @@ impl PlatformSource for FixturePlatformSource {
     }
 
     fn collect(&self) -> Result<EnvironmentInventory, EnvironmentCommandError> {
-        let path = self.fixture_path();
-        let bytes = fs::read(&path)
-            .map_err(|source| EnvironmentCommandError::FixtureIo { path, source })?;
+        let bytes = self.fixture_bytes()?;
         match self.environment {
             EnvironmentId::Macos => macos::collect_fixture_macos(&bytes),
             EnvironmentId::Windows => windows::collect_fixture_windows(&bytes),
             EnvironmentId::Wayland | EnvironmentId::X11 => {
                 linux::collect_fixture_linux(self.environment, &bytes)
             }
+        }
+    }
+
+    fn reference_host_identity(&self) -> Result<Option<String>, EnvironmentCommandError> {
+        match self.environment {
+            EnvironmentId::Wayland | EnvironmentId::X11 => {
+                linux::fixture_reference_host_identity(&self.fixture_bytes()?)
+            }
+            EnvironmentId::Macos | EnvironmentId::Windows => Ok(None),
         }
     }
 }

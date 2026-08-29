@@ -77,16 +77,16 @@
     "wayland-linux-x86_64": {
       "operatingSystem": "NixOS 26.05 Hyprland Wayland session",
       "minimumVersion": null,
-      "hardwareId": "thinkpadp14s",
-      "gpuId": "AMD Renoir integrated GPU",
+      "hardwareId": null,
+      "gpuId": "amd-renoir-integrated-gpu",
       "driverVersion": null,
       "systemPackageLockDigest": null
     },
     "x11-linux-x86_64": {
       "operatingSystem": "NixOS 26.05 Hyprland session with Xwayland and Xvfb X11 paths",
       "minimumVersion": null,
-      "hardwareId": "thinkpadp14s",
-      "gpuId": "AMD Renoir integrated GPU",
+      "hardwareId": null,
+      "gpuId": "amd-renoir-integrated-gpu",
       "driverVersion": null,
       "systemPackageLockDigest": null
     }

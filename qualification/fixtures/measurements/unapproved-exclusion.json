@@ -2,7 +2,7 @@
   "schemaVersion": "2.0.0",
   "candidate": "focused",
   "environment": "macos",
-  "lockDigest": "e58f3db39de47eb2a91c68180a53fdb1aac9441455d79b9c2a9d87c6d2e3207b",
+  "lockDigest": "93364eb345914cf8471257c0a1bce087abc3f0c796d825d725b4b44e0479ac33",
   "meterVersion": "synthetic-meter-v1",
   "samples": [
     {

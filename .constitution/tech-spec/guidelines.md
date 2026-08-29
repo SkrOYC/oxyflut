@@ -110,7 +110,7 @@ Use Conventional Commits. A commit that changes a public contract, ABI, schema, 
 
 ## Verification commands
 
-The following commands are the Stage 4 command contract. The documentation formatter and the qualification commands marked Available exist in the repository at v0.16.0; Stage 4 can schedule implementation of the remaining missing commands for qualification work only.
+The following commands are the Stage 4 command contract. The documentation formatter and each qualification command marked Available exist in the repository at v0.16.0. Stage 4 can schedule implementation of the remaining missing commands for qualification work only.
 
 The staged native toolchain supports only `x86_64-unknown-linux-gnu`; other Tier 1 hosts are a decided-deferred lock input owned by the next Stage 4 epic, superseding the archived hardware-ticket recommendation.
 
@@ -136,7 +136,7 @@ Qualification planning is environment-sequenced. The `shared-runtime` scope perm
 | `cargo +1.98.0 run -p xtask -- qualify --all-candidates --locked` | Run hard gates and produce schema-valid eligibility records without selecting from incomplete evidence. | Missing until both probes exist. |
 | `cargo +1.98.0 fuzz run FUZZ_TARGET` | Run one frozen fuzz target. Replace `FUZZ_TARGET` with the ingress target identifier. | Missing until fuzz targets exist. |
 | `cargo +1.98.0 deny check licenses bans sources` | Enforce dependency source, license, and duplicate policy. | Available. |
-| `cargo +1.98.0 deny check advisories` | Check dependency advisories with the pinned advisory configuration. | Available. |
+| `cargo +1.98.0 deny check advisories` | advisory validation is blocked until Stage 3 binds a pinned offline RustSec advisory database and refresh policy. | Blocked until Stage 3 binds a pinned advisory database |
 | `cargo +1.98.0 audit` | Check the lockfile against RustSec advisories. | Missing until the workspace exists. |
 
 Qualification CLI commands write content-free diagnostics to standard error. Validation, evidence, external-contract, baseline, environment-inspection, build, probe, and qualification commands return exit code 0 on success and 1 on invalid input, failed validation, or execution failure. `lock status` returns 0 when the requested gate is ready, 2 when the lock is valid but the requested gate remains open, and 1 when the lock itself is invalid. No command converts an open gate into readiness.

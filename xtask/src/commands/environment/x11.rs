@@ -16,4 +16,8 @@ impl PlatformSource for X11Source {
     fn collect(&self) -> Result<EnvironmentInventory, EnvironmentCommandError> {
         linux::collect_linux(EnvironmentId::X11)
     }
+
+    fn reference_host_identity(&self) -> Result<Option<String>, EnvironmentCommandError> {
+        Ok(linux::reference_host_identity())
+    }
 }

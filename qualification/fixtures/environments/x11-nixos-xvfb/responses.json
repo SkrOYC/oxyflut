@@ -7,7 +7,7 @@
   "gpuFamily": "07:00.0 VGA compatible controller: Advanced Micro Devices, Inc. [AMD/ATI] Renoir [Radeon Vega Series / Radeon Vega Mobile Series] (rev d1)\n",
   "sessionType": "wayland\n",
   "currentDesktop": "Hyprland\n",
-  "display": ":0\n",
-  "xdpyinfo": "name of display:    :0\nversion number:    11.0\n",
-  "xwaylandProcess": "3128 Xwayland :0 -rootless -core -listenfd 45 -listenfd 46 -displayfd 94 -wm 91\n"
+  "display": ":99\n",
+  "xdpyinfo": "name of display:    :99\nversion number:    11.0\n",
+  "xvfbProcess": "2695946 Xvfb :99 -screen 0 1280x720x24\n"
 }

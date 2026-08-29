@@ -13,9 +13,15 @@ All notable changes to the technical specification appear in this file.
 
 - Applied sequential qualification: the integrated candidate enters first, and the focused candidate is built only on the first-environment hard-gate failure trigger.
 - Applied per-environment readiness boundaries for candidate adapters, the engine bridge, and measurement; shared substrate-neutral crates and the candidate-neutral `oxyflut-substrate` contract crate are plannable with a null or test substrate.
-- Re-pinned the Linux reference configuration and Linux qualification-lock host identities to `thinkpadp14s` on NixOS 26.05 with a Hyprland Wayland session, interactive Xwayland, and headless Xvfb; the Ubuntu 26.04 LTS Linux references are superseded.
+- Re-pinned the Linux reference configuration and reference-host validation to `thinkpadp14s` on NixOS 26.05 with a Hyprland Wayland session, interactive Xwayland, and headless Xvfb; the Ubuntu 26.04 LTS Linux references are superseded.
 - Rebound 14 raw-measurement and sample-validity fixture `lockDigest` values after the Linux lock change and updated the Tier 1 environment-pin assertion.
-- Updated the scope guard, candidate rules, and verification-command contract, including available `cargo +1.98.0 deny check advisories` and the per-crate shared-runtime test command.
+- Updated the scope guard, candidate rules, and verification-command contract, including the per-crate shared-runtime test command.
+
+### Fixed
+
+- Defined Linux `hardwareId` as the DMI product-name value, retained both Linux lock values as `null` because the preserved probe has no DMI output, and required separate hostname, AMD Renoir GPU-family, and Hyprland compositor validation.
+- Accepted an X11 inspection in the declared Wayland session only with a matching Xwayland process, `DISPLAY`, and responding X server, while retaining the separate Xvfb path.
+- Restored blocked `cargo +1.98.0 deny check advisories` wording until a pinned offline RustSec advisory database and refresh policy are bound.
 - Kept the active machine-readable `specificationVersion` at `0.15.0`: a trial replaced all 62 `0.15.0` hits in `xtask`, `qualification`, and `.constitution/tech-spec`, updated the corrupt-platform-baseline mutation literal, and left `contracts validate` green, but `cargo test --workspace --all-features` failed 10 digest-bound fixture and readiness tests after changed hashed bytes invalidated parent digests. The full version migration and its digest cascade are routed through T6.1-T6.3 and T8.x.
 
 ### Scheduled landings routed to the next Stage 4 epic
@@ -26,6 +32,7 @@ All notable changes to the technical specification appear in this file.
 - T1.4: `.constitution/tech-spec/data-models/qualification-lock.schema.json`; land the v6 lock fields; enforce with `LOCK_SCHEMA` and claimed-ready policy validation; see [T1](../reports/pre-implementation-readiness.md#t1-schema-creation-and-migration).
 - T1.5: `.constitution/tech-spec/data-models/{layout-qualification-record,layout-prequalification-run,layout-prequalification-suite}.schema.json`; land the proposed layout schemas; enforce with `schema_compiles_committed_contract_instances_and_fixture_corpus`; see [T1](../reports/pre-implementation-readiness.md#t1-schema-creation-and-migration).
 - T1.6: `PATH.inventory.json`; type the environment inventory and Wayland interface completeness; enforce with `POLICY_FIELDS` and `LOCK_SCHEMA`; see [T1](../reports/pre-implementation-readiness.md#t1-schema-creation-and-migration).
+- T1.7: `.constitution/tech-spec/data-models/{qualification-evidence,selection-decision}.schema.json`; migrate per-environment eligibility, `not-entered` records, candidate states, and `selectionState`; enforce with `LOCK_SCHEMA` and schema validation; see ADR-0011.
 - T2.1: `qualification/fixtures/contracts/{semantic-role-registry,semantic-role-registry-snapshot}/`; land the proposed fixture corpora; enforce with `run_fixture_corpus`; see [T2](../reports/pre-implementation-readiness.md#t2-schema-fixture-corpora).
 - T2.2: `qualification/fixtures/contracts/accessibility-map/` and `migration/accessibility-map-v5-to-v6.{input,expected}.json`; land the accessibility-map corpus and migration pair; enforce with `run_fixture_corpus`, `$schema` discovery, and `validate_migration_fixture`; see [T2](../reports/pre-implementation-readiness.md#t2-schema-fixture-corpora).
 - T2.3: `qualification/fixtures/contracts/{layout-qualification-record,layout-prequalification-run,layout-prequalification-suite}/`; land layout fixture corpora; enforce with `run_fixture_corpus`; see [T2](../reports/pre-implementation-readiness.md#t2-schema-fixture-corpora).
@@ -34,6 +41,7 @@ All notable changes to the technical specification appear in this file.
 - T2.6.1: `xtask/src/commands/external_contracts.rs`; land external-fixture sidecar validation; enforce with `cargo run -q -p xtask -- external-contracts verify`; see [T2.6](../reports/pre-implementation-readiness.md#t26-external-fixture-preservation-and-sidecar-validation).
 - T2.6.2: `qualification/fixtures/external-contracts/{macos,wayland,x11}/`; preserve the proposed sidecar-backed fixture sets; enforce with `cargo run -q -p xtask -- external-contracts verify`; see [T2.6](../reports/pre-implementation-readiness.md#t26-external-fixture-preservation-and-sidecar-validation).
 - T2.6.3: `qualification/fixtures/external-contracts/windows/`; retain the Windows excerpt exemption until reference-host capture; enforce with the SPK-B002 capture procedure; see [T2.6](../reports/pre-implementation-readiness.md#t26-external-fixture-preservation-and-sidecar-validation).
+- T2.7: `qualification/fixtures/contracts/{qualification-evidence,selection-decision}/`; add provisional-selection valid and invalid fixture corpora; enforce with `run_fixture_corpus`; see ADR-0011.
 - T3.1: `.constitution/tech-spec/contracts/semantic-role-registry.json` and capability traceability; land registry and physical contract-test bindings; enforce with `$schema` discovery and `validate_required_symbol_edges`; see [T3](../reports/pre-implementation-readiness.md#t3-contract-instances).
 - T3.1a: `.constitution/tech-spec/contracts/{oxyflut-public.rs,oxyflut-substrate.rs,oxyflut-substrate.h}`; land generated semantic-role definitions; enforce with the generated-role contract test and `validate_required_symbol_edges`; see [T3](../reports/pre-implementation-readiness.md#t3-contract-instances).
 - T3.2: `.constitution/tech-spec/contracts/platform-contracts.json` and `stack.md`; land the remaining platform retentions and replacements after external fixtures; enforce with `validate_platform_baseline`; see [T3](../reports/pre-implementation-readiness.md#t3-contract-instances).
@@ -43,6 +51,7 @@ All notable changes to the technical specification appear in this file.
 - T3.3c: `xtask/src/commands/environment/mod.rs`; validate v6 lock projections without environment inspection; enforce with `validate_lock_environment_projection`; see [T3](../reports/pre-implementation-readiness.md#t3-contract-instances).
 - T3.3d: `xtask/src/commands/lock.rs`; land staged layout digest and identity reporting; enforce with `lock status --gate candidate-implementation` assertions; see [T3](../reports/pre-implementation-readiness.md#t3-contract-instances).
 - T3.3e: qualification-lock schema and lock instance plus `xtask/src/toolchain/lock.rs`; preserve resolved-tool classification; enforce with `verify_lock_resolved_tools_classified` and `POLICY_FIELDS`; see [T3](../reports/pre-implementation-readiness.md#t3-contract-instances).
+- T3.3f: `xtask/src/contracts/readiness_promotion.rs`; migrate the final-selection checks for provisional and final `selectionState`, entered and untriggered candidate states, and the conditional two-assessor calculation; enforce with the readiness-promotion family; see ADR-0011.
 - T3.4: public and qualification Rust contracts plus ADR-0005; land layout counter and probe-contract changes; enforce with Rust-contract compilation and `validate_workspace`; see [T3](../reports/pre-implementation-readiness.md#t3-contract-instances).
 - T3.4a: `xtask/src/commands/contracts.rs`; land the external-client layout-contract assertion; enforce with the `rust-contract` family; see [T3](../reports/pre-implementation-readiness.md#t3-contract-instances).
 - T3.4b: `xtask/src/commands/layout_prequalification.rs` and its corpus; land the layout-prequalification command; enforce with the custom-validator fixture corpus; see [T3](../reports/pre-implementation-readiness.md#t3-contract-instances).
@@ -66,6 +75,7 @@ All notable changes to the technical specification appear in this file.
 - T8.3: staged fuzz-corpora and security-patch-rehearsal records; create and bind the records; enforce with `POLICY_FIELDS` and `digests::validate_workspace`; see [T8](../reports/pre-implementation-readiness.md#t8-digest-bound-artifacts-frozen-last).
 - T8.4: staged layout artifacts and schemas; freeze and bind layout policy artifacts; enforce with the layout-prequalification validator, `POLICY_FIELDS`, and `digests::validate_workspace`; see [T8](../reports/pre-implementation-readiness.md#t8-digest-bound-artifacts-frozen-last).
 - T8.5: ADR-0010 and production-3b fixtures; apply the acceptance cascade after the approved evidence migration; enforce with `adr_cites_verified_evidence` and `digests::validate_workspace`; see [T8](../reports/pre-implementation-readiness.md#t8-digest-bound-artifacts-frozen-last).
+- T8.6: qualification-evidence and selection-decision parents, sidecars, and dependent lock references; re-freeze every affected digest after the provisional-selection migration; enforce with `digests::validate_workspace`; see ADR-0011.
 
 ## [v0.15.0] - 2026-08-26
 
