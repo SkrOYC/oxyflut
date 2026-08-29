@@ -130,4 +130,4 @@ Checker: prettier --prose-wrap never --check '.constitution/**/*.md'
 ##### OXY-D001 Deviations & Justifications
 
 - **Touched Files:** `.constitution/tasks/completed/EPIC-D-readiness-reconciliation.md`, `.constitution/tasks/critical-path.md`, and `.constitution/tasks/changelog.md`
-- **Justification:** Closeout follows Step 6 of the execution skill with no in-scope-file deviation; the report itself stayed the only in-scope edit.
+- **Justification:** These three tasks-file edits are the execution skill's Step 6 closeout: archive Epic D, recompute the critical path, and update the changelog. They follow the identical Epic B closeout precedent in `.constitution/tasks/completed/EPIC-B-readiness-research.md`. Version v0.4.0 is a plan-bookkeeping bump that records completion and zero active points, not the next Stage 4 version for new work; that version follows Stage 3 reconciliation as this ticket states.

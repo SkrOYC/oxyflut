@@ -17,6 +17,7 @@ All notable changes to the Stage 4 execution plan appear in this file.
 
 - No readiness flag was set; every `measurementPolicy` field, `resolvedTools`, and `referenceEnvironments` capture remains missing.
 - `Known gaps routed to OXY-D001` in `.constitution/tech-spec/changelog.md` is superseded only by Stage 3's v0.16.0 entry and is not edited here.
+- Stage 3 applies the reconciliation-checklist tiers that need no external input and releases the technical specification; `/planning-engineering-execution` then produces the next Stage 4 workload-definition epic. `candidateImplementationReady: true` remains the gate for candidate implementation and measurement, not for planning workload-definition work.
 - macOS arm64 and Windows x86-64 reference hardware and Assessor 2 remain blocked external inputs.
 
 ## [v0.3.0] - 2026-08-28

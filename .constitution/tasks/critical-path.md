@@ -6,7 +6,7 @@
 
 ## Critical path
 
-No active ticket remains. Stage 4 cannot name the next epic: `/planning-engineering-execution` must produce it after Stage 3 applies the [Stage 3 reconciliation checklist](../reports/pre-implementation-readiness.md#stage-3-reconciliation-checklist) and releases the technical specification with `candidateImplementationReady: true`.
+No active ticket remains. Stage 3 applies the [Stage 3 reconciliation checklist](../reports/pre-implementation-readiness.md#stage-3-reconciliation-checklist) tiers that need no external input and releases the technical specification. `/planning-engineering-execution` then produces the next Stage 4 epic for workload-definition work. `candidateImplementationReady: true` remains the gate for candidate implementation and measurement, not for planning workload-definition work.
 
 ## Build order
 
@@ -14,4 +14,4 @@ The active graph is empty.
 
 ## Phasing strategy
 
-No candidate implementation, measurements, or production 3B planning is active. The release gate requires Stage 3 to complete the reconciliation checklist, verify every readiness-blocking input, remove the exact known unknowns that the verified inputs close, and release the technical specification with `candidateImplementationReady: true` before `/planning-engineering-execution` produces the next epic.
+No candidate implementation or measurement is active. Stage 3 applies the reconciliation-checklist tiers that need no external input and releases the technical specification before `/planning-engineering-execution` produces the next Stage 4 workload-definition epic. `candidateImplementationReady: true` remains the gate for candidate implementation and measurement, not for planning workload-definition work.
