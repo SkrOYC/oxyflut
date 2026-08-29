@@ -2,6 +2,19 @@
 
 All notable changes to the logical architecture appear in this file.
 
+## [v1.1.0] - 2026-08-29
+
+### Added
+
+- Added ARC-R12 for reversal of provisional selection and ARC-R13 for the single Linux reference configuration.
+- Added the null-substrate invariant for shared boundaries above the rendering substrate boundary.
+
+### Changed
+
+- Reframed substrate qualification as sequential and provisional while retaining the frozen common suite.
+- Replaced the ARC-R02 mitigation with the SPK-B005 layout-cap follow-up.
+- Recast structural debt as the retained contract seam and untriggered focused candidate build recipe rather than two live adapters.
+
 ## [v1.0.0] - 2026-08-26
 
 ### Added

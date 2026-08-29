@@ -20,6 +20,8 @@ flowchart LR
     Gate -->|no| Reject[Candidate ineligible]
 ```
 
+Tier 1 environments are qualified in the declared order: Wayland, X11, macOS, then Windows; the first production release waits for all four to pass.
+
 ## Failure path
 
 A failed, missing, incomparable, or gating-known-unknown row makes the candidate ineligible. A cited unsupported event can be not applicable only under the frozen baseline.

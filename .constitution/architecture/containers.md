@@ -72,7 +72,7 @@ flowchart LR
 
 ## Candidate responsibility allocation
 
-The logical boundaries don't change between substrate candidates. The following matrix separates canonical ownership from delegated mechanisms:
+The logical boundaries don't change between substrate candidates. The integrated allocation is the first allocation qualified; the focused allocation remains specified and is built only if the integrated candidate fails hard-gate eligibility on the first qualification environment. The following matrix separates canonical ownership from delegated mechanisms:
 
 | Concern | Canonical owner | Focused drawing-and-text allocation | Integrated allocation |
 | :-- | :-- | :-- | :-- |

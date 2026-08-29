@@ -17,6 +17,8 @@ flowchart LR
     Score -->|scored evidence| Register
 ```
 
+The one-eligible rule applies per qualification environment and yields a provisional selection until CAP-PLT-001 is met.
+
 ## Failure path
 
 If candidate count or eligibility evidence is inconsistent, the selection remains open until Release qualification resolves the records.
