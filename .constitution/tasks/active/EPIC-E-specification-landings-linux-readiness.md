@@ -1,7 +1,7 @@
 # Epic E: Specification landings and Linux readiness
 
 - **Status:** Active.
-- **Total effort:** 79 points.
+- **Total effort:** 80 points.
 - **Plane:** Qualification.
 - **Disjointness:** This epic owns the listed qualification specifications, fixtures, evidence, lock inputs, and `xtask` files. It excludes `xtask/src/commands/candidate.rs`, `xtask/src/commands/probe.rs`, `qualification/probes/`, candidate adapter crates, and shared application-runtime crates.
 - **Boundary:** This epic lands the nonblocked reconciliation checklist rows and prepares per-environment candidate-adapter readiness. It does not collect comparative measurements, select a rendering substrate, or promote Phase 3B.
@@ -87,37 +87,6 @@ discover_contract_instances validates self-declared raw measurements and traceab
 run_fixture_corpus accepts the semantic-role registry and snapshot directory sets only when each schema has the required valid and invalid corpus.
 ```
 
-#### OXY-E004 Freeze the deferred version and digest migration
-
-- **Type:** Chore
-- **Effort:** 3
-- **Dependencies:** OXY-E001, OXY-E002, OXY-E003, OXY-E005, OXY-E006, OXY-E007, OXY-E009, OXY-E010, OXY-E011, OXY-E012, OXY-E013, OXY-E014, OXY-E015, OXY-E016, OXY-E017, OXY-E018, OXY-E019, OXY-E020, OXY-E021, OXY-E022, OXY-E023, OXY-E024, OXY-E025, OXY-G008
-- **Category:** Correctness
-- **Scope (In-Scope Files):**
-  - `.constitution/tech-spec/changelog.md`
-  - `.constitution/tech-spec/contracts/qualification-lock.json`
-  - `.constitution/tech-spec/contracts/oxyflut-substrate.h`
-  - `qualification/fixtures/generated-bindings/oxyflut-substrate.rs`
-  - `qualification/fixtures/generated-bindings/oxyflut-substrate.rs.sha256`
-  - `qualification/fixtures/native/interface.json`
-  - `qualification/fixtures/native/layout-probe.c.in`
-  - `qualification/fixtures/native/layout.x86_64-unknown-linux-gnu.json`
-  - `xtask/src/contracts/digests.rs`
-- **Scope (Out-of-Scope Files):**
-  - `xtask/src/commands/candidate.rs`, `xtask/src/commands/probe.rs`, `qualification/probes/`, candidate adapter crates, and shared application-runtime crates (don't touch).
-- **Verification Command:** `cargo +1.98.0 run -p xtask -- contracts validate`
-- **Expected Success Output:** `exit 0`.
-- **STOP Conditions:**
-  - "STOP if any digest-bound input changes after its dependent artifact is frozen; return to the input ticket and regenerate the complete digest chain."
-- **Description:** Apply T6.1-T6.3 and freeze T8 artifacts after every digest-affecting landing, including external fixtures, Linux captures, the approved baseline, layout-cap evidence, and every split schema, corpus, instance, and assertion migration. Advance the integrated C ABI and regenerate the committed layout and bindings artifacts only after their source contracts settle.
-- **Acceptance:**
-  - **Mode:** contract_test
-  - **Evidence:**
-
-```text
-validate_workspace and digests::validate_workspace accept one active specification version and every regenerated dependent digest. validate_interface, layout validation, validate_bindings, and the generated-role contract test accept ABI 11 and reject ABI 10 before callbacks install.
-```
-
 #### OXY-E005 Preserve macOS, Wayland, and X11 external fixtures
 
 - **Type:** Chore
@@ -160,27 +129,29 @@ external-contracts verify accepts each expected macOS, Wayland, and X11 fixture 
   - `xtask/src/commands/environment/mod.rs`
   - `xtask/src/commands/lock.rs`
   - `xtask/src/commands/lock_tests.rs`
+  - `crates/oxyflut-qualification/src/readiness.rs`
 - **Scope (Out-of-Scope Files):**
   - `qualification/fixtures/environments/macos/`, `qualification/fixtures/environments/windows/`, `xtask/src/commands/candidate.rs`, `xtask/src/commands/probe.rs`, `qualification/probes/`, candidate adapter crates, and shared application-runtime crates (don't touch).
 - **Verification Command:** `cargo +1.98.0 run -p xtask -- environment inspect --environment ENVIRONMENT --output PATH`
 - **Expected Success Output:** `exit 0` for the Wayland and X11 captures.
 - **STOP Conditions:**
   - "STOP if a capture is not from `thinkpadp14s`, or if it lacks a Nix system-closure digest; do not substitute an Ubuntu package snapshot."
+  - "STOP if a required observed Wayland compositor, protocol, or interface version or X11 server or protocol version is absent; retain its Linux minimum-version KU rather than claim a lower floor."
   - "STOP if a resolved tool lacks an exact matching record in `qualification/tools/native-contract-toolchain.json`; retain the gate as open."
-- **Description:** Apply T3.3c. Capture the Wayland and X11 projections from `thinkpadp14s`, bind `systemPackageLockDigest` from the `/run/current-system` `narHash`, and preserve the NixOS, AMD Renoir, Hyprland, Xwayland, Xvfb, and session-family-risk fields required by the technical stack.
+- **Description:** Apply T3.3c. Capture the Wayland and X11 projections from `thinkpadp14s`, bind `systemPackageLockDigest` from the `/run/current-system` `narHash`, and preserve the NixOS, AMD Renoir, Hyprland, Xwayland, Xvfb, and session-family-risk fields required by the technical stack. Capture each environment's `minimumVersion` once and freeze the observed version set as its floor: the Wayland compositor and advertised protocol and interface versions, and the X11 Xwayland and Xvfb server versions and X protocol version. Clear the two Linux minimum-version KU strings only with their matching capture evidence.
 - **Acceptance:**
   - **Mode:** hitl_sil
   - **Evidence:**
 
 ```text
-Run environment inspect with environment=wayland and environment=x11 and a locked repository-relative PATH. Each accepted projection records the required reference-environment identities and the Nix system-closure digest. validate_lock_environment_projection rejects missing identity fields and unclassified tools.
+Run environment inspect with environment=wayland and environment=x11 and a locked repository-relative PATH. Each accepted projection records the required reference-environment identities, Nix system-closure digest, and frozen observed minimum-version floor. The Wayland capture records its compositor and advertised protocol and interface versions. The X11 capture records its Xwayland and Xvfb server versions and X protocol version. The matching two Linux minimum-version KU strings clear only when this evidence validates. validate_lock_environment_projection rejects missing identity fields and unclassified tools.
 ```
 
 #### OXY-E007 Define and publish the approved capability baseline
 
 - **Type:** Feature
 - **Effort:** 3
-- **Dependencies:** OXY-E002
+- **Dependencies:** OXY-E002, OXY-E011
 - **Category:** Feature-Evolution
 - **Scope (In-Scope Files):**
   - `qualification/fixtures/baselines/approved-capability-baseline.json`
@@ -190,12 +161,12 @@ Run environment inspect with environment=wayland and environment=x11 and a locke
   - `xtask/src/commands/lock_tests.rs`
 - **Scope (Out-of-Scope Files):**
   - `xtask/src/commands/candidate.rs`, `xtask/src/commands/probe.rs`, `qualification/probes/`, candidate adapter crates, and shared application-runtime crates (don't touch).
-- **Verification Command:** `cargo +1.98.0 run -p xtask -- baseline validate --input PATH --output PATH`
+- **Verification Command:** `cargo +1.98.0 run -p xtask -- baseline validate --input INPUT_PATH --output OUTPUT_PATH`
 - **Expected Success Output:** `exit 0` and a canonical baseline artifact with its provenance sidecar.
 - **STOP Conditions:**
   - "STOP if the project owner has not recorded approval in the baseline provenance fields; do not bind the baseline to the lock."
   - "STOP if the baseline does not contain exactly the approved 52-capability candidate-neutral set; reject publication."
-- **Description:** Create the approved 52-capability candidate-neutral baseline. Validate its input with `cargo +1.98.0 run -p xtask -- baseline validate --input PATH`, publish the canonical artifact with the `--output` form, record project-owner approval in provenance, and bind the published digest as `measurementPolicy.capabilityBaseline`.
+- **Description:** Create the approved 52-capability candidate-neutral baseline. Validate its input with `cargo +1.98.0 run -p xtask -- baseline validate --input INPUT_PATH`, publish the canonical artifact with `cargo +1.98.0 run -p xtask -- baseline validate --input INPUT_PATH --output OUTPUT_PATH`, record project-owner approval in provenance, and bind the published digest as `measurementPolicy.capabilityBaseline`. Store the provenance sidecar in `qualification/evidence/baselines/`, a subdirectory of the `qualification/evidence/` target structure in Stage 3 guidelines.
 - **Acceptance:**
   - **Mode:** contract_test
   - **Evidence:**
@@ -208,7 +179,7 @@ baseline validate accepts the approved 52-capability input and the published can
 
 - **Type:** Chore
 - **Effort:** 3
-- **Dependencies:** OXY-E004, OXY-E005, OXY-E006, OXY-E007, OXY-E015, OXY-E024, OXY-G008
+- **Dependencies:** OXY-E005, OXY-E006, OXY-E007, OXY-E015, OXY-E020, OXY-E021, OXY-E024, OXY-G008
 - **Category:** Correctness
 - **Scope (In-Scope Files):**
   - `.constitution/tech-spec/contracts/qualification-lock.json`
@@ -226,7 +197,7 @@ baseline validate accepts the approved 52-capability input and the published can
 - **STOP Conditions:**
   - "STOP if a required Wayland or X11 pre-implementation input remains a KU or has a digest mismatch; do not set that environment's candidateImplementationReady."
   - "STOP if the readiness change would claim measurementReady, a provisional selection, or a final selection."
-- **Description:** Set `candidateImplementationReady` for Wayland after complete Wayland evidence passes its gate, then set it for X11 after complete X11 evidence passes its gate. The approved baseline, workload inputs, Linux projections, external fixtures, lock v6 enforcement, and null-substrate layout-cap evidence are planned prerequisites. `scoringAnchors` and `assessors` do not gate one-candidate provisional selection; they become measurement inputs only if two substrate candidates enter qualification.
+- **Description:** Set `candidateImplementationReady` for Wayland after complete Wayland evidence passes its gate, then set it for X11 after complete X11 evidence passes its gate. The approved baseline, workload inputs, frozen Linux minimum-version floors and projections, external fixtures, lock v6 enforcement, final active specification version, fuzz-corpus and security-patch records, and null-substrate layout-cap evidence are planned prerequisites. `scoringAnchors` and `assessors` do not gate one-candidate provisional selection; they become measurement inputs only if two substrate candidates enter qualification.
 - **Acceptance:**
   - **Mode:** contract_test
   - **Evidence:**
@@ -281,10 +252,10 @@ ACCESSIBILITY_MAP_SCHEMA, run_fixture_corpus, discover_contract_instances, and v
 - **Scope (Out-of-Scope Files):**
   - `xtask/src/commands/candidate.rs`, `xtask/src/commands/probe.rs`, `qualification/probes/`, candidate adapter crates, and shared application-runtime crates (don't touch).
 - **Verification Command:** `cargo +1.98.0 run -p xtask -- layout-prequalification validate --lock LOCK_PATH --corpus CORPUS_PATH --suite-schema SUITE_SCHEMA_PATH --suite SUITE_PATH --output RESULT_PATH`
-- **Expected Success Output:** `exit 0` for the valid corpus and `exit 1` for every invalid fixture.
+- **Expected Success Output:** `exit 0` for the valid corpus, `exit 1` for every invalid fixture, and one schema-valid suite result at `RESULT_PATH` without mutating the lock.
 - **STOP Conditions:**
   - "STOP if the null-substrate candidate shape or nullable paint-submission field lacks an approved Stage 3 schema definition; route the gap to Stage 3."
-- **Description:** Apply T1.5, T2.3, and T3.4b in one coupled landing. Create the three layout schemas, their schema corpus, and the custom validator. Include the D7 null-substrate candidate, separate ordinary and attempted ordinary visits, intrinsic queries, application-owned layout time, and paint-submission time that is not applicable for the null substrate.
+- **Description:** Apply T1.5, T2.3, and T3.4b in one coupled landing. The Stage 3 command contract is `cargo +1.98.0 run -p xtask -- layout-prequalification validate --lock LOCK_PATH --corpus CORPUS_PATH --suite-schema SUITE_SCHEMA_PATH --suite SUITE_PATH --output RESULT_PATH`; it is missing until this ticket lands it. Create the three layout schemas, their schema corpus, and the custom validator. Include the D7 null-substrate candidate, separate ordinary and attempted ordinary visits, intrinsic queries, application-owned layout time, and paint-submission time that is not applicable for the null substrate.
 - **Acceptance:**
   - **Mode:** contract_test
   - **Evidence:**
@@ -409,7 +380,7 @@ The rust-contract family constructs LayoutResult with attempted_ordinary_visits 
 
 - **Type:** Feature
 - **Effort:** 5
-- **Dependencies:** OXY-E006, OXY-E007, OXY-E011, OXY-E013, OXY-E022
+- **Dependencies:** OXY-E002, OXY-E006, OXY-E007, OXY-E011, OXY-E013, OXY-E021, OXY-E022
 - **Category:** Correctness
 - **Scope (In-Scope Files):**
   - `.constitution/tech-spec/contracts/qualification-lock.json`
@@ -467,7 +438,7 @@ baseline validate, measurement validate, generate_templates, and digests::valida
 
 - **Type:** Chore
 - **Effort:** 3
-- **Dependencies:** OXY-E011
+- **Dependencies:** OXY-E015
 - **Category:** Correctness
 - **Scope (In-Scope Files):**
   - `.constitution/tech-spec/contracts/qualification-lock.json`
@@ -490,14 +461,13 @@ baseline validate, measurement validate, generate_templates, and digests::valida
 committed_candidate_gate_is_valid_but_open_with_the_exact_ku_set, cleared_ku_without_evidence_remains_open_with_the_exact_remaining_ku_set, clearing_a_ku_string_without_its_evidence_keeps_the_gate_open, collect_known_unknowns, and candidate_report_lines_are_stable_and_content_free accept only the reconciled arrays and output.
 ```
 
-#### OXY-E018 Update schema counts, traceability edges, and migration assertions
+#### OXY-E018 Reconcile traceability edges and migration assertions
 
 - **Type:** Chore
 - **Effort:** 3
-- **Dependencies:** OXY-E009, OXY-E010, OXY-E011, OXY-E012, OXY-E017
+- **Dependencies:** OXY-E009, OXY-E011, OXY-E012
 - **Category:** Correctness
 - **Scope (In-Scope Files):**
-  - `xtask/src/contracts/schema.rs`
   - `xtask/src/contracts/traceability/edges.rs`
   - `xtask/src/contracts/traceability/fixtures.rs`
   - `xtask/src/contracts/traceability/mod.rs`
@@ -509,14 +479,14 @@ committed_candidate_gate_is_valid_but_open_with_the_exact_ku_set, cleared_ku_wit
 - **Verification Command:** `cargo +1.98.0 run -p xtask -- contracts validate`
 - **Expected Success Output:** `exit 0`.
 - **STOP Conditions:**
-  - "STOP if a count, exact set, or migration pair has no named source landing; return to that ticket."
-- **Description:** Apply T5.3, T5.5, and T5.6 after the schema, corpus, and KU shapes settle. Update the 23-schema and seven-instance assertions, accessibility registry edges, and named migration-pair validation.
+  - "STOP if an exact edge or migration pair has no named source landing; return to that ticket."
+- **Description:** Apply T5.5 and T5.6 after their schema and corpus sources settle. Update the accessibility registry edges and named migration-pair validation.
 - **Acceptance:**
   - **Mode:** contract_test
   - **Evidence:**
 
 ```text
-schema_compiles_committed_contract_instances_and_fixture_corpus pins schema_count=23 and instance_count=7. ACCESSIBILITY_MAP_SCHEMA, REQUIRED_ACCESSIBILITY_CATEGORIES, validate_required_symbol_edges, and validate_migration_fixture reject incorrect edges, source bytes, expected bytes, and v6 migration output.
+ACCESSIBILITY_MAP_SCHEMA, REQUIRED_ACCESSIBILITY_CATEGORIES, validate_required_symbol_edges, and validate_migration_fixture reject incorrect edges, source bytes, expected bytes, and v6 migration output.
 ```
 
 #### OXY-E019 Regenerate ABI and binding artifacts
@@ -552,7 +522,7 @@ abi_seven_through_ten_fail_before_callbacks_install, validate_interface, layout 
 
 - **Type:** Chore
 - **Effort:** 3
-- **Dependencies:** OXY-E018, OXY-E019
+- **Dependencies:** OXY-E001, OXY-E002, OXY-E003, OXY-E005, OXY-E006, OXY-E007, OXY-E009, OXY-E010, OXY-E011, OXY-E012, OXY-E013, OXY-E014, OXY-E015, OXY-E016, OXY-E017, OXY-E018, OXY-E019, OXY-E023, OXY-E026
 - **Category:** Correctness
 - **Scope (In-Scope Files):**
   - `.constitution/tech-spec/changelog.md`
@@ -575,7 +545,7 @@ abi_seven_through_ten_fail_before_callbacks_install, validate_interface, layout 
 - **Expected Success Output:** `exit 0`.
 - **STOP Conditions:**
   - "STOP if the active-version inventory contains an unreviewed occurrence after the migration; reconcile it before regenerating parent digests."
-- **Description:** Apply T6.1-T6.3 after T1-T5 shapes settle. Recount the active-version inventory, migrate every active occurrence, regenerate affected parents and sidecars, update the command and stack version references, and prepend the technical-spec release record.
+- **Description:** Apply T6.1-T6.3 after every T1-T5 landing settles. Recount the active-version inventory, migrate every active occurrence, regenerate affected parents and sidecars, update the command and stack version references, and prepend the technical-spec release record.
 - **Acceptance:**
   - **Mode:** contract_test
   - **Evidence:**
@@ -614,7 +584,7 @@ POLICY_FIELDS and digests::validate_workspace accept only the canonical staged r
 
 - **Type:** Feature
 - **Effort:** 2
-- **Dependencies:** OXY-E010
+- **Dependencies:** OXY-E011
 - **Category:** Correctness
 - **Scope (In-Scope Files):**
   - `qualification/staged/layout-visit-corpus.json` (proposed in SPK-B005, not committed)
@@ -628,7 +598,7 @@ POLICY_FIELDS and digests::validate_workspace accept only the canonical staged r
 - **Expected Success Output:** `exit 0`.
 - **STOP Conditions:**
   - "STOP if a corpus, counting-rule, or schema digest differs from the approved SPK-B005 bytes; re-freeze the complete dependent set."
-- **Description:** Apply T8.4. Freeze the layout corpus and counting rules, bind the layout policy references, and retain `layoutVisitCap` as unresolved until OXY-G008 supplies the null-substrate suite evidence.
+- **Description:** Apply T8.4 after OXY-E011 creates the v6 lock shape. Freeze the layout corpus and counting rules, bind the layout policy references, and retain `layoutVisitCap` as unresolved until OXY-G008 supplies the null-substrate suite evidence.
 - **Acceptance:**
   - **Mode:** contract_test
   - **Evidence:**
@@ -669,17 +639,17 @@ Selection and qualification-evidence fixture corpora accept one entered integrat
 
 - **Type:** Feature
 - **Effort:** 3
-- **Dependencies:** OXY-E002
+- **Dependencies:** OXY-E011, OXY-E026
 - **Category:** Feature-Evolution
 - **Scope (In-Scope Files):**
-  - `qualification/staged/workload-reference-application.json`
-  - `qualification/staged/workload-scenes.json`
-  - `qualification/staged/workload-interaction-scripts.json`
-  - `qualification/staged/workload-fonts.json`
-  - `qualification/staged/workload-assets.json`
-  - `qualification/staged/workload-window-matrix.json`
-  - `qualification/staged/workload-cache-states.json`
-  - `qualification/staged/workload-release-flags.json`
+  - `qualification/staged/workload/referenceApplication.json`
+  - `qualification/staged/workload/scenes.json`
+  - `qualification/staged/workload/interactionScripts.json`
+  - `qualification/staged/workload/fonts.json`
+  - `qualification/staged/workload/assets.json`
+  - `qualification/staged/workload/windowMatrix.json`
+  - `qualification/staged/workload/cacheStates.json`
+  - `qualification/staged/workload/releaseFlags.json`
   - `.constitution/tech-spec/contracts/qualification-lock.json`
   - `xtask/src/commands/lock_tests.rs`
 - **Scope (Out-of-Scope Files):**
@@ -687,24 +657,29 @@ Selection and qualification-evidence fixture corpora accept one entered integrat
 - **Verification Command:** `cargo +1.98.0 run -p xtask -- contracts validate`
 - **Expected Success Output:** `exit 0`.
 - **STOP Conditions:**
-  - "STOP if a workload input needs a schema or lock reference absent from Stage 3; route the gap to Stage 3."
-- **Description:** Define and bind the reference application, scenes, interaction scripts, fonts, assets, window matrix, cache states, and release flags as candidate-readiness inputs. Do not record a CON-* meter value, benchmark row, comparative score, or selection result.
+  - "STOP if a workload document violates its `workload-input` schema or its lock digest differs; reject the document."
+- **Description:** Produce the eight candidate-readiness workload documents against `workload-input.schema.json`: reference application, scenes, interaction scripts, fonts, assets, window matrix, cache states, and release flags. The lock's eight workload digests bind the SHA-256 values of these documents. Do not record a CON-* meter value, benchmark row, comparative score, or selection result.
 - **Acceptance:**
   - **Mode:** contract_test
   - **Evidence:**
 
 ```text
-Lock validation accepts only digest-bound workload inputs with complete required identities. Candidate status reports an incomplete, missing, or mismatched workload input as open without producing measurement or selection evidence.
+Lock validation accepts the eight digest-bound workload documents only when each passes workload-input.schema.json with its required identity. Candidate status reports an incomplete, missing, or mismatched workload input as open without producing measurement or selection evidence.
 ```
 
-#### OXY-E025 Land the selection-citation migration
+#### OXY-E025 Land the selection-citation and evidence-digest migrations
 
 - **Type:** Chore
-- **Effort:** 2
-- **Dependencies:** OXY-E023
+- **Effort:** 3
+- **Dependencies:** OXY-E020, OXY-E023
 - **Category:** Correctness
 - **Scope (In-Scope Files):**
   - `.constitution/tech-spec/adrs/ADR-0010-production-substrate.md`
+  - `.constitution/tech-spec/contracts/qualification-lock.json`
+  - `.constitution/tech-spec/data-models/qualification-evidence.schema.json`
+  - `.constitution/tech-spec/data-models/selection-decision.schema.json`
+  - `qualification/fixtures/contracts/qualification-evidence/`
+  - `qualification/fixtures/contracts/selection-decision/`
   - `qualification/fixtures/contracts/readiness/production-3b/`
   - `xtask/src/contracts/readiness_promotion.rs`
   - `xtask/src/contracts/digests.rs`
@@ -714,11 +689,36 @@ Lock validation accepts only digest-bound workload inputs with complete required
 - **Expected Success Output:** `exit 0`.
 - **STOP Conditions:**
   - "STOP if transformed selection evidence, its schema, or its digest has not settled; retain the ADR citation and production-3b fixture cascade."
-- **Description:** Apply T8.5 after the ADR-0011 evidence-schema migration. Reconcile the ADR-0010 citation and production-3b fixture cascade only with transformed evidence that passes the migrated schema. This ticket does not promote Phase 3B or claim a final selection.
+- **Description:** Apply T8.5 and T8.6 after OXY-E020 completes the active-version migration and the ADR-0011 evidence-schema migration settles. Reconcile the ADR-0010 citation and production-3b fixture cascade only with transformed evidence that passes the migrated schema. Re-freeze the qualification-evidence and selection-decision parents, sidecars, and dependent lock references. This ticket does not promote Phase 3B or claim a final selection.
 - **Acceptance:**
   - **Mode:** contract_test
   - **Evidence:**
 
 ```text
-adr_cites_verified_evidence and digests::validate_workspace accept transformed evidence only when its schema, digest, and citation agree. The checks reject a provisional selection, incomplete Tier 1 evidence, or an unverified transformed artifact as a Phase 3B basis.
+adr_cites_verified_evidence and digests::validate_workspace accept transformed evidence only when its schema, parent and sidecar digests, dependent lock reference, and citation agree. The checks reject a provisional selection, incomplete Tier 1 evidence, or an unverified transformed artifact as a Phase 3B basis.
+```
+
+#### OXY-E026 Land the workload-input schema and fixture corpus
+
+- **Type:** Feature
+- **Effort:** 3
+- **Dependencies:** OXY-E003, OXY-E010
+- **Category:** Feature-Evolution
+- **Scope (In-Scope Files):**
+  - `.constitution/tech-spec/data-models/workload-input.schema.json`
+  - `qualification/fixtures/contracts/workload-input/`
+  - `xtask/src/contracts/schema.rs`
+- **Scope (Out-of-Scope Files):**
+  - `xtask/src/commands/candidate.rs`, `xtask/src/commands/probe.rs`, `qualification/probes/`, candidate adapter crates, and shared application-runtime crates (don't touch).
+- **Verification Command:** `cargo +1.98.0 run -p xtask -- contracts validate`
+- **Expected Success Output:** `exit 0`.
+- **STOP Conditions:**
+  - "STOP if a required workload-input field or fixture rule lacks the Stage 3 contract; route the gap to Stage 3."
+- **Description:** Land `workload-input.schema.json` and its valid and invalid fixture corpus. Each document has `schemaVersion`; `field` as an enum of `referenceApplication`, `scenes`, `interactionScripts`, `fonts`, `assets`, `windowMatrix`, `cacheStates`, and `releaseFlags`; `id`; `description`; a repository-relative `path` under `qualification/staged/workload/`; `sha256`; `byteCount`; `identities` with `name` and `revision`; and `license` as an SPDX expression or `LicenseRef-` value. Update the schema counter after the pre-existing schema landings.
+- **Acceptance:**
+  - **Mode:** contract_test
+  - **Evidence:**
+
+```text
+run_fixture_corpus accepts the workload-input corpus only when its valid and invalid fixtures conform to workload-input.schema.json. schema_compiles_committed_contract_instances_and_fixture_corpus pins schema_count=24 and instance_count=7.
 ```

@@ -9,13 +9,23 @@ All notable changes to the Stage 4 execution plan appear in this file.
 - Added Epic E for specification landings and Linux readiness, Epic F for the integrated substrate candidate on Linux, and Epic G for the shared application runtime.
 - Added the time-boxed `SPK-F001` Dart-free integrated-candidate build spike.
 - Added the null-substrate layout-prequalification and Platform integration skeleton tickets.
+- Added `OXY-E026` for the Stage 3 workload-input schema, its fixture corpus, and the `schema_count=24` assertion.
 
 ### Changed
 
-- Split the readiness landings into checklist-ordered tickets, including the external-fixture, approved baseline, lock v6, provisional-selection, layout-cap, and final-digest dependencies.
+- Split the readiness landings into checklist-ordered tickets, including the external-fixture, approved baseline, lock v6, provisional-selection, layout-cap, workload-schema, and final-digest dependencies.
 - Applied sequential Wayland-then-X11 candidate-adapter readiness, the one-candidate assessor rule, and per-environment lock-status commands planned for lock v6.
-- Recomputed the active backlog to 130 points and the 45-point critical path through `OXY-E002`, `OXY-E010`, `OXY-E011`, `OXY-E006`, `OXY-E015`, `OXY-E023`, `OXY-E025`, `OXY-E004`, `OXY-E008`, `OXY-F003`, `OXY-F004`, and `OXY-F005`.
+- Applied the Stage 3 target structure for `qualification/evidence/` and the distinct `INPUT_PATH` and `OUTPUT_PATH` baseline-publication placeholders.
+- Recomputed the active backlog to 131 points and the 43-point critical path through the equal `OXY-E006` or `OXY-E007` and `OXY-E017` or `OXY-E023` branches, `OXY-E020`, `OXY-E008`, `OXY-F003`, `OXY-F004`, and `OXY-F005`.
 - macOS and Windows reference hardware remain blocked, the focused substrate candidate remains conditional on the first-environment hard-gate trigger, and comparable measurement, selection evidence, and production delivery remain deferred.
+
+### Fixed
+
+- Made `OXY-E006` capture and freeze the Linux minimum-version floors, then clear the matching two Linux minimum-version KU strings only with capture evidence.
+- Made `OXY-E024` create the eight `qualification/staged/workload/<field>.json` documents after the workload-input schema and v6 lock land.
+- Marked the D15 layout-prequalification command as a Stage 3 contract missing until `OXY-E010` lands it in both layout tickets.
+- Corrected consumer dependencies for lock fields, version migration, ABI artifacts, and final evidence digests.
+- Removed duplicate `OXY-E004` ownership: `OXY-E019` retains ABI regeneration, `OXY-E020` retains T6 version migration, and `OXY-E025` owns T8.6 evidence-digest freezing.
 
 ## [v0.4.0] - 2026-08-29
 

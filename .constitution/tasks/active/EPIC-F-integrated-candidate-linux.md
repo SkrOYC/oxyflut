@@ -59,7 +59,7 @@ Contract tests compile the safe surface against contracts/oxyflut-substrate.rs. 
 
 - **Type:** Feature
 - **Effort:** 5
-- **Dependencies:** OXY-E004, OXY-E008, OXY-F001, OXY-F002
+- **Dependencies:** OXY-E008, OXY-E019, OXY-F001, OXY-F002
 - **Category:** Feature-Evolution
 - **Scope (In-Scope Files):**
   - `native/engine-bridge/`

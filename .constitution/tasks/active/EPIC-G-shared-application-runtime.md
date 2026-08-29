@@ -202,11 +202,11 @@ Contract tests serialize reentrant callback intake, normalize each declared even
 - **Scope (Out-of-Scope Files):**
   - Candidate adapter crates, `native/engine-bridge/`, `qualification/probes/`, and every file owned by Epic F (don't touch).
 - **Verification Command:** `cargo +1.98.0 run -p xtask -- layout-prequalification validate --lock LOCK_PATH --corpus CORPUS_PATH --suite-schema SUITE_SCHEMA_PATH --suite SUITE_PATH --output RESULT_PATH`
-- **Expected Success Output:** `exit 0` and schema-valid null-substrate layout-cap evidence.
+- **Expected Success Output:** `exit 0`, one schema-valid null-substrate layout-cap result at `RESULT_PATH`, and no lock mutation.
 - **STOP Conditions:**
   - "STOP if `thinkpadp14s` cannot supply the required reference-host identity or if the null-substrate evidence fails schema or lock validation; retain layoutVisitCap as a KU."
   - "STOP if the suite needs a candidate adapter or a paint-submission value for the null substrate; route the gap to Stage 3."
-- **Description:** Run the layout prequalification suite from `oxyflut-layout` with a null substrate on the Linux reference host. Record ordinary visits, attempted ordinary visits, intrinsic queries, and application-owned layout time as substrate-independent evidence. Record paint-submission time as not applicable for the null substrate. Produce the layoutVisitCap binding input without recording a CON-* meter value, benchmark row, comparative score, or selection result.
+- **Description:** The Stage 3 command contract is `cargo +1.98.0 run -p xtask -- layout-prequalification validate --lock LOCK_PATH --corpus CORPUS_PATH --suite-schema SUITE_SCHEMA_PATH --suite SUITE_PATH --output RESULT_PATH`; it is missing until OXY-E010 lands it. Run the layout prequalification suite from `oxyflut-layout` with a null substrate on the Linux reference host. Store the result in `qualification/evidence/layout-prequalification/`, a subdirectory of the `qualification/evidence/` target structure in Stage 3 guidelines. Record ordinary visits, attempted ordinary visits, intrinsic queries, and application-owned layout time as substrate-independent evidence. Record paint-submission time as not applicable for the null substrate. Produce the layoutVisitCap binding input without recording a CON-* meter value, benchmark row, comparative score, or selection result.
 - **Acceptance:**
   - **Mode:** runbook_probe
   - **Evidence:**
