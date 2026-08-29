@@ -238,7 +238,7 @@ Checker: cargo +1.98.0 run -p xtask -- lock status --gate candidate-implementati
 - **Justification:** PR review required factual command descriptions and a durable record of the manual-capture lock input after Epic C moved to completed tasks.
 - **OXY-D001 input:** `qualification-lock.schema.json` binds `measurementPolicy.{scoringAnchors,assessors,fuzzCorpora,securityPatchRehearsal}` as path-less digests; the repository convention `qualification/staged/<field>.json` is proposed as their referent and should be typed by Stage 3.
 - **External-lock decision:** The external lock has per-contract `epistemicStatus` values rather than one root status. When every active contract is `ku-gating`, readiness verifies the staged proposal. Otherwise, readiness verifies the active lock.
-- **Touched Files:** `xtask/src/main.rs`, `.constitution/tech-spec/changelog.md`, `.constitution/tasks/active/EPIC-D-readiness-reconciliation.md`, `.constitution/tasks/completed/EPIC-C-lock-input-tooling.md`, and `.constitution/tasks/changelog.md`.
+- **Touched Files:** `xtask/src/main.rs`, `.constitution/tech-spec/changelog.md`, `.constitution/tasks/completed/EPIC-D-readiness-reconciliation.md`, `.constitution/tasks/completed/EPIC-C-lock-input-tooling.md`, and `.constitution/tasks/changelog.md`.
 - **Justification:** PR review required removal of obsolete command-outcome allowances, correction of the staged SLSA license record, explicit OXY-D001 ownership gaps, and complete Epic C review records.
 - **Touched Files:** `.constitution/tasks/{critical-path,changelog}.md`.
 - **Justification:** PR review round 3 aligned the active-plan version with its changelog and recorded the review corrections without changing qualification readiness.
@@ -275,7 +275,7 @@ Epic C completed its 21 story points without claiming that any staged input is c
 
 ### Stage 3 revisions required — routed to OXY-D001
 
-The [OXY-D001 inputs from Epic C](../active/EPIC-D-readiness-reconciliation.md#oxy-d001-inputs-from-epics-a-and-c) must name these unresolved Stage 3 revisions:
+The [OXY-D001 inputs from Epic C](EPIC-D-readiness-reconciliation.md#oxy-d001-inputs-from-epics-a-and-c) must name these unresolved Stage 3 revisions:
 
 - `.constitution/tech-spec/data-models/raw-measurement.schema.json` omits the `$schema` property, so raw-measurement instances cannot self-declare their schema.
 - `.constitution/tech-spec/data-models/raw-measurement.schema.json` doesn't state that `samples[].monotonicNs` is non-decreasing per `(constraintId, launch)`.

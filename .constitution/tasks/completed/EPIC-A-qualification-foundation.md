@@ -234,7 +234,7 @@ Command: cargo +1.98.0 test --workspace --all-features
 - **Justification:** An immutable Prettier identity is required for OXY-A008.
 - **Touched Files:** `xtask/src/toolchain/{error,specs}.rs`, `xtask/src/toolchain_tests.rs`.
 - **Justification:** PR review required moving staged-toolchain definitions, errors, and tests below the hard file-size ceiling.
-- **Touched Files:** `.constitution/tech-spec/{changelog,guidelines,stack}.md`, `.constitution/tasks/active/{EPIC-B-readiness-research,EPIC-D-readiness-reconciliation}.md`, and `.constitution/tasks/active/EPIC-A-qualification-foundation.md`.
+- **Touched Files:** `.constitution/tech-spec/{changelog,guidelines,stack}.md`, `.constitution/tasks/{active/EPIC-B-readiness-research,completed/EPIC-D-readiness-reconciliation}.md`, and `.constitution/tasks/active/EPIC-A-qualification-foundation.md`.
 - **Justification:** Review fixes record the locked staged-toolchain host and its OXY-D001 lock input alongside the immutable formatter command.
 
 #### OXY-A005 Compile and layout-check native contract headers
@@ -368,7 +368,7 @@ Command: cargo +1.98.0 run -p xtask -- contracts validate
 - **Justification:** The execution rules require deviations to be recorded in the ticket block.
 - **Touched Files:** `xtask/src/contracts/readiness.rs`.
 - **Justification:** The aggregate command needs a typed distinction between readiness-gate and Phase 3B promotion-only errors to report their statuses independently.
-- **Touched Files:** `deny.toml`, `devenv.nix`, `.constitution/prd/glossary.md`, and `.constitution/tasks/active/EPIC-D-readiness-reconciliation.md`.
+- **Touched Files:** `deny.toml`, `devenv.nix`, `.constitution/prd/glossary.md`, and `.constitution/tasks/completed/EPIC-D-readiness-reconciliation.md`.
 - **Justification:** PR review required an offline dependency-policy gate, the corresponding CI scripts, canonical KU and KK glossary entries, and a recorded advisory-database deferral. The glossary and OXY-D001 input additions are explicitly authorized by the review request.
 - **Touched Files:** `xtask/tests/cli_output.rs`.
 - **Justification:** PR review required process-level assertions that reports use standard output and diagnostics use standard error.
@@ -398,7 +398,7 @@ Epic A completed its 34 story points without implementing candidate, platform, o
 
 ### Stage 3 revisions required — routed to OXY-D001
 
-The [OXY-D001 inputs from Epic A](../active/EPIC-D-readiness-reconciliation.md#oxy-d001-inputs-from-epic-a) must name these unresolved Stage 3 revisions:
+The [OXY-D001 inputs from Epic A](EPIC-D-readiness-reconciliation.md#oxy-d001-inputs-from-epics-a-and-c) must name these unresolved Stage 3 revisions:
 
 - `.constitution/tech-spec/data-models/capability-traceability.schema.json` `mappings[].contractTests[]` identifies a contract test but has no physical file location.
 - `.constitution/tech-spec/data-models/accessibility-map.schema.json` `reverseActions[].textLayoutBinding` has no text-layout generation value.
