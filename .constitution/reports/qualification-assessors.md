@@ -6,6 +6,8 @@
 - Clock stop: 2026-08-28T17:08:01Z
 - Round-9 fix clock start: 2026-08-29T01:04:51Z
 - Round-9 fix clock stop: 2026-08-29T01:08:52Z
+- Round-14 fix clock start: 2026-08-29T03:37:21Z
+- Round-14 fix clock stop: 2026-08-29T03:38:49Z
 - Scope: assessor coordination only; this report assigns no candidate score and makes no candidate selection.
 
 ## Question
@@ -336,6 +338,72 @@ crates/oxyflut-qualification/src/evidence/mod.rs:382:            super::declared
 crates/oxyflut-qualification/src/evidence/mod.rs:387:            super::declared_references("urn:oxyflut:schema:qualification-evidence:5", &null_digest),
 ```
 
+The following round-14 fixture-inspection probe ran on this host. It establishes the existing migration-fixture names, the absence of an `.input.sha256` sidecar, the ADR's selected-evidence citation, every fixture that binds the ADR digest, and the validator routine that checks the citation.
+
+```text
+command: find qualification/fixtures/contracts/migration -maxdepth 1 -type f -printf '%f\n' | sort
+migration fixtures:
+derived.json
+source.json
+source.sha256
+
+command: find qualification/fixtures/contracts/migration -maxdepth 1 -type f -name '*.input.sha256' -printf '%f\n' | sort
+input SHA-256 sidecars:
+
+command: grep -n 'evidence/selected-qualification.json\|SHA-256' qualification/fixtures/contracts/readiness/production-3b/.constitution/tech-spec/adrs/ADR-0010-production-substrate.md
+ADR selected-evidence citation:
+11:- `evidence/selected-qualification.json` SHA-256: 160cb166868bf633de725ece2afec1b459098a40b4ee318924245266be27c8e8
+
+command: grep -Rnl 'acceptedAdr0010' qualification/fixtures/contracts/readiness/production-3b | sort
+accepted ADR references:
+qualification/fixtures/contracts/readiness/production-3b/negative/promotion-missing-artifact-phase.json
+qualification/fixtures/contracts/readiness/production-3b/negative/promotion-selection-lower-score-phase.json
+qualification/fixtures/contracts/readiness/production-3b/negative/promotion-tampered-adr-phase.json
+qualification/fixtures/contracts/readiness/production-3b/negative/promotion-untyped-wrong-lock-phase.json
+qualification/fixtures/contracts/readiness/production-3b/negative/promotion-wrong-candidate-phase.json
+qualification/fixtures/contracts/readiness/production-3b/negative/promotion-wrong-lock-phase.json
+qualification/fixtures/contracts/readiness/production-3b/negative/promotion-wrong-version-phase.json
+qualification/fixtures/contracts/readiness/production-3b/production-3b-phase.json
+
+command: find qualification/fixtures/contracts/readiness/production-3b/negative -maxdepth 1 -type f -name 'promotion-*-phase.json' -printf '%f\n' | sort
+negative promotion phase fixtures:
+promotion-missing-artifact-phase.json
+promotion-selection-lower-score-phase.json
+promotion-tampered-adr-phase.json
+promotion-untyped-wrong-lock-phase.json
+promotion-wrong-candidate-phase.json
+promotion-wrong-lock-phase.json
+promotion-wrong-version-phase.json
+
+command: grep -n -A 24 'fn adr_cites_verified_evidence' xtask/src/contracts/readiness_promotion.rs | head -25
+ADR evidence verification routine:
+206:fn adr_cites_verified_evidence(root: &Path, adr: &str) -> bool {
+207-    for line in adr.lines() {
+208-        let digests = line
+209-            .split(|character: char| !character.is_ascii_hexdigit())
+210-            .filter(|value| {
+211-                value.len() == 64
+212-                    && value
+213-                        .bytes()
+214-                        .all(|byte| byte.is_ascii_digit() || matches!(byte, b'a'..=b'f'))
+215-            })
+216-            .collect::<Vec<_>>();
+217-        if digests.is_empty() {
+218-            continue;
+219-        }
+220-        let mut fragments = line.split('`');
+221-        let _ = fragments.next();
+222-        while let Some(path) = fragments.next() {
+223-            let _ = fragments.next();
+224-            if !path.starts_with("evidence/") {
+225-                continue;
+226-            }
+227-            if digests
+228-                .iter()
+229-                .any(|digest| digests::verify_reference(root, path, digest).is_ok())
+230-            {
+```
+
 ## Recommendation
 
 Choose Option B for the ticket state and Option C for the authorship-conflict policy.
@@ -363,8 +431,8 @@ No active-specification edit is authorized while Q2, Q3, or Q4 remains gating. S
   - `qualification/fixtures/contracts/qualification-evidence/invalid/superseded-identity.expected.json`, `supersededBy`: replace `"urn:oxyflut:schema:qualification-evidence:5"` with `"urn:oxyflut:schema:qualification-evidence:6"`. Retain `invalid/superseded-identity.json` as the v4 old-reader input; the updated generic supersession fixture separately proves that v5 rejects in favor of v6.
   - `qualification/fixtures/contracts/qualification-evidence/`, direct schema fixture corpus: preserve its count of 3 valid inputs, 10 invalid inputs, and 10 invalid expected sidecars. Set the root `schemaVersion` to exactly `"6.0.0"` in the 3 valid inputs (`valid/minimal.json`, `valid/not-applicable-kk-binding.json`, and `valid/pass-null-absence.json`) and the 7 active-version invalid inputs (`invalid/additional-properties.json`, `invalid/conditional.json`, `invalid/contradictory-pass-binding.json`, `invalid/eligible-fail.json`, `invalid/eligible-gating-ku.json`, `invalid/enum.json`, and `invalid/missing-not-applicable-binding.json`). Retain the absent root `schemaVersion` in `invalid/required.json`, numeric root `schemaVersion: 1` in `invalid/type.json`, and the v4 `$schema` plus `schemaVersion: "superseded"` in `invalid/superseded-identity.json`, so each keeps its sole intended failure. In `valid/not-applicable-kk-binding.json` and `invalid/contradictory-pass-binding.json`, retain the nested platform-baseline `schemaVersion: "5.0.0"`, because platform contracts remain v5.
   - `qualification/fixtures/contracts/qualification-evidence/`, scorer-bearing direct fixtures: in `valid/not-applicable-kk-binding.json`, `valid/pass-null-absence.json`, `invalid/contradictory-pass-binding.json`, `invalid/eligible-fail.json`, `invalid/eligible-gating-ku.json`, and `invalid/missing-not-applicable-binding.json`, replace every two-integer `assessorScores` tuple with two objects whose `assessorId` values are the fixture's `assessor-one` and `assessor-two` root identities and whose `score` values equal the replaced integers; add `"recusedAssessorIds": []` to every criterion score. Retain the other nine invalid `.expected.json` sidecars unchanged because their declared failure path and keyword do not change; revalidate that claim after the fixture inputs change.
-  - `qualification/fixtures/contracts/readiness/production-3b/`, qualification-evidence consumers: set root `schemaVersion` to exactly `"6.0.0"` in `evidence/selected-qualification.json`, `evidence/all-tier1-results.json`, `evidence/eligible-integrated-qualification.json`, `evidence/integrated-qualification.json`, and `negative/fabricated-not-applicable-qualification.json`. Apply the same object-score and empty-recusals transform to every scorer-bearing file in that set, which is every named file except `evidence/integrated-qualification.json`. Regenerate every affected SHA-256 reference only after those bytes are final: `evidence/selection-decision.json`, `production-3b-phase.json`, `negative/fabricated-selection-decision.json`, `negative/promotion-tampered-adr-phase.json`, `negative/promotion-untyped-wrong-lock-phase.json`, `negative/promotion-wrong-candidate-phase.json`, `negative/promotion-selection-lower-score-phase.json`, `negative/promotion-missing-artifact-phase.json`, `negative/promotion-wrong-lock-phase.json`, and `negative/promotion-wrong-version-phase.json`. Preserve the declared negative condition in each negative fixture rather than accidentally replacing it with a stale-digest failure.
-  - `xtask/src/contracts/schema.rs`, qualification-evidence migration test: add `qualification/fixtures/contracts/migration/qualification-evidence-v5-to-v6.input.json`, its computed `qualification-evidence-v5-to-v6.input.sha256`, and `qualification-evidence-v5-to-v6.expected.json`. The test must verify the input's SHA-256 before and after derivation, validate the expected document through `urn:oxyflut:schema:qualification-evidence:6`, reject the v5 input through the v6 identity, and prove that each primitive score becomes the named score object with the same integer and an empty `recusedAssessorIds` array. The expected v6 fixture must not add migration metadata because the evidence schema rejects additional root properties.
+  - `qualification/fixtures/contracts/readiness/production-3b/`, qualification-evidence consumers: set root `schemaVersion` to exactly `"6.0.0"` in `evidence/selected-qualification.json`, `evidence/all-tier1-results.json`, `evidence/eligible-integrated-qualification.json`, `evidence/integrated-qualification.json`, and `negative/fabricated-not-applicable-qualification.json`. Apply the same object-score and empty-recusals transform to every scorer-bearing file in that set, which is every named file except `evidence/integrated-qualification.json`. After those bytes are final, regenerate SHA-256 bindings in this order. First, rewrite `.constitution/tech-spec/adrs/ADR-0010-production-substrate.md` so its `evidence/selected-qualification.json` SHA-256 citation names the final transformed evidence digest. `adr_cites_verified_evidence` in `xtask/src/contracts/readiness_promotion.rs` verifies that cited `evidence/` path against its inline SHA-256, so a stale ADR citation fails promotion. Then hash the final ADR bytes and update `acceptedAdr0010` in `production-3b-phase.json` and in every `negative/promotion-*-phase.json` fixture. Continue by regenerating every other affected SHA-256 reference: `evidence/selection-decision.json`, `production-3b-phase.json`, `negative/fabricated-selection-decision.json`, `negative/promotion-tampered-adr-phase.json`, `negative/promotion-untyped-wrong-lock-phase.json`, `negative/promotion-wrong-candidate-phase.json`, `negative/promotion-selection-lower-score-phase.json`, `negative/promotion-missing-artifact-phase.json`, `negative/promotion-wrong-lock-phase.json`, and `negative/promotion-wrong-version-phase.json`. Preserve the declared negative condition in each negative fixture rather than accidentally replacing it with a stale-digest failure.
+  - `xtask/src/contracts/schema.rs`, qualification-evidence migration test: extend `validate_migration_fixture` so both the SPK-B005 qualification-lock v5-to-v6 migration and this qualification-evidence v5-to-v6 migration use `.input.json` and `.expected.json` fixture pairs. Add `qualification/fixtures/contracts/migration/qualification-evidence-v5-to-v6.input.json` and `qualification/fixtures/contracts/migration/qualification-evidence-v5-to-v6.expected.json`; don't add a `qualification-evidence-v5-to-v6.input.sha256` sidecar because the existing migration-fixture inventory has no `.input.sha256` sidecar. For both fixture pairs, the validator and matching contract test must compute the input SHA-256 before and after derivation and require equality, byte-compare the derived document with the expected fixture, validate the expected document through its v6 identity, and reject the v5 input through the v6 identity. The qualification-evidence test must also prove that each primitive score becomes the named score object with the same integer and an empty `recusedAssessorIds` array. The expected v6 fixture must not add migration metadata because the evidence schema rejects additional root properties.
   - `xtask/src/contracts/traceability/validation.rs`, `validate_qualification_evidence`: add a semantic assessor-score check after the existing gate checks. For every eligible criterion, require every score `assessorId` and every `recusedAssessorIds` member to name a root `assessors[].id`, require exactly two differing scorer IDs, and reject a scorer whose ID is recused for that criterion. Add passing and each failing unknown-ID, duplicate-scorer-ID, and scorer-is-recused assertions in `xtask/src/contracts/traceability/tests.rs`; schema validity alone cannot enforce those cross-object identities.
   - `xtask/src/contracts/readiness_promotion.rs`, `EVIDENCE_SCHEMA`: replace the exact constant value `urn:oxyflut:schema:qualification-evidence:5` with `urn:oxyflut:schema:qualification-evidence:6`. `xtask/src/contracts/digests.rs` at both source-inspection probe matches and `crates/oxyflut-qualification/src/evidence/mod.rs` at both `declared_references` test matches: replace each exact `urn:oxyflut:schema:qualification-evidence:5` literal with `urn:oxyflut:schema:qualification-evidence:6`. The preserved round-9 grep found no other Rust v5 identity reference.
   - `.constitution/tech-spec/data-models/README.md`, `qualification-evidence.schema.json` table row: replace the compatibility-rule cell with exactly `Preserve original evidence; corrected evidence must reference a new lock digest; an eligible not-applicable-kk result names an exact absent-event entry in the frozen platform baseline; breaking assessor-score representation changes require a major schema version and a derived document that preserves source bytes and digest.` In the supersession summary, replace `qualification-evidence v5` with `qualification-evidence v6` and append exactly `Qualification-evidence v6 supersedes v5 because assessor scores are named objects and every criterion declares its recused assessor identities.`
