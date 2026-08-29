@@ -14,6 +14,7 @@
 - **Round-11 correction clock start / stop:** 2026-08-28T21:19:47Z / 2026-08-28T21:24:47Z.
 - **Round-12 correction clock start / stop:** 2026-08-28T23:55:08Z / 2026-08-28T23:56:23Z.
 - **Round-13 correction clock start / stop:** 2026-08-29T00:29:18Z / 2026-08-29T00:36:58Z.
+- **Round-14 correction clock start / stop:** 2026-08-29T01:03:14Z / 2026-08-29T01:05:44Z.
 
 ## Question
 
@@ -32,7 +33,7 @@ Table 1. Wayland baseline decisions
 | GTK reference package and Wayland session lock | [SPK-B004's Ubuntu source-package audit](SPK-B004.md#ubuntu-source-package-audit) establishes the shared Ubuntu reference package identity as `libgtk-4-1` `4.22.2+ds-1ubuntu1`, with source-descriptor checksums and a patch audit. The official [Ubuntu package page](https://packages.ubuntu.com/resolute/libgtk-4-1) identifies the same binary package and version. That identity applies to both Linux sessions; the Wayland session still has no installed-package manifest digest or backend capture. The `v4_20` crate feature is a separate API-binding ceiling and does not require the reference package to be 4.20.4. | KU (gating) | P1: On the selected Ubuntu Wayland session, record `dpkg-query -W libgtk-4-1`, the package origin, and the immutable package-manifest digest. Accept this gate only when the installed package is `libgtk-4-1` `4.22.2+ds-1ubuntu1` and the manifest binds that package to the selected session. Expected output: package version, origin, manifest digest, and session identifier. |
 | `GtkIMContext` surrounding text and input-purpose mechanism | [`set_surrounding`](https://docs.gtk.org/gtk4/method.IMContext.set_surrounding.html) takes UTF-8 text and a byte index for the cursor. [`input-purpose`](https://docs.gtk.org/gtk4/property.IMContext.input-purpose.html) and [`input-hints`](https://docs.gtk.org/gtk4/property.IMContext.input-hints.html) are writable properties. [`GtkInputPurpose`](https://docs.gtk.org/gtk4/enum.InputPurpose.html) supplies typed purpose values, including `PASSWORD` and `PIN`; [`GtkInputHints.PRIVATE`](https://docs.gtk.org/gtk4/flags.InputHints.html) requests that an input method not update personalized data. These are properties, not a compositor numeric negotiation. | KK | Not required. P2 verifies the selected input method's behavior rather than the documented interface shape. |
 | Complete IME transcript and non-cursor operation units | GTK documents [`delete-surrounding`](https://docs.gtk.org/gtk4/signal.IMContext.delete-surrounding.html) arguments as character offsets and counts, but it does not state the scalar, grapheme, or another unit in the fetched API page. No selected Ubuntu IM module or candidate transcript exists. The report therefore does not infer a unit for deletion, preedit cursor position, or replacement behavior. | KU (gating) | P2: On the P1 session, use an instrumented noncandidate GTK 4.22.2 text widget from the locked `libgtk-4-1` `4.22.2+ds-1ubuntu1` package and the ASCII, multibyte, combining, bidirectional, CJK-composition, replacement, candidate-geometry, and secure-field corpus. Log every `preedit-*`, `commit`, `retrieve-surrounding`, `delete-surrounding`, `focus-*`, and `reset` callback with typed indices. Expected output: a transcript that identifies every operation's unit and round trips each valid boundary. |
-| Linux assistive-technology selection | Select [Orca](https://help.gnome.org/users/orca/stable/) as the required screen-reader test client and AT-SPI 2 as its inspection and action transport. [GNOME's AT-SPI development documentation](https://gnome.pages.gitlab.gnome.org/at-spi2-core/devel-docs/atspi-python-stack.html) states that Orca builds a view of an application's accessible-object tree through `libatspi` and `pyatspi2`. | KK | Not required. P3 establishes the Ubuntu package lock and candidate behavior. |
+| Linux assistive-technology selection | The tagged [Orca 47.2 introduction source](https://gitlab.gnome.org/GNOME/orca/-/raw/ORCA_47_2/help/C/introduction.page) identifies Orca as a screen reader that works with applications and toolkits supporting AT-SPI. Select Orca as the required screen-reader test client and AT-SPI 2 as its inspection and action transport. [GNOME's AT-SPI development documentation](https://gnome.pages.gitlab.gnome.org/at-spi2-core/devel-docs/atspi-python-stack.html) states that Orca builds a view of an application's accessible-object tree through `libatspi` and `pyatspi2`. | KK | Not required. P3 establishes the Ubuntu package lock and candidate behavior. |
 | AT-SPI API floor | The official [at-spi2-core 2.60.6 release notes](https://gitlab.gnome.org/GNOME/at-spi2-core/-/raw/2.60.6/NEWS) identify release 2.60.6. The immutable [AT-SPI 2.60.6 `Text.xml`](https://gitlab.gnome.org/GNOME/at-spi2-core/-/raw/2.60.6/xml/Text.xml) defines `CharacterCount`, `GetText`, `SetCaretOffset`, and selections. It does not define editable text. The immutable [AT-SPI 2.60.6 `EditableText.xml`](https://gitlab.gnome.org/GNOME/at-spi2-core/-/raw/2.60.6/xml/EditableText.xml) defines `SetTextContents`, `InsertText`, `CopyText`, `CutText`, `DeleteText`, and `PasteText`. Freeze 2.60.6 as the AT-SPI source API floor. That source floor is not the Ubuntu package identity: [SPK-B004's package audit](SPK-B004.md#ubuntu-source-package-audit) establishes `at-spi2-core` `2.60.0-1` as the shared package identity for both Linux reference environments. The preserved `Text.xml` SHA-256 is `5c2d5049d2e427d630ca1ae288d0abe321f39c683336cb8a1373f41c4414d614`; the preserved `EditableText.xml` SHA-256 is `2ea1b94822f19b0b00c80b918b89833cfb67d1eeef99d69b8421d0e6f40920ff`. | KK | Not required for the source API floor. P3 must lock the Ubuntu package and run the behavior transcript. |
 | AT-SPI documented text-offset unit | The normative [AT-SPI 2.60.6 `Text.xml`](https://gitlab.gnome.org/GNOME/at-spi2-core/-/raw/2.60.6/xml/Text.xml) defines `CharacterCount` as a number of characters that can differ from fetched UTF-8 byte count. It defines `GetText` end offsets as the first character past the range, while the UTF-8 result bytes can exceed those offsets. It also states that `GetCharacterAtOffset` returns "the UCS-4 unicode code point of the given character." The [AT-SPI 2.60.6 `EditableText.xml`](https://gitlab.gnome.org/GNOME/at-spi2-core/-/raw/2.60.6/xml/EditableText.xml) defines edit positions as character offsets that can differ from UTF-8 byte offsets. Therefore the documented AT-SPI text, caret, selection, and editable-position unit is a Unicode scalar boundary, not a UTF-8 byte, UTF-16 unit, or grapheme boundary. The independent conversion fixture verifies scalar, UTF-8, UTF-16, and grapheme-boundary mechanics, not AT-SPI behavior or `TextIndex::Logical` conversion. | KK | Not required for the documented unit or scalar conversion mechanics. The next rows retain the representation and behavior gates. |
 | AT-SPI scalar-to-`TextIndex::Logical` conversion | [`ADR-0007`](../tech-spec/adrs/ADR-0007-text-indexing.md) and the preserved contract probe establish that `TextIndex::Logical(u32)` is a logical text position within an immutable layout generation. Neither source defines its representation or a scalar-to-logical mapping. The scalar fixture therefore makes no scalar-to-logical claim. | KU (gating) | P3B: Before candidate geometry qualification, freeze the `TextIndex::Logical` representation in the public contract and add four hand-listed scalar-to-logical and logical-to-scalar pair tables for ASCII, multibyte, combining, and bidirectional layouts. Bind each pair to one `TextLayoutId` and assert rejection after its generation changes. Expected output: the adopted representation, four bidirectional pair tables, and stale-generation failures. |
@@ -1160,7 +1161,7 @@ The report relies on the following fetched authoritative sources:
 - [GTK `GtkAccessible` API](https://docs.gtk.org/gtk4/iface.Accessible.html).
 - [GTK `GtkAccessibleText` API](https://docs.gtk.org/gtk4/iface.AccessibleText.html).
 - [GTK `GdkFrameClock` API](https://docs.gtk.org/gdk4/class.FrameClock.html).
-- [Orca screen-reader documentation](https://help.gnome.org/users/orca/stable/).
+- [Tagged Orca 47.2 introduction source](https://gitlab.gnome.org/GNOME/orca/-/raw/ORCA_47_2/help/C/introduction.page).
 - [GNOME AT-SPI documentation for Orca and `libatspi`](https://gnome.pages.gitlab.gnome.org/at-spi2-core/devel-docs/atspi-python-stack.html).
 - [AT-SPI 2.60.6 release notes](https://gitlab.gnome.org/GNOME/at-spi2-core/-/raw/2.60.6/NEWS).
 - [Ubuntu `at-spi2-core` package](https://packages.ubuntu.com/resolute/at-spi2-core).
@@ -1345,7 +1346,7 @@ The capture map covers all 29 evidence objects in the template, including the `w
 | `wp_viewporter`, `wp_viewport` (2) | `qualification/fixtures/external-contracts/wayland/s04-viewporter.xml` | https://raw.githubusercontent.com/wayland-mirror/wayland-protocols/d5aed4e4903a77aefaef03359d1ffdc0d5093456/stable/viewporter/viewporter.xml |
 | `wp_fractional_scale_manager_v1`, `wp_fractional_scale_v1` (2) | `qualification/fixtures/external-contracts/wayland/s05-fractional-scale-v1.xml` | https://raw.githubusercontent.com/wayland-mirror/wayland-protocols/d5aed4e4903a77aefaef03359d1ffdc0d5093456/staging/fractional-scale/fractional-scale-v1.xml |
 | `zwp_text_input_manager_v3`, `zwp_text_input_v3` (2) | `qualification/fixtures/external-contracts/wayland/s06-text-input-unstable-v3.xml` | https://raw.githubusercontent.com/wayland-mirror/wayland-protocols/d5aed4e4903a77aefaef03359d1ffdc0d5093456/unstable/text-input/text-input-unstable-v3.xml |
-| `wp_presentation`, `wp_presentation_feedback` (2) | `qualification/fixtures/external-contracts/wayland/s07-presentation-time-v1.xml` | https://raw.githubusercontent.com/wayland-mirror/wayland-protocols/37a1560cf6981a11d44dd200d9409d09b4f0074e/stable/presentation-time/presentation-time.xml |
+| `wp_presentation`, `wp_presentation_feedback` (2). This row deliberately pins `37a1560cf6981a11d44dd200d9409d09b4f0074e` to retain the version-1 `wp_presentation` declaration; normalizing it to `d5aed4e4903a77aefaef03359d1ffdc0d5093456` would change the recorded floor. | `qualification/fixtures/external-contracts/wayland/s07-presentation-time-v1.xml` | https://raw.githubusercontent.com/wayland-mirror/wayland-protocols/37a1560cf6981a11d44dd200d9409d09b4f0074e/stable/presentation-time/presentation-time.xml |
 | `AT-SPI` `Text.xml` (1) | `qualification/fixtures/external-contracts/wayland/s08-atspi-2.60.6-text.xml` | https://gitlab.gnome.org/GNOME/at-spi2-core/-/raw/fff349553d16f99de3258bdeed7b8a663469b84b/xml/Text.xml |
 | `AT-SPI` `EditableText.xml` (1) | `qualification/fixtures/external-contracts/wayland/s09-atspi-2.60.6-editable-text.xml` | https://gitlab.gnome.org/GNOME/at-spi2-core/-/raw/fff349553d16f99de3258bdeed7b8a663469b84b/xml/EditableText.xml |
 | Ubuntu `at-spi2-core` package identity (1) | `qualification/fixtures/external-contracts/wayland/s10-ubuntu-at-spi2-core.html`; `sha256`: `<to-be-computed-by-preservation-step>` | https://packages.ubuntu.com/resolute/at-spi2-core |
@@ -1822,6 +1823,44 @@ exit=0
 
 - `xtask/src/commands/lock_tests.rs` -> `committed_candidate_gate_is_valid_but_open_with_the_exact_ku_set`: update the expected `known_unknowns` vector to its exact 24-element set by retaining the existing 13 values, adding the eleven new strings listed in the preceding binding table, and removing no value. Keep the vector in the report's existing lexicographic order: append `wayland-atspi-scalar-logical-representation`, `wayland-atspi-text-caret-selection-editable-transcript`, `wayland-drm-vblank-calibration-acceptance-bound`, `wayland-drm-vblank-calibration-uncertainty-budget`, `wayland-drm-vblank-kernel-identity-live-schema-callsite`, `wayland-frozen-protocol-reference-session-transcript`, `wayland-ime-operation-unit-transcript`, `wayland-orca-atspi-maps-for-both-allocations`, `wayland-recovery-injection-for-both-allocations`, `wayland-service-routing-for-both-allocations`, and `wayland-ubuntu-compositor-session-package-lock` after `security-patch-rehearsal`.
 - `.constitution/tech-spec/adrs/ADR-0005-platform-hosts.md` -> `Consequences`: add `"Wayland qualification freezes source-level core, shell, scale, text-input, clipboard, and wp_presentation floors, including all client-issued P0 teardown operations. P1 must prove the selected session advertises them and records the mechanically derived 97-member deterministic P1 transcript and retains the four named nondeterministic event gates separately. wp_presentation v1 supplies per-commit acknowledgement and output association only, not the independent presentation-opportunity meter. P4 evaluates a Linux DRM drm_vblank_event trace only after Ubuntu kernel package and source or patch identity, live-format and call-site-semantic evidence, access, pipe-index-to-CRTC-object-ID-to-output attribution, the trace_marker-bracketed U_95 characterization, the reviewed Stage 3 maximum-uncertainty decision made before candidate measurements, and callback or IPC independence pass. CON-FRM-001's 10% interval-error limit is applied only to qualified measured matching results."`.
+
+### Round-14 correction: version-pinned Orca source and presentation-time map
+
+The mutable Orca stable-documentation URL is replaced by the tagged [Orca 47.2 introduction source](https://gitlab.gnome.org/GNOME/orca/-/raw/ORCA_47_2/help/C/introduction.page). The `ORCA_47_2` tag resolves to commit `7da13d868338c4c75751155258b51a82ab273583`; the direct fetch identifies Orca as a screen reader that works with AT-SPI. This preserves the KK selection evidence without treating a mutable documentation branch as a versioned source. The capture-map `s07-presentation-time-v1.xml` row deliberately retains `37a1560cf6981a11d44dd200d9409d09b4f0074e`; replacing it with `d5aed4e4903a77aefaef03359d1ffdc0d5093456` would change the version-1 `wp_presentation` floor.
+
+The direct-source probe used only `/tmp/wf-epic-b/OXY-B003/round-9/`. The SHA-256 is for the direct raw source response, not a Jina-proxied page. The excerpt normalization preserves exact matching source lines.
+
+```text
+fetched_at=2026-08-29T01:04:13Z
+$ git ls-remote https://gitlab.gnome.org/GNOME/orca.git refs/tags/ORCA_47_2 refs/tags/ORCA_47_2^{}
+a008afb27f72c641cc8998349a630f8714dc7443	refs/tags/ORCA_47_2
+7da13d868338c4c75751155258b51a82ab273583	refs/tags/ORCA_47_2^{}
+ls_remote_exit=0
+$ curl -sS -fL --max-time 60 -o /tmp/wf-epic-b/OXY-B003/round-9/orca-47.2-introduction.page https://gitlab.gnome.org/GNOME/orca/-/raw/ORCA_47_2/help/C/introduction.page
+url=https://gitlab.gnome.org/GNOME/orca/-/raw/ORCA_47_2/help/C/introduction.page bytes=4466 sha256=942321460d52d2185ece6a7792358973fefed5789251e0a80eadc653158f0a78
+excerpt_normalization=grep_exact_source_lines
+      <p>Creative Commons Share Alike 3.0</p>
+  <title>Welcome to Orca</title>
+  <p>
+  <p>
+    <title>Launching <app>Orca</app></title>
+fetch_exit=0
+```
+
+The source-classification excerpt is preserved verbatim:
+
+```text
+$ grep -A 7 -F '<app>Orca</app> is a free' /tmp/wf-epic-b/OXY-B003/round-9/orca-47.2-introduction.page
+    <app>Orca</app> is a free, open source, flexible, and extensible
+    screen reader that provides access to the graphical desktop via
+    speech and refreshable braille.
+  </p>
+  <p>
+    <app>Orca</app> works with applications and toolkits that support
+    the Assistive Technology Service Provider Interface (AT-SPI), which
+    is the primary assistive technology infrastructure for Linux and
+excerpt_exit=0
+```
 
 ## Downstream impact
 
