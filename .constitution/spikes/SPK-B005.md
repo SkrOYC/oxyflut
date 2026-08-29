@@ -16,7 +16,7 @@ Table 1. Decision questions and evidence
 | :-- | :-- | :-- | :-- | :-- |
 | 1 | Can the corpus define deep, wide, nested, virtualized, reordered, and separation or failure cases without a substrate? | Yes. The [preserved topology probe](#probe-record) builds the 10 declared trees, validates node, edge, and depth counts, replays family-specific parent-child events, and validates every declared counter. It also proves that the lazy tree contains only 64 realized children and zero visits to 9,936 unrealized IDs. | KK | Not applicable. |
 | 2 | What is one ordinary visit? | One requested regular child-layout invocation from a policy to a realized direct child in one root transaction. The request increments `attempted_ordinary_visits` before the per-child cap check; a completed invocation increments `node_visits`. The [pinned Flutter source](https://raw.githubusercontent.com/flutter/flutter/4cf24164269a5ebf0c16a028a00727d0e77bbb05/packages/flutter/lib/src/rendering/object.dart) calls `layout` the parent entry point for asking children to update layout. The probe applies this rule only to declared parent-child edges. | KK | Not applicable. |
-| 3 | Do the ordinary policy families have finite bounds under the classifier? | Yes. The [preserved topology probe](#probe-record) admits and replays single-pass box, weighted with a definite basis, virtualized lazy, and custom multi-pass families. It verifies at most one completed visit per realized child for the first three and at most two for the custom family. The third custom request fails before invocation. | KK | Not applicable. |
+| 3 | Do the ordinary policy families have finite bounds under the classifier? | Yes. `policyCaps` declares the finite per-family bound. The [preserved topology probe](#probe-record) verifies at most one completed visit per realized child for single-pass box, weighted with a definite basis, and virtualized lazy, and at most two for custom multi-pass. It exercises only the cap-2 candidate bound: the third custom request fails before invocation. | KK | Not applicable. |
 | 4 | Can intrinsic or dry measurement consume an ordinary-policy visit? | No. The [pinned Flutter `getDryLayout` source](https://raw.githubusercontent.com/flutter/flutter/4cf24164269a5ebf0c16a028a00727d0e77bbb05/packages/flutter/lib/src/rendering/box.dart) defines dry layout as distinct from wet layout and states that it doesn't change internal state. The probe records one `intrinsic_queries` event and zero ordinary attempts for `intrinsic-separation`. | KK (not applicable) | Not applicable. |
 | 5 | Can text shaping or text layout consume an ordinary-policy visit? | No. The [pinned Yoga source](https://raw.githubusercontent.com/facebook/yoga/bd8fe0d6d243cc7e0334d4cc68864a994f63beae/website/docs/advanced/external-layout-systems.mdx) identifies text as content delegated through a measure function to another layout system. The probe records the ordinary parent-to-realized-text-leaf request separately from one `text_operations` event. | KK (not applicable) | Not applicable. |
 | 6 | Can `2` freeze as `measurementPolicy.layoutVisitCap` while establishing compatibility with the 2.0 ms aggregate goal? | No. The [preserved topology probe](#probe-record) establishes count semantics, not application-owned layout or paint-submission duration. The current lock has no durable corpus file, frozen prequalification-probe binding for a complete run and suite, record and suite schemas, counting rules, candidate source and artifact, hardware and driver, or release flags. It also permits an unbound sample-validity policy that could exclude measured frames. | KU (gating) | After Stage 3 creates the digest-bound corpus, adds the record, run, and 48-tuple suite contracts, and implements the fixed-frame no-exclusion suite validator, run the bounded timing procedure in "Next bounded probe" on every tuple of the 2 candidates x 4 environments x 6 passing fixtures matrix. |
@@ -1713,6 +1713,16 @@ prettier --parser json /tmp/wf-epic-b/OXY-B005/round6-record.schema.json > /tmp/
 }
 ```
 
+### Counting-rules interpretation and Stage 3 validator requirements
+
+For a `text` fixture, `family` names the scenario. The single ordinary visit is issued by the single-pass box root to the realized text leaf. The text operation is counted separately and is never an ordinary visit. This makes the Perl model's `family_admitted` and `declared_child_layout_events` text special case explicit.
+
+`policyCaps` is the normative per-family bound. The model's global `$CAP = 2` is the candidate bound only for the `three-pass-cap-failure` scenario; it isn't a substitute for the cap-1 bounds of `single-pass-box`, `weighted`, or `virtualized-lazy`.
+
+The proposed `xtask layout-prequalification validate` command must derive each node's cap from `policyCaps[family]`. It must treat `nonOrdinaryFamilies` under the preceding text-fixture rule and must not apply an ordinary cap to a text operation.
+
+OXY-D001 must decide whether to add a cap-1 rejection fixture, for example `reject-cap-before-invocation`, before the v6 lock binds these digests. Adding that fixture re-freezes the corpus, counting-rules, model-source, and changelog blocks.
+
 - `.constitution/tech-spec/data-models/qualification-lock.schema.json`: apply the schema-semver rule that a new required field on an existing durable document is breaking and therefore needs a major bump. Replace `$id` with `urn:oxyflut:schema:qualification-lock:6` and the `schemaVersion` `const` with `"6.0.0"`.
 - `.constitution/tech-spec/data-models/qualification-lock.schema.json` in `$defs.measurementPolicy.required`: add `layoutVisitCorpus`, `layoutQualificationRecordSchema`, `layoutPrequalificationRunSchema`, `layoutPrequalificationSuiteSchema`, `layoutVisitCountingRules`, and `layoutPrequalificationIdentities`.
 - `.constitution/tech-spec/data-models/qualification-lock.schema.json` in `$defs.measurementPolicy.properties`: add exactly `"layoutVisitCorpus": { "$ref": "#/$defs/digestOrNull" }`, `"layoutQualificationRecordSchema": { "$ref": "#/$defs/digestOrNull" }`, `"layoutPrequalificationRunSchema": { "$ref": "#/$defs/digestOrNull" }`, `"layoutPrequalificationSuiteSchema": { "$ref": "#/$defs/digestOrNull" }`, `"layoutVisitCountingRules": { "$ref": "#/$defs/digestOrNull" }`, and `"layoutPrequalificationIdentities": { "$ref": "#/$defs/layoutPrequalificationIdentitiesOrNull" }`.
@@ -1720,7 +1730,7 @@ prettier --parser json /tmp/wf-epic-b/OXY-B005/round6-record.schema.json > /tmp/
 - `.constitution/tech-spec/data-models/qualification-lock.schema.json` in `$defs`: add `layoutPrequalificationIdentitiesOrNull` as `{"oneOf":[{"type":"null"},{"$ref":"#/$defs/layoutPrequalificationIdentities"}]}`; add `layoutPrequalificationIdentities` as an object with `additionalProperties: false`, required `focused` and `integrated` properties, and each property referencing `candidateEnvironmentIdentities`; add `candidateEnvironmentIdentities` as an object with `additionalProperties: false`, required `macos`, `windows`, `wayland`, and `x11` properties, and each property referencing `layoutPrequalificationIdentity`; add `layoutPrequalificationIdentity` as an object with `additionalProperties: false`, required `revision` and `artifactSha256` properties, and exactly `"revision": { "$ref": "#/$defs/sha40" }` and `"artifactSha256": { "$ref": "#/$defs/sha256" }`.
 - `.constitution/tech-spec/contracts/qualification-lock.json`: migrate `schemaVersion` from `"5.0.0"` to `"6.0.0"`; add to `measurementPolicy` exactly `"layoutVisitCorpus": "4972e43333984047b5a1d84200d5b89a29c5b59e47c5aca8773379320f2c6c84"`, `"layoutQualificationRecordSchema": "09d96af49384e47ee6154f386af2ef771985516a61c843d561835654283bd7b1"`, `"layoutPrequalificationRunSchema": "76dfee7dfcdfdd49e2d67afdf83ab43c29dbb6513652a8023b0869a7d59293e2"`, `"layoutPrequalificationSuiteSchema": "27e3a876f3b8d5e88ad43089a9eff0c7ce225a6d9cece5fcd789f7759c05c924"`, `"layoutVisitCountingRules": "6cd0d7c7b06587525d9127f15cceecdd6f9c21b8a62be93c70c9b3756ca459c2"`, and `"layoutPrequalificationIdentities": null`; retain exactly `"sampleValidityRules": null`, `"layoutVisitCap": null`, `"candidateImplementationReady": false`, and `"measurementReady": false`.
 - Create `.constitution/tech-spec/migrations/qualification-lock-v5-to-v6.md` with the title `# Qualification lock v5 to v6` and these required statements: preserve the byte-for-byte v5 input and its computed SHA-256 before writing the derived v6 instance; add the six `measurementPolicy` fields above; don't add migration metadata to the lock because its root rejects additional properties; preserve `sampleValidityRules: null`, `layoutVisitCap: null`, both readiness flags as `false`, and `layout-visit-cap` in both known-unknown arrays; and validate the source and derived documents with their respective schemas. The note must name the preserved v5 path and computed source digest after Stage 3 performs the migration; this report cannot supply an unfetched digest.
-- `.constitution/tech-spec/stack.md`: set `Version` to `v0.16.0` and replace both active `v0.15.0` references in the Scope guard with `v0.16.0`. `.constitution/tech-spec/contracts/specification-phase.json`, `.constitution/tech-spec/contracts/platform-contracts.json`, and `.constitution/tech-spec/contracts/capability-traceability.json`: set each `specificationVersion` to exactly `"0.16.0"` in the same change so active cross-document equality remains valid.
+- `.constitution/tech-spec/stack.md`: set the `Version` bullet to `v0.16.0` and replace the single Scope-guard `v0.15.0` reference with `v0.16.0`. `.constitution/tech-spec/contracts/specification-phase.json`, `.constitution/tech-spec/contracts/platform-contracts.json`, and `.constitution/tech-spec/contracts/capability-traceability.json`: set each `specificationVersion` to exactly `"0.16.0"` in the same change so active cross-document equality remains valid.
 - `.constitution/tech-spec/changelog.md`: prepend this exact entry before `## [v0.15.0] - 2026-08-26`.
 
 <!-- canonical-block: qualification-lock-v6-changelog-entry -->
@@ -1910,6 +1920,8 @@ The check must cover these anchors and digests:
 - `layout-visit-counting-rules`: `6cd0d7c7b06587525d9127f15cceecdd6f9c21b8a62be93c70c9b3756ca459c2`.
 - `qualification-lock-v6-changelog-entry`: `7c271171a6cdda4515e7c96e26ac5db79cd05f1d5acc1d62e03ceb37853f2bb9`.
 
+The date in the frozen changelog block is the version's release date under repository convention: `v0.15.0` retained `2026-08-26` through later amendments, so Stage 3 must apply the exact bytes regardless of landing date.
+
 The correction run reserialized the changed counting-rules JSON with Prettier's JSON parser, checked its JSON syntax, and verified all seven fenced blocks after Markdown formatting. The verifier wrote only `/tmp/wf-epic-b/OXY-B005-pr-fix/` files.
 
 ```sh
@@ -1995,6 +2007,28 @@ After the final Prettier check for this correction, the round-2 verifier recheck
 set -euo pipefail
 rm -rf /tmp/wf-epic-b/OXY-B005/canonical-blocks-round-9
 perl /tmp/wf-epic-b/OXY-B005/verify-canonical-blocks-round-2.pl .constitution/spikes/SPK-B005.md /tmp/wf-epic-b/OXY-B005/canonical-blocks-round-9
+```
+
+```text
+layout-visit-corpus|4972e43333984047b5a1d84200d5b89a29c5b59e47c5aca8773379320f2c6c84|6152|ok
+layout-visit-topology-model-source|a0774355500de806c118316982dc6b781518f9b1134f6c9239d6f3fcc149ddff|18850|ok
+layout-qualification-record-schema|09d96af49384e47ee6154f386af2ef771985516a61c843d561835654283bd7b1|13109|ok
+layout-prequalification-run-schema|76dfee7dfcdfdd49e2d67afdf83ab43c29dbb6513652a8023b0869a7d59293e2|5479|ok
+layout-prequalification-suite-schema|27e3a876f3b8d5e88ad43089a9eff0c7ce225a6d9cece5fcd789f7759c05c924|2467|ok
+layout-visit-counting-rules|6cd0d7c7b06587525d9127f15cceecdd6f9c21b8a62be93c70c9b3756ca459c2|976|ok
+qualification-lock-v6-changelog-entry|7c271171a6cdda4515e7c96e26ac5db79cd05f1d5acc1d62e03ceb37853f2bb9|651|ok
+canonical_fenced_blocks=7
+canonical_fence_assertions=passed
+```
+
+### PR round-11 verification
+
+After the final Prettier check for this correction, the round-2 verifier rechecked all seven protected streams. It wrote only `/tmp/wf-epic-b/OXY-B005/canonical-blocks-round-11/` files.
+
+```sh
+set -euo pipefail
+rm -rf /tmp/wf-epic-b/OXY-B005/canonical-blocks-round-11
+perl /tmp/wf-epic-b/OXY-B005/verify-canonical-blocks-round-2.pl .constitution/spikes/SPK-B005.md /tmp/wf-epic-b/OXY-B005/canonical-blocks-round-11
 ```
 
 ```text
