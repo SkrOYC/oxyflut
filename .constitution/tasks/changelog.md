@@ -2,6 +2,21 @@
 
 All notable changes to the Stage 4 execution plan appear in this file.
 
+## [v0.5.0] - 2026-08-29
+
+### Added
+
+- Added Epic E for specification landings and Linux readiness, Epic F for the integrated substrate candidate on Linux, and Epic G for the shared application runtime.
+- Added the time-boxed `SPK-F001` Dart-free integrated-candidate build spike.
+
+### Changed
+
+- Recomputed the active backlog to 94 points and the critical path through `OXY-E001`, `OXY-E002`, `OXY-E003`, `OXY-E004`, `OXY-E008`, `OXY-F003`, `OXY-F004`, and `OXY-F005`.
+
+### Noted
+
+- macOS and Windows reference hardware remain blocked, the focused substrate candidate remains conditional on the first-environment hard-gate trigger, and comparable measurement and scoring remain deferred.
+
 ## [v0.4.0] - 2026-08-29
 
 ### Added
