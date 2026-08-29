@@ -16,7 +16,7 @@ The critical path now runs through `OXY-D001` alone. The next critical epic is E
 
 ## Build order
 
-An arrow points from a prerequisite to a ticket that depends on it. Dependencies on completed tickets are satisfied and don't appear in the active graph.
+The active graph contains only `OXY-D001`. All prerequisites are satisfied or recorded as blocked external inputs, so no dependency edges remain.
 
 ```mermaid
 flowchart LR
