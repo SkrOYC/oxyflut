@@ -1,5 +1,5 @@
 {
-  "osRelease": "ID=nixos\nVERSION_ID=25.11\n",
+  "osRelease": "ID=nixos\nVERSION_ID=26.05\n",
   "uname": "x86_64\n",
   "sysfsHardware": ["Standard Q35\n"],
   "gpuCards": [
@@ -13,7 +13,7 @@
   "rustToolchain": "rustc 1.98.0 (88d9e12ae 2026-08-20)\n",
   "compiler": "clang version 21.1.0\n",
   "sessionType": "wayland",
-  "currentDesktop": "GNOME Shell 48.0\n",
+  "currentDesktop": "Hyprland\n",
   "dpkgQuery": {
     "binutils": "binutils\t2.44-1ubuntu1\n",
     "clang": "clang\t21.1.0-1ubuntu1\n",

@@ -15,4 +15,4 @@ The Rust editing model stores Unicode scalar text and exposes strong index types
 
 - Bare integer indices cannot cross public, platform, or substrate boundaries.
 - Candidate adapters must prove round-trip conversions with the shared multilingual corpus.
-- Phase 3B freezes the production index contract after both candidates complete the geometry probe.
+- Phase 3B freezes the production index contract after every substrate candidate that enters qualification completes the geometry probe.

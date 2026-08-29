@@ -209,7 +209,7 @@ const fn reference_environment_pin(environment: EnvironmentId) -> ReferenceEnvir
         },
         EnvironmentId::Wayland | EnvironmentId::X11 => ReferenceEnvironmentPin {
             architecture: "x86_64",
-            operating_system: "ubuntu-26.04",
+            operating_system: "nixos-26.05",
         },
     }
 }
@@ -536,7 +536,8 @@ mod tests {
         let output_path = root.join(output.as_str());
         let inventory_path = root.join(companion_inventory_path(&output)?.as_str());
 
-        let source = FixturePlatformSource::new(root, EnvironmentId::Wayland);
+        let source =
+            FixturePlatformSource::with_fixture(root, EnvironmentId::Wayland, "wayland-nixos");
         let references = inspect_with_source(root, &source, &output)?;
         let projection = verify_file(root, &output, &MediaType::application_json())?;
         let companion_path = companion_inventory_path(&output)?;
@@ -668,17 +669,18 @@ mod tests {
     }
 
     #[test]
-    fn reference_operating_systems_accept_pinned_releases_and_reject_nixos_without_writing()
+    fn reference_operating_systems_accept_pinned_nixos_and_reject_ubuntu_without_writing()
     -> Result<(), Box<dyn Error>> {
         let root = test_workspace_root()?;
-        let ubuntu = FixturePlatformSource::new(&root, EnvironmentId::Wayland).collect()?;
-        validate_reference_environment(EnvironmentId::Wayland, &ubuntu)?;
+        let nixos =
+            FixturePlatformSource::with_fixture(&root, EnvironmentId::Wayland, "wayland-nixos")
+                .collect()?;
+        validate_reference_environment(EnvironmentId::Wayland, &nixos)?;
 
         let output =
-            "qualification/fixtures/environments/nixos-test.json".parse::<RepositoryPath>()?;
+            "qualification/fixtures/environments/ubuntu-test.json".parse::<RepositoryPath>()?;
         assert_no_evidence(&root, &output)?;
-        let source =
-            FixturePlatformSource::with_fixture(&root, EnvironmentId::Wayland, "wayland-nixos");
+        let source = FixturePlatformSource::new(&root, EnvironmentId::Wayland);
         let result = inspect_with_source(&root, &source, &output);
         assert!(matches!(
             result,
@@ -802,7 +804,8 @@ mod tests {
             .ok_or("environment projection must have a parent")?;
         fs::create_dir_all(parent)?;
         fs::write(&output_path, b"{}")?;
-        let source = FixturePlatformSource::new(root, EnvironmentId::Wayland);
+        let source =
+            FixturePlatformSource::with_fixture(root, EnvironmentId::Wayland, "wayland-nixos");
 
         let result = inspect_with_source(root, &source, &output);
         assert!(matches!(
@@ -1188,9 +1191,15 @@ mod tests {
                 .get(2)
                 .ok_or("Tier 1 stack row must contain a reference configuration")?;
             let mut words = configuration.split_whitespace();
-            let architecture = match words.next() {
-                Some("arm64") => "aarch64",
-                Some("x86-64") => "x86_64",
+            let architecture = match (environment, words.next()) {
+                (EnvironmentId::Macos, Some("arm64")) => "aarch64",
+                (EnvironmentId::Windows, Some("x86-64")) => "x86_64",
+                (EnvironmentId::Wayland | EnvironmentId::X11, Some("`thinkpadp14s`:")) => {
+                    match words.next() {
+                        Some("x86_64") => "x86_64",
+                        _ => return Err("Linux stack row must name the pinned architecture"),
+                    }
+                }
                 _ => return Err("Tier 1 stack row must start with a pinned architecture"),
             };
             let operating_system = match environment {
@@ -1210,8 +1219,10 @@ mod tests {
                     }
                 },
                 EnvironmentId::Wayland | EnvironmentId::X11 => match (words.next(), words.next()) {
-                    (Some("Ubuntu"), Some(version)) => format!("ubuntu-{version}"),
-                    _ => return Err("Linux stack row must name an Ubuntu version"),
+                    (Some("NixOS"), Some(version)) => {
+                        format!("nixos-{}", version.trim_end_matches(','))
+                    }
+                    _ => return Err("Linux stack row must name a NixOS version"),
                 },
             };
             if rows
@@ -1287,7 +1298,8 @@ mod tests {
         let output = "qualification/evidence/environment.json".parse::<RepositoryPath>()?;
         fs::create_dir_all(root.join("qualification/evidence"))?;
         fs::write(root.join(output.as_str()), b"{}")?;
-        let source = FixturePlatformSource::new(root, EnvironmentId::Wayland);
+        let source =
+            FixturePlatformSource::with_fixture(root, EnvironmentId::Wayland, "wayland-nixos");
 
         let error = inspect_with_source(root, &source, &output)
             .err()

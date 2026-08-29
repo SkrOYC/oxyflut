@@ -75,18 +75,18 @@
       "systemPackageLockDigest": null
     },
     "wayland-linux-x86_64": {
-      "operatingSystem": "Ubuntu 26.04 LTS Wayland session",
+      "operatingSystem": "NixOS 26.05 Hyprland Wayland session",
       "minimumVersion": null,
-      "hardwareId": null,
-      "gpuId": null,
+      "hardwareId": "thinkpadp14s",
+      "gpuId": "AMD Renoir integrated GPU",
       "driverVersion": null,
       "systemPackageLockDigest": null
     },
     "x11-linux-x86_64": {
-      "operatingSystem": "Ubuntu 26.04 LTS X11 session",
+      "operatingSystem": "NixOS 26.05 Hyprland session with Xwayland and Xvfb X11 paths",
       "minimumVersion": null,
-      "hardwareId": null,
-      "gpuId": null,
+      "hardwareId": "thinkpadp14s",
+      "gpuId": "AMD Renoir integrated GPU",
       "driverVersion": null,
       "systemPackageLockDigest": null
     }
