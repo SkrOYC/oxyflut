@@ -2,6 +2,20 @@
 
 All notable changes to the product requirements appear in this file.
 
+## [v1.1.0] - 2026-08-29
+
+### Added
+
+- Added glossary definitions for routed qualification terms, provisional selection, and the qualification sequence.
+- Added deferral notes for parallel candidate qualification and simultaneous Tier 1 qualification.
+- Added the declared candidate and Tier 1 environment sequencing policy.
+
+### Changed
+
+- Replaced the layout visit-cap paragraph with the prequalification-lock and timing-probe condition.
+- Added the authorship-independence rule to independent scoring.
+- Added principles for sequential qualification and readiness-gate boundaries.
+
 ## [v1.0.1] - 2026-08-26
 
 ### Fixed

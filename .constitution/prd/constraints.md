@@ -13,7 +13,7 @@ The meters in this file apply to every eligible substrate candidate. Before meas
 | CON-SIZE-001 | Compressed canonical unsigned runtime payload. | Direct byte count of the reproducible release archive, excluding application assets and separate debug symbols. | At most 75 MiB. | At least 30% headroom. | More than 75 MiB on any Tier 1 environment. |
 | CON-SIZE-002 | Installed canonical unsigned runtime payload. | Sum of regular-file payload bytes from the canonical manifest. | At most 300 MiB. | At least 30% headroom. | More than 300 MiB on any Tier 1 environment. |
 
-The numeric common-case node-visit limit for CAP-LAY-001 remains a gating known unknown until the reference layout corpus exists. Before substrate qualification, each ordinary layout policy must declare a finite per-node visit cap, and the harness must verify that cap independently from intrinsic measurement and text work. Deferring this number risks accepting a layout model that meets the aggregate 2.0 ms target only on shallow reference scenes.
+The numeric common-case node-visit limit for CAP-LAY-001 remains a gating known unknown until the prequalification lock binds candidate and environment identities and the 48-tuple timing probe supplies schema-valid evidence under CON-PERF-001 on unblocked reference hardware.
 
 ## Rendering and recovery constraints
 
@@ -53,7 +53,7 @@ The numeric common-case node-visit limit for CAP-LAY-001 remains a gating known 
 
 ## Substrate selection policy
 
-After hard-gate eligibility, two assessors independently assign an integer score from 3 through 5 to each criterion from cited evidence. They must record one consensus score for every disagreement. Multiply each consensus score by its weight and divide by 5 to produce a 100-point result.
+After hard-gate eligibility, two assessors independently assign an integer score from 3 through 5 to each criterion from cited evidence. A person who authors candidate implementation or qualification evidence for a candidate must not serve as an independent scorer for that candidate. They must record one consensus score for every disagreement. Multiply each consensus score by its weight and divide by 5 to produce a 100-point result.
 
 | Criterion                                       | Weight |
 | :---------------------------------------------- | -----: |
@@ -65,3 +65,11 @@ After hard-gate eligibility, two assessors independently assign an integer score
 | Testing, diagnostics, and operational clarity   |     10 |
 
 The scoring anchors must be frozen before either candidate implementation begins. CAP-SUB-002 through CAP-SUB-004 govern eligibility, zero-candidate and one-candidate outcomes, weighted selection, and the maintenance-first tie-break.
+
+Qualification uses a declared sequence. The integrated candidate enters the frozen suite first; build and qualify the focused candidate only if the integrated candidate fails hard-gate eligibility in the first Tier 1 environment. CAP-SUB-001 requires the same complete frozen suite for every candidate that enters qualification.
+
+Qualify Tier 1 environments in this order: Wayland, X11, macOS, then Windows. Apply readiness gates separately to each environment on pinned reference hardware the project controls. An environment without accountable reference hardware remains blocked. A selection supported by complete evidence from the first environment is provisional and becomes final only after every Tier 1 environment passes.
+
+CAP-SUB-003 selects the sole eligible candidate, subject to the provisional-to-final rule. The two-assessor weighted comparison applies only when two candidates are eligible.
+
+Sequencing leaves CAP-SUB-001 through CAP-SUB-004 and CAP-PLT-001 unchanged.
