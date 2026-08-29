@@ -6,9 +6,11 @@
 - Budget: 1 focused day.
 - Clock start / stop: 2026-08-28T20:23:54Z / 2026-08-28T20:33:24Z.
 - Round-6 evidence clock start / stop: 2026-08-28T22:32:41Z / 2026-08-28T22:38:44Z.
-- CHANGES: `fuzz-corpora.json` SHA-256 `59d3459130a585e335df491f464258f40b3708c48d237600df960722ffcda105`, 15,932 bytes; `security-patch-rehearsal.json` SHA-256 `27b6e4525723e2501d08e72169f8194bb070d4a79b32825f3cc70fe9e66fc14c`, 1,991 bytes.
+- CHANGES: `fuzz-corpora.json` SHA-256 `59f239e1e9dffbca7eb9d15be6cb69139435a74d4d86b0c6d8e0ddcc1b93b80d`, 15,991 bytes; `security-patch-rehearsal.json` SHA-256 `27b6e4525723e2501d08e72169f8194bb070d4a79b32825f3cc70fe9e66fc14c`, 1,991 bytes.
 - Round-9 correction clock start / stop: 2026-08-29T01:02:59Z / 2026-08-29T01:08:30Z.
 - Round-9 correction: Remove `fuzz-corpora` and `security-patch-rehearsal`, add `campaign-host-tool-records`, and reduce each affected KU array by one entry.
+- Round-12 correction clock start / stop: 2026-08-29T02:32:25Z / 2026-08-29T02:39:48Z.
+- Round-12 correction: Pin GNU Time output parsing to `LC_ALL=C`, re-freeze `fuzz-corpora`, and retain `security-patch-rehearsal` unchanged.
 
 ## Question
 
@@ -133,7 +135,7 @@ $ sha256sum source contract
 
 ### Instrumentation and campaign procedure
 
-Use one physical core for each parser campaign. Require at least `86_400` process CPU seconds per implemented untrusted parser ingress and `28_800` process CPU seconds for each supported thread-instrumented callback or teardown target. Require a 5-second libFuzzer timeout, `ingressMapping[INGRESS].maxLenBytes` as `-max_len`, and a zero unresolved-report result. Admission checks every source and derived input against its own `corpusSets[SET].capBytes` before it enters a corpus. `maxLenBytes` is the maximum `capBytes` of the corpus sets mapped to that ingress, so it bounds fuzz mutations without weakening per-set admission. In the commands, `INGRESS` is the architecture ingress, `TARGET` is its implemented fuzz target, `CORPUS` is its admitted persistent corpus directory, `MAX_LEN_BYTES` is `ingressMapping[INGRESS].maxLenBytes`, `FUZZ_EXE` is the built target executable, `CPU_LOG` is the GNU Time output, `PACKAGE` owns the replay test, and `TEST_FILTER` selects that replay.
+Use one physical core for each parser campaign. Require at least `86_400` process CPU seconds per implemented untrusted parser ingress and `28_800` process CPU seconds for each supported thread-instrumented callback or teardown target. Require a 5-second libFuzzer timeout, `ingressMapping[INGRESS].maxLenBytes` as `-max_len`, and a zero unresolved-report result. Admission checks every source and derived input against its own `corpusSets[SET].capBytes` before it enters a corpus. `maxLenBytes` is the maximum `capBytes` of the corpus sets mapped to that ingress, so it bounds fuzz mutations without weakening per-set admission. In the commands, `INGRESS` is the architecture ingress, `TARGET` is its implemented fuzz target, `CORPUS` is its admitted persistent corpus directory, `MAX_LEN_BYTES` is `ingressMapping[INGRESS].maxLenBytes`, `FUZZ_EXE` is the built target executable, `CPU_LOG` is the GNU Time output, `PACKAGE` owns the replay test, and `TEST_FILTER` selects that replay. The timed command and preflight entries that parse tool output export `LC_ALL=C`, so the required GNU Time field names remain stable on a host with any locale.
 
 [`-max_total_time`](https://llvm.org/docs/LibFuzzer.html) is an elapsed-time maximum for one fuzzer invocation. It is only an operational bound. It cannot establish CON-SEC-001 or CON-SEC-002 process-CPU coverage. The [cargo-fuzz README](https://raw.githubusercontent.com/rust-fuzz/cargo-fuzz/0.13.2/README.md) directs users to command help, and P8 verifies that `--careful` is a `cargo fuzz build` option. Before a campaign, select `nightly-2026-08-12`, select exactly one `hostToolRecords` entry by both `hostname` and Rust host triple, then run this preflight. It resolves Rust tools through `rustup which --toolchain`, resolves non-Rust tools through `command -v`, compares every resolved executable hash with that selected record, and fails before build or execution on no match or any mismatch.
 
@@ -142,6 +144,7 @@ For Rustup-resolved `rustc`, `cargo`, and `cargo-miri`, `executablePath` and `pa
 ```sh
 POLICY=qualification/staged/fuzz-corpora.json
 TOOLCHAIN=nightly-2026-08-12
+export LC_ALL=C
 HOST_NAME="$(hostname)"
 HOST_TRIPLE="$(rustc +"$TOOLCHAIN" -vV | awk '/^host:/ {print $2}')"
 HOST_RECORD="$(jq -cer --arg hostname "$HOST_NAME" --arg triple "$HOST_TRIPLE" '[.instrumentation.campaignToolchain.hostToolRecords[] | select(.hostname == $hostname and .hostTriple == $triple)] | if length == 1 then .[0] else error("expected exactly one host record") end' "$POLICY")"
@@ -161,7 +164,7 @@ test "$(cargo +"$TOOLCHAIN" fuzz --version)" = "$(printf '%s' "$HOST_RECORD" | j
 test "$("$TIME_BIN" --version | head -n 1)" = "$(printf '%s' "$HOST_RECORD" | jq -er '.tools[] | select(.name == "time") | .version')"
 ```
 
-Build every AddressSanitizer target with `cargo +nightly-2026-08-12 fuzz build --sanitizer address --careful TARGET`, and build every ThreadSanitizer target with `cargo +nightly-2026-08-12 fuzz build --sanitizer thread --careful TARGET`. For every successful shard, resolve `MAX_LEN_BYTES` from `ingressMapping[INGRESS].maxLenBytes`, then run `"$TIME_BIN" -v -o CPU_LOG FUZZ_EXE CORPUS -max_total_time=28800 -timeout=5 -max_len=MAX_LEN_BYTES`. Preserve `User time (seconds)`, `System time (seconds)`, and elapsed wall time from `CPU_LOG`, and record user plus system seconds in the shard ledger. Add only successful shards with the same target, sanitizer, and persistent `CORPUS`; resume until the applicable threshold is reached. `-max_total_time=28800` bounds one operational invocation only. Keep `CORPUS` as the first libFuzzer corpus directory. Before admitting another input directory, use `FUZZ_EXE -merge=1 CORPUS NEW_INPUTS`, then resume the timed target. The LLVM documentation states that the first corpus directory receives new inputs and describes `-merge=1` and resumable merge control files. Replay every minimized crash and retained seed with `cargo +nightly-2026-08-12 miri test -p PACKAGE TEST_FILTER`.
+Build every AddressSanitizer target with `cargo +nightly-2026-08-12 fuzz build --sanitizer address --careful TARGET`, and build every ThreadSanitizer target with `cargo +nightly-2026-08-12 fuzz build --sanitizer thread --careful TARGET`. For every successful shard, resolve `MAX_LEN_BYTES` from `ingressMapping[INGRESS].maxLenBytes`, then run `LC_ALL=C "$TIME_BIN" -v -o CPU_LOG FUZZ_EXE CORPUS -max_total_time=28800 -timeout=5 -max_len=MAX_LEN_BYTES`. Preserve `User time (seconds)`, `System time (seconds)`, and elapsed wall time from `CPU_LOG`, and record user plus system seconds in the shard ledger. Add only successful shards with the same target, sanitizer, and persistent `CORPUS`; resume until the applicable threshold is reached. `-max_total_time=28800` bounds one operational invocation only. Keep `CORPUS` as the first libFuzzer corpus directory. Before admitting another input directory, use `FUZZ_EXE -merge=1 CORPUS NEW_INPUTS`, then resume the timed target. The LLVM documentation states that the first corpus directory receives new inputs and describes `-merge=1` and resumable merge control files. Replay every minimized crash and retained seed with `cargo +nightly-2026-08-12 miri test -p PACKAGE TEST_FILTER`.
 
 P6 proves this host's `command time -v -o CPU_LOG` records the required three fields. P7 confirms the four post-patch test functions do not yet exist in the qualification scaffold, so OXY-SYN-SEC-001 must add them before rehearsal. P8 proves `nightly-2026-08-11` resolves commit `12c36e2539c54397c51d6ea4401defd8768a4f5b`, while `nightly-2026-08-12` resolves the required `3d6c19bb9ab4798ecfb2ee943df01a811720fc27`. P8 also re-hashes the executables from the dated selector. The captured host record uses only `nightly-2026-08-12`; the previous rolling-`nightly` record is inadmissible. This host records SHA-256 values for `rustc` `7de94a5c099c8d7ee4cafb905e36d882325faa480d8cff6513dd8c0887fac0c5`, `cargo` `1cf1cd7feded113706026c5f04fad33e45364546e3c0d92ddee0c1a4c8277296`, `cargo-miri` `40a69668c9ff4e5df3e6a87531f2b87dcc5c84e705ee5b06f915fb76383c94af`, `cargo-fuzz` 0.13.2 `db150590a2f9fa003fb167bc0eec3f90ba5574fcdd01f78110e6f397dda56582`, and GNU Time 1.10 `e8b9f5440e01a81e0692e68d07dfacb8059c434cae100c1fbb60b7ec52848480`. Stage 3 must stage an equivalent complete record in `qualification/staged/fuzz-corpora.json` for every campaign host and retain `campaign-host-tool-records` as a gate until it does. `resolved-tool-digests` remains independently bound to `resolvedTools` and `qualification/tools/native-contract-toolchain.json`, which OXY-A008 owns. P16 establishes that campaign-host tools must remain only in `instrumentation.campaignToolchain.hostToolRecords`; they must never enter `qualification-lock.json` `resolvedTools`. The lock binds the campaign toolchain only through `measurementPolicy.fuzzCorpora`, which holds the staged file digest.
 
@@ -575,7 +578,7 @@ The corpus importer may derive target-specific encodings only from a listed sour
 
 ### Spec edits required
 
-- `qualification/staged/fuzz-corpora.json`: create this file with the exact canonical bytes in the next section. In `admission`, set `requireLicenses` to `true` and `requiredLicenseEntryKeys` to `["licenseId", "licenseUrl", "licenseSha256"]`; don't use flat license fields. In every `corpusSets[*].licenses`, use objects with exactly those three keys. In every `ingressMapping[INGRESS]`, use `corpusSets` and `maxLenBytes`, where `maxLenBytes` is the maximum mapped `capBytes`; enforce `requireSizeAtMostCorpusSetCap` against each source set's `capBytes` at ingestion and pass only the ingress `maxLenBytes` to `-max_len`. `.constitution/tech-spec/contracts/qualification-lock.json`, `measurementPolicy.fuzzCorpora`: set the value to `59d3459130a585e335df491f464258f40b3708c48d237600df960722ffcda105`.
+- `qualification/staged/fuzz-corpora.json`: create this file with the exact canonical bytes in the next section. In `admission`, set `requireLicenses` to `true` and `requiredLicenseEntryKeys` to `["licenseId", "licenseUrl", "licenseSha256"]`; don't use flat license fields. In every `corpusSets[*].licenses`, use objects with exactly those three keys. In every `ingressMapping[INGRESS]`, use `corpusSets` and `maxLenBytes`, where `maxLenBytes` is the maximum mapped `capBytes`; enforce `requireSizeAtMostCorpusSetCap` against each source set's `capBytes` at ingestion and pass only the ingress `maxLenBytes` to `-max_len`. Set `instrumentation.runCommand` to the canonical `LC_ALL=C; export LC_ALL;`-prefixed command and prefix `instrumentation.campaignToolchain.preflight[0]` and `[4]` with `export LC_ALL=C;`. `.constitution/tech-spec/contracts/qualification-lock.json`, `measurementPolicy.fuzzCorpora`: set the value to `59f239e1e9dffbca7eb9d15be6cb69139435a74d4d86b0c6d8e0ddcc1b93b80d`.
 - `qualification/staged/security-patch-rehearsal.json`: create this file with the exact canonical bytes in the next section. In `rehearsal[4]`, resolve `ingressMapping["application-assets"].maxLenBytes` from `qualification/staged/fuzz-corpora.json` and pass it to `-max_len`; this resolves to `1048576`. `.constitution/tech-spec/contracts/qualification-lock.json`, `measurementPolicy.securityPatchRehearsal`: set the value to `27b6e4525723e2501d08e72169f8194bb070d4a79b32825f3cc70fe9e66fc14c`.
 - `.constitution/tech-spec/data-models/qualification-lock.schema.json`, `$defs.tool.properties`: make no `pathRoot` edit. `xtask/src/toolchain/lock.rs:238-262` accepts only `name`, `version`, `sourceIdentity`, `hostTriple`, `licenseId`, `executablePath`, and `sha256` for a `resolvedTools` entry. The `pathRoot` fields already present in the canonical campaign record remain staged-policy data only; they are not `$defs.tool` properties.
 - `.constitution/tech-spec/contracts/qualification-lock.json`, `resolvedTools`: make no campaign-host append or transformation. `xtask/src/contracts/readiness.rs:409-419` delegates nonempty entries to the staged-manifest validator. `xtask/src/toolchain/lock.rs:50-75` rejects duplicate names, resolves every entry against the staged manifest, and requires every `TOOL_SPECS` name; `xtask/src/toolchain/lock.rs:296-320` requires an exact absolute staged path. Thus `pathRoot` yields `InvalidManifest`, Rustup-relative paths yield `ExecutableSubstitution`, campaign `cargo`, `cargo-miri`, `cargo-fuzz`, and `time` yield `MissingTool`, a campaign `rustc` either duplicates or mismatches the staged `rustc`, and multiple campaign hosts yield `DuplicateTool`. `resolvedTools` must not represent a campaign host. The lock binds campaign tools only through `measurementPolicy.fuzzCorpora`, the SHA-256 digest of `qualification/staged/fuzz-corpora.json`.
@@ -601,12 +604,12 @@ Clear that KU only when every campaign host that produced evidence has a complet
 
 Each displayed JSON block is UTF-8, uses the displayed 2-space indentation and key order, and ends with exactly one LF. The stable canonical-block anchor, `prettier-ignore` directive, and `text` fence protect each byte stream from Markdown formatting. P13b extracts both blocks after Prettier, JSON-reserializes each with Prettier's JSON parser, compares the byte streams, and SHA-256-checks the result.
 
-The campaign policy is host-neutral except for `hostToolRecords`. Its first record captures this NixOS 26.05 host as non-reference. A campaign must select an exact hostname-and-triple match, resolve Rust through the selected dated Rustup toolchain, resolve `cargo-fuzz` and the selected GNU Time executable with `command -v`, and compare hashes against that record. `command -v time` alone yields a shell keyword on this host, so the selected record supplies the executable path to `command -v`; no Nix path or `/home/oscar` path appears in the generic procedure. P11 verifies the five records, their license IDs, and the shell-keyword result. P16 confirms the records remain only in this staged policy; no campaign-host record or tool enters the qualification lock's `resolvedTools`.
+The campaign policy is host-neutral except for `hostToolRecords`. Its first record captures this NixOS 26.05 host as non-reference. A campaign must select an exact hostname-and-triple match, resolve Rust through the selected dated Rustup toolchain, resolve `cargo-fuzz` and the selected GNU Time executable with `command -v`, and compare hashes against that record. `command -v time` alone yields a shell keyword on this host, so the selected record supplies the executable path to `command -v`; no Nix path or `/home/oscar` path appears in the generic procedure. P11 verifies the five records, their license IDs, and the shell-keyword result. P16 confirms the records remain only in this staged policy; no campaign-host record or tool enters the qualification lock's `resolvedTools`. The `LC_ALL=C` export makes the canonical English `cpuAccounting.requiredFields` labels reproducible before the campaign parser reads `CPU_LOG`.
 
 The corrected current source bytes produce these declared digests and byte counts:
 
 ```text
-59d3459130a585e335df491f464258f40b3708c48d237600df960722ffcda105  fuzz-corpora.json  15932 bytes
+59f239e1e9dffbca7eb9d15be6cb69139435a74d4d86b0c6d8e0ddcc1b93b80d  fuzz-corpora.json  15991 bytes
 27b6e4525723e2501d08e72169f8194bb070d4a79b32825f3cc70fe9e66fc14c  security-patch-rehearsal.json  1991 bytes
 ```
 
@@ -629,7 +632,7 @@ The corrected current source bytes produce these declared digests and byte count
     "concurrencyRequiredProcessCpuSeconds": 28800,
     "addressBuildCommand": "cargo +nightly-2026-08-12 fuzz build --sanitizer address --careful TARGET",
     "concurrencyBuildCommand": "cargo +nightly-2026-08-12 fuzz build --sanitizer thread --careful TARGET",
-    "runCommand": "MAX_LEN_BYTES=\"$(jq -er --arg ingress \"$INGRESS\" '.ingressMapping[$ingress].maxLenBytes' qualification/staged/fuzz-corpora.json)\"; \"$TIME_BIN\" -v -o CPU_LOG FUZZ_EXE CORPUS -max_total_time=28800 -timeout=5 -max_len=$MAX_LEN_BYTES",
+    "runCommand": "LC_ALL=C; export LC_ALL; MAX_LEN_BYTES=\"$(jq -er --arg ingress \"$INGRESS\" '.ingressMapping[$ingress].maxLenBytes' qualification/staged/fuzz-corpora.json)\"; \"$TIME_BIN\" -v -o CPU_LOG FUZZ_EXE CORPUS -max_total_time=28800 -timeout=5 -max_len=$MAX_LEN_BYTES",
     "cpuAccounting": {
       "requiredFields": [
         "User time (seconds)",
@@ -649,11 +652,11 @@ The corrected current source bytes produce these declared digests and byte count
       "requiredCargoFuzzVersion": "0.13.2",
       "requireHostToolRecordForEveryCampaign": true,
       "preflight": [
-        "TOOLCHAIN=nightly-2026-08-12; HOST_NAME=\"$(hostname)\"; HOST_TRIPLE=\"$(rustc +$TOOLCHAIN -vV | awk '/^host:/ {print $2}')\"",
+        "export LC_ALL=C; TOOLCHAIN=nightly-2026-08-12; HOST_NAME=\"$(hostname)\"; HOST_TRIPLE=\"$(rustc +$TOOLCHAIN -vV | awk '/^host:/ {print $2}')\"",
         "HOST_RECORD=\"$(jq -cer --arg hostname \"$HOST_NAME\" --arg triple \"$HOST_TRIPLE\" '[.instrumentation.campaignToolchain.hostToolRecords[] | select(.hostname == $hostname and .hostTriple == $triple)] | if length == 1 then .[0] else error(\"expected exactly one host record\") end' qualification/staged/fuzz-corpora.json)\"; test -n \"$HOST_RECORD\"",
         "RUSTC_BIN=\"$(rustup which --toolchain $TOOLCHAIN rustc)\"; CARGO_BIN=\"$(rustup which --toolchain $TOOLCHAIN cargo)\"; CARGO_MIRI_BIN=\"$(rustup which --toolchain $TOOLCHAIN cargo-miri)\"; CARGO_FUZZ_BIN=\"$(command -v cargo-fuzz)\"; TIME_BIN=\"$(command -v \"$(printf '%s' \"$HOST_RECORD\" | jq -er '.tools[] | select(.name == \"time\") | .executablePath')\")\"",
         "printf '%s  %s\\n' \"$(printf '%s' \"$HOST_RECORD\" | jq -er '.tools[] | select(.name == \"rustc\") | .sha256')\" \"$RUSTC_BIN\" \"$(printf '%s' \"$HOST_RECORD\" | jq -er '.tools[] | select(.name == \"cargo\") | .sha256')\" \"$CARGO_BIN\" \"$(printf '%s' \"$HOST_RECORD\" | jq -er '.tools[] | select(.name == \"cargo-miri\") | .sha256')\" \"$CARGO_MIRI_BIN\" \"$(printf '%s' \"$HOST_RECORD\" | jq -er '.tools[] | select(.name == \"cargo-fuzz\") | .sha256')\" \"$CARGO_FUZZ_BIN\" \"$(printf '%s' \"$HOST_RECORD\" | jq -er '.tools[] | select(.name == \"time\") | .sha256')\" \"$TIME_BIN\" | sha256sum -c -",
-        "test \"$(rustc +$TOOLCHAIN -vV | awk '/^commit-hash:/ {print $2}')\" = \"$(printf '%s' \"$HOST_RECORD\" | jq -er '.rustcCommit')\"; test \"$(cargo +$TOOLCHAIN fuzz --version)\" = \"$(printf '%s' \"$HOST_RECORD\" | jq -er '.tools[] | select(.name == \"cargo-fuzz\") | .version')\"; test \"$(\"$TIME_BIN\" --version | head -n 1)\" = \"$(printf '%s' \"$HOST_RECORD\" | jq -er '.tools[] | select(.name == \"time\") | .version')\""
+        "export LC_ALL=C; test \"$(rustc +$TOOLCHAIN -vV | awk '/^commit-hash:/ {print $2}')\" = \"$(printf '%s' \"$HOST_RECORD\" | jq -er '.rustcCommit')\"; test \"$(cargo +$TOOLCHAIN fuzz --version)\" = \"$(printf '%s' \"$HOST_RECORD\" | jq -er '.tools[] | select(.name == \"cargo-fuzz\") | .version')\"; test \"$(\"$TIME_BIN\" --version | head -n 1)\" = \"$(printf '%s' \"$HOST_RECORD\" | jq -er '.tools[] | select(.name == \"time\") | .version')\""
       ],
       "hostToolRecords": [
         {
@@ -962,37 +965,54 @@ The corrected current source bytes produce these declared digests and byte count
 The output of P13a follows:
 
 ```text
-$ perl /tmp/wf-epic-b/OXY-B006-pr-round3/verify-canonical-blocks.pl .constitution/spikes/SPK-B006.md /tmp/wf-epic-b/OXY-B006-pr-round3/p13a
-fuzz-corpora|59d3459130a585e335df491f464258f40b3708c48d237600df960722ffcda105|15932|ok
+$ perl /tmp/wf-epic-b/OXY-B006-pr-round-12/verify-canonical-blocks.pl .constitution/spikes/SPK-B006.md /tmp/wf-epic-b/OXY-B006-pr-round-12/p13a
+fuzz-corpora|59f239e1e9dffbca7eb9d15be6cb69139435a74d4d86b0c6d8e0ddcc1b93b80d|15991|ok
 security-patch-rehearsal|27b6e4525723e2501d08e72169f8194bb070d4a79b32825f3cc70fe9e66fc14c|1991|ok
-$ jq -e . /tmp/wf-epic-b/OXY-B006-pr-round3/p13a/fuzz-corpora.json >/dev/null
-$ jq -e . /tmp/wf-epic-b/OXY-B006-pr-round3/p13a/security-patch-rehearsal.json >/dev/null
-$ sha256sum /tmp/wf-epic-b/OXY-B006-pr-round3/p13a/fuzz-corpora.json /tmp/wf-epic-b/OXY-B006-pr-round3/p13a/security-patch-rehearsal.json
-59d3459130a585e335df491f464258f40b3708c48d237600df960722ffcda105  /tmp/wf-epic-b/OXY-B006-pr-round3/p13a/fuzz-corpora.json
-27b6e4525723e2501d08e72169f8194bb070d4a79b32825f3cc70fe9e66fc14c  /tmp/wf-epic-b/OXY-B006-pr-round3/p13a/security-patch-rehearsal.json
+$ jq -e . /tmp/wf-epic-b/OXY-B006-pr-round-12/p13a/fuzz-corpora.json >/dev/null
+$ jq -e . /tmp/wf-epic-b/OXY-B006-pr-round-12/p13a/security-patch-rehearsal.json >/dev/null
+$ sha256sum /tmp/wf-epic-b/OXY-B006-pr-round-12/p13a/fuzz-corpora.json /tmp/wf-epic-b/OXY-B006-pr-round-12/p13a/security-patch-rehearsal.json
+59f239e1e9dffbca7eb9d15be6cb69139435a74d4d86b0c6d8e0ddcc1b93b80d  /tmp/wf-epic-b/OXY-B006-pr-round-12/p13a/fuzz-corpora.json
+27b6e4525723e2501d08e72169f8194bb070d4a79b32825f3cc70fe9e66fc14c  /tmp/wf-epic-b/OXY-B006-pr-round-12/p13a/security-patch-rehearsal.json
 ```
 
 The output of P13b follows:
 
 ```text
-$ perl /tmp/wf-epic-b/OXY-B006-pr-round3/verify-canonical-blocks.pl .constitution/spikes/SPK-B006.md /tmp/wf-epic-b/OXY-B006-pr-round3/p13b
-fuzz-corpora|59d3459130a585e335df491f464258f40b3708c48d237600df960722ffcda105|15932|ok
+$ perl /tmp/wf-epic-b/OXY-B006-pr-round-12/verify-canonical-blocks.pl .constitution/spikes/SPK-B006.md /tmp/wf-epic-b/OXY-B006-pr-round-12/p13b
+fuzz-corpora|59f239e1e9dffbca7eb9d15be6cb69139435a74d4d86b0c6d8e0ddcc1b93b80d|15991|ok
 security-patch-rehearsal|27b6e4525723e2501d08e72169f8194bb070d4a79b32825f3cc70fe9e66fc14c|1991|ok
-$ prettier --parser json /tmp/wf-epic-b/OXY-B006-pr-round3/p13b/fuzz-corpora.json > /tmp/wf-epic-b/OXY-B006-pr-round3/p13b/fuzz-corpora.reserialized.json
-$ prettier --parser json /tmp/wf-epic-b/OXY-B006-pr-round3/p13b/security-patch-rehearsal.json > /tmp/wf-epic-b/OXY-B006-pr-round3/p13b/security-patch-rehearsal.reserialized.json
-$ cmp -s /tmp/wf-epic-b/OXY-B006-pr-round3/p13b/fuzz-corpora.json /tmp/wf-epic-b/OXY-B006-pr-round3/p13b/fuzz-corpora.reserialized.json && cmp -s /tmp/wf-epic-b/OXY-B006-pr-round3/p13b/security-patch-rehearsal.json /tmp/wf-epic-b/OXY-B006-pr-round3/p13b/security-patch-rehearsal.reserialized.json
+$ prettier --parser json /tmp/wf-epic-b/OXY-B006-pr-round-12/p13b/fuzz-corpora.json > /tmp/wf-epic-b/OXY-B006-pr-round-12/p13b/fuzz-corpora.reserialized.json
+$ prettier --parser json /tmp/wf-epic-b/OXY-B006-pr-round-12/p13b/security-patch-rehearsal.json > /tmp/wf-epic-b/OXY-B006-pr-round-12/p13b/security-patch-rehearsal.reserialized.json
+$ cmp -s /tmp/wf-epic-b/OXY-B006-pr-round-12/p13b/fuzz-corpora.json /tmp/wf-epic-b/OXY-B006-pr-round-12/p13b/fuzz-corpora.reserialized.json && cmp -s /tmp/wf-epic-b/OXY-B006-pr-round-12/p13b/security-patch-rehearsal.json /tmp/wf-epic-b/OXY-B006-pr-round-12/p13b/security-patch-rehearsal.json
 canonical_json_reserialization=passed
-$ sha256sum /tmp/wf-epic-b/OXY-B006-pr-round3/p13b/fuzz-corpora.json /tmp/wf-epic-b/OXY-B006-pr-round3/p13b/security-patch-rehearsal.json
-59d3459130a585e335df491f464258f40b3708c48d237600df960722ffcda105  /tmp/wf-epic-b/OXY-B006-pr-round3/p13b/fuzz-corpora.json
-27b6e4525723e2501d08e72169f8194bb070d4a79b32825f3cc70fe9e66fc14c  /tmp/wf-epic-b/OXY-B006-pr-round3/p13b/security-patch-rehearsal.json
+$ sha256sum /tmp/wf-epic-b/OXY-B006-pr-round-12/p13b/fuzz-corpora.json /tmp/wf-epic-b/OXY-B006-pr-round-12/p13b/security-patch-rehearsal.json
+59f239e1e9dffbca7eb9d15be6cb69139435a74d4d86b0c6d8e0ddcc1b93b80d  /tmp/wf-epic-b/OXY-B006-pr-round-12/p13b/fuzz-corpora.json
+27b6e4525723e2501d08e72169f8194bb070d4a79b32825f3cc70fe9e66fc14c  /tmp/wf-epic-b/OXY-B006-pr-round-12/p13b/security-patch-rehearsal.json
 ```
 
-P14 rechecked both protected streams after the round-4 readiness-binding correction.
+P14 rechecked both protected streams after the round-4 readiness-binding correction and the round-12 locale re-freeze.
 
 ```text
-$ perl /tmp/wf-epic-b/OXY-B006-pr-round3/verify-canonical-blocks.pl .constitution/spikes/SPK-B006.md /tmp/wf-epic-b/PR4-B006/check
-fuzz-corpora|59d3459130a585e335df491f464258f40b3708c48d237600df960722ffcda105|15932|ok
+$ perl /tmp/wf-epic-b/OXY-B006-pr-round-12/verify-canonical-blocks.pl .constitution/spikes/SPK-B006.md /tmp/wf-epic-b/OXY-B006-pr-round-12/final
+fuzz-corpora|59f239e1e9dffbca7eb9d15be6cb69139435a74d4d86b0c6d8e0ddcc1b93b80d|15991|ok
 security-patch-rehearsal|27b6e4525723e2501d08e72169f8194bb070d4a79b32825f3cc70fe9e66fc14c|1991|ok
+```
+
+P19 confirmed that the recorded host uses `LANG=es_CL.UTF-8` and that the locale pin produces the exact English labels. The [GNU Time 1.10 manual](https://www.gnu.org/software/time/manual/time.html) documents the same verbose labels; P19 also found the upstream 1.10 source's explicit no-gettext declaration, so this probe doesn't assume that an Ubuntu package has no downstream localization patch.
+
+```text
+$ printf '%s\n' "LANG=$LANG" "LC_ALL=${LC_ALL-}"
+LANG=es_CL.UTF-8
+LC_ALL=
+$ LC_ALL=C /run/current-system/sw/bin/time -v -o time-C.log true; sed -n '1,4p' time-C.log
+	Command being timed: "true"
+	User time (seconds): 0.00
+	System time (seconds): 0.00
+	Percent of CPU this job got: 50%
+$ grep -n -A 1 -B 1 -F 'No gettext support for now.' time-1.10/src/system.h
+22-
+23:/* No gettext support for now.  */
+24-#define _(x) (x)
 ```
 
 ### Canonical fenced-block integrity proposal
@@ -1001,7 +1021,7 @@ Stage 3 must add an `xtask` or continuous-integration check that extracts the ex
 
 The check must cover these anchors and digests:
 
-- `fuzz-corpora`: `59d3459130a585e335df491f464258f40b3708c48d237600df960722ffcda105` (15,932 bytes).
+- `fuzz-corpora`: `59f239e1e9dffbca7eb9d15be6cb69139435a74d4d86b0c6d8e0ddcc1b93b80d` (15,991 bytes).
 - `security-patch-rehearsal`: `27b6e4525723e2501d08e72169f8194bb070d4a79b32825f3cc70fe9e66fc14c` (1,991 bytes).
 
 ## Sources
@@ -1031,6 +1051,7 @@ The check must cover these anchors and digests:
 - [cargo-fuzz 0.13.2 package metadata](https://raw.githubusercontent.com/rust-fuzz/cargo-fuzz/0.13.2/Cargo.toml)
 - [cargo-fuzz 0.13.2 Apache-2.0 notice](https://raw.githubusercontent.com/rust-fuzz/cargo-fuzz/0.13.2/LICENSE-APACHE)
 - [cargo-fuzz 0.13.2 MIT notice](https://raw.githubusercontent.com/rust-fuzz/cargo-fuzz/0.13.2/LICENSE-MIT)
+- [GNU Time 1.10 manual](https://www.gnu.org/software/time/manual/time.html)
 - [GNU Time 1.10 source distribution](https://ftp.gnu.org/gnu/time/time-1.10.tar.gz)
 - [image Apache-2.0 notice](https://raw.githubusercontent.com/image-rs/image/76e57184f22772dad1138e96954e57945406b15e/LICENSE-APACHE)
 - [image MIT notice](https://raw.githubusercontent.com/image-rs/image/76e57184f22772dad1138e96954e57945406b15e/LICENSE-MIT)
