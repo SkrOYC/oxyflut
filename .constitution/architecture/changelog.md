@@ -6,8 +6,8 @@ All notable changes to the logical architecture appear in this file.
 
 ### Added
 
-- Added ARC-R12 for reversal of provisional selection and ARC-R13 for the single Linux reference configuration.
-- Added the null-substrate invariant for shared boundaries above the rendering substrate boundary.
+- Added ARC-R12 for reversal of provisional selection and ARC-R13 for the Linux reference-session and second-configuration risks.
+- Added the candidate-neutral invariant for implementation against a null or test substrate while retaining Platform integration's selected-rendering-substrate dependency.
 
 ### Changed
 

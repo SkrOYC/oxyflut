@@ -7,12 +7,14 @@
 ## Behavior
 
 ```mermaid
-flowchart LR
-    Suite[Frozen evidence suite] -->|same controlled requests| A[First substrate candidate]
-    Suite -->|same controlled requests| B[Second substrate candidate]
-    A -->|complete evidence file handoff| Gates[Common P0 and constraint gates]
-    B -->|complete evidence file handoff| Gates
-    Gates -->|separate eligibility records| Qualification[Release qualification]
+flowchart TD
+    Suite[Frozen evidence suite] -->|same controlled requests| Integrated[Integrated substrate candidate]
+    Integrated -->|first-environment evidence handoff| IntegratedGates{Integrated candidate common P0 and constraint hard gates}
+    IntegratedGates -->|pass| Provisional[Provisional selection per environment under CAP-SUB-003]
+    Provisional -->|eligibility record| Records[Eligibility records]
+    IntegratedGates -->|fail on first Tier 1 environment| Focused[Focused substrate candidate]
+    Focused -->|same frozen-suite controlled requests| CommonGates[Common P0 and constraint gates]
+    CommonGates -->|eligibility record| Records
 ```
 
 ## Sequencing
@@ -21,4 +23,4 @@ Substrate candidates enter the frozen suite in the declared order: the integrate
 
 ## Failure path
 
-Missing, candidate-specific, incomparable, failed, or unresolved gating evidence makes that candidate ineligible and cannot weaken the common suite. Evidence from a later Tier 1 environment that makes a provisional selection ineligible reverses the provisional selection and prevents final selection.
+Missing, candidate-specific, incomparable, failed, or unresolved gating evidence makes that candidate ineligible and cannot weaken the common suite. A hard-gate failure of the integrated candidate on the first Tier 1 environment starts focused-candidate qualification under the same frozen suite. Evidence from a later Tier 1 environment that makes a provisional selection ineligible reverses the provisional selection and prevents final selection.

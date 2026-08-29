@@ -24,7 +24,10 @@ The qualification plane observes presentation opportunities independently from p
 - Every surfaceless frame begins with a harness-controlled frame instant that isn't a presentation opportunity and cannot create an interactive-display connection.
 - Every semantics action identifies a live application runtime, view, and semantics node.
 - Every substrate candidate implements the same logical rendering, resource, timing, recovery, and evidence contracts.
-- Shared boundaries above the rendering substrate boundary have no dependency on any substrate candidate and are implementable against a null substrate.
+- Candidate-neutral responsibilities in the Component runtime, Layout and viewport, Scene composition recording, and Text and editing model have no dependency on a substrate candidate.
+- Candidate-neutral responsibilities in Semantics, Interaction and focus, Local diagnostics, View coordinator policy, and the rendering-substrate port contract have no dependency on a substrate candidate.
+- Readiness gates don't block implementation of these responsibilities against a null or test substrate.
+- Platform integration retains its dependency on the selected rendering substrate as cataloged in `containers.md`.
 - Production diagnostics remain bounded, privacy-classified, and machine-local.
 - Qualification evidence is immutable, attributable, and independent from candidate-internal counters where an external observation is possible.
 
