@@ -11,9 +11,13 @@ This specification defines Phase 3A qualification builds and does not select a p
 
 Stage 4 can use v0.16.0 for qualification infrastructure, candidate probes, common contract tests, measurements, evidence collection, and the `shared-runtime` scope. It must not plan the production framework, release delivery, or removal of a substrate candidate until Phase 3B reaches v1.0.0.
 
-The shared substrate-neutral crates `oxyflut-runtime`, `oxyflut-layout`, `oxyflut-scene`, `oxyflut-text`, `oxyflut-semantics`, `oxyflut-input`, `oxyflut-view`, and `oxyflut-diagnostics`, plus the candidate-neutral `oxyflut-substrate` contract crate, are plannable now against `contracts/oxyflut-public.rs` and `contracts/oxyflut-substrate.rs` with a null or test substrate.
+The shared substrate-neutral crates `oxyflut-runtime`, `oxyflut-layout`, `oxyflut-scene`, `oxyflut-text`, `oxyflut-semantics`, `oxyflut-input`, `oxyflut-platform`, `oxyflut-view`, and `oxyflut-diagnostics`, plus the candidate-neutral `oxyflut-substrate` contract crate, are plannable now against `contracts/oxyflut-public.rs` and `contracts/oxyflut-substrate.rs` with a null or test substrate.
 
 For each Tier 1 environment, that environment's `candidateImplementationReady` gates only the candidate adapter and engine bridge: `oxyflut-substrate-engine`, `oxyflut-substrate-impeller`, and `native/engine-bridge`. The integrated candidate enters the frozen suite first; build the focused candidate only if the integrated candidate fails hard-gate eligibility in the first qualification environment. Measurement for an environment remains gated by that environment's `measurementReady`; comparable or scored evidence also requires pinned completed candidate source identities.
+
+`measurementPolicy.scoringAnchors` and `measurementPolicy.assessors` don't gate an environment's `candidateImplementationReady`. When two substrate candidates enter qualification, both fields gate that environment's `measurementReady`.
+
+To resolve `layoutVisitCap`, run the SPK-B005 layout prequalification suite against the shared `oxyflut-layout` crate with a `null-substrate` on the Linux reference host. Record ordinary visits, attempted ordinary visits, intrinsic queries, and application-owned layout time; record paint-submission time as not applicable. This requires no candidate adapter.
 
 Before candidateImplementationReady becomes true, Stage 4 may run unscored nonproduction candidate probes only to resolve a pre-implementation gating KU; each probe must use the frozen evidence contract and can't produce comparative scores or select a candidate.
 
