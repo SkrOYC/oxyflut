@@ -11,14 +11,14 @@
 
 ## Context and objective
 
-- **Triggering upstream file or section:** `.constitution/tech-spec/stack.md` defines the integrated candidate and the Dart-disabled production-configuration probe.
-- **Target:** The Linux integrated-candidate build boundary, linked-subsystem inventory, GN arguments, binary size, build duration, and application-runtime replacement inventory.
+- **Triggering upstream file or section:** `.constitution/tech-spec/stack.md` defines the integrated candidate and its Dart-disabled feasibility configuration build procedure.
+- **Target:** The Linux integrated-candidate build boundary, linked-subsystem inventory, GN arguments, binary size, build duration, and application-runtime replacement inventory. The feasibility configuration build procedure is research output until `candidate build` exists.
 - **Archetype / surface:** Library/SDK with a System/Native rendering-substrate boundary.
 
 ## Codebase baseline
 
 - **State today:** Planning inspection found a 3-line `native/engine-bridge/README.md`, an 18-line `xtask/src/commands/candidate.rs`, and one-line `oxyflut-substrate` and `oxyflut-substrate-engine` library files.
-- **Discovered constraints:** The technical stack requires `flutter_enable_dart=false` for every scored, measured, packaged, or distributed configuration. The time-box evidence determines the Linux build result, retained subsystems, binary size, build duration, and GN arguments.
+- **Discovered constraints:** The technical stack requires `flutter_enable_dart=false` for every scored, measured, packaged, or distributed configuration. The time-box evidence records the Linux build result, retained subsystems, binary size, build duration, and GN arguments. The spike does not implement or verify `candidate build`.
 
 ## Options and trade-offs
 

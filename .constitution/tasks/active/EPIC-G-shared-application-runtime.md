@@ -1,7 +1,7 @@
 # Epic G: Shared application runtime
 
 - **Status:** Active.
-- **Total effort:** 26 points.
+- **Total effort:** 32 points.
 - **Plane:** Shared runtime.
 - **Disjointness:** This epic owns only the listed shared application-runtime crates and `oxyflut` reexports; Epic E owns qualification specifications and readiness inputs, and Epic F owns the integrated substrate candidate files.
 - **Boundary:** These substrate-neutral crates implement approved contracts against a null or test substrate. They do not depend on candidateImplementationReady.
@@ -23,7 +23,7 @@
 - **Expected Success Output:** `exit 0` after replacing `CRATE` with `oxyflut-runtime`.
 - **STOP Conditions:**
   - "STOP if a public type or function would be needed that `contracts/oxyflut-public.rs` does not define; route the gap to Stage 3."
-- **Description:** Implement CAP-CMP-001 through CAP-CMP-006: mutable reactive state, cached derived values, lifecycle-bound effects, nested batching, dependency-scoped updates, and idempotent teardown. Keep the steady-state update path free of global heap allocation.
+- **Description:** Implement CAP-CMP-001 through CAP-CMP-006: mutable reactive state, cached derived values, lifecycle-bound effects, nested batching, dependency-scoped updates, and idempotent teardown.
 - **Acceptance:**
   - **Mode:** contract_test
   - **Evidence:**
@@ -31,7 +31,6 @@
 ```text
 Contract tests exercise Signal, Memo, EffectHandle, ApplicationRuntime.batch, owner-scoped dependency updates, and teardown against contracts/oxyflut-public.rs.
 Proptest invariants preserve prior committed state after a failed batch, publish no intermediate state, and reject stale owner work.
-A test allocator records zero global allocations in the measured steady-state update path.
 ```
 
 #### OXY-G002 Preserve keyed component state on reorder
@@ -102,7 +101,7 @@ Property tests generate valid and invalid finite policy sequences and assert the
 - **Expected Success Output:** `exit 0` after replacing `CRATE` with `oxyflut-scene`.
 - **STOP Conditions:**
   - "STOP if scene recording needs a public type or function absent from `contracts/oxyflut-public.rs`; route the gap to Stage 3."
-- **Description:** Implement CAP-REN-001 through CAP-REN-003 against a null substrate. Record paths, shapes, gradients, transforms, clips, filters, images, pictures, textures, and retained compositing state as immutable scene values without exposing substrate handles.
+- **Description:** Implement CAP-REN-001 through CAP-REN-003 against a null substrate. Record paths, shapes, gradients, transforms, clips, filters, images, pictures, textures, and retained compositing state as immutable scene values without exposing substrate handles. Keep the measured steady-state paint traversal free from global heap allocation.
 - **Acceptance:**
   - **Mode:** contract_test
   - **Evidence:**
@@ -111,6 +110,7 @@ Property tests generate valid and invalid finite policy sequences and assert the
 Canvas contract tests record each approved drawing operation and finish an immutable picture against a null substrate.
 Invalid geometry, ownership, clip, filter, transform, or texture input returns an error without emitting a partial picture.
 Retained-layer tests preserve opaque composition state and rebuild only an invalid or changed subtree.
+A test allocator records zero global allocations during the measured steady-state paint traversal.
 ```
 
 #### OXY-G005 Implement bounded local diagnostics
@@ -164,4 +164,53 @@ Correlation tests reject stale, missing, or cross-runtime identifiers and never 
 EditableText contract tests accept checked insertion, replacement, selection, grapheme deletion, word deletion, undo, and redo.
 Boundary tests reject indices that split an invalid text unit and preserve the prior text and selection.
 The model exposes the approved geometry contract without realizing geometry through a rendering substrate candidate.
+```
+
+#### OXY-G007 Implement Platform integration normalization and serialization skeleton
+
+- **Type:** Feature
+- **Effort:** 3
+- **Dependencies:** None
+- **Category:** Feature-Evolution
+- **Scope (In-Scope Files):**
+  - `crates/oxyflut-platform/`
+  - `crates/oxyflut/` for reviewed public-surface reexports only
+- **Scope (Out-of-Scope Files):**
+  - Candidate adapter crates, `native/engine-bridge/`, qualification files, and every file owned by Epic E or Epic F (don't touch).
+- **Verification Command:** `cargo +1.98.0 test -p CRATE --all-features`; `cargo +1.98.0 clippy --workspace --all-targets --all-features -- -D warnings`
+- **Expected Success Output:** `exit 0` after replacing `CRATE` with `oxyflut-platform`.
+- **STOP Conditions:**
+  - "STOP if callback serialization, normalization, timestamp, or ownership behavior needs a public contract absent from `contracts/oxyflut-public.rs`; route the gap to Stage 3."
+- **Description:** Implement the substrate-neutral Platform integration skeleton. Serialize callback intake and normalize window, display, input, lifecycle, and presentation feedback before application state changes. Expose a normalized test interface for candidate adapters without giving the adapter policy ownership.
+- **Acceptance:**
+  - **Mode:** contract_test
+  - **Evidence:**
+
+```text
+Contract tests serialize reentrant callback intake, normalize each declared event to the approved interface, and reject callback data after its owner begins teardown. Candidate-facing tests consume the normalized interface without mutating application state through callback intake.
+```
+
+#### OXY-G008 Run the layout prequalification suite against the null substrate on the reference host
+
+- **Type:** Feature
+- **Effort:** 3
+- **Dependencies:** OXY-E010, OXY-E015, OXY-E022, OXY-G003
+- **Category:** Perf
+- **Scope (In-Scope Files):**
+  - `crates/oxyflut-layout/`
+  - `qualification/evidence/layout-prequalification/`
+- **Scope (Out-of-Scope Files):**
+  - Candidate adapter crates, `native/engine-bridge/`, `qualification/probes/`, and every file owned by Epic F (don't touch).
+- **Verification Command:** `cargo +1.98.0 run -p xtask -- layout-prequalification validate --lock LOCK_PATH --corpus CORPUS_PATH --suite-schema SUITE_SCHEMA_PATH --suite SUITE_PATH --output RESULT_PATH`
+- **Expected Success Output:** `exit 0` and schema-valid null-substrate layout-cap evidence.
+- **STOP Conditions:**
+  - "STOP if `thinkpadp14s` cannot supply the required reference-host identity or if the null-substrate evidence fails schema or lock validation; retain layoutVisitCap as a KU."
+  - "STOP if the suite needs a candidate adapter or a paint-submission value for the null substrate; route the gap to Stage 3."
+- **Description:** Run the layout prequalification suite from `oxyflut-layout` with a null substrate on the Linux reference host. Record ordinary visits, attempted ordinary visits, intrinsic queries, and application-owned layout time as substrate-independent evidence. Record paint-submission time as not applicable for the null substrate. Produce the layoutVisitCap binding input without recording a CON-* meter value, benchmark row, comparative score, or selection result.
+- **Acceptance:**
+  - **Mode:** runbook_probe
+  - **Evidence:**
+
+```text
+The layout-prequalification command accepts the null-substrate suite with the declared Linux reference-host identity. The emitted evidence binds the corpus, counting rules, ordinary visits, attempted ordinary visits, intrinsic queries, application-owned layout time, and not-applicable paint-submission field. Lock validation accepts the layoutVisitCap binding input and rejects an absent, mismatched, or candidate-adapter-derived substitute.
 ```
