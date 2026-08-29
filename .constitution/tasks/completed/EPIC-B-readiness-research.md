@@ -265,9 +265,9 @@ Epic B completed its 20 story points as research and coordination inputs only. N
 
 ##### EPIC-B closeout Deviations & Justifications
 
-- **Touched Files:** `.constitution/tasks/critical-path.md`, `.constitution/tasks/changelog.md`, `.constitution/tasks/active/EPIC-D-readiness-reconciliation.md`, and the `.constitution/tasks/active/EPIC-B-readiness-research.md` to `.constitution/tasks/completed/EPIC-B-readiness-research.md` rename.
+- **Touched Files:** `.constitution/tasks/critical-path.md`, `.constitution/tasks/changelog.md`, `.constitution/tasks/completed/EPIC-D-readiness-reconciliation.md`, and the `.constitution/tasks/active/EPIC-B-readiness-research.md` to `.constitution/tasks/completed/EPIC-B-readiness-research.md` rename.
 - **Justification:** Step 5/6 constitution reconciliation records Epic B's completed research inputs, the remaining blocked external inputs, and the resulting OXY-D001 handoff. These closeout changes archive the epic and update task bookkeeping without editing active specifications or changing readiness.
 
 ### Stage 3 revisions required — routed to OXY-D001
 
-Every spike's `Spec edits required` or `Downstream impact` section, the hardware register's blocked rows, and the assessor record's blocked second assessor and authorship-independence decision are enumerated in [OXY-D001 inputs from Epic B](../active/EPIC-D-readiness-reconciliation.md#oxy-d001-inputs-from-epic-b). No Epic B ticket applied any of them.
+Every spike's `Spec edits required` or `Downstream impact` section, the hardware register's blocked rows, and the assessor record's blocked second assessor and authorship-independence decision are enumerated in [OXY-D001 inputs from Epic B](EPIC-D-readiness-reconciliation.md#oxy-d001-inputs-from-epic-b). No Epic B ticket applied any of them.
