@@ -382,7 +382,7 @@ The nonproduction Perl model at `/tmp/wf-epic-b/OXY-B005/layout_visit_topology_m
 The following is the complete executed probe source.
 
 <!-- canonical-block: layout-visit-topology-model-source -->
-
+<!-- prettier-ignore -->
 ```text
 #!/usr/bin/env perl
 use strict;
@@ -894,7 +894,7 @@ Stage 3 must apply all of the following edits without setting a numeric cap.
 - Create `.constitution/tech-spec/data-models/layout-qualification-record.schema.json` with the exact bytes in the following code block. Its SHA-256 is `09d96af49384e47ee6154f386af2ef771985516a61c843d561835654283bd7b1`.
 
 <!-- canonical-block: layout-qualification-record-schema -->
-
+<!-- prettier-ignore -->
 ```text
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1282,7 +1282,7 @@ Stage 3 must apply all of the following edits without setting a numeric cap.
 - Create `.constitution/tech-spec/data-models/layout-prequalification-run.schema.json` with the exact bytes in the following code block. Its SHA-256 is `76dfee7dfcdfdd49e2d67afdf83ab43c29dbb6513652a8023b0869a7d59293e2`.
 
 <!-- canonical-block: layout-prequalification-run-schema -->
-
+<!-- prettier-ignore -->
 ```text
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1542,7 +1542,7 @@ The following local schema-byte check parsed both proposed schemas and hashed th
 - Create `.constitution/tech-spec/data-models/layout-prequalification-suite.schema.json` with the exact bytes in the following code block. Its SHA-256 is `27e3a876f3b8d5e88ad43089a9eff0c7ce225a6d9cece5fcd789f7759c05c924`.
 
 <!-- canonical-block: layout-prequalification-suite-schema -->
-
+<!-- prettier-ignore -->
 ```text
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1685,7 +1685,7 @@ prettier --parser json /tmp/wf-epic-b/OXY-B005/round6-record.schema.json > /tmp/
 - Create `qualification/staged/layout-visit-counting-rules.json` with the exact canonical UTF-8 bytes below. Its SHA-256 is `6cd0d7c7b06587525d9127f15cceecdd6f9c21b8a62be93c70c9b3756ca459c2`. The `policyCaps` identifier is `weighted`; `intrinsic-measure` and `text` are explicit nonordinary families. `CAP_CANDIDATE=2` is a probe input in this document, not the value of `measurementPolicy.layoutVisitCap`.
 
 <!-- canonical-block: layout-visit-counting-rules -->
-
+<!-- prettier-ignore -->
 ```text
 {
   "schemaVersion": "1.0.0",
@@ -1724,7 +1724,7 @@ prettier --parser json /tmp/wf-epic-b/OXY-B005/round6-record.schema.json > /tmp/
 - `.constitution/tech-spec/changelog.md`: prepend this exact entry before `## [v0.15.0] - 2026-08-26`.
 
 <!-- canonical-block: qualification-lock-v6-changelog-entry -->
-
+<!-- prettier-ignore -->
 ```text
 ## [v0.16.0] - 2026-08-28
 
