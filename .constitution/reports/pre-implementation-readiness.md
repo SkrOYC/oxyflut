@@ -2,7 +2,7 @@
 
 - Original date: 2026-08-29
 - Ticket: OXY-D001
-- Status: reconciliation complete; readiness not set
+- Status: reconciliation complete through the Stage 3 routing checklist in section 8; readiness not set
 
 This Stage 4 report applies no specification edit and cannot set `candidateImplementationReady` or `measurementReady`.
 
@@ -118,7 +118,7 @@ measurement validate: ok
 measurement validate: ok
 ```
 
-`environment inspect` was not run because it writes a `PATH.inventory.json` companion artifact into the repository. The recorded Epic C facts and `.constitution/tech-spec/changelog.md:7-19` supply the environment-tooling state instead.
+`environment inspect` was not run because it writes a `PATH.inventory.json` companion artifact into the repository. The recorded Epic C facts and `.constitution/tech-spec/changelog.md:10-14` supply the environment-tooling state instead.
 
 ## Consolidated inputs
 
@@ -145,7 +145,7 @@ measurement validate: ok
 
 ### Staged tool manifest
 
-`qualification/tools/native-contract-toolchain.json` records the staged compiler, linker, archiver, symbol inspector, binding generators, formatter, Rust tools, and libc-header utility records. Every record has host triple `x86_64-unknown-linux-gnu`; `.constitution/tech-spec/changelog.md:9-10` retains other Tier 1 hosts as a lock input.
+`qualification/tools/native-contract-toolchain.json` records the staged compiler, linker, archiver, symbol inspector, binding generators, formatter, Rust tools, and libc-header utility records. Every record has host triple `x86_64-unknown-linux-gnu`; `.constitution/tech-spec/changelog.md:10-11` retains other Tier 1 hosts as a lock input.
 
 ### External-contract manifest and snapshot convention
 
@@ -153,15 +153,15 @@ measurement validate: ok
 
 ### Baseline tooling
 
-`xtask/src/commands/baseline.rs:22-60` validates one candidate-neutral baseline from `--input`; its `--output` path publishes artifacts and was not used. The synthetic baseline fixture passed the read-only run, but `.constitution/tech-spec/contracts/qualification-lock.json:94-105` retains `measurementPolicy.capabilityBaseline` as `null`.
+`xtask/src/commands/baseline.rs:22-60` validates one candidate-neutral baseline from `--input`; its `--output` path publishes artifacts and was not used. The synthetic baseline fixture passed the read-only run, but `.constitution/tech-spec/contracts/qualification-lock.json:104-114` retains `measurementPolicy.capabilityBaseline` as `null`.
 
 ### Measurement templates
 
-`crates/oxyflut-qualification/src/measurement.rs:1-24` provides library-only `generate_templates` and `compute_comparison_bounds`; no template-generation command surface exists. `.constitution/tech-spec/data-models/raw-measurement.schema.json:1-58` is the committed raw schema, but it omits `$schema` and has no per-`(constraintId, launch)` non-decreasing `monotonicNs` schema rule. The successful synthetic-fixture validation verifies parsing and bindings only; it reports no observation.
+`crates/oxyflut-qualification/src/measurement.rs:535-640` provides library-only `generate_templates` and `compute_comparison_bounds`; no template-generation command surface exists. `.constitution/tech-spec/data-models/raw-measurement.schema.json:1-58` is the committed raw schema, but it omits `$schema` and has no per-`(constraintId, launch)` non-decreasing `monotonicNs` schema rule. The successful synthetic-fixture validation verifies parsing and bindings only; it reports no observation.
 
 ### Environment tooling
 
-`.constitution/tech-spec/changelog.md:9-18` records the reproducible shell, the `x86_64-unknown-linux-gnu` staged-tool limit, and the `PATH.inventory.json` companion behavior. The environment command was not run because its output publication is outside this ticket.
+`.constitution/tech-spec/changelog.md:10-14` records the reproducible shell, the `x86_64-unknown-linux-gnu` staged-tool limit, and the `PATH.inventory.json` companion behavior. The environment command was not run because its output publication is outside this ticket.
 
 ### Read-only lock report
 
@@ -169,7 +169,7 @@ measurement validate: ok
 
 ### Count reconciliation
 
-The live lock has 13 committed pre-implementation KUs (`.constitution/tech-spec/contracts/qualification-lock.json:114-144`). Applying the deltas from [SPK-B002](../spikes/SPK-B002.md#spec-edits-required), [SPK-B003](../spikes/SPK-B003.md#spec-edits-required), [SPK-B004](../spikes/SPK-B004.md#spec-edits-required), [SPK-B005](../spikes/SPK-B005.md#spec-edits-required), and [SPK-B006](../spikes/SPK-B006.md#spec-edits-required): +5, +11, +0, +1, and -1, gives 29. The live `qualification/fixtures/readiness/cleared-without-evidence.json` fixture has 12 KUs; its B005 +1 plus B006 -1 deltas retain 12. The live `xtask/src/contracts/schema.rs:606-614` assertions are `schema_count`/`instance_count` 18/6; SPK-B001 contributes +2/+1 and SPK-B005 contributes +3/+0, giving 23/7. The live `.constitution/tech-spec/contracts/oxyflut-substrate.h:22` header has ABI `10u`; SPK-B001 requires `11u`. The required live command `grep -rl '0\.15\.0' xtask qualification .constitution/tech-spec | wc -l` returns 62, while SPK-B005's 56 count covers only `xtask` and `qualification`.
+The live lock has 13 committed pre-implementation KUs (`.constitution/tech-spec/contracts/qualification-lock.json:117-131`). Applying the deltas from [SPK-B002](../spikes/SPK-B002.md#spec-edits-required), [SPK-B003](../spikes/SPK-B003.md#spec-edits-required), [SPK-B004](../spikes/SPK-B004.md#spec-edits-required), [SPK-B005](../spikes/SPK-B005.md#spec-edits-required), and [SPK-B006](../spikes/SPK-B006.md#spec-edits-required): +5, +11, +0, +1, and -1, gives 29. The live `qualification/fixtures/readiness/cleared-without-evidence.json` fixture has 12 KUs; its B005 +1 plus B006 -1 deltas retain 12. The live `xtask/src/contracts/schema.rs:606-614` assertions are `schema_count`/`instance_count` 18/6; SPK-B001 contributes +2/+1 and SPK-B005 contributes +3/+0, giving 23/7. The live `.constitution/tech-spec/contracts/oxyflut-substrate.h:22` header has ABI `10u`; SPK-B001 requires `11u`. The required live command `grep -rl '0\.15\.0' xtask qualification .constitution/tech-spec | wc -l` returns 62, while SPK-B005's 56 count covers only `xtask` and `qualification`.
 
 ### Routed Stage 3 and upstream text replacements
 
@@ -180,7 +180,7 @@ The live lock has 13 committed pre-implementation KUs (`.constitution/tech-spec/
 - Stage 3 must type `measurementPolicy.sampleValidityRules`, the external-contract proposal, `PATH.inventory.json`, Wayland interface completeness, and the conventional digest referents for scoring anchors, assessors, fuzz corpora, and security-patch rehearsal.
 - Stage 1 must replace the `.constitution/prd/constraints.md` paragraph that begins "The numeric common-case node-visit limit" with: "The numeric common-case node-visit limit for CAP-LAY-001 remains a gating known unknown until the prequalification lock binds candidate and environment identities and the 48-tuple timing probe supplies schema-valid evidence under CON-PERF-001 on unblocked reference hardware."
 - Stage 2 must replace `.constitution/architecture/risks.md` `ARC-R02` `Mitigation or follow-up` with: "Record the corpus and Table 4 finite per-policy visit-cap freeze as partially discharged; retain the numeric global layout-visit cap as the remaining gating condition until the prequalification lock binds candidate and environment identities and the 48-tuple timing probe supplies schema-valid evidence under CON-PERF-001 on unblocked reference hardware."
-- Stage 1 must add `ordinary visit`, `attempted ordinary visits`, `layout prequalification suite`, `second-configuration score-4 evidence`, `semantic-role registry`, `authorship independence`, `display-epoch equality tuple`, `targetModeSignature`, and `campaign host` to `.constitution/prd/glossary.md` before Stage 3 adopts them.
+- Stage 1 must add `ordinary visit`, `attempted ordinary visits`, `layout prequalification suite`, `second-configuration score-4 evidence`, `semantic-role registry`, `authorship independence`, `display-epoch equality tuple` (including `targetModeSignature`), and `campaign host` to `.constitution/prd/glossary.md` before Stage 3 adopts them.
 - Stage 1 must insert this exact sentence after the independent-scoring sentence in `.constitution/prd/constraints.md`: "A person who authors candidate implementation or qualification evidence for a candidate must not serve as an independent scorer for that candidate."
 
 The proposed `qualification/staged/` records, the proposed `qualification/fixtures/external-contracts/{macos,wayland,x11,windows,accessibility}/` directories, the proposed `.constitution/tech-spec/contracts/semantic-role-registry.json`, and proposed `OXY_SEMANTICS_ROLE_*` symbols are proposed in SPK-B001, SPK-B002, SPK-B003, SPK-B004, SPK-B005, or SPK-B006, not committed.
@@ -191,21 +191,21 @@ Table 1 classifies every committed pre-implementation KU and both gating-only so
 
 | Known unknown | Binding field | Cited result | Status | Owner | Next action |
 | :-- | :-- | :-- | :-- | :-- | :-- |
-| `minimum-platform-and-protocol-versions` | `referenceEnvironments` | `.constitution/tech-spec/contracts/qualification-lock.json:53-88` retains every `minimumVersion` as `null`. | blocked external input | OXY-B007 | Obtain the missing macOS, Windows, and Ubuntu reference-host captures, then apply the Stage 3 platform revisions. |
+| `minimum-platform-and-protocol-versions` | `referenceEnvironments` | `.constitution/tech-spec/contracts/qualification-lock.json:60-91` retains every `minimumVersion` as `null`. | blocked external input | OXY-B007 | Obtain the missing macOS, Windows, and Ubuntu reference-host captures, then apply the Stage 3 platform revisions. |
 | `hardware-gpu-driver-and-system-package-locks` | `referenceEnvironments` | `.constitution/reports/reference-hardware-access.md#reference-conformance-and-feasibility` records non-reference Linux access and blocked macOS and Windows rows. | blocked external input | OXY-B007 | Obtain accountable reference-host access and capture hardware, GPU, driver, and package-lock identities. |
-| `reference-application-scenes-scripts-fonts-assets-windows-cache-and-flags` | `workload` | `.constitution/tech-spec/contracts/qualification-lock.json:89-98` sets every workload field to `null`. | retained KU | OXY-D001 | Define and type the approved workload corpus in the Stage 3 lock revision. |
+| `reference-application-scenes-scripts-fonts-assets-windows-cache-and-flags` | `workload` | `.constitution/tech-spec/contracts/qualification-lock.json:94-102` sets every workload field to `null`. | retained KU | OXY-D001 | Define and type the approved workload corpus in the Stage 3 lock revision. |
 | `raw-measurement-and-sample-validity-contracts` | `measurementPolicy.sampleValidityRules` | `.constitution/tech-spec/data-models/raw-measurement.schema.json:1-58` lacks `$schema` and the monotonic-time schema rule. | retained KU | Stage 3 | Add the raw-measurement revisions and type the staged sample-validity referent. |
-| `capability-and-platform-baselines` | `measurementPolicy.capabilityBaseline` | `.constitution/tech-spec/contracts/qualification-lock.json:99-112` keeps `capabilityBaseline` and `platformContracts` `null`. | retained KU | Stage 3 | Bind approved capability and platform baseline artifacts with typed references. |
+| `capability-and-platform-baselines` | `measurementPolicy.capabilityBaseline` | `.constitution/tech-spec/contracts/qualification-lock.json:104-114` keeps `capabilityBaseline` and `platformContracts` `null`. | retained KU | Stage 3 | Bind approved capability and platform baseline artifacts with typed references. |
 | `independent-presentation-opportunity-sources` | `measurementPolicy.platformContracts` | `.constitution/spikes/SPK-B003.md#spec-edits-required` retains the Wayland independent-meter capture requirements. | blocked external input | OXY-B007 | Capture reference-session meter evidence and apply the Stage 3 platform-contract revision. |
 | `complete-ime-editing-geometry-and-accessibility-maps` | `measurementPolicy.platformContracts` | `.constitution/reports/reference-hardware-access.md#answers` records blocked macOS and Windows host access. | blocked external input | OXY-B007 | Obtain the blocked host access and capture the required IME and accessibility artifacts. |
 | `scoring-anchors-and-two-assessors` | `measurementPolicy.scoringAnchors` | `.constitution/reports/qualification-assessors.md#question` leaves Q2 through Q4 gating and Assessor 2 unnamed. | blocked external input | OXY-B008 | Obtain the second assessor confirmation and Stage 1 authorship-independence approval. |
-| `fuzz-corpora` | `measurementPolicy.fuzzCorpora` | `.constitution/tech-spec/contracts/qualification-lock.json:99-112` sets `fuzzCorpora` to `null`. | retained KU | OXY-D001 | Admit the `fuzz-corpora` record proposed in SPK-B006, not committed, through a typed Stage 3 binding. |
-| `security-patch-rehearsal` | `measurementPolicy.securityPatchRehearsal` | `.constitution/tech-spec/contracts/qualification-lock.json:99-112` sets `securityPatchRehearsal` to `null`. | retained KU | OXY-D001 | Admit the security-patch record proposed in SPK-B006, not committed, through a typed Stage 3 binding. |
+| `fuzz-corpora` | `measurementPolicy.fuzzCorpora` | `.constitution/tech-spec/contracts/qualification-lock.json:104-114` sets `fuzzCorpora` to `null`. | retained KU | OXY-D001 | Admit the `fuzz-corpora` record proposed in SPK-B006, not committed, through a typed Stage 3 binding. |
+| `security-patch-rehearsal` | `measurementPolicy.securityPatchRehearsal` | `.constitution/tech-spec/contracts/qualification-lock.json:104-114` sets `securityPatchRehearsal` to `null`. | retained KU | OXY-D001 | Admit the security-patch record proposed in SPK-B006, not committed, through a typed Stage 3 binding. |
 | `layout-visit-cap` | `measurementPolicy.layoutVisitCap` | `.constitution/spikes/SPK-B005.md#question` retains row 6 as a gating KU. | blocked external input | OXY-B007 | Obtain the blocked reference hosts before the Stage 3 layout-lock revision can receive capture input. |
-| `external-distribution-schema-snapshots-and-verifiers` | `measurementPolicy.externalContractLock` | `.constitution/tech-spec/contracts/qualification-lock.json:99-112` sets `externalContractLock` to `null`. | retained KU | Stage 3 | Adopt or replace the proposed external-contract lock through a typed Stage 3 binding. |
-| `resolved-tool-digests` | `resolvedTools` | `.constitution/tech-spec/contracts/qualification-lock.json:113-113` keeps `resolvedTools` empty. | retained KU | OXY-A008 | Bind an authoritative resolved-tool lock that conforms to the staged manifest. |
-| `integrated-fork-commit` (gating-only) | `sourcePins.integratedFork.commit` | `.constitution/tech-spec/contracts/qualification-lock.json:17-18` sets the commit to `null`. | retained KU | Stage 3 | Record a verified immutable integrated-fork commit in the Stage 3 lock revision. |
-| `oxyflut-adapter-commit` (gating-only) | `sourcePins.oxyflutAdapter.commit` | `.constitution/tech-spec/contracts/qualification-lock.json:18-18` sets the commit to `null`. | retained KU | Stage 3 | Record a verified immutable Oxyflut-adapter commit in the Stage 3 lock revision. |
+| `external-distribution-schema-snapshots-and-verifiers` | `measurementPolicy.externalContractLock` | `.constitution/tech-spec/contracts/qualification-lock.json:104-114` sets `externalContractLock` to `null`. | retained KU | Stage 3 | Adopt or replace the proposed external-contract lock through a typed Stage 3 binding. |
+| `resolved-tool-digests` | `resolvedTools` | `.constitution/tech-spec/contracts/qualification-lock.json:116` keeps `resolvedTools` empty. | retained KU | OXY-A008 | Bind an authoritative resolved-tool lock that conforms to the staged manifest. |
+| `integrated-fork-commit` (gating-only) | `sourcePins.integratedFork.commit` | `.constitution/tech-spec/contracts/qualification-lock.json:20` sets the commit to `null`. | retained KU | Stage 3 | Record a verified immutable integrated-fork commit in the Stage 3 lock revision. |
+| `oxyflut-adapter-commit` (gating-only) | `sourcePins.oxyflutAdapter.commit` | `.constitution/tech-spec/contracts/qualification-lock.json:21` sets the commit to `null`. | retained KU | Stage 3 | Record a verified immutable Oxyflut-adapter commit in the Stage 3 lock revision. |
 
 ## OXY-D001 decisions
 
@@ -220,15 +220,15 @@ Table 2 records repository-supported decisions and bounded deferrals. The report
 | Windows 77 excerpt fixtures | `SPK-B002.md#spec-edits-required` records excerpt fixtures because no Windows host supplies canonical bytes. | Retain excerpts while no Windows host exists; convert to canonical bytes plus sidecars after canonical host access exists. | Define the conversion trigger and sidecar validation rule in the Stage 3 external-fixture revision. | OXY-D001 |
 | Migration-fixture mechanism | `xtask/src/contracts/schema.rs:505-540` validates one fixed `migration/{source.json,source.sha256,derived.json}` triple. | Generalize the helper to named per-migration input and derived-output pairs. | Add a per-migration registry that validates each named pair from the proposed SPK-B001 and SPK-B005 migrations, not committed. | Stage 3 |
 | 256 KiB `wayland-info` and `xdpyinfo` capture bound | `.constitution/reports/reference-hardware-access.md#reference-conformance-and-feasibility` confirms only a non-reference NixOS host. | Defer and retain fail-closed truncation handling. | Add the bound only after real Ubuntu 26.04 capture sizes are available. | OXY-B007 |
-| Other Tier 1 hosts as a lock input | `.constitution/tech-spec/changelog.md:9-10` limits the staged toolchain to `x86_64-unknown-linux-gnu`. | Defer pending blocked hardware inputs. | Add host records only after accountable Tier 1 host capture exists. | OXY-B007 |
+| Other Tier 1 hosts as a lock input | `.constitution/tech-spec/changelog.md:10-11` limits the staged toolchain to `x86_64-unknown-linux-gnu`. | Defer pending blocked hardware inputs. | Add host records only after accountable Tier 1 host capture exists. | OXY-B007 |
 | Wayland interface-set completeness rule | `.constitution/tech-spec/changelog.md:30-31` identifies the absent completeness rule and partial `protocolVersion` representation. | Defer completeness determination pending a reference-session capture. | Add an `interfaceSetCompleteness` schema rule that requires the captured interface set and rejects absent or partial observed `protocolVersion`. | Stage 3 |
-| Offline advisory database and refresh policy | `.constitution/tasks/active/EPIC-D-readiness-reconciliation.md:58-59` records no pinned vendored advisory database. | Defer advisory validation. | Bind a pinned offline RustSec advisory database, its digest, refresh authority, cadence, and CI location. | Stage 3 |
+| Offline advisory database and refresh policy | `.constitution/tasks/active/EPIC-D-readiness-reconciliation.md:42` records no pinned vendored advisory database. | Defer advisory validation. | Bind a pinned offline RustSec advisory database, its digest, refresh authority, cadence, and CI location. | Stage 3 |
 
 The proposed SPK-B001 and SPK-B005 migration filenames use `<name>-v5-to-v6.input.json` and `<name>-v5-to-v6.expected.json`; they are proposed in SPK-B001 and SPK-B005, not committed.
 
 ## Missing approved or captured lock inputs
 
-Table 3 identifies every null policy value, empty resolved-tool array, null reference-environment field family, and false readiness flag. The entries name inputs only and do not change a flag.
+Table 3 identifies every null policy value, empty resolved-tool array, null source-pin commit, null reference-environment field family, and false readiness flag. The entries name inputs only and do not change a flag.
 
 | Lock field | Current value | What fills it (exact approval or capture) | Owner |
 | :-- | :-- | :-- | :-- |
@@ -242,6 +242,16 @@ Table 3 identifies every null policy value, empty resolved-tool array, null refe
 | `measurementPolicy.securityPatchRehearsal` | `null` | Admission of the security-patch record proposed in SPK-B006, not committed, with its typed digest binding. | OXY-D001 |
 | `measurementPolicy.externalContractLock` | `null` | Stage 3 adoption or replacement of `qualification/schemas/external/proposed-external-contract-lock.json`. | Stage 3 |
 | `measurementPolicy.layoutVisitCap` | `null` | Schema-valid reference-host capture from the bounded layout probe and the approved cap decision. | OXY-B007 |
+| `sourcePins.integratedFork.commit` | `null` | A verified immutable integrated-fork commit captured for the lock. | Stage 3 |
+| `sourcePins.oxyflutAdapter.commit` | `null` | A verified immutable Oxyflut-adapter commit captured for the lock. | Stage 3 |
+| `workload.referenceApplication` | `null` | The approved reference-application identity in the typed workload corpus. | OXY-D001 |
+| `workload.scenes` | `null` | The approved reference scene set in the typed workload corpus. | OXY-D001 |
+| `workload.interactionScripts` | `null` | The approved interaction-script set in the typed workload corpus. | OXY-D001 |
+| `workload.fonts` | `null` | The captured font identities and immutable bytes for the approved workload. | OXY-D001 |
+| `workload.assets` | `null` | The captured asset identities and immutable bytes for the approved workload. | OXY-D001 |
+| `workload.windowMatrix` | `null` | The approved window matrix for the workload. | OXY-D001 |
+| `workload.cacheStates` | `null` | The approved cache-state matrix for the workload. | OXY-D001 |
+| `workload.releaseFlags` | `null` | The approved release-flag set for the workload. | OXY-D001 |
 | `resolvedTools` | `[]` | An authoritative resolved-tool lock that matches `qualification/tools/native-contract-toolchain.json`. | OXY-A008 |
 | `referenceEnvironments.*.minimumVersion` | `null` | Captures that establish every reference OS and protocol minimum. | OXY-B007 |
 | `referenceEnvironments.*.hardwareId` | `null` | Accountable reference-host hardware identity captures for every Tier 1 environment. | OXY-B007 |
@@ -251,4 +261,162 @@ Table 3 identifies every null policy value, empty resolved-tool array, null refe
 | `candidateImplementationReady` | `false` | Complete approved and captured inputs for every pre-implementation lock field and no pre-implementation KU. | Stage 3 |
 | `measurementReady` | `false` | Complete approved and captured inputs for every measurement lock field and no gating KU. | Stage 3 |
 
-<!-- M2 sections follow -->
+## Stage 3 reconciliation checklist
+
+This checklist orders prerequisites before dependents. Each row routes an existing source instruction; its anchor holds the normative text.
+
+### T0 upstream prerequisites
+
+Order rule: Stage 1 and Stage 2 approvals precede every Stage 3 change that uses their terms or replacement text.
+
+| # | File | Field, section, or symbol | Enforcing check | Source anchor | Owner |
+| :-- | :-- | :-- | :-- | :-- | :-- |
+| T0.1 | `.constitution/prd/glossary.md` | Add eight terms: `ordinary visit`, `attempted ordinary visits`, `layout prequalification suite`, `second-configuration score-4 evidence`, `semantic-role registry`, `authorship independence`, `display-epoch equality tuple` including `targetModeSignature`, and `campaign host`. | `xtask/src/contracts/traceability/mod.rs` exact PRD sets. | [Epic D glossary inputs](../tasks/active/EPIC-D-readiness-reconciliation.md#oxy-d001-inputs-from-epic-b) | Stage 1 |
+| T0.2 | `.constitution/prd/constraints.md` | Replace the paragraph beginning `The numeric common-case node-visit limit` with the exact section 3 replacement. | `prd_constraints` and `EXPECTED_CONSTRAINTS`. | [SPK-B005, Spec edits required](../spikes/SPK-B005.md#spec-edits-required) | Stage 1 |
+| T0.3 | `.constitution/prd/constraints.md` | Insert the exact authorship-independence sentence in section 3. | `$defs.score.properties.assessorScores` and `LOCK_SCHEMA`. | [OXY-B008, Spec edits required](qualification-assessors.md#spec-edits-required) | Stage 1 |
+| T0.4 | `.constitution/architecture/risks.md` | Replace `ARC-R02` `Mitigation or follow-up` with the exact section 3 replacement. | `xtask/src/contracts/traceability/mod.rs` architecture authority. | [SPK-B005, Spec edits required](../spikes/SPK-B005.md#spec-edits-required) | Stage 2 |
+
+### T1 schema creation and migration
+
+Order rule: Create or migrate schemas before their fixture corpora, instances, and assertions.
+
+| # | File | Field, section, or symbol | Enforcing check | Source anchor | Owner |
+| :-- | :-- | :-- | :-- | :-- | :-- |
+| T1.1 | `.constitution/tech-spec/data-models/{capability-traceability,specification-phase,raw-measurement}.schema.json` | Add physical contract-test locations, five typed promotion-evidence references, raw `$schema`, and non-decreasing per-`(constraintId, launch)` `monotonicNs`. | `discover_contract_instances` `$schema` and traceability contract-test resolution. | `.constitution/tech-spec/changelog.md:24-28` | Stage 3 |
+| T1.2 | `.constitution/tech-spec/data-models/{semantic-role-registry,semantic-role-registry-snapshot}.schema.json` (proposed in SPK-B001, not committed) | Create the D0 registry and snapshot schemas. | `run_fixture_corpus` directory-set equality. | [SPK-B001, Spec edits required](../spikes/SPK-B001.md#spec-edits-required) | Stage 3 |
+| T1.3 | `.constitution/tech-spec/data-models/accessibility-map.schema.json` | Migrate v5 to v6 keyed `forward.roles`, registry provenance, and text-layout generation. | `ACCESSIBILITY_MAP_SCHEMA` and accessibility-map validation. | [SPK-B001, Accessibility-map version-6 landing inventory](../spikes/SPK-B001.md#accessibility-map-version-6-landing-inventory) | Stage 3 |
+| T1.4 | `.constitution/tech-spec/data-models/qualification-lock.schema.json` | Migrate v5 to v6; type sample-validity, external-lock, inventory, conventional staged, and six layout fields. | `LOCK_SCHEMA` and claimed-ready policy validation. | [SPK-B005, Counting-rules interpretation](../spikes/SPK-B005.md#counting-rules-interpretation-and-stage-3-validator-requirements) | Stage 3 |
+| T1.5 | `.constitution/tech-spec/data-models/{layout-qualification-record,layout-prequalification-run,layout-prequalification-suite}.schema.json` (proposed in SPK-B005, not committed) | Create the three layout schemas. | `schema_compiles_committed_contract_instances_and_fixture_corpus`. | [SPK-B005, Layout prequalification additions inventory](../spikes/SPK-B005.md#layout-prequalification-additions-inventory) | Stage 3 |
+| T1.6 | `PATH.inventory.json` (proposed conventional referent from Epic C, not committed) | Type the environment inventory, Wayland interface-set completeness, and partial observed `protocolVersion`. | `POLICY_FIELDS` and `LOCK_SCHEMA`. | `.constitution/tech-spec/changelog.md:29-33` | Stage 3 |
+
+### T2 schema-fixture corpora
+
+Order rule: Land a schema and its corpus in one change because `run_fixture_corpus` requires equal schema and fixture-directory sets.
+
+| # | File | Field, section, or symbol | Enforcing check | Source anchor | Owner |
+| :-- | :-- | :-- | :-- | :-- | :-- |
+| T2.1 | `qualification/fixtures/contracts/{semantic-role-registry,semantic-role-registry-snapshot}/` (proposed in SPK-B001, not committed) | Add valid and five invalid inputs with expected sidecars for each new schema. | `run_fixture_corpus`. | [SPK-B001, Spec edits required](../spikes/SPK-B001.md#spec-edits-required) | Stage 3 |
+| T2.2 | `qualification/fixtures/contracts/accessibility-map/` and `migration/accessibility-map-v5-to-v6.{input,expected}.json` (migration pair proposed in SPK-B001, not committed) | Migrate the keyed-role, supersession, and traceability fixture corpus. | `run_fixture_corpus`, `discover_contract_instances` `$schema`, and `validate_migration_fixture`. | [SPK-B001, Accessibility-map version-6 landing inventory](../spikes/SPK-B001.md#accessibility-map-version-6-landing-inventory) | Stage 3 |
+| T2.3 | `qualification/fixtures/contracts/{layout-qualification-record,layout-prequalification-run,layout-prequalification-suite}/` (proposed in SPK-B005, not committed) | Add all schema-valid and schema-invalid corpora with expected sidecars. | `run_fixture_corpus`. | [SPK-B005, Layout prequalification additions inventory](../spikes/SPK-B005.md#layout-prequalification-additions-inventory) | Stage 3 |
+| T2.4 | `qualification/fixtures/contracts/qualification-lock/` and 13 lock-bearing readiness fixtures | Migrate fixtures to v6 and add the six required layout fields. | `LOCK_SCHEMA` and `run_fixture_corpus`. | [SPK-B005, Counting-rules interpretation](../spikes/SPK-B005.md#counting-rules-interpretation-and-stage-3-validator-requirements) | Stage 3 |
+
+### T3 contract instances
+
+Order rule: Populate instances after T1 schemas and T2 fixture shapes are present.
+
+| # | File | Field, section, or symbol | Enforcing check | Source anchor | Owner |
+| :-- | :-- | :-- | :-- | :-- | :-- |
+| T3.1 | `.constitution/tech-spec/contracts/semantic-role-registry.json` (proposed in SPK-B001, not committed) and `.constitution/tech-spec/contracts/capability-traceability.json` | Create the self-declared registry; add CAP-SEM physical, generated-symbol, and registry-pointer bindings, plus contract-test locations. | `discover_contract_instances` `$schema` and `validate_required_symbol_edges`. | [SPK-B001, Spec edits required](../spikes/SPK-B001.md#spec-edits-required) | Stage 3 |
+| T3.2 | `.constitution/tech-spec/contracts/platform-contracts.json` and `.constitution/tech-spec/stack.md` | Apply macOS retentions, Windows ten edits, Wayland replacement, X11 nine edits, aligned GTK and AT-SPI rows, and the retained Orca gate. | `validate_platform_baseline`. | [SPK-B002](../spikes/SPK-B002.md#spec-edits-required), [SPK-B003](../spikes/SPK-B003.md#spec-edits-required), and [SPK-B004](../spikes/SPK-B004.md#spec-edits-required) | Stage 3 |
+| T3.3 | `.constitution/tech-spec/contracts/qualification-lock.json` | Apply typed raw, sample-validity, external-contract, environment-inventory, platform-baseline, and layout references; retain every null field required by its source. | `candidate_implementation_report` and `LOCK_SCHEMA`. | [Epic D inputs from Epics A and C](../tasks/active/EPIC-D-readiness-reconciliation.md#oxy-d001-inputs-from-epics-a-and-c) | Stage 3 |
+| T3.4 | `.constitution/tech-spec/contracts/{oxyflut-public.rs,oxyflut-qualification.rs}` and `.constitution/tech-spec/adrs/ADR-0005-platform-hosts.md` | Add the layout counter and probe surface; append the Windows Decision and Wayland Consequences text. | Rust-contract compilation assertion and `validate_workspace`. | [SPK-B005](../spikes/SPK-B005.md#counting-rules-interpretation-and-stage-3-validator-requirements), [SPK-B002](../spikes/SPK-B002.md#spec-edits-required), and [SPK-B003](../spikes/SPK-B003.md#spec-edits-required) | Stage 3 |
+| T3.5 | `.constitution/tech-spec/changelog.md` and CI advisory configuration | Bind a pinned offline advisory database and refresh policy; assign remaining baseline owners; retain library-only template APIs pending their contract. | `baseline validate`, `measurement validate`, and `generate_templates`. | [Epic D inputs from Epics A and C](../tasks/active/EPIC-D-readiness-reconciliation.md#oxy-d001-inputs-from-epics-a-and-c) | Stage 3 |
+
+### T4 lock known-unknown arrays as one lexicographic transaction
+
+Order rule: Change all affected KU arrays and bindings together, sorted lexicographically, before exact-set tests.
+
+| # | File | Field, section, or symbol | Enforcing check | Source anchor | Owner |
+| :-- | :-- | :-- | :-- | :-- | :-- |
+| T4.1 | `.constitution/tech-spec/contracts/qualification-lock.json` | Apply B002 +5, B003 +11, B004 +0, B005 +1, and B006 -1 to both committed arrays: 13 to 29. | `committed_candidate_gate_is_valid_but_open_with_the_exact_ku_set`. | [Epic D KU composition](../tasks/active/EPIC-D-readiness-reconciliation.md#oxy-d001-inputs-from-epic-b) | Stage 3 |
+| T4.2 | `qualification/fixtures/readiness/{invalid,cleared-without-evidence}.json` and `crates/oxyflut-qualification/src/readiness.rs` | Replace two B006 policy KUs with `campaign-host-tool-records`; retain both fixture-derived sets at 12; update `KNOWN_UNKNOWN_BINDINGS`. | `KNOWN_UNKNOWN_BINDINGS`, `collect_known_unknowns`, and `clearing_a_ku_string_without_its_evidence_keeps_the_gate_open`. | [SPK-B006, Spec edits required](../spikes/SPK-B006.md#spec-edits-required) | Stage 3 |
+
+### T5 exact-set and counter assertions
+
+Order rule: Update assertions after T1-T4 source shapes, instances, and arrays are final.
+
+| # | File | Field, section, or symbol | Enforcing check | Source anchor | Owner |
+| :-- | :-- | :-- | :-- | :-- | :-- |
+| T5.1 | `xtask/src/commands/lock_tests.rs` | Update both exact KU tests and the `0.15.0` to `0.15.1` mutation literal. | `committed_candidate_gate_is_valid_but_open_with_the_exact_ku_set`, `cleared_ku_without_evidence_remains_open_with_the_exact_remaining_ku_set`, and corrupt-platform-baseline assertion. | [Epic D KU composition](../tasks/active/EPIC-D-readiness-reconciliation.md#oxy-d001-inputs-from-epic-b) | Stage 3 |
+| T5.2 | `crates/oxyflut-qualification/src/readiness.rs` | Update the cleared-fixture exact KU assertion and changed bindings. | `clearing_a_ku_string_without_its_evidence_keeps_the_gate_open` and `KNOWN_UNKNOWN_BINDINGS`. | [SPK-B006, Spec edits required](../spikes/SPK-B006.md#spec-edits-required) | Stage 3 |
+| T5.3 | `xtask/src/contracts/schema.rs` | Change `schema_count`/`instance_count` from 18/6 to 23/7. | `schema_compiles_committed_contract_instances_and_fixture_corpus`. | [Epic D KU composition](../tasks/active/EPIC-D-readiness-reconciliation.md#oxy-d001-inputs-from-epic-b) | Stage 3 |
+| T5.4 | `xtask/src/contracts/native_tests.rs` | Rename `abi_seven_through_nine_fail_before_callbacks_install`; change `7..=9` to `7..=10`. | `abi_seven_through_ten_fail_before_callbacks_install`. | [SPK-B001, D0 C ABI compatibility landing inventory](../spikes/SPK-B001.md#d0-c-abi-compatibility-landing-inventory) | Stage 3 |
+| T5.5 | `xtask/src/contracts/traceability/{mod.rs,edges.rs,validation.rs,fixtures.rs,tests.rs}` | Advance `ACCESSIBILITY_MAP_SCHEMA`; remove `roles` from `REQUIRED_ACCESSIBILITY_CATEGORIES`; add keyed-role and registry edges. | `ACCESSIBILITY_MAP_SCHEMA`, `REQUIRED_ACCESSIBILITY_CATEGORIES`, and `validate_required_symbol_edges`. | [SPK-B001, Accessibility-map version-6 landing inventory](../spikes/SPK-B001.md#accessibility-map-version-6-landing-inventory) | Stage 3 |
+| T5.6 | `xtask/src/contracts/schema.rs` and `qualification/fixtures/contracts/migration/` | Generalize `validate_migration_fixture` to named input/expected pairs for accessibility-map and qualification-lock migrations. | Source-byte assertion, expected-byte comparison, and v6 rejection in `validate_migration_fixture`. | [OXY-D001 decisions, Migration-fixture mechanism](#oxy-d001-decisions) | Stage 3 |
+
+### T6 version migration
+
+Order rule: Apply active-version edits after T1-T5 content is stable and before the v0.16.0 entry freezes the release record.
+
+| # | File | Field, section, or symbol | Enforcing check | Source anchor | Owner |
+| :-- | :-- | :-- | :-- | :-- | :-- |
+| T6.1 | `xtask/`, `qualification/`, and `.constitution/tech-spec/` | Replace `0.15.0` with `0.16.0` in 62 live files and regenerate affected valid parents and sidecars. | `grep -rl '0\\.15\\.0' xtask qualification .constitution/tech-spec` followed by `wc -l`; `validate_workspace`. | [SPK-B005, Version migration inventory](../spikes/SPK-B005.md#version-migration-inventory) | Stage 3 |
+| T6.2 | `.constitution/tech-spec/guidelines.md` and `.constitution/tech-spec/stack.md` | Update the command table, `Version`, and the sole Scope-guard version reference. | Active-specification equality in traceability validation. | [SPK-B005, Version migration inventory](../spikes/SPK-B005.md#version-migration-inventory) | Stage 3 |
+| T6.3 | `.constitution/tech-spec/changelog.md` | Prepend v0.16.0 and supersede `Known gaps routed to OXY-D001`. | `digests::validate_workspace`. | [SPK-B005, Counting-rules interpretation](../spikes/SPK-B005.md#counting-rules-interpretation-and-stage-3-validator-requirements) | Stage 3 |
+
+### T7 external-fixture preservation
+
+Order rule: Preserve canonical bytes before platform rows reference them and before sidecar enforcement covers them.
+
+| # | File | Field, section, or symbol | Enforcing check | Source anchor | Owner |
+| :-- | :-- | :-- | :-- | :-- | :-- |
+| T7.1 | `qualification/fixtures/external-contracts/macos/` (proposed in SPK-B001, not committed), `qualification/fixtures/external-contracts/wayland/` (proposed in SPK-B003, not committed), and `qualification/fixtures/external-contracts/x11/` (proposed in SPK-B004, not committed) | Re-fetch canonical bytes; preserve macOS, 11 Wayland, and 15 X11 fixtures with same-stem `source.json` sidecars. | `SNAPSHOTS` and `require_license_fields`. | [Epic D external-fixture input](../tasks/active/EPIC-D-readiness-reconciliation.md#oxy-d001-inputs-from-epic-b) | Stage 3 |
+| T7.2 | `qualification/fixtures/external-contracts/windows/` (proposed in SPK-B002, not committed) | Retain the 77-excerpt exemption and record the Windows-host canonical-capture decision. | SPK-B002 `source-fixture capture procedure`. | [SPK-B002, Spec edits required](../spikes/SPK-B002.md#spec-edits-required) | Stage 3 |
+| T7.3 | `qualification/fixtures/external-contracts/accessibility/candidate-neutral-role-registry.json` and `.sha256` (proposed in SPK-B001, not committed) | Generate the candidate-neutral registry outside the upstream-fixture convention. | `discover_contract_instances` `$schema` and registry-pointer edges. | [SPK-B001, Stage 3 semantic-role decision and P2R registry freeze](../spikes/SPK-B001.md#stage-3-semantic-role-decision-and-p2r-registry-freeze) | Stage 3 |
+| T7.4 | `xtask/src/commands/external_contracts.rs` | Extend sidecar coverage or record the accepted manual-enforcement gap; `SNAPSHOTS` excludes external-fixture sidecars. | `SNAPSHOTS` and `require_license_fields`. | [Epic D external-fixture input](../tasks/active/EPIC-D-readiness-reconciliation.md#oxy-d001-inputs-from-epic-b) | Stage 3 |
+| T7.5 | `PATH.inventory.json` (proposed conventional referent from Epic C, not committed) | Confirm the temporary 256 KiB `wayland-info` and `xdpyinfo` capture bound; retain fail-closed truncation. | Stage 3 fail-closed capture-bound assertion. | [Epic D inputs from Epics A and C](../tasks/active/EPIC-D-readiness-reconciliation.md#oxy-d001-inputs-from-epics-a-and-c) | OXY-B007 |
+
+### T8 digest-bound artifacts, frozen last
+
+Order rule: Freeze bytes and regenerate every dependent digest only after each upstream header, schema, corpus, and instance edit is final.
+
+| # | File | Field, section, or symbol | Enforcing check | Source anchor | Owner |
+| :-- | :-- | :-- | :-- | :-- | :-- |
+| T8.1 | `.constitution/tech-spec/contracts/oxyflut-substrate.h`, `qualification/fixtures/native/{interface.json,layout-probe.c.in,layout.x86_64-unknown-linux-gnu.json}` | Advance ABI `10u` to `11u` and regenerate the macro-based layout fixture after all header edits. | `validate_interface` and layout validation. | [SPK-B001, D0 C ABI compatibility landing inventory](../spikes/SPK-B001.md#d0-c-abi-compatibility-landing-inventory) | Stage 3 |
+| T8.2 | `qualification/fixtures/generated-bindings/oxyflut-substrate.rs` and `.sha256` | Regenerate the bindgen golden and sidecar once after all header edits with the manual pinned command; no xtask regeneration subcommand exists. | `validate_bindings`. | [SPK-B001, D0 C ABI compatibility landing inventory](../spikes/SPK-B001.md#d0-c-abi-compatibility-landing-inventory) | Stage 3 |
+| T8.3 | `qualification/staged/{fuzz-corpora,security-patch-rehearsal}.json` (proposed in SPK-B006, not committed) | Create staged records; bind `measurementPolicy.fuzzCorpora` and `measurementPolicy.securityPatchRehearsal`. | `POLICY_FIELDS` and `digests::validate_workspace`. | [SPK-B006, Spec edits required](../spikes/SPK-B006.md#spec-edits-required) | Stage 3 |
+| T8.4 | `qualification/staged/{layout-visit-corpus,layout-visit-counting-rules}.json` and three layout schemas (proposed in SPK-B005, not committed) | Freeze artifacts and bind layout `measurementPolicy` fields; re-freeze four canonical blocks after an `issuingFamily` or cap-1 fixture change. | `xtask/src/commands/layout_prequalification.rs` (proposed in SPK-B005, not committed), `POLICY_FIELDS`, and `digests::validate_workspace`. | [SPK-B005, Counting-rules interpretation](../spikes/SPK-B005.md#counting-rules-interpretation-and-stage-3-validator-requirements) | Stage 3 |
+| T8.5 | `.constitution/tech-spec/adrs/ADR-0010-production-substrate.md` and `qualification/fixtures/contracts/readiness/production-3b/` | If Stage 1 approves the evidence-schema migration, apply the ADR-0010 citation and production-3b cascade after transformed evidence bytes settle. | `adr_cites_verified_evidence` and `digests::validate_workspace`. | [OXY-B008, Spec edits required](qualification-assessors.md#spec-edits-required) | Stage 3 |
+
+### Lock inputs the checklist must name separately
+
+| Lock input | Lock field | Current state |
+| :-- | :-- | :-- |
+| Approved 52-capability baseline | `measurementPolicy.capabilityBaseline` | `null` at `.constitution/tech-spec/contracts/qualification-lock.json:107` |
+| Reference application | `workload.referenceApplication` | `null` at `.constitution/tech-spec/contracts/qualification-lock.json:95` |
+| Scenes | `workload.scenes` | `null` at `.constitution/tech-spec/contracts/qualification-lock.json:96` |
+| Interaction scripts | `workload.interactionScripts` | `null` at `.constitution/tech-spec/contracts/qualification-lock.json:97` |
+| Fonts | `workload.fonts` | `null` at `.constitution/tech-spec/contracts/qualification-lock.json:98` |
+| Assets | `workload.assets` | `null` at `.constitution/tech-spec/contracts/qualification-lock.json:99` |
+| Window matrix | `workload.windowMatrix` | `null` at `.constitution/tech-spec/contracts/qualification-lock.json:100` |
+| Cache states | `workload.cacheStates` | `null` at `.constitution/tech-spec/contracts/qualification-lock.json:101` |
+| Release flags | `workload.releaseFlags` | `null` at `.constitution/tech-spec/contracts/qualification-lock.json:102` |
+| Scoring anchors | `measurementPolicy.scoringAnchors` | `null` at `.constitution/tech-spec/contracts/qualification-lock.json:109` |
+| Assessor assignments | `measurementPolicy.assessors` | `null` at `.constitution/tech-spec/contracts/qualification-lock.json:110` |
+| Reference-environment captures | `referenceEnvironments.*.{minimumVersion,hardwareId,gpuId,driverVersion,systemPackageLockDigest}` | `null` at `.constitution/tech-spec/contracts/qualification-lock.json:60-91` |
+| Authoritative resolved-tool lock | `resolvedTools` | `[]` at `.constitution/tech-spec/contracts/qualification-lock.json:116` |
+
+## Blocked external inputs
+
+| Input | Blocking condition | Evidence | Owner | Unblock procedure |
+| :-- | :-- | :-- | :-- | :-- |
+| macOS arm64 reference hardware (B007-Q01) | No accountable owner or usable access procedure. | `.constitution/reports/reference-hardware-access.md#answers` | OXY-B007 | Obtain a named owner and complete the macOS owner-confirmation procedure. |
+| Windows x86-64 reference hardware (B007-Q02) | No accountable owner or usable access procedure. | `.constitution/reports/reference-hardware-access.md#answers` | OXY-B007 | Obtain a named owner and complete the Windows owner-confirmation procedure. |
+| Second-configuration score-4 evidence for Linux rows | Wayland and X11 share one physical machine. | `.constitution/reports/reference-hardware-access.md#reference-conformance-and-feasibility` | OXY-B007 | Supply a physically distinct configuration. |
+| Assessor 2 (B008) | No distinct human is named, available, or confirmed. | `.constitution/reports/qualification-assessors.md#question` | OXY-B008 | Preserve the second-assessor confirmation. |
+| Stage 1 authorship-independence policy sentence | The exact sentence is not applied in the PRD. | `.constitution/reports/qualification-assessors.md#spec-edits-required` | Stage 1 | Approve and apply the exact section 3 sentence. |
+| Stage 1 glossary terms | Eight routed terms lack Stage 1 adoption: ordinary visit; attempted ordinary visits; layout prequalification suite; second-configuration score-4 evidence; semantic-role registry; authorship independence; display-epoch equality tuple including targetModeSignature; campaign host. | `.constitution/tasks/active/EPIC-D-readiness-reconciliation.md:55` | Stage 1 | Add the eight terms to the glossary. |
+| Stage 2 ARC-R02 update | The exact replacement remains outside the architecture record. | [SPK-B005, Spec edits required](../spikes/SPK-B005.md#spec-edits-required) | Stage 2 | Apply the exact section 3 replacement. |
+| Windows source-fixture capture procedure | Canonical bytes require a Windows host. | [SPK-B002, Spec edits required](../spikes/SPK-B002.md#spec-edits-required) | OXY-B007 | Run the specified capture procedure on a Windows host. |
+
+## Conditions for the next Stage 4 minor release
+
+1. Stage 3 applies section 8 and publishes `qualification-lock.json` v6 with `candidateImplementationReady: true`.
+2. The blocked external inputs above are supplied or explicitly accepted as deferred by Stage 1.
+3. `/planning-engineering-execution` produces the next epic from the released technical specification.
+
+This iteration cannot set `candidateImplementationReady`, and Stage 4 cannot name the next epic.
+
+## Next action
+
+The exact Stage 3 reconciliation pass in section 8 is the next action; it is not blocked on external inputs for T1-T6 and T8, while T0 and parts of T7 are blocked on the named Stage 1 and Stage 2 approvals and hardware.
+
+## Sources
+
+- `.constitution/tasks/{active/EPIC-D-readiness-reconciliation.md,critical-path.md}`, `.constitution/tech-spec/{changelog.md,stack.md,guidelines.md,data-models/README.md}`, `.constitution/prd/{constraints.md,glossary.md}`, and `.constitution/architecture/risks.md`.
+- `.constitution/tech-spec/data-models/{capability-traceability.schema.json,accessibility-map.schema.json,specification-phase.schema.json,raw-measurement.schema.json,qualification-lock.schema.json}` and `.constitution/tech-spec/contracts/{qualification-lock.json,capability-traceability.json,platform-contracts.json,oxyflut-public.rs,oxyflut-qualification.rs,oxyflut-substrate.rs,oxyflut-substrate.h,specification-phase.json}`.
+- `.constitution/tech-spec/adrs/{ADR-0005-platform-hosts.md,ADR-0010-production-substrate.md}`, `.constitution/reports/{reference-hardware-access.md,qualification-assessors.md}`, `crates/oxyflut-qualification/src/{readiness.rs,measurement.rs}`, and `xtask/src/commands/{baseline.rs,lock_tests.rs,external_contracts.rs,contracts.rs}`.
+- `xtask/src/contracts/{schema.rs,readiness.rs,native.rs,native_tests.rs,digests.rs,readiness_promotion.rs}` and `xtask/src/contracts/traceability/{mod.rs,edges.rs,validation.rs,fixtures.rs,tests.rs}`.
+- `qualification/tools/native-contract-toolchain.json`, `qualification/schemas/{sample-validity.schema.json,external/README.md,external/proposed-external-contract-lock.json}`, and `qualification/fixtures/{readiness/cleared-without-evidence.json,readiness/invalid.json,readiness/complete.synthetic.json,evidence/positive-derived.json,baselines/complete.synthetic.json,measurements/complete.synthetic.json,sample-validity/complete.synthetic.json,native/interface.json,native/layout-probe.c.in,native/layout.x86_64-unknown-linux-gnu.json,generated-bindings/oxyflut-substrate.rs,generated-bindings/oxyflut-substrate.rs.sha256,contracts/migration/source.json,contracts/migration/source.sha256,contracts/migration/derived.json}`.
+- [SPK-B001, Spec edits required](../spikes/SPK-B001.md#spec-edits-required), [D0 C ABI compatibility landing inventory](../spikes/SPK-B001.md#d0-c-abi-compatibility-landing-inventory), [Accessibility-map version-6 landing inventory](../spikes/SPK-B001.md#accessibility-map-version-6-landing-inventory), and [Stage 3 semantic-role decision and P2R registry freeze](../spikes/SPK-B001.md#stage-3-semantic-role-decision-and-p2r-registry-freeze).
+- [SPK-B002](../spikes/SPK-B002.md#spec-edits-required), [SPK-B003](../spikes/SPK-B003.md#spec-edits-required), [SPK-B004](../spikes/SPK-B004.md#spec-edits-required), [SPK-B005](../spikes/SPK-B005.md#spec-edits-required), [Counting-rules interpretation](../spikes/SPK-B005.md#counting-rules-interpretation-and-stage-3-validator-requirements), [Version migration inventory](../spikes/SPK-B005.md#version-migration-inventory), [Layout prequalification additions inventory](../spikes/SPK-B005.md#layout-prequalification-additions-inventory), and [SPK-B006](../spikes/SPK-B006.md#spec-edits-required).
