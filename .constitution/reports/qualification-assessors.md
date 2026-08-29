@@ -4,6 +4,8 @@
 - Status: BLOCKED / incomplete - candidate implementation is blocked. OXY-B008 stays open until two distinct confirmations are preserved. This record is the preserved first half plus the frozen procedure.
 - Clock start: 2026-08-28T17:02:24Z
 - Clock stop: 2026-08-28T17:08:01Z
+- Round-9 fix clock start: 2026-08-29T01:04:51Z
+- Round-9 fix clock stop: 2026-08-29T01:08:52Z
 - Scope: assessor coordination only; this report assigns no candidate score and makes no candidate selection.
 
 ## Question
@@ -290,6 +292,50 @@ command: grep -A 8 "After hard-gate eligibility" .constitution/reports/2026-08-0
 Both candidates can fail. A candidate with a failed or unresolved gating P0 item is ineligible for scoring; an implementation plan doesn't close the gate. The selection rule defines outcomes for zero, one, and two eligible candidates. A cross-family per-platform hybrid requires a separate architecture decision.
 ```
 
+The following round-9 source-inspection probe ran on this host. It establishes the active qualification-evidence v5 identity, required score fields, direct fixture inventory, and active Rust references. It doesn't approve the blocked future migration.
+
+```text
+command: date -u +%Y-%m-%dT%H:%M:%SZ; jq and find inspection of qualification-evidence schema, supersession fixture, and fixture directories; grep -rn 'qualification-evidence:5' xtask crates
+2026-08-29T01:04:51Z
+qualification-evidence schema identity, root version, and required score fields:
+urn:oxyflut:schema:qualification-evidence:5
+5.0.0
+weight
+assessorScores
+consensusScore
+consensusRationale
+evidence
+qualification-evidence supersession entry:
+superseded=urn:oxyflut:schema:qualification-evidence:4 current=urn:oxyflut:schema:qualification-evidence:5
+valid fixture inputs:
+minimal.json
+not-applicable-kk-binding.json
+pass-null-absence.json
+valid fixture count:
+3
+invalid fixture inputs:
+additional-properties.json
+conditional.json
+contradictory-pass-binding.json
+eligible-fail.json
+eligible-gating-ku.json
+enum.json
+missing-not-applicable-binding.json
+required.json
+superseded-identity.json
+type.json
+invalid fixture input count:
+10
+invalid fixture expected-sidecar count:
+10
+active qualification-evidence v5 Rust references:
+xtask/src/contracts/digests.rs:393:            "$schema": "urn:oxyflut:schema:qualification-evidence:5",
+xtask/src/contracts/digests.rs:398:            "$schema": "urn:oxyflut:schema:qualification-evidence:5",
+xtask/src/contracts/readiness_promotion.rs:20:const EVIDENCE_SCHEMA: &str = "urn:oxyflut:schema:qualification-evidence:5";
+crates/oxyflut-qualification/src/evidence/mod.rs:382:            super::declared_references("urn:oxyflut:schema:qualification-evidence:5", &skipped),
+crates/oxyflut-qualification/src/evidence/mod.rs:387:            super::declared_references("urn:oxyflut:schema:qualification-evidence:5", &null_digest),
+```
+
 ## Recommendation
 
 Choose Option B for the ticket state and Option C for the authorship-conflict policy.
@@ -311,6 +357,18 @@ No active-specification edit is authorized while Q2, Q3, or Q4 remains gating. S
 - Stage 3 - `.constitution/tech-spec/contracts/qualification-lock.json`, `measurementPolicy.scoringAnchors`: retain the exact value `null` until the accepted assessors freeze the anchors in a separate immutable artifact.
 - Stage 3 - `.constitution/tech-spec/contracts/qualification-lock.json`, `candidateImplementationReady`: retain the exact value `false` while any assessor, authorship-independence, or scoring-anchor gate remains unresolved.
 - Stage 3, blocked future option only - `.constitution/tech-spec/data-models/qualification-evidence.schema.json`, root `assessors`: replace the current exactly-two tuple with the exact value `{ "type": "array", "items": { "$ref": "#/$defs/assessor" }, "minItems": 2, "uniqueItems": true }`; remove `prefixItems`, `items: false`, and `maxItems: 2` so a third frozen replacement identity is encodable.
-- Stage 3, blocked future option only - `.constitution/tech-spec/data-models/qualification-evidence.schema.json`, add `$defs.assessorScore` with the exact value `{ "type": "object", "additionalProperties": false, "required": ["assessorId", "score"], "properties": { "assessorId": { "type": "string", "minLength": 1 }, "score": { "type": "integer", "minimum": 3, "maximum": 5 } } }`; replace `$defs.score.properties.assessorScores` with the exact value `{ "type": "array", "items": { "$ref": "#/$defs/assessorScore" }, "minItems": 2, "maxItems": 2 }`; append the exact string `"recusedAssessorIds"` to `$defs.score.required`; and add `$defs.score.properties.recusedAssessorIds` with the exact value `{ "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true }`. Stage 3 must enforce that score and recusal IDs name entries in root `assessors`, the two score IDs differ, and no score ID is recused for that criterion.
+- Stage 3, blocked future option only - `.constitution/tech-spec/data-models/qualification-evidence.schema.json`, add `$defs.assessorScore` with the exact value `{ "type": "object", "additionalProperties": false, "required": ["assessorId", "score"], "properties": { "assessorId": { "type": "string", "minLength": 1 }, "score": { "type": "integer", "minimum": 3, "maximum": 5 } } }`; replace `$defs.score.properties.assessorScores` with the exact value `{ "type": "array", "items": { "$ref": "#/$defs/assessorScore" }, "minItems": 2, "maxItems": 2 }`; append the exact string `"recusedAssessorIds"` to `$defs.score.required`; and add `$defs.score.properties.recusedAssessorIds` with the exact value `{ "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true }`. This is a breaking durable-evidence change and the complete v5-to-v6 landing below remains blocked until Stage 1 approves the per-criterion recusal policy.
+  - `.constitution/tech-spec/data-models/qualification-evidence.schema.json`, document identity: replace `$id` exactly from `urn:oxyflut:schema:qualification-evidence:5` to `urn:oxyflut:schema:qualification-evidence:6` and root `properties.schemaVersion.const` exactly from `"5.0.0"` to `"6.0.0"` in the same atomic change as the score-shape edits. Do not mutate a durable v5 evidence document in place: preserve its source bytes and SHA-256, then write a distinct derived v6 document, as required by `.constitution/tech-spec/data-models/README.md`. No durable qualification-evidence instance exists in this workspace, so this landing creates no evidence migration artifact.
+  - `qualification/fixtures/contracts/supersession.json`, `schemas[name="qualification-evidence"]`: replace `"superseded": "urn:oxyflut:schema:qualification-evidence:4"` with `"superseded": "urn:oxyflut:schema:qualification-evidence:5"` and replace `"current": "urn:oxyflut:schema:qualification-evidence:5"` with `"current": "urn:oxyflut:schema:qualification-evidence:6"`.
+  - `qualification/fixtures/contracts/qualification-evidence/invalid/superseded-identity.expected.json`, `supersededBy`: replace `"urn:oxyflut:schema:qualification-evidence:5"` with `"urn:oxyflut:schema:qualification-evidence:6"`. Retain `invalid/superseded-identity.json` as the v4 old-reader input; the updated generic supersession fixture separately proves that v5 rejects in favor of v6.
+  - `qualification/fixtures/contracts/qualification-evidence/`, direct schema fixture corpus: preserve its count of 3 valid inputs, 10 invalid inputs, and 10 invalid expected sidecars. Set the root `schemaVersion` to exactly `"6.0.0"` in the 3 valid inputs (`valid/minimal.json`, `valid/not-applicable-kk-binding.json`, and `valid/pass-null-absence.json`) and the 7 active-version invalid inputs (`invalid/additional-properties.json`, `invalid/conditional.json`, `invalid/contradictory-pass-binding.json`, `invalid/eligible-fail.json`, `invalid/eligible-gating-ku.json`, `invalid/enum.json`, and `invalid/missing-not-applicable-binding.json`). Retain the absent root `schemaVersion` in `invalid/required.json`, numeric root `schemaVersion: 1` in `invalid/type.json`, and the v4 `$schema` plus `schemaVersion: "superseded"` in `invalid/superseded-identity.json`, so each keeps its sole intended failure. In `valid/not-applicable-kk-binding.json` and `invalid/contradictory-pass-binding.json`, retain the nested platform-baseline `schemaVersion: "5.0.0"`, because platform contracts remain v5.
+  - `qualification/fixtures/contracts/qualification-evidence/`, scorer-bearing direct fixtures: in `valid/not-applicable-kk-binding.json`, `valid/pass-null-absence.json`, `invalid/contradictory-pass-binding.json`, `invalid/eligible-fail.json`, `invalid/eligible-gating-ku.json`, and `invalid/missing-not-applicable-binding.json`, replace every two-integer `assessorScores` tuple with two objects whose `assessorId` values are the fixture's `assessor-one` and `assessor-two` root identities and whose `score` values equal the replaced integers; add `"recusedAssessorIds": []` to every criterion score. Retain the other nine invalid `.expected.json` sidecars unchanged because their declared failure path and keyword do not change; revalidate that claim after the fixture inputs change.
+  - `qualification/fixtures/contracts/readiness/production-3b/`, qualification-evidence consumers: set root `schemaVersion` to exactly `"6.0.0"` in `evidence/selected-qualification.json`, `evidence/all-tier1-results.json`, `evidence/eligible-integrated-qualification.json`, `evidence/integrated-qualification.json`, and `negative/fabricated-not-applicable-qualification.json`. Apply the same object-score and empty-recusals transform to every scorer-bearing file in that set, which is every named file except `evidence/integrated-qualification.json`. Regenerate every affected SHA-256 reference only after those bytes are final: `evidence/selection-decision.json`, `production-3b-phase.json`, `negative/fabricated-selection-decision.json`, `negative/promotion-tampered-adr-phase.json`, `negative/promotion-untyped-wrong-lock-phase.json`, `negative/promotion-wrong-candidate-phase.json`, `negative/promotion-selection-lower-score-phase.json`, `negative/promotion-missing-artifact-phase.json`, `negative/promotion-wrong-lock-phase.json`, and `negative/promotion-wrong-version-phase.json`. Preserve the declared negative condition in each negative fixture rather than accidentally replacing it with a stale-digest failure.
+  - `xtask/src/contracts/schema.rs`, qualification-evidence migration test: add `qualification/fixtures/contracts/migration/qualification-evidence-v5-to-v6.input.json`, its computed `qualification-evidence-v5-to-v6.input.sha256`, and `qualification-evidence-v5-to-v6.expected.json`. The test must verify the input's SHA-256 before and after derivation, validate the expected document through `urn:oxyflut:schema:qualification-evidence:6`, reject the v5 input through the v6 identity, and prove that each primitive score becomes the named score object with the same integer and an empty `recusedAssessorIds` array. The expected v6 fixture must not add migration metadata because the evidence schema rejects additional root properties.
+  - `xtask/src/contracts/traceability/validation.rs`, `validate_qualification_evidence`: add a semantic assessor-score check after the existing gate checks. For every eligible criterion, require every score `assessorId` and every `recusedAssessorIds` member to name a root `assessors[].id`, require exactly two differing scorer IDs, and reject a scorer whose ID is recused for that criterion. Add passing and each failing unknown-ID, duplicate-scorer-ID, and scorer-is-recused assertions in `xtask/src/contracts/traceability/tests.rs`; schema validity alone cannot enforce those cross-object identities.
+  - `xtask/src/contracts/readiness_promotion.rs`, `EVIDENCE_SCHEMA`: replace the exact constant value `urn:oxyflut:schema:qualification-evidence:5` with `urn:oxyflut:schema:qualification-evidence:6`. `xtask/src/contracts/digests.rs` at both source-inspection probe matches and `crates/oxyflut-qualification/src/evidence/mod.rs` at both `declared_references` test matches: replace each exact `urn:oxyflut:schema:qualification-evidence:5` literal with `urn:oxyflut:schema:qualification-evidence:6`. The preserved round-9 grep found no other Rust v5 identity reference.
+  - `.constitution/tech-spec/data-models/README.md`, `qualification-evidence.schema.json` table row: replace the compatibility-rule cell with exactly `Preserve original evidence; corrected evidence must reference a new lock digest; an eligible not-applicable-kk result names an exact absent-event entry in the frozen platform baseline; breaking assessor-score representation changes require a major schema version and a derived document that preserves source bytes and digest.` In the supersession summary, replace `qualification-evidence v5` with `qualification-evidence v6` and append exactly `Qualification-evidence v6 supersedes v5 because assessor scores are named objects and every criterion declares its recused assessor identities.`
+  - `.constitution/tech-spec/changelog.md`, next `Changed` entry: add exactly `- Advanced qualification evidence from v5 to v6 because replacing the un-attributed fixed integer assessor-score tuple with named assessor-score objects and requiring per-criterion recused assessor identities is breaking. The migration rejects the v5 identity, preserves any durable v5 source bytes and SHA-256, and writes a distinct derived v6 document.`
+  - Stage 3 must validate the complete landing with `devenv shell -- cargo +1.98.0 run -p xtask -- contracts validate` after the Stage 1 approval and before any recusal is used for a candidate.
 
 The future per-criterion option remains blocked until Stage 1 approves it and Stage 3 applies and validates both listed schema changes. Until then, whole-candidate assessor replacement is mandatory.
