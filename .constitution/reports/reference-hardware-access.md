@@ -448,6 +448,8 @@ Use a mix of option B and option C.
 
 None. This access register does not justify a Stage 3 specification edit. In particular, do not add `thinkpadp14s` hardware, GPU, driver, or access information to the qualification lock because the host is not a Stage 3 reference environment and this register does not set readiness.
 
+This prohibition applies to `referenceEnvironments` and any hardware, GPU, driver, or access identity; non-reference campaign-host tool records under [SPK-B006](../spikes/SPK-B006.md)'s `instrumentation.campaignToolchain.hostToolRecords` are exempt because they identify a toolchain, not a qualification environment.
+
 ## Sources
 
 - [Apple Technical Note TN2339: Building from the command line with Xcode](https://developer.apple.com/library/archive/technotes/tn2339/_index.html) - fetched successfully through the Jina reader proxy on 2026-08-28; identifies `xcrun` as an Xcode command-line shim.
