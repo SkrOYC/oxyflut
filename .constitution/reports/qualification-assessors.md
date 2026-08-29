@@ -302,7 +302,7 @@ Choose Option B for the ticket state and Option C for the authorship-conflict po
 
 Candidate-neutral readiness work can continue only when it doesn't begin candidate implementation or create candidate score conclusions. No candidate score, candidate ranking, or candidate selection is authorized by this report.
 
-## Spec edits required
+### Spec edits required
 
 No active-specification edit is authorized while Q2, Q3, or Q4 remains gating. Stage 1 must first approve and apply the PRD amendment below. Only after that approval and application may Stage 3 update the qualification contracts to conform; Stage 3 must not apply the PRD amendment.
 
