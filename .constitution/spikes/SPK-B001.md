@@ -11,6 +11,7 @@
 - **Round-8 correction clock start / stop:** 2026-08-28T20:22:55Z / 2026-08-28T20:25:45Z.
 - **Round-9 correction clock start / stop:** 2026-08-28T20:53:47Z / 2026-08-28T20:54:45Z.
 - **Round-10 correction clock start / stop:** 2026-08-28T21:17:30Z / 2026-08-28T21:20:54Z.
+- **Round-11 correction clock start / stop:** 2026-08-28T23:54:23Z / 2026-08-28T23:58:42Z.
 - **Scope result:** This report changes no product capability, architecture boundary, source tree, or specification. The only repository file changed is this report.
 
 ## Question
@@ -319,7 +320,8 @@ The P5 command is `cd /tmp/wf-epic-b/OXY-B001/mac-recovery-probe && xcrun --sdk 
 - **Why it fits:** The recommendation treats only preserved, authoritative interface evidence as KK. It does not turn a platform API, a source listing, or a plausible deployment target into candidate behavior evidence. P1-P8 each specify a host, input, command, and expected output. P6 uses a one-way provenance chain: an input-only lock is embedded at build time, while the executable and artifact-manifest digests are recorded only after the build in a separate attestation.
 - **Rejected option:** Reject B because the documented 14.0 display-link introduction does not prove the historical availability of every other required interface. Reject deprecated `CVDisplayLink`, candidate-internal clocks as independent meters, `MTLDeviceNotificationName.wasRemoved` on Apple Silicon, default-window routing, and a map or recovery claim without preserved traces.
 - **Capability and architecture guard:** This recommendation preserves the P0 capabilities and the accepted Platform integration and reentrancy boundaries. It chooses no substrate and introduces no product capability or architecture boundary.
-- **Stage 3 edits:** Apply only the exact deployment-target retentions and the D0 role-registry, per-role accessibility-map migration, generated-role-constant, traceability, and migration-note instructions in [Downstream impact](#downstream-impact). The P6 provenance correction is a report-runbook change and requires no current Stage 3 specification edit.
+- **Stage 3 edits:** Apply only the exact deployment-target retentions and the D0 role-registry, per-role accessibility-map migration, generated-role-constant, C ABI compatibility, traceability, and migration-note instructions in [Downstream impact](#downstream-impact). The P6 provenance correction is a report-runbook change and requires no current Stage 3 specification edit.
+- **D0 C ABI decision:** Advance `OXY_SUBSTRATE_ABI_VERSION` from `10u` to `11u` in the same atomic change that constrains `OxySemanticsNode.role` to the generated closed set. That constraint changes the accepted semantics of a `uint32_t` field even when its layout remains unchanged. ADR-0004 requires an ABI version change, generated-binding diffs, and layout tests for any ABI change, and the guidelines require an ABI version change for any semantic change. The preserved source-inventory probe and the exact landing procedure appear in [D0 C ABI compatibility landing inventory](#d0-c-abi-compatibility-landing-inventory).
 
 ## Downstream impact
 
@@ -357,6 +359,73 @@ B001-02 remains a gating KU, so Stage 3 must retain the deployment-target state 
 | `.constitution/tech-spec/changelog.md` -> migration note | Add a migration note for the breaking `accessibility-map` 5.0.0 to 6.0.0 keyed-role change. State that each former one-object `forward.roles` value becomes one `forward.roles[role-name]` mapping, and that version-5 maps are rejected by version-6 validation. |
 | `.constitution/tech-spec/contracts/oxyflut-public.rs`, `.constitution/tech-spec/contracts/oxyflut-substrate.rs`, and `.constitution/tech-spec/contracts/oxyflut-substrate.h` -> semantic role constants | Add a generated `#[repr(u32)] SemanticRole` enum to each Rust contract and generated `OXY_SEMANTICS_ROLE_*` `uint32_t` constants to the C header from `semantic-role-registry.json`; generate every numeric value from `roles[*].code` and forbid hand-authored numeric values. Retain the existing `SemanticsNode.role: u32` and `OxySemanticsNode.role: uint32_t` fields, and require each value to equal a generated role code. Add a generated-contract test that compares every registry record's `name` and `code` with all three generated artifacts. |
 | `.constitution/tech-spec/contracts/capability-traceability.json` -> `mappings[capabilityId="CAP-SEM-001"].bindings` and `mappings[capabilityId="CAP-SEM-002"].bindings` | Add a binding to `contracts/semantic-role-registry.json` with symbols `#/codeStabilityRule`, `#/roleVocabularySources`, `#/roles/*/name`, `#/roles/*/code`, `#/roles/*/ax`, `#/roles/*/uia`, and `#/roles/*/atspi` to both mappings. In both mappings, add `SemanticRole` and `SemanticsNode.role` to the existing `oxyflut-public.rs` and `oxyflut-substrate.rs` bindings, and add `OXY_SEMANTICS_ROLE_*` and `OxySemanticsNode.role` to the existing `oxyflut-substrate.h` binding. |
+
+### D0 C ABI compatibility landing inventory
+
+D0's closed generated role set makes `OxySemanticsNode.role` semantically narrower. Stage 3 must therefore advance the C ABI from `10u` to `11u`; preserving `10u` would contradict the accepted ABI decision and the qualification guidelines. This is a Stage 3 landing requirement, not a change made by this report.
+
+The following repository source-inventory probe establishes the current ABI value, generated Rust mirror, layout fixture, validation flow, and lack of a golden-file writer. The output is trimmed to the relevant matches.
+
+```text
+$ grep -RInE 'OXY_SUBSTRATE_ABI_VERSION|ABI_VERSION' crates xtask qualification
+xtask/src/contracts/native.rs:241:    if !compact.contains(&format!("#defineOXY_SUBSTRATE_ABI_VERSION{abi_version}u")) {
+xtask/src/contracts/native_tests.rs:384:        authoritative::sys::OXY_SUBSTRATE_ABI_VERSION,
+xtask/src/contracts/native_tests.rs:391:            authoritative::sys::OXY_SUBSTRATE_ABI_VERSION,
+xtask/src/contracts/native_tests.rs:659:        abi_version: authoritative::sys::OXY_SUBSTRATE_ABI_VERSION,
+xtask/src/contracts/native_tests.rs:745:    if implementation_abi != authoritative::sys::OXY_SUBSTRATE_ABI_VERSION {
+qualification/fixtures/generated-bindings/oxyflut-substrate.rs:1:pub const OXY_SUBSTRATE_ABI_VERSION: u32 = 10;
+qualification/fixtures/native/layout-probe.c.in:34:  printf("{\"abiVersion\":%u,\"structs\":[", OXY_SUBSTRATE_ABI_VERSION);
+$ grep -RInE -- '--(write|update)([[:space:]=]|$)' xtask/src
+exit=1
+$ grep -nE 'command == "contracts"|contracts.*validate' xtask/src/main.rs xtask/src/commands/contracts.rs
+xtask/src/main.rs:80:        [command, action, remaining @ ..] if command == "contracts" && action == "validate" => {
+xtask/src/main.rs:396:            (&["contracts", "validate"][..], CommandRoute::Contracts, 2),
+xtask/src/commands/contracts.rs:31:            code: "contracts-validate-arguments",
+$ grep -nE 'native_summaries|validate_generated_bindings|validate_host_layout' xtask/src/commands/contracts.rs
+58:        Ok(tools) => summaries.extend(native_summaries(root, &tools)),
+197:fn native_summaries(root: &Path, tools: &validators::native::NativeTools) -> [FamilySummary; 4] {
+207:            validators::native::validate_generated_bindings(root, tools),
+217:            validators::native::validate_host_layout(root, tools),
+$ grep -nE 'TemporaryDirectory::new\("native-bindings"\)|generate_bindings\(|validate_bindings\(|BINDINGS(_DIGEST)?_PATH' xtask/src/contracts/native.rs
+20:const BINDINGS_PATH: &str = "qualification/fixtures/generated-bindings/oxyflut-substrate.rs";
+21:const BINDINGS_DIGEST_PATH: &str =
+71:    let temporary = TemporaryDirectory::new("native-bindings")?;
+73:    generate_bindings(&root.join(HEADER_PATH), &bindings, tools)?;
+74:    validate_bindings(root, &bindings)
+198:fn validate_bindings(root: &Path, generated: &Path) -> Result<(), NativeContractError> {
+199:    let golden = root.join(BINDINGS_PATH);
+200:    let golden_digest = root.join(BINDINGS_DIGEST_PATH);
+$ grep -oH '"abiVersion":[0-9]*' qualification/fixtures/native/layout.x86_64-unknown-linux-gnu.json; grep -Hn '"abiVersion"' qualification/fixtures/native/interface.json; grep -nE 'abi_seven_through_nine|7\.\.=9' xtask/src/contracts/native_tests.rs
+qualification/fixtures/native/layout.x86_64-unknown-linux-gnu.json:"abiVersion":10
+qualification/fixtures/native/interface.json:2:  "abiVersion": 10,
+372:fn abi_seven_through_nine_fail_before_callbacks_install() -> Result<(), Box<dyn Error>> {
+374:    for abi_version in 7..=9 {
+$ grep -nE 'Any ABI change|Advance the C ABI version' .constitution/tech-spec/adrs/ADR-0004-substrate-c-abi.md .constitution/tech-spec/guidelines.md
+.constitution/tech-spec/adrs/ADR-0004-substrate-c-abi.md:22:- Any ABI change requires layout tests, generated-binding diffs, and an ABI version change.
+.constitution/tech-spec/guidelines.md:97:- Advance the C ABI version for any layout, calling-convention, ownership, lifetime, or semantic change.
+```
+
+The `crates` search produced no ABI-version match. The generated binding is therefore the only direct Rust mirror. The `contracts validate` route has no `--write`, `--update`, or regeneration subcommand. It generates bindings in a temporary `native-bindings` directory and byte-compares them with the committed golden and its digest sidecar. It also runs the native layout validation. The command verifies a staged update, but it cannot create one.
+
+Stage 3 must use the manual regeneration procedure below after it changes the header. The bindgen path is the `bindgen` `executablePath` recorded in `qualification/tools/native-contract-toolchain.json`; the shown path is the pinned manifest value inspected for this report. The spike did not run this write procedure.
+
+```sh
+/nix/store/bjglapck78yxncsn63ijabd5nlkpasc6-rust-bindgen-0.72.1/bin/bindgen .constitution/tech-spec/contracts/oxyflut-substrate.h --rust-target 1.98 --rust-edition 2024 --no-layout-tests --no-doc-comments --disable-header-comment --use-core --ctypes-prefix core::ffi --allowlist-type '^Oxy.*' --allowlist-var '^OXY_.*' --allowlist-function '^OxySubstrateGetApi$' -o qualification/fixtures/generated-bindings/oxyflut-substrate.rs -- -x c -std=c11
+sha256sum qualification/fixtures/generated-bindings/oxyflut-substrate.rs | awk '{print $1}' > qualification/fixtures/generated-bindings/oxyflut-substrate.rs.sha256
+devenv shell -- cargo +1.98.0 run -p xtask -- contracts validate
+```
+
+The command's `--allowlist-var '^OXY_.*'` argument includes both `OXY_SUBSTRATE_ABI_VERSION` and every generated `OXY_SEMANTICS_ROLE_*` constant. The manual procedure must regenerate and commit both golden files in the same change as the header and test fixtures; it must not hand-edit the generated Rust file or its digest.
+
+| File | Required Stage 3 change |
+| :-- | :-- |
+| `.constitution/tech-spec/contracts/oxyflut-substrate.h` | Replace `#define OXY_SUBSTRATE_ABI_VERSION 10u` with `#define OXY_SUBSTRATE_ABI_VERSION 11u`. Generate the closed-set `OXY_SEMANTICS_ROLE_*` `uint32_t` constants from `semantic-role-registry.json` in the same atomic D0 change. |
+| `qualification/fixtures/native/interface.json` | Replace the exact `"abiVersion": 10` value with `"abiVersion": 11`, so `validate_interface` requires the header's ABI 11 definition. |
+| `xtask/src/contracts/native_tests.rs` -> `abi_seven_through_nine_fail_before_callbacks_install` | Rename the test to `abi_seven_through_ten_fail_before_callbacks_install` and replace `7..=9` with `7..=10`. This proves a version-10 implementation cannot install callbacks when the generated Rust projection accepts ABI 11. |
+| `qualification/fixtures/native/layout-probe.c.in` and `qualification/fixtures/native/layout.x86_64-unknown-linux-gnu.json` | Keep the probe's macro-based `abiVersion` emission. Regenerate the committed x86_64 layout fixture with the staged native toolchain after the header update, require `"abiVersion":11`, and review every size, alignment, offset, and nullability value before committing it. |
+| `qualification/fixtures/generated-bindings/oxyflut-substrate.rs` | Run the preceding manual pinned-bindgen command, review the generated `pub const OXY_SUBSTRATE_ABI_VERSION: u32 = 11;` and all generated `OXY_SEMANTICS_ROLE_*` constants, then commit this regenerated golden file. This is the only direct Rust ABI-version mirror; add no hand-authored Rust mirror under `crates/` or `xtask/`. |
+| `qualification/fixtures/generated-bindings/oxyflut-substrate.rs.sha256` | Run the preceding `sha256sum` command after the golden file is complete, commit its one-line SHA-256 output, and require `contracts validate` to byte-compare the golden and digest sidecar. |
+| `xtask/src/contracts/native.rs` and `xtask/src/commands/contracts.rs` | Do not add a writer. Retain the generated-binding byte comparison and host-layout validation, then run the preceding `contracts validate` command as the post-change gate. |
 
 ### Accessibility-map version-6 landing inventory
 
