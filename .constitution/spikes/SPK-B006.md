@@ -7,6 +7,8 @@
 - Clock start / stop: 2026-08-28T20:23:54Z / 2026-08-28T20:33:24Z.
 - Round-6 evidence clock start / stop: 2026-08-28T22:32:41Z / 2026-08-28T22:38:44Z.
 - CHANGES: `fuzz-corpora.json` SHA-256 `59d3459130a585e335df491f464258f40b3708c48d237600df960722ffcda105`, 15,932 bytes; `security-patch-rehearsal.json` SHA-256 `27b6e4525723e2501d08e72169f8194bb070d4a79b32825f3cc70fe9e66fc14c`, 1,991 bytes.
+- Round-9 correction clock start / stop: 2026-08-29T01:02:59Z / 2026-08-29T01:08:30Z.
+- Round-9 correction: Remove `fuzz-corpora` and `security-patch-rehearsal`, add `campaign-host-tool-records`, and reduce each affected KU array by one entry.
 
 ## Question
 
@@ -161,7 +163,7 @@ test "$("$TIME_BIN" --version | head -n 1)" = "$(printf '%s' "$HOST_RECORD" | jq
 
 Build every AddressSanitizer target with `cargo +nightly-2026-08-12 fuzz build --sanitizer address --careful TARGET`, and build every ThreadSanitizer target with `cargo +nightly-2026-08-12 fuzz build --sanitizer thread --careful TARGET`. For every successful shard, resolve `MAX_LEN_BYTES` from `ingressMapping[INGRESS].maxLenBytes`, then run `"$TIME_BIN" -v -o CPU_LOG FUZZ_EXE CORPUS -max_total_time=28800 -timeout=5 -max_len=MAX_LEN_BYTES`. Preserve `User time (seconds)`, `System time (seconds)`, and elapsed wall time from `CPU_LOG`, and record user plus system seconds in the shard ledger. Add only successful shards with the same target, sanitizer, and persistent `CORPUS`; resume until the applicable threshold is reached. `-max_total_time=28800` bounds one operational invocation only. Keep `CORPUS` as the first libFuzzer corpus directory. Before admitting another input directory, use `FUZZ_EXE -merge=1 CORPUS NEW_INPUTS`, then resume the timed target. The LLVM documentation states that the first corpus directory receives new inputs and describes `-merge=1` and resumable merge control files. Replay every minimized crash and retained seed with `cargo +nightly-2026-08-12 miri test -p PACKAGE TEST_FILTER`.
 
-P6 proves this host's `command time -v -o CPU_LOG` records the required three fields. P7 confirms the four post-patch test functions do not yet exist in the qualification scaffold, so OXY-SYN-SEC-001 must add them before rehearsal. P8 proves `nightly-2026-08-11` resolves commit `12c36e2539c54397c51d6ea4401defd8768a4f5b`, while `nightly-2026-08-12` resolves the required `3d6c19bb9ab4798ecfb2ee943df01a811720fc27`. P8 also re-hashes the executables from the dated selector. The captured host record uses only `nightly-2026-08-12`; the previous rolling-`nightly` record is inadmissible. This host records SHA-256 values for `rustc` `7de94a5c099c8d7ee4cafb905e36d882325faa480d8cff6513dd8c0887fac0c5`, `cargo` `1cf1cd7feded113706026c5f04fad33e45364546e3c0d92ddee0c1a4c8277296`, `cargo-miri` `40a69668c9ff4e5df3e6a87531f2b87dcc5c84e705ee5b06f915fb76383c94af`, `cargo-fuzz` 0.13.2 `db150590a2f9fa003fb167bc0eec3f90ba5574fcdd01f78110e6f397dda56582`, and GNU Time 1.10 `e8b9f5440e01a81e0692e68d07dfacb8059c434cae100c1fbb60b7ec52848480`. Stage 3 must stage an equivalent complete record in `qualification/staged/fuzz-corpora.json` for every campaign host and retain `resolved-tool-digests` as a gate until it does. P16 establishes that campaign-host tools must remain only in `instrumentation.campaignToolchain.hostToolRecords`; they must never enter `qualification-lock.json` `resolvedTools`. The lock binds the campaign toolchain only through `measurementPolicy.fuzzCorpora`, which holds the staged file digest.
+P6 proves this host's `command time -v -o CPU_LOG` records the required three fields. P7 confirms the four post-patch test functions do not yet exist in the qualification scaffold, so OXY-SYN-SEC-001 must add them before rehearsal. P8 proves `nightly-2026-08-11` resolves commit `12c36e2539c54397c51d6ea4401defd8768a4f5b`, while `nightly-2026-08-12` resolves the required `3d6c19bb9ab4798ecfb2ee943df01a811720fc27`. P8 also re-hashes the executables from the dated selector. The captured host record uses only `nightly-2026-08-12`; the previous rolling-`nightly` record is inadmissible. This host records SHA-256 values for `rustc` `7de94a5c099c8d7ee4cafb905e36d882325faa480d8cff6513dd8c0887fac0c5`, `cargo` `1cf1cd7feded113706026c5f04fad33e45364546e3c0d92ddee0c1a4c8277296`, `cargo-miri` `40a69668c9ff4e5df3e6a87531f2b87dcc5c84e705ee5b06f915fb76383c94af`, `cargo-fuzz` 0.13.2 `db150590a2f9fa003fb167bc0eec3f90ba5574fcdd01f78110e6f397dda56582`, and GNU Time 1.10 `e8b9f5440e01a81e0692e68d07dfacb8059c434cae100c1fbb60b7ec52848480`. Stage 3 must stage an equivalent complete record in `qualification/staged/fuzz-corpora.json` for every campaign host and retain `campaign-host-tool-records` as a gate until it does. `resolved-tool-digests` remains independently bound to `resolvedTools` and `qualification/tools/native-contract-toolchain.json`, which OXY-A008 owns. P16 establishes that campaign-host tools must remain only in `instrumentation.campaignToolchain.hostToolRecords`; they must never enter `qualification-lock.json` `resolvedTools`. The lock binds the campaign toolchain only through `measurementPolicy.fuzzCorpora`, which holds the staged file digest.
 
 The relevant instrumentation output follows:
 
@@ -368,6 +370,119 @@ $ nl -ba xtask/src/toolchain/specs.rs | grep -E "TOOL_SPECS|name:"
    115         name: "rustc",
 ```
 
+P18 verified the readiness binding and its tests and fixtures. `resolved-tool-digests` maps only to `resolvedTools` and `qualification/tools/native-contract-toolchain.json`, which OXY-A008 owns. `collect_known_unknowns` maps each KU string to its own binding and requires the binding's field. No `hostToolRecords` or `campaignToolchain` implementation exists in the readiness crate or `xtask`. Therefore, clearing the OXY-A008 gate cannot establish campaign-host records. `campaign-host-tool-records` must remain a separate KU until every campaign host that produced evidence has a complete selected `hostToolRecords` entry.
+
+The output of P18 follows:
+
+```text
+$ nl -ba crates/oxyflut-qualification/src/readiness.rs | sed -n "185,215p;509,536p"
+   185    KnownUnknownBinding {
+   186        known_unknown: "fuzz-corpora",
+   187        required_field: "measurementPolicy.fuzzCorpora",
+   188        evidence_path: Some("qualification/staged/fuzz-corpora.json"),
+   189        upstream_owner: "OXY-D001",
+   190    },
+   191    KnownUnknownBinding {
+   192        known_unknown: "security-patch-rehearsal",
+   193        required_field: "measurementPolicy.securityPatchRehearsal",
+   194        evidence_path: Some("qualification/staged/security-patch-rehearsal.json"),
+   195        upstream_owner: "OXY-D001",
+   196    },
+   197    KnownUnknownBinding {
+   198        known_unknown: "layout-visit-cap",
+   199        required_field: "measurementPolicy.layoutVisitCap",
+   200        evidence_path: None,
+   201        upstream_owner: "OXY-D001",
+   202    },
+   203    KnownUnknownBinding {
+   204        known_unknown: EXTERNAL_CONTRACT_LOCK_KNOWN_UNKNOWN,
+   205        required_field: "measurementPolicy.externalContractLock",
+   206        evidence_path: None,
+   207        upstream_owner: "OXY-C001",
+   208    },
+   209    KnownUnknownBinding {
+   210        known_unknown: "resolved-tool-digests",
+   211        required_field: "resolvedTools",
+   212        evidence_path: Some("qualification/tools/native-contract-toolchain.json"),
+   213        upstream_owner: "OXY-A008",
+   214    },
+   215 ];
+   509    for known_unknown in known_unknowns {
+   510        let known_unknown = known_unknown.as_str().ok_or(ReadinessError::InvalidLock {
+   511            code: "pre-implementation-known-unknown",
+   512        })?;
+   513        let binding = KNOWN_UNKNOWN_BINDINGS
+   514            .iter()
+   515            .find(|binding| binding.known_unknown == known_unknown)
+   516            .ok_or(ReadinessError::UnmappedKnownUnknown)?;
+   517        if !required_field_is_present(lock, binding.required_field) {
+   518            return Err(ReadinessError::InvalidLock {
+   519                code: "ku-required-field",
+   520            });
+   521        }
+   522        let field_path = format!("preImplementationKnownUnknowns.{known_unknown}");
+   523        let referent = (known_unknown == "external-distribution-schema-snapshots-and-verifiers")
+   524            .then(|| external_contract_lock_referent(active_external_lock))
+   525            .transpose()?;
+   526        let evidence_path = referent
+   527            .map(ExternalContractLockReferent::evidence_path)
+   528            .or(binding.evidence_path);
+   529        push_block_with_referent(
+   530            blocking,
+   531            &field_path,
+   532            BlockingKind::Ku,
+   533            evidence_path,
+   534            referent,
+   535            Some(binding.upstream_owner),
+$ rg -n "hostToolRecords|campaignToolchain" crates/oxyflut-qualification xtask || true
+$ for file in qualification/fixtures/readiness/invalid.json qualification/fixtures/readiness/cleared-without-evidence.json; do jq -r --arg file "$file" "$file + \" pre=\" + ([.preImplementationKnownUnknowns[] | select(. == \"fuzz-corpora\" or . == \"security-patch-rehearsal\" or . == \"campaign-host-tool-records\")] | join(\",\")) + \" gating=\" + ([.gatingKnownUnknowns[] | select(. == \"fuzz-corpora\" or . == \"security-patch-rehearsal\" or . == \"campaign-host-tool-records\")] | join(\",\"))" "$file"; done
+qualification/fixtures/readiness/invalid.json pre=fuzz-corpora,security-patch-rehearsal gating=fuzz-corpora,security-patch-rehearsal
+qualification/fixtures/readiness/cleared-without-evidence.json pre=fuzz-corpora,security-patch-rehearsal gating=fuzz-corpora,security-patch-rehearsal
+$ nl -ba xtask/src/commands/lock_tests.rs | sed -n "51,68p;268,284p;311,317p"
+    51    assert_eq!(
+    52        known_unknowns,
+    53        vec![
+    54            "capability-and-platform-baselines",
+    55            "complete-ime-editing-geometry-and-accessibility-maps",
+    56            "external-distribution-schema-snapshots-and-verifiers",
+    57            "fuzz-corpora",
+    58            "hardware-gpu-driver-and-system-package-locks",
+    59            "independent-presentation-opportunity-sources",
+    60            "layout-visit-cap",
+    61            "minimum-platform-and-protocol-versions",
+    62            "raw-measurement-and-sample-validity-contracts",
+    63            "reference-application-scenes-scripts-fonts-assets-windows-cache-and-flags",
+    64            "resolved-tool-digests",
+    65            "scoring-anchors-and-two-assessors",
+    66            "security-patch-rehearsal",
+    67        ]
+    68    );
+   268    assert_eq!(
+   269        known_unknowns,
+   270        vec![
+   271            "capability-and-platform-baselines",
+   272            "complete-ime-editing-geometry-and-accessibility-maps",
+   273            "external-distribution-schema-snapshots-and-verifiers",
+   274            "fuzz-corpora",
+   275            "hardware-gpu-driver-and-system-package-locks",
+   276            "independent-presentation-opportunity-sources",
+   277            "layout-visit-cap",
+   278            "minimum-platform-and-protocol-versions",
+   279            "raw-measurement-and-sample-validity-contracts",
+   280            "reference-application-scenes-scripts-fonts-assets-windows-cache-and-flags",
+   281            "scoring-anchors-and-two-assessors",
+   282            "security-patch-rehearsal",
+   283        ]
+   284    );
+   311    for line in [
+   312        "blocking: field-path=preImplementationKnownUnknowns.capability-and-platform-baselines kind=ku evidence-path=.constitution/tech-spec/contracts/platform-contracts.json upstream-owner=OXY-C002,OXY-C004",
+   313        "blocking: field-path=preImplementationKnownUnknowns.scoring-anchors-and-two-assessors kind=ku evidence-path=qualification/staged/scoring-anchors.json upstream-owner=OXY-D001",
+   314        "blocking: field-path=preImplementationKnownUnknowns.fuzz-corpora kind=ku evidence-path=qualification/staged/fuzz-corpora.json upstream-owner=OXY-D001",
+   315        "blocking: field-path=preImplementationKnownUnknowns.security-patch-rehearsal kind=ku evidence-path=qualification/staged/security-patch-rehearsal.json upstream-owner=OXY-D001",
+   316    ] {
+   317        assert!(lines.iter().any(|actual| actual == line), "{line}");
+```
+
 ### Frozen corpus sources
 
 Table 2. Admitted source sets
@@ -464,11 +579,23 @@ The corpus importer may derive target-specific encodings only from a listed sour
 - `qualification/staged/security-patch-rehearsal.json`: create this file with the exact canonical bytes in the next section. In `rehearsal[4]`, resolve `ingressMapping["application-assets"].maxLenBytes` from `qualification/staged/fuzz-corpora.json` and pass it to `-max_len`; this resolves to `1048576`. `.constitution/tech-spec/contracts/qualification-lock.json`, `measurementPolicy.securityPatchRehearsal`: set the value to `27b6e4525723e2501d08e72169f8194bb070d4a79b32825f3cc70fe9e66fc14c`.
 - `.constitution/tech-spec/data-models/qualification-lock.schema.json`, `$defs.tool.properties`: make no `pathRoot` edit. `xtask/src/toolchain/lock.rs:238-262` accepts only `name`, `version`, `sourceIdentity`, `hostTriple`, `licenseId`, `executablePath`, and `sha256` for a `resolvedTools` entry. The `pathRoot` fields already present in the canonical campaign record remain staged-policy data only; they are not `$defs.tool` properties.
 - `.constitution/tech-spec/contracts/qualification-lock.json`, `resolvedTools`: make no campaign-host append or transformation. `xtask/src/contracts/readiness.rs:409-419` delegates nonempty entries to the staged-manifest validator. `xtask/src/toolchain/lock.rs:50-75` rejects duplicate names, resolves every entry against the staged manifest, and requires every `TOOL_SPECS` name; `xtask/src/toolchain/lock.rs:296-320` requires an exact absolute staged path. Thus `pathRoot` yields `InvalidManifest`, Rustup-relative paths yield `ExecutableSubstitution`, campaign `cargo`, `cargo-miri`, `cargo-fuzz`, and `time` yield `MissingTool`, a campaign `rustc` either duplicates or mismatches the staged `rustc`, and multiple campaign hosts yield `DuplicateTool`. `resolvedTools` must not represent a campaign host. The lock binds campaign tools only through `measurementPolicy.fuzzCorpora`, the SHA-256 digest of `qualification/staged/fuzz-corpora.json`.
-- `qualification/staged/fuzz-corpora.json`, `instrumentation.campaignToolchain.hostToolRecords`: before each campaign, capture hostname, host triple, reference status, operating system, selector, Rust commit, CPU-accounting fields, and each executable's `name`, `version`, `sourceIdentity`, `hostTriple`, `licenseId`, `executablePath`, and `sha256`; retain an existing `pathRoot` only as campaign-record data. Capture `licenseId` from the package's authoritative license metadata or notice; reject an absent or non-SPDX value. The existing canonical block already holds these host records, including `licenseId`, so this correction requires no canonical-block change. Require a complete selected record, including license ID, executable hashes, and CPU-accounting fields, for every campaign host. Retain `resolved-tool-digests` in both known-unknown arrays until that condition holds.
-- `.constitution/tech-spec/contracts/qualification-lock.json`, `preImplementationKnownUnknowns` and `gatingKnownUnknowns`: after both staged records and every listed source and license byte pass admission, remove only `fuzz-corpora` and `security-patch-rehearsal`. Leave all unrelated readiness gates unchanged.
-- `crates/oxyflut-qualification/src/readiness.rs`, `KNOWN_UNKNOWN_BINDINGS`: remove the existing `fuzz-corpora` row (`required_field: "measurementPolicy.fuzzCorpora"`, `evidence_path: Some("qualification/staged/fuzz-corpora.json")`, upstream owner `OXY-D001`) and `security-patch-rehearsal` row (`required_field: "measurementPolicy.securityPatchRehearsal"`, `evidence_path: Some("qualification/staged/security-patch-rehearsal.json")`, upstream owner `OXY-D001`) when their KU strings leave the arrays. This spike adds no KU string, so don't add a binding. Keep both `POLICY_FIELDS` rows: they bind and verify the staged policy digests even after the KU blockers clear. Update the module's `clearing_a_ku_string_without_its_evidence_keeps_the_gate_open` expected KU set and its KU evidence-path loop to remove the same two names.
-- `qualification/fixtures/readiness/invalid.json` and `qualification/fixtures/readiness/cleared-without-evidence.json`, `preImplementationKnownUnknowns` and `gatingKnownUnknowns`: remove `fuzz-corpora` and `security-patch-rehearsal` from all four fixture arrays. Removing the bindings without this fixture update causes `collect_known_unknowns` to return `ReadinessError::UnmappedKnownUnknown` before the intended fixture assertions run.
-- `xtask/src/commands/lock_tests.rs`, `committed_candidate_gate_is_valid_but_open_with_the_exact_ku_set`: update the asserted committed KU set by removing `fuzz-corpora` and `security-patch-rehearsal`, leaving exactly `capability-and-platform-baselines`, `complete-ime-editing-geometry-and-accessibility-maps`, `external-distribution-schema-snapshots-and-verifiers`, `hardware-gpu-driver-and-system-package-locks`, `independent-presentation-opportunity-sources`, `layout-visit-cap`, `minimum-platform-and-protocol-versions`, `raw-measurement-and-sample-validity-contracts`, `reference-application-scenes-scripts-fonts-assets-windows-cache-and-flags`, `resolved-tool-digests`, and `scoring-anchors-and-two-assessors`. In the cleared-fixture exact-set assertion, remove the same two names and retain its ten remaining entries. Remove the two matching KU output-line assertions, but retain the staged-file digest and missing-file assertions because `POLICY_FIELDS` still verifies both staged inputs.
+- `qualification/staged/fuzz-corpora.json`, `instrumentation.campaignToolchain.hostToolRecords`: before each campaign, capture hostname, host triple, reference status, operating system, selector, Rust commit, CPU-accounting fields, and each executable's `name`, `version`, `sourceIdentity`, `hostTriple`, `licenseId`, `executablePath`, and `sha256`; retain an existing `pathRoot` only as campaign-record data. Capture `licenseId` from the package's authoritative license metadata or notice; reject an absent or non-SPDX value. The existing canonical block already holds these host records, including `licenseId`, so this correction requires no canonical-block change. Require a complete selected record, including license ID, executable hashes, and CPU-accounting fields, for every campaign host. Add `campaign-host-tool-records` to both known-unknown arrays. Clear it only when every campaign host that produced evidence has a complete selected `hostToolRecords` entry. This rule must not alter `resolved-tool-digests`, which remains OXY-A008's `resolvedTools` gate.
+- `.constitution/tech-spec/contracts/qualification-lock.json`, `preImplementationKnownUnknowns` and `gatingKnownUnknowns`: after both staged records and every listed source and license byte pass admission, remove `fuzz-corpora` and `security-patch-rehearsal` and add `campaign-host-tool-records` to both arrays. This is a net reduction of one entry in each array. Clear `campaign-host-tool-records` only when every campaign host that produced evidence has a complete selected `hostToolRecords` entry. Leave all unrelated readiness gates, including `resolved-tool-digests`, unchanged.
+- `crates/oxyflut-qualification/src/readiness.rs`, `KNOWN_UNKNOWN_BINDINGS`: remove the existing `fuzz-corpora` row (`required_field: "measurementPolicy.fuzzCorpora"`, `evidence_path: Some("qualification/staged/fuzz-corpora.json")`, upstream owner `OXY-D001`) and `security-patch-rehearsal` row (`required_field: "measurementPolicy.securityPatchRehearsal"`, `evidence_path: Some("qualification/staged/security-patch-rehearsal.json")`, upstream owner `OXY-D001`) when their KU strings leave the arrays. This spike adds `campaign-host-tool-records`; add this exact binding row:
+
+```rust
+KnownUnknownBinding {
+    known_unknown: "campaign-host-tool-records",
+    required_field: "measurementPolicy.fuzzCorpora",
+    evidence_path: Some("qualification/staged/fuzz-corpora.json"),
+    upstream_owner: "OXY-D001",
+},
+```
+
+Clear that KU only when every campaign host that produced evidence has a complete selected `hostToolRecords` entry. Keep both `POLICY_FIELDS` rows: they bind and verify the staged policy digests even after the two policy KU blockers clear. Update the module's `clearing_a_ku_string_without_its_evidence_keeps_the_gate_open` expected KU set and its KU evidence-path loop by removing the two policy KUs and adding `campaign-host-tool-records` with evidence path `qualification/staged/fuzz-corpora.json`.
+
+- `qualification/fixtures/readiness/invalid.json` and `qualification/fixtures/readiness/cleared-without-evidence.json`, `preImplementationKnownUnknowns` and `gatingKnownUnknowns`: remove `fuzz-corpora` and `security-patch-rehearsal` and add `campaign-host-tool-records` to all four fixture arrays. This is a net reduction of one entry in each array. Without this fixture update, `collect_known_unknowns` returns `ReadinessError::UnmappedKnownUnknown` before the intended fixture assertions run.
+- `xtask/src/commands/lock_tests.rs`, `committed_candidate_gate_is_valid_but_open_with_the_exact_ku_set`: remove `fuzz-corpora` and `security-patch-rehearsal`, add `campaign-host-tool-records`, and assert exactly `capability-and-platform-baselines`, `campaign-host-tool-records`, `complete-ime-editing-geometry-and-accessibility-maps`, `external-distribution-schema-snapshots-and-verifiers`, `hardware-gpu-driver-and-system-package-locks`, `independent-presentation-opportunity-sources`, `layout-visit-cap`, `minimum-platform-and-protocol-versions`, `raw-measurement-and-sample-validity-contracts`, `reference-application-scenes-scripts-fonts-assets-windows-cache-and-flags`, `resolved-tool-digests`, and `scoring-anchors-and-two-assessors`. In `cleared_ku_without_evidence_remains_open_with_the_exact_remaining_ku_set`, remove the same two names, add `campaign-host-tool-records`, and assert exactly `capability-and-platform-baselines`, `campaign-host-tool-records`, `complete-ime-editing-geometry-and-accessibility-maps`, `external-distribution-schema-snapshots-and-verifiers`, `hardware-gpu-driver-and-system-package-locks`, `independent-presentation-opportunity-sources`, `layout-visit-cap`, `minimum-platform-and-protocol-versions`, `raw-measurement-and-sample-validity-contracts`, `reference-application-scenes-scripts-fonts-assets-windows-cache-and-flags`, and `scoring-anchors-and-two-assessors`. In `candidate_report_lines_are_stable_and_content_free`, replace the two policy KU output-line assertions with `blocking: field-path=preImplementationKnownUnknowns.campaign-host-tool-records kind=ku evidence-path=qualification/staged/fuzz-corpora.json upstream-owner=OXY-D001`. Retain the staged-file digest and missing-file assertions because `POLICY_FIELDS` still verifies both staged inputs.
 
 ### Canonical staged inputs
 
