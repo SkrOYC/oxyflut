@@ -1785,10 +1785,11 @@ def nearest_rank_p99_ns(frame_totals):
 
 ### Version migration inventory
 
-The preserved `grep` found 56 active-version-dependent paths under `xtask/` and `qualification/`. The separate v5-to-v6 lock landing inventory contains 13 readiness-lock instances: the 10 contract-readiness fixtures listed above plus the three top-level readiness fixtures added in the round-3 correction. For every `R` entry, replace the active literal `"0.15.0"` with exactly `"0.16.0"`. For every `R+D` entry, also regenerate every valid digest-bound parent, reference, fixture sidecar, and test assertion affected by the changed bytes. For every `R+N` entry, preserve the intentionally invalid digest or value after updating the active-version literal and revalidate its intended failure.
+The preserved `grep` found 56 active-version-dependent paths under `xtask/` and `qualification/`; that grep-derived count remains 56. This table has 57 entries because it also includes `.constitution/tech-spec/guidelines.md`, a separate Tech Spec path like the `stack.md` instruction above. The separate v5-to-v6 lock landing inventory contains 13 readiness-lock instances: the 10 contract-readiness fixtures listed above plus the three top-level readiness fixtures added in the round-3 correction. For every `R` entry, replace the active literal `"0.15.0"` with exactly `"0.16.0"`. For every `R+D` entry, also regenerate every valid digest-bound parent, reference, fixture sidecar, and test assertion affected by the changed bytes. For every `R+N` entry, preserve the intentionally invalid digest or value after updating the active-version literal and revalidate its intended failure.
 
 | File | Required Stage 3 change |
 | :-- | :-- |
+| `.constitution/tech-spec/guidelines.md` | R: change both `v0.15.0` literals to `v0.16.0`: the `## Verification commands` lead sentence and the `Availability at v0.15.0` column header. Add a three-column `Verification commands` row with command `cargo +1.98.0 run -p xtask -- layout-prequalification validate --lock LOCK_PATH --corpus CORPUS_PATH --suite-schema SUITE_SCHEMA_PATH --suite SUITE_PATH --output RESULT_PATH`, purpose `Validate the complete unscored layout-cap prequalification matrix and write the canonical result.`, and availability `Missing until the layout-prequalification validator exists.` |
 | `xtask/src/commands/lock_tests.rs` | R: update the corrupted platform-baseline source version and its expected validation path. |
 | `xtask/src/contracts/readiness_tests.rs` | R: update both `candidate_input_issues` active-version arguments. |
 | `xtask/src/contracts/traceability/fixtures.rs` | R+D: update the synthetic platform-baseline version and regenerate its hard-coded digest references. |
@@ -1972,6 +1973,28 @@ The PR round-3 correction reran the seven-digest check after the final Prettier 
 set -euo pipefail
 rm -rf /tmp/wf-epic-b/OXY-B005/canonical-blocks-round-3
 perl /tmp/wf-epic-b/OXY-B005/verify-canonical-blocks-round-2.pl .constitution/spikes/SPK-B005.md /tmp/wf-epic-b/OXY-B005/canonical-blocks-round-3
+```
+
+```text
+layout-visit-corpus|4972e43333984047b5a1d84200d5b89a29c5b59e47c5aca8773379320f2c6c84|6152|ok
+layout-visit-topology-model-source|a0774355500de806c118316982dc6b781518f9b1134f6c9239d6f3fcc149ddff|18850|ok
+layout-qualification-record-schema|09d96af49384e47ee6154f386af2ef771985516a61c843d561835654283bd7b1|13109|ok
+layout-prequalification-run-schema|76dfee7dfcdfdd49e2d67afdf83ab43c29dbb6513652a8023b0869a7d59293e2|5479|ok
+layout-prequalification-suite-schema|27e3a876f3b8d5e88ad43089a9eff0c7ce225a6d9cece5fcd789f7759c05c924|2467|ok
+layout-visit-counting-rules|6cd0d7c7b06587525d9127f15cceecdd6f9c21b8a62be93c70c9b3756ca459c2|976|ok
+qualification-lock-v6-changelog-entry|7c271171a6cdda4515e7c96e26ac5db79cd05f1d5acc1d62e03ceb37853f2bb9|651|ok
+canonical_fenced_blocks=7
+canonical_fence_assertions=passed
+```
+
+### PR round-9 verification
+
+After the final Prettier check for this correction, the round-2 verifier rechecked all seven protected streams. It wrote only `/tmp/wf-epic-b/OXY-B005/canonical-blocks-round-9/` files.
+
+```sh
+set -euo pipefail
+rm -rf /tmp/wf-epic-b/OXY-B005/canonical-blocks-round-9
+perl /tmp/wf-epic-b/OXY-B005/verify-canonical-blocks-round-2.pl .constitution/spikes/SPK-B005.md /tmp/wf-epic-b/OXY-B005/canonical-blocks-round-9
 ```
 
 ```text
