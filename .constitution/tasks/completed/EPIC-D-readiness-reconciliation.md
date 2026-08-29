@@ -117,3 +117,17 @@ Invariants:
 - The next action is either an exact Stage 3 reconciliation pass or an explicit blocked state with required user/external input.
 Checker: prettier --prose-wrap never --check '.constitution/**/*.md'
 ```
+
+## Completion record
+
+- **Date:** 2026-08-29
+- **Outcome:** OXY-D001 completed with `.constitution/reports/pre-implementation-readiness.md`; its 15 classification rows are 0 resolved KK, 9 retained KU, and 6 blocked external input. Both readiness flags remain false, and no specification edit was applied.
+
+### Ticket outcomes
+
+- **OXY-D001** — `.constitution/reports/pre-implementation-readiness.md` consolidates the validator results, spike recommendations, hardware and assessor inputs, lock-input gaps, decisions, blocked external inputs, and the Stage 3 reconciliation checklist. `cargo run -q -p xtask -- lock status --gate candidate-implementation` exited 2 (valid but open); `cargo run -q -p xtask -- lock status --gate measurement` exited 2 (valid but open); `cargo run -q -p xtask -- contracts validate`, `cargo run -q -p xtask -- external-contracts verify`, `cargo run -q -p xtask -- evidence verify qualification/fixtures/evidence/positive-derived.json`, `cargo run -q -p xtask -- baseline validate --input qualification/fixtures/baselines/complete.synthetic.json`, `cargo run -q -p xtask -- measurement validate --input qualification/fixtures/measurements/complete.synthetic.json`, and `cargo run -q -p xtask -- measurement validate --input qualification/fixtures/sample-validity/complete.synthetic.json` each exited 0. Decisions adopt external-fixture sidecar validation, align the GTK and AT-SPI package rows, require `issuingFamily` and a cap-1 rejection fixture, assign baseline-validation ownership, retain Windows excerpt fixtures, and generalize migration fixtures; the Ubuntu capture bound, Tier 1 host inputs, Wayland interface-set completeness, and offline advisory policy remain deferred. The Stage 3 reconciliation checklist is the next action. Independently actionable now, subject to its stated order, are T1.1, T1.6, T2.5, T2.6.1, T2.6.2, and T3.5. Approval-dependent rows are T0.1-T0.4; the semantic-role branch T1.2-T1.3, T2.1-T2.2, T3.1-T3.1a, T5.4-T5.6, T7.1, and T8.1-T8.2; the layout branch T1.4-T1.5, T2.3-T2.4, T3.3-T3.4d, T4.1-T4.2, T5.1-T5.3, T6.1-T6.3, and T8.4; and T8.5. T2.6.3 and T7.2 remain blocked external inputs owned by OXY-B007; lock bindings in T3.3 remain open until the named hardware and assessor inputs arrive.
+
+##### OXY-D001 Deviations & Justifications
+
+- **Touched Files:** `.constitution/tasks/completed/EPIC-D-readiness-reconciliation.md`, `.constitution/tasks/critical-path.md`, and `.constitution/tasks/changelog.md`
+- **Justification:** Closeout follows Step 6 of the execution skill with no in-scope-file deviation; the report itself stayed the only in-scope edit.

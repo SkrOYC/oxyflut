@@ -2,6 +2,23 @@
 
 All notable changes to the Stage 4 execution plan appear in this file.
 
+## [v0.4.0] - 2026-08-29
+
+### Added
+
+- Added the pre-implementation readiness reconciliation report: `.constitution/reports/pre-implementation-readiness.md`.
+
+### Changed
+
+- Recomputed the critical path to zero active story points.
+- Archived Epic D at `.constitution/tasks/completed/EPIC-D-readiness-reconciliation.md`.
+
+### Noted
+
+- No readiness flag was set; every `measurementPolicy` field, `resolvedTools`, and `referenceEnvironments` capture remains missing.
+- `Known gaps routed to OXY-D001` in `.constitution/tech-spec/changelog.md` is superseded only by Stage 3's v0.16.0 entry and is not edited here.
+- macOS arm64 and Windows x86-64 reference hardware and Assessor 2 remain blocked external inputs.
+
 ## [v0.3.0] - 2026-08-28
 
 ### Added
