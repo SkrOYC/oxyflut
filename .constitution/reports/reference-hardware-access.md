@@ -4,6 +4,8 @@
 - Status: completed access register
 - Clock start: 2026-08-28T17:54:20Z
 - Clock stop: 2026-08-28T17:55:46Z
+- PR round-12 correction clock start: 2026-08-29T02:33:25Z
+- PR round-12 correction clock stop: 2026-08-29T02:35:39Z
 
 ## Purpose and scope
 
@@ -68,12 +70,12 @@ On an identified macOS machine, run this command block:
 ```bash
 mkdir -p /tmp/wf-epic-b/B007-macos
 {
-  uname -m
-  sw_vers
-  system_profiler SPHardwareDataType SPDisplaysDataType
-  xcodebuild -version
-  xcrun --sdk macosx --show-sdk-version
-  xcrun --sdk macosx --show-sdk-path
+  LC_ALL=C uname -m
+  LC_ALL=C sw_vers
+  LC_ALL=C system_profiler SPHardwareDataType SPDisplaysDataType
+  LC_ALL=C xcodebuild -version
+  LC_ALL=C xcrun --sdk macosx --show-sdk-version
+  LC_ALL=C xcrun --sdk macosx --show-sdk-path
 } > /tmp/wf-epic-b/B007-macos/owner-confirmation.txt 2>&1
 ```
 
@@ -85,6 +87,7 @@ On an identified Windows machine, run this PowerShell block:
 New-Item -ItemType Directory -Force -Path 'C:\Temp\wf-epic-b\B007-windows' | Out-Null
 $evidencePath = 'C:\Temp\wf-epic-b\B007-windows\owner-confirmation.txt'
 & {
+  $env:LC_ALL = 'C'
   hostname
   Get-CimInstance Win32_OperatingSystem | Select-Object Caption, Version, BuildNumber, OSArchitecture
   Get-CimInstance Win32_ComputerSystem | Select-Object Name, Model, TotalPhysicalMemory
@@ -108,6 +111,8 @@ The output in `C:\Temp\wf-epic-b\B007-windows\owner-confirmation.txt` must ident
 | Windows x86-64 | Required: x86-64; no machine recorded | None | None | None observed | None observed | None observed | None observed |
 | Wayland x86-64 | x86_64 ([Owner attestation](#owner-attestation), HITL; [host discovery probe](#host-discovery-probe), corroborating) | `thinkpadp14s` ([Owner attestation](#owner-attestation), HITL) | Oscar Y. <oscar@ocmasesorias.com> ([Owner attestation](#owner-attestation), HITL) | NixOS 26.05 (Yarara), kernel 6.18.44 ([Owner attestation](#owner-attestation), HITL; [host discovery probe](#host-discovery-probe), corroborating) | AMD Renoir (Radeon Vega) integrated GPU ([Owner attestation](#owner-attestation), HITL); the probe reports AMD/ATI Renoir Radeon Vega Series / Radeon Vega Mobile Series at PCI `07:00.0` ([host discovery probe](#host-discovery-probe), corroborating) | AMD Ryzen 7 PRO 4750U with Radeon Graphics; 8 cores and 16 logical CPUs ([host discovery probe](#host-discovery-probe)) | 29 GiB total ([host discovery probe](#host-discovery-probe)) |
 | X11 x86-64 | x86_64 ([Owner attestation](#owner-attestation), HITL; [host discovery probe](#host-discovery-probe), corroborating) | `thinkpadp14s`, the same physical machine as Wayland ([Owner attestation](#owner-attestation), HITL) | Oscar Y. <oscar@ocmasesorias.com> ([Owner attestation](#owner-attestation), HITL) | NixOS 26.05 (Yarara), kernel 6.18.44 ([Owner attestation](#owner-attestation), HITL; [host discovery probe](#host-discovery-probe), corroborating) | AMD Renoir (Radeon Vega) integrated GPU ([Owner attestation](#owner-attestation), HITL); the probe reports AMD/ATI Renoir Radeon Vega Series / Radeon Vega Mobile Series at PCI `07:00.0` ([host discovery probe](#host-discovery-probe), corroborating) | AMD Ryzen 7 PRO 4750U with Radeon Graphics; 8 cores and 16 logical CPUs ([host discovery probe](#host-discovery-probe)) | 29 GiB total ([host discovery probe](#host-discovery-probe)) |
+
+Publishing the hostname, hardware fingerprint, and owner contact in this public report is a deliberate part of the owner attestation required by this ticket. The prohibition on recording this information is scoped to the qualification lock.
 
 ### Session and access procedure
 
@@ -166,7 +171,7 @@ The output in `C:\Temp\wf-epic-b\B007-windows\owner-confirmation.txt` must ident
 
 ## Host discovery probe
 
-The following raw output was captured on `thinkpadp14s` during this ticket. The probe records host discovery only; it does not test graphics, X11 server behavior, a compositor protocol, drivers, or qualification capabilities.
+The following raw output was captured on `thinkpadp14s` during this ticket. The probe records host discovery only; it does not test graphics, X11 server behavior, a compositor protocol, drivers, or qualification capabilities. The `lscpu` and `free` commands in this historical transcript ran under `es_CL.UTF-8`; their Spanish labels and comma decimal separators are historical evidence, not a canonical parser fixture.
 
 ```text
 $ cat /etc/os-release
@@ -248,9 +253,41 @@ $ hostname
 thinkpadp14s
 ```
 
+### C-locale host-discovery correction
+
+On 2026-08-29, the following additional host-discovery probe ran with `LC_ALL=C`. It preserves the C-locale forms of the two historical locale-sensitive commands; dynamic utilization fields can differ from the historical capture. SHA-256 of the UTF-8 output byte stream in `/tmp/wf-epic-b/OXY-B007/host-discovery-c-locale.txt`, including its terminating newline, is `6b33a517d0c35ab2144eb4c26ba620d1783a57b08cad97d580d42b6b368999ec`.
+
+```text
+$ LC_ALL=C lscpu | head -20
+Architecture:                            x86_64
+CPU op-mode(s):                          32-bit, 64-bit
+Address sizes:                           48 bits physical, 48 bits virtual
+Byte Order:                              Little Endian
+CPU(s):                                  16
+On-line CPU(s) list:                     0-15
+Vendor ID:                               AuthenticAMD
+Model name:                              AMD Ryzen 7 PRO 4750U with Radeon Graphics
+CPU family:                              23
+Model:                                   96
+Thread(s) per core:                      2
+Core(s) per socket:                      8
+Socket(s):                               1
+Stepping:                                1
+Microcode version:                       0x860010d
+Frequency boost:                         enabled
+CPU(s) scaling MHz:                      88%
+CPU max MHz:                             1700.0000
+CPU min MHz:                             1400.0000
+BogoMIPS:                                3393.37
+$ LC_ALL=C free -h
+               total        used        free      shared  buff/cache   available
+Mem:            29Gi        13Gi       2.6Gi       1.6Gi        14Gi        15Gi
+Swap:           14Gi       8.8Gi       5.7Gi
+```
+
 ### Pinned Nix package-attribute verification
 
-The CI workflow's locked `devenv` installation and `devenv.lock` pin Nixpkgs revision `56c02bc00adcf003215cc4bd996d6efaf4cff188`. The prescribed commands below use that explicit GitHub flake reference rather than the mutable `nixpkgs` registry alias. The Nix flake manual documents the `github:NixOS/nixpkgs/<revision>` form as a specific Nixpkgs revision. This host probe verifies that the unprefixed `xdpyinfo`, `xwininfo`, and `xrandr` package attributes resolve and run at that revision. It checks package resolution and command availability only; it does not establish X11 access or qualification behavior.
+The CI workflow's locked `devenv` installation and `devenv.lock` pin Nixpkgs revision `56c02bc00adcf003215cc4bd996d6efaf4cff188`. The historical commands below used that explicit GitHub flake reference rather than the mutable `nixpkgs` registry alias. The Nix flake manual documents the `github:NixOS/nixpkgs/<revision>` form as a specific Nixpkgs revision. This host probe verifies that the unprefixed `xdpyinfo`, `xwininfo`, and `xrandr` package attributes resolve and run at that revision. It checks package resolution and command availability only; it does not establish X11 access or qualification behavior.
 
 ```text
 $ nix shell github:NixOS/nixpkgs/56c02bc00adcf003215cc4bd996d6efaf4cff188#xdpyinfo --command xdpyinfo -version
@@ -273,17 +310,17 @@ The following procedure establishes access only. It does not qualify graphics, d
 For interactive Xwayland access:
 
 1. Coordinate with Oscar Y. and use the local Hyprland session on `thinkpadp14s`.
-2. Run `pgrep -a Xwayland`. Success is a process line containing `Xwayland :0`, as recorded in the probe.
-3. Connect clients to that server by setting `DISPLAY=:0`; do not select a display merely because an executable exists.
-4. Run `nix shell github:NixOS/nixpkgs/56c02bc00adcf003215cc4bd996d6efaf4cff188#xdpyinfo --command xdpyinfo -display :0 | head -40`. Success includes `name of display: :0`, `vendor string: The X.Org Foundation`, and `X.Org version: 24.1.13`; its extension list includes `Present` and `RANDR`.
-5. Run `nix shell github:NixOS/nixpkgs/56c02bc00adcf003215cc4bd996d6efaf4cff188#xdpyinfo --command xdpyinfo -display :0 -ext Present`, `nix shell github:NixOS/nixpkgs/56c02bc00adcf003215cc4bd996d6efaf4cff188#xdpyinfo --command xdpyinfo -display :0 -ext XInputExtension`, and `DISPLAY=:0 nix shell github:NixOS/nixpkgs/56c02bc00adcf003215cc4bd996d6efaf4cff188#xrandr --command xrandr --version`. Success includes `Present version 1.4`, `XInputExtension version 2.4`, and a `Server reports RandR version` line. The historical `xdpyinfo -ext RANDR` output remains evidence that `xdpyinfo` itself does not report a RANDR version.
-6. Run `nix shell github:NixOS/nixpkgs/56c02bc00adcf003215cc4bd996d6efaf4cff188#xwininfo --command xwininfo -root -display :0 | head -15`. Success includes `Window id: 0x350 (the root window)`, `Width: 1920`, and `Height: 1080`, demonstrating that the minimal X11 client connected to `:0`.
+2. Run `LC_ALL=C pgrep -a Xwayland`. Recorded at capture time: `Xwayland :0` was active. Required for success: `pgrep` exits `0` and identifies an `Xwayland` process for the target session; record its actual display argument.
+3. Set `DISPLAY` to the display argument recorded in step 2. Do not select a display merely because an executable exists.
+4. Run `LC_ALL=C nix shell github:NixOS/nixpkgs/56c02bc00adcf003215cc4bd996d6efaf4cff188#xdpyinfo --command xdpyinfo -display "$DISPLAY" | LC_ALL=C head -40`. Recorded at capture time: the server was `:0`, reported vendor `The X.Org Foundation`, X.Org version `24.1.13`, and listed `Present` and `RANDR`. Required for success: the command connects to the server on `$DISPLAY`, reports that display, and lists `Present` and `RANDR`; record the returned vendor and version without requiring the historical values.
+5. Run `LC_ALL=C nix shell github:NixOS/nixpkgs/56c02bc00adcf003215cc4bd996d6efaf4cff188#xdpyinfo --command xdpyinfo -display "$DISPLAY" -ext Present`, `LC_ALL=C nix shell github:NixOS/nixpkgs/56c02bc00adcf003215cc4bd996d6efaf4cff188#xdpyinfo --command xdpyinfo -display "$DISPLAY" -ext XInputExtension`, and `DISPLAY="$DISPLAY" LC_ALL=C nix shell github:NixOS/nixpkgs/56c02bc00adcf003215cc4bd996d6efaf4cff188#xrandr --command xrandr --version`. Recorded at capture time: `Present` was version `1.4`, `XInputExtension` was version `2.4`, and `xrandr` reported RandR version `1.6`. Required for success: the first two commands report their extensions, and `xrandr` reports a server RandR version; record the returned versions without requiring the historical values. The historical `xdpyinfo -ext RANDR` output remains evidence that `xdpyinfo` itself does not report a RANDR version.
+6. Run `LC_ALL=C nix shell github:NixOS/nixpkgs/56c02bc00adcf003215cc4bd996d6efaf4cff188#xwininfo --command xwininfo -root -display "$DISPLAY" | LC_ALL=C head -15`. Recorded at capture time: the root window ID was `0x350`, width was `1920`, and height was `1080`. Required for success: the client connects to `$DISPLAY`, identifies a root window, and reports positive width and height that match the active compositor output for the same session; record the discovered ID and dimensions without requiring the historical values.
 
 For headless Xvfb access:
 
-1. Run a copy of the lifecycle script preserved in the [X11 access probe](#x11-access-probe), but replace its historical mutable-alias invocation with the pinned command in the next step. It must first create `/tmp/wf-epic-b/OXY-B007` and exit 1 if that fails, create a unique log directory below it with `mktemp -d` and exit 1 if that fails, write the server log to `$LOGDIR/xvfb99.log`, and record the started server process ID in `XVFB_PID`. The preserved script remains historical evidence and is not the current procedure.
-2. The current script runs `nix shell github:NixOS/nixpkgs/56c02bc00adcf003215cc4bd996d6efaf4cff188#xdpyinfo --command xdpyinfo -display :99 | head -15`. Success includes `name of display: :99`, `vendor string: The X.Org Foundation`, and `X.Org version: 21.1.24`.
-3. The script signals only its recorded process with `kill "$XVFB_PID"`, then waits for that exact process with `wait "$XVFB_PID"`. The recorded `wait exit: 0` establishes that the child process terminated successfully. The script then runs `pgrep -a Xvfb` and prints its status. [pgrep(1)](https://man7.org/linux/man-pages/man1/pgrep.1.html) defines exit 1 as no matching processes and exits 2 and 3 as command-line and fatal errors. The recorded `pgrep exit: 1` therefore establishes that no host process matched `Xvfb` when the probe ended.
+1. Run a copy of the lifecycle script preserved in the [X11 access probe](#x11-access-probe), but replace its historical mutable-alias invocation with the pinned command in the next step. Set `LC_ALL=C` in the current script before every tool invocation that presents or parses output. It must first create `/tmp/wf-epic-b/OXY-B007` and exit 1 if that fails, create a unique log directory below it with `mktemp -d` and exit 1 if that fails, write the server log to `$LOGDIR/xvfb99.log`, and record the started server process ID in `XVFB_PID`. The preserved script remains historical evidence and is not the current procedure.
+2. The current script runs `LC_ALL=C nix shell github:NixOS/nixpkgs/56c02bc00adcf003215cc4bd996d6efaf4cff188#xdpyinfo --command xdpyinfo -display :99 | LC_ALL=C head -15`. Recorded at capture time: the server was `:99`, reported vendor `The X.Org Foundation`, and reported X.Org version `21.1.24`. Required for success: the command connects to the selected Xvfb display, reports that display, and records its returned vendor and version without requiring the historical values.
+3. The script signals only its recorded process with `kill "$XVFB_PID"`, then waits for that exact process with `wait "$XVFB_PID"`. The recorded `wait exit: 0` establishes that the child process terminated successfully. The current script then runs `LC_ALL=C pgrep -a Xvfb` and prints its status. [pgrep(1)](https://man7.org/linux/man-pages/man1/pgrep.1.html) defines exit 1 as no matching processes and exits 2 and 3 as command-line and fatal errors. The recorded `pgrep exit: 1` therefore establishes that no host process matched `Xvfb` when the probe ended.
 
 This evidence establishes that X11 clients can connect to active Xwayland on `:0` and to a temporary Xvfb server on `:99`. It does not establish native X11 desktop-session behavior, a native X server session, graphics or driver behavior, any P0 capability, or conformance to the Stage 3 Ubuntu 26.04 LTS X11 reference.
 
